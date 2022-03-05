@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "${modid}",
+  "version": "$version",
+
+  "name": "Machine Library",
+  "icon": "assets/${modid}/icon.png",
+  "description": "Machine Library for the FabricMC port of Galacticraft.",
+  "license": "MIT",
+  "contact": {
+    "homepage": "https://galacticraft.team/",
+    "sources": "https://github.com/TeamGalacticraft/MachineLib/",
+    "issues": "https://github.com/TeamGalacticraft/MachineLib/issues/"
+  },
+  "authors": [
+    {
+      "name": "Team Galacticraft",
+      "contact": {
+        "homepage": "https://github.com/TeamGalacticraft/",
+        "discord": "https://discord.gg/n3QqhMYyFK"
+      }
+    }
+  ],
+  "environment": "*",
+  "entrypoints": {
+  },
+  "mixins": [
+    "${modid}.mixins.json"
+  ],
+  "accessWidener": "${modid}.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.13",
+    "minecraft": ">=1.18.2",
+    "fabric-api-base": "*",
+    "fabric-api-lookup-api-v1": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-networking-api-v1": "*",
+    "fabric-registry-sync-v0": "*",
+    "fabric-renderer-api-v1": "*",
+    "fabric-resource-loader-v0": "*",
+    "fabric-transfer-api-v1": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [ "library" ],
+      "parent": "galacticraft-api"
+    }
+  }
+}
