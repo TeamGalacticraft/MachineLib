@@ -20,18 +20,19 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.machine.storage;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
+public class ResourceSlot<T, V extends TransferVariant<T>> extends SnapshotParticipant<V> {
+    @Override
+    protected V createSnapshot() {
+        return null;
+    }
 
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
+    @Override
+    protected void readSnapshot(V snapshot) {
+
     }
 }

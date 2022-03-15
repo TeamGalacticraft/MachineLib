@@ -20,18 +20,44 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.gas;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
+import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.gas.GasVariantImpl;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.PacketByteBuf;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
+@ApiStatus.Experimental
+public interface GasVariant extends TransferVariant<Gas> {
+    static GasVariant blank() {
+        return of(Gas.EMPTY);
+    }
 
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
+    static GasVariant of(@NotNull Gas gas) {
+        return of(gas, null);
+    }
+
+    static GasVariant of(@NotNull GasStack stack) {
+        return of(stack.getGas(), stack.getNbt());
+    }
+
+    static GasVariant of(@NotNull Gas gas, @Nullable NbtCompound tag) {
+        return GasVariantImpl.of(gas, tag);
+    }
+
+    default Gas getGas() {
+        return getObject();
+    }
+
+    static GasVariant fromNbt(NbtCompound nbt) {
+        return GasVariantImpl.fromNbt(nbt);
+    }
+
+    static GasVariant fromPacket(PacketByteBuf buf) {
+        return GasVariantImpl.fromPacket(buf);
     }
 }

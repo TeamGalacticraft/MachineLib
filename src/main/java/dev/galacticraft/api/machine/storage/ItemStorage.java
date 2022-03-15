@@ -20,18 +20,11 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.machine.storage;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
-
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
-    }
+public interface ItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
 }

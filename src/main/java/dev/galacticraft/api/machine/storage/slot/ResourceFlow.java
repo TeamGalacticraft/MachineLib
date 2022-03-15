@@ -20,18 +20,29 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.machine.storage.slot;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Formatting;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
+public enum ResourceFlow {
+    INPUT(new TranslatableText("ui.galacticraft.side_option.in").setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
+    OUTPUT(new TranslatableText("ui.galacticraft.side_option.out").setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
+    BOTH(new TranslatableText("ui.galacticraft.side_option.io").setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
 
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
+    private final Text name;
+
+    ResourceFlow(Text name) {
+        this.name = name;
+    }
+
+    public Text getName() {
+        return this.name;
+    }
+
+    public boolean canFlowIn(ResourceFlow direction) {
+        return this == direction || this == BOTH;
     }
 }

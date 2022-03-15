@@ -20,18 +20,40 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.machine.storage;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
+public class ModCount extends SnapshotParticipant<Integer> {
+    private int count;
 
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
+    public int increment(@NotNull TransactionContext transaction) {
+        updateSnapshots(transaction);
+        return ++this.count;
+    }
+
+    public int incrementAfter(@NotNull TransactionContext transaction) {
+        updateSnapshots(transaction);
+        return this.count++;
+    }
+
+    public int getModCount() {
+        return this.count;
+    }
+
+    @Override
+    protected Integer createSnapshot() {
+        return this.count;
+    }
+
+    @Override
+    protected void readSnapshot(Integer snapshot) {
+        this.count = snapshot;
+    }
+
+    public void incrementUnsafe() {
+        this.count++;
     }
 }

@@ -20,18 +20,14 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.machine.storage.automation;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import org.jetbrains.annotations.NotNull;
+import dev.galacticraft.api.machine.storage.slot.SlotType;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
-
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
-    }
+/**
+ * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ */
+public interface Automatable<T, V extends TransferVariant<T>> {
+    SlotType<T, V>[] getTypes();
 }

@@ -20,18 +20,26 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.gametest;
+package dev.galacticraft.api.screen;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
+import dev.galacticraft.api.gas.Gas;
+import dev.galacticraft.api.gas.GasVariant;
+import dev.galacticraft.api.machine.storage.slot.SlotType;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.item.Item;
 import org.jetbrains.annotations.NotNull;
 
-public class MachineLibTestSuite implements FabricGameTest {
-    private static final String MOD_ID = "machinelib-test";
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
-    @GameTest(structureName = EMPTY_STRUCTURE)
-    public void emptyTest(@NotNull TestContext context) {
-        context.addInstantFinalTask(() -> {});
-    }
+public interface StorageSyncHandler {
+    void addCapacitor(int x, int y, int width, int height, @NotNull LongSupplier amount);
+
+    void addSlot(@NotNull SlotType<Item, ItemVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull FluidVariant> fluid, @NotNull LongSupplier amount);
+
+    void addFluidTank(@NotNull SlotType<Fluid, FluidVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull FluidVariant> fluid, @NotNull LongSupplier amount);
+
+    void addGasTank(@NotNull SlotType<Gas, GasVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull GasVariant> fluid, @NotNull LongSupplier amount);
 }
