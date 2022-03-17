@@ -212,6 +212,7 @@ public class GasStorageImpl implements GasStorage {
 
     @Override
     public long insert(int slot, @NotNull GasVariant variant, long amount, @Nullable TransactionContext context) {
+        if (amount == 0) return 0;
         GasSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
@@ -250,7 +251,7 @@ public class GasStorageImpl implements GasStorage {
                     invSlot.updateSnapshots(transaction);
                     invSlot.amount -= extracted;
 
-                    if (amount == 0) {
+                    if (invSlot.amount == 0) {
                         invSlot.variant = GasVariant.blank();
                     }
                     modCount.increment(transaction);
@@ -412,6 +413,7 @@ public class GasStorageImpl implements GasStorage {
         }
 
         public GasStack copyStack() {
+            if (this.variant.isBlank() || this.amount == 0) return GasStack.EMPTY;
             return this.variant.toStack(this.amount);
         }
     }

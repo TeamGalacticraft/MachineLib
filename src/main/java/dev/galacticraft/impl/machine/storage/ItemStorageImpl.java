@@ -147,6 +147,7 @@ public class ItemStorageImpl implements ItemStorage {
     @Override
     public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
+        if (amount == 0) return ItemStack.EMPTY;
 
         return this.extractVariant(this.inventory[slot], amount, context);
     }
@@ -154,6 +155,7 @@ public class ItemStorageImpl implements ItemStorage {
     @Override
     public @NotNull ItemStack extract(int slot, @NotNull Tag<Item> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
+        if (amount == 0) return ItemStack.EMPTY;
 
         ItemSlot invSlot = this.inventory[slot];
         if (tag.values().contains(invSlot.variant.getItem())) {
@@ -166,6 +168,7 @@ public class ItemStorageImpl implements ItemStorage {
     @Override
     public @NotNull ItemStack extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
+        if (amount == 0) return ItemStack.EMPTY;
 
         ItemSlot invSlot = this.inventory[slot];
         if (invSlot.variant.getItem() == item) {
@@ -177,6 +180,7 @@ public class ItemStorageImpl implements ItemStorage {
 
     @NotNull
     private ItemStack extractVariant(@NotNull ItemSlot invSlot, long amount, @Nullable TransactionContext context) {
+        if (amount == 0) return ItemStack.EMPTY;
         long extracted = Math.min(invSlot.amount, amount);
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
@@ -202,8 +206,10 @@ public class ItemStorageImpl implements ItemStorage {
             ItemSlot invSlot = this.inventory[slot];
             invSlot.updateSnapshots(transaction);
             ItemStack currentStack = invSlot.copyStack();
-            invSlot.variant = variant;
-            invSlot.amount = amount;
+            if (amount != 0) invSlot.variant = variant;
+            else invSlot.variant = ItemVariant.blank();
+            if (!variant.isBlank()) invSlot.amount = amount;
+            else invSlot.amount = 0;
             modCount.increment(transaction);
             transaction.commit();
             return currentStack;
@@ -212,6 +218,7 @@ public class ItemStorageImpl implements ItemStorage {
 
     @Override
     public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
+        if (amount == 0 || variant.isBlank()) return 0;
         ItemSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
@@ -233,11 +240,9 @@ public class ItemStorageImpl implements ItemStorage {
                     transaction.commit();
                     return inserted;
                 }
-                return 0;
             }
-        } else {
-            return 0;
         }
+        return 0;
     }
 
     @Override
@@ -250,7 +255,7 @@ public class ItemStorageImpl implements ItemStorage {
                     invSlot.updateSnapshots(transaction);
                     invSlot.amount -= extracted;
 
-                    if (amount == 0) {
+                    if (invSlot.amount == 0) {
                         invSlot.variant = ItemVariant.blank();
                     }
                     modCount.increment(transaction);
@@ -412,6 +417,7 @@ public class ItemStorageImpl implements ItemStorage {
         }
 
         public ItemStack copyStack() {
+            if (this.variant.isBlank() || this.amount == 0) return ItemStack.EMPTY;
             return this.variant.toStack((int) this.amount);
         }
     }

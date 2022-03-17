@@ -211,6 +211,7 @@ public class FluidStorageImpl implements FluidStorage {
 
     @Override
     public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
+        if (amount == 0) return 0;
         FluidSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
@@ -249,7 +250,7 @@ public class FluidStorageImpl implements FluidStorage {
                     invSlot.updateSnapshots(transaction);
                     invSlot.amount -= extracted;
 
-                    if (amount == 0) {
+                    if (invSlot.amount == 0) {
                         invSlot.variant = FluidVariant.blank();
                     }
                     modCount.increment(transaction);
@@ -311,6 +312,7 @@ public class FluidStorageImpl implements FluidStorage {
 
     @Override
     public void clear() {
+        assert !Transaction.isOpen();
         for (FluidSlot fluidSlot : this.inventory) {
             fluidSlot.variant = FluidVariant.blank();
             fluidSlot.amount = 0;
@@ -411,7 +413,7 @@ public class FluidStorageImpl implements FluidStorage {
         }
 
         public FluidStack copyStack() {
-            if (variant.isBlank()) return FluidStack.EMPTY;
+            if (this.variant.isBlank() || this.amount == 0) return FluidStack.EMPTY;
             return new FluidStack(this.variant, this.amount);
         }
     }

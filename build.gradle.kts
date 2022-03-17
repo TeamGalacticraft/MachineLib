@@ -40,7 +40,6 @@ val yarn            = project.property("yarn.build").toString()
 val loader          = project.property("loader.version").toString()
 val fabric          = project.property("fabric.version").toString()
 val energy          = project.property("energy.version").toString()
-val jupiter         = project.property("jupiter.version").toString()
 
 group = modGroup
 version ="$modVersion+$minecraft"
@@ -71,7 +70,7 @@ loom {
             server()
             name("Game Test")
             source(gametestSourceSet)
-            property("fabric.log.level", "debug")
+//            property("fabric.log.level", "debug")
             vmArgs("-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml", "-ea")
         }
     }
@@ -106,9 +105,6 @@ dependencies {
     }
 
     modRuntimeOnly("net.fabricmc.fabric-api:fabric-api:$fabric")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiter")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiter")
 }
 
 tasks.processResources {
@@ -128,10 +124,7 @@ tasks.processResources {
 }
 
 tasks.test {
-    useJUnitPlatform()
-    systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
-    maxHeapSize = "2048M"
-//    dependsOn(tasks.getByName("runGametest"))
+    dependsOn(tasks.getByName("runGametest"))
 }
 
 tasks.withType<JavaCompile> {

@@ -62,7 +62,7 @@ public interface GasVariant extends TransferVariant<Gas> {
     }
 
     default GasStack toStack(long amount) {
-        if (this.isBlank()) return GasStack.EMPTY;
+        if (this.isBlank() || amount == 0) return GasStack.EMPTY;
         return new GasStack(this, amount);
     }
 }

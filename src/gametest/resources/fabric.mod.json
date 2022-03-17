@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "machinelib-test",
-  "version": "$version",
+  "version": "0.0",
 
   "name": "MachineLib Test Mod",
   "description": "Test mod for MachineLib.",
@@ -23,7 +23,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "dev.galacticraft.api.gametest.MachineLibTestSuite"
+      "dev.galacticraft.impl.machine.storage.ItemStorageImplTest"
     ]
   },
   "depends": {
