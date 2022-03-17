@@ -22,10 +22,10 @@
 
 package dev.galacticraft.api.machine;
 
-import dev.galacticraft.api.machine.storage.automation.Automatable;
-import dev.galacticraft.api.machine.storage.slot.ResourceType;
+import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 
 public interface ResourceProvider {
-    <T, V extends TransferVariant<T>> Automatable<T, V> getResource(ResourceType<T, V> type);
+    <T, V extends TransferVariant<T>> ConfiguredStorage<T, V> getResource(ResourceType<T, V> type);
 }

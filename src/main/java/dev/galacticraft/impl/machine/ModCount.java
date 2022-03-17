@@ -20,29 +20,40 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage.slot;
+package dev.galacticraft.impl.machine;
 
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.Formatting;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
+import org.jetbrains.annotations.NotNull;
 
-public enum ResourceFlow {
-    INPUT(new TranslatableText("ui.galacticraft.side_option.in").setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
-    OUTPUT(new TranslatableText("ui.galacticraft.side_option.out").setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
-    BOTH(new TranslatableText("ui.galacticraft.side_option.io").setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
+public class ModCount extends SnapshotParticipant<Integer> {
+    private int count;
 
-    private final Text name;
-
-    ResourceFlow(Text name) {
-        this.name = name;
+    public int increment(@NotNull TransactionContext transaction) {
+        updateSnapshots(transaction);
+        return ++this.count;
     }
 
-    public Text getName() {
-        return this.name;
+    public int incrementAfter(@NotNull TransactionContext transaction) {
+        updateSnapshots(transaction);
+        return this.count++;
     }
 
-    public boolean canFlowIn(ResourceFlow direction) {
-        return this == direction || this == BOTH;
+    public int getModCount() {
+        return this.count;
+    }
+
+    @Override
+    protected Integer createSnapshot() {
+        return this.count;
+    }
+
+    @Override
+    protected void readSnapshot(Integer snapshot) {
+        this.count = snapshot;
+    }
+
+    public void incrementUnsafe() {
+        this.count++;
     }
 }

@@ -20,19 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage;
+package dev.galacticraft.api.machine.storage.io;
 
+import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
+import org.jetbrains.annotations.NotNull;
 
-public class ResourceSlot<T, V extends TransferVariant<T>> extends SnapshotParticipant<V> {
-    @Override
-    protected V createSnapshot() {
-        return null;
+import java.util.function.Predicate;
+
+/**
+ * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ */
+public interface SlotType<T, V extends TransferVariant<T>> {
+    static <T, V extends TransferVariant<T>> SlotType<T, V> create(@NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+        return new SlotTypeImpl<>(color, name, filter, flow, type);
     }
 
-    @Override
-    protected void readSnapshot(V snapshot) {
+    @NotNull TextColor getColor();
 
-    }
+    @NotNull Text getName();
+
+    @NotNull ResourceType<T, V> getType();
+
+    @NotNull ResourceFlow getFlow();
+
+    boolean willAccept(V variant);
 }

@@ -22,9 +22,47 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.fluid.FluidStack;
+import dev.galacticraft.impl.machine.storage.FluidStorageImpl;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.fluid.Fluid;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public interface FluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
+    class Builder {
+        private int size = 0;
+        private final List<SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
+        private final LongList counts = new LongArrayList();
+
+        public Builder() {}
+
+        @Contract(value = " -> new", pure = true)
+        public static @NotNull Builder create() {
+            return new Builder();
+        }
+
+        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type) {
+            return this.addSlot(type, 64);
+        }
+
+        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, int maxCount) {
+            maxCount = Math.min(maxCount, 64);
+            this.size++;
+            this.types.add(type);
+            this.counts.add(maxCount);
+            return this;
+        }
+
+        @Contract(pure = true, value = " -> new")
+        public @NotNull FluidStorageImpl build() {
+            return new FluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+        }
+    }
 }

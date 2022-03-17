@@ -22,6 +22,7 @@
 
 package dev.galacticraft.impl.fluid;
 
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.NbtCompound;
@@ -44,6 +45,10 @@ public class FluidStack {
             this.empty = true;
         }
         this.empty = this.testEmpty();
+    }
+
+    public FluidStack(FluidVariant variant, long amount) {
+        this(variant.getFluid(), variant.copyNbt(), amount);
     }
 
     public void setAmount(long amount) {

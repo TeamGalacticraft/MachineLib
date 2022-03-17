@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.gas;
 
 import dev.galacticraft.api.gas.Gas;
+import dev.galacticraft.api.gas.GasVariant;
 import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,10 @@ public class GasStack {
             this.empty = true;
         }
         this.empty = this.testEmpty();
+    }
+
+    public GasStack(GasVariant gasVariant, long amount) {
+        this(gasVariant.getGas(), gasVariant.copyNbt(), amount);
     }
 
     public void setAmount(long amount) {

@@ -20,20 +20,13 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage.automation;
+package dev.galacticraft.api.machine.storage.io;
 
-import dev.galacticraft.api.machine.storage.slot.SlotType;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public final class NullAutomatable implements Automatable {
-    public static final Automatable INSTANCE = new NullAutomatable();
-    private static final SlotType[] EMPTY = new SlotType[0];
-
-    private NullAutomatable() {}
-    @Override
-    public SlotType[] getTypes() {
-        return EMPTY;
-    }
+public interface ConfiguredStorage<T, V extends TransferVariant<T>> {
+    SlotType<T, V>[] getTypes();
 }

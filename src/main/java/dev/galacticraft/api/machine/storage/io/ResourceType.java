@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage.slot;
+package dev.galacticraft.api.machine.storage.io;
 
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;

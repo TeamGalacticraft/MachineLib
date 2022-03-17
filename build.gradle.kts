@@ -129,7 +129,9 @@ tasks.processResources {
 
 tasks.test {
     useJUnitPlatform()
-    dependsOn(tasks.getByName("runGametest"))
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
+    maxHeapSize = "2048M"
+//    dependsOn(tasks.getByName("runGametest"))
 }
 
 tasks.withType<JavaCompile> {

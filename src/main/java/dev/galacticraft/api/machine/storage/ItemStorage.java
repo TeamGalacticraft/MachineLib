@@ -22,9 +22,47 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.impl.machine.storage.ItemStorageImpl;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public interface ItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
+    class Builder {
+        private int size = 0;
+        private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
+        private final IntList counts = new IntArrayList();
+
+        public Builder() {}
+
+        @Contract(value = " -> new", pure = true)
+        public static @NotNull Builder create() {
+            return new Builder();
+        }
+
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type) {
+            return this.addSlot(type, 64);
+        }
+
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount) {
+            maxCount = Math.min(maxCount, 64);
+            this.size++;
+            this.types.add(type);
+            this.counts.add(maxCount);
+            return this;
+        }
+
+        @Contract(pure = true, value = " -> new")
+        public @NotNull ItemStorageImpl build() {
+            return new ItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toIntArray());
+        }
+    }
 }

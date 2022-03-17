@@ -20,26 +20,44 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.api.machine.storage;
 
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.storage.io.SlotType;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
+import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.machine.storage.GasStorageImpl;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.LongSupplier;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface StorageSyncHandler {
-    void addCapacitor(int x, int y, int width, int height, @NotNull LongSupplier amount);
+public interface GasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
+    class Builder {
+        private int size = 0;
+        private final List<SlotType<Gas, GasVariant>> types = new ArrayList<>();
+        private final LongList counts = new LongArrayList();
 
-    void addSlot(@NotNull SlotType<Item, ItemVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull FluidVariant> fluid, @NotNull LongSupplier amount);
+        public Builder() {}
 
-    void addFluidTank(@NotNull SlotType<Fluid, FluidVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull FluidVariant> fluid, @NotNull LongSupplier amount);
+        @Contract(value = " -> new", pure = true)
+        public static @NotNull Builder create() {
+            return new Builder();
+        }
+        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, int maxCount) {
+            maxCount = Math.min(maxCount, 64);
+            this.size++;
+            this.types.add(type);
+            this.counts.add(maxCount);
+            return this;
+        }
 
-    void addGasTank(@NotNull SlotType<Gas, GasVariant> type, int x, int y, int width, int height, @NotNull Supplier<@NotNull GasVariant> fluid, @NotNull LongSupplier amount);
+        @Contract(pure = true, value = " -> new")
+        public @NotNull GasStorageImpl build() {
+            return new GasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+        }
+    }
 }

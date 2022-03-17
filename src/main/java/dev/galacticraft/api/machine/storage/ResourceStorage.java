@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.machine.storage;
 
-import dev.galacticraft.api.machine.storage.automation.Automatable;
+import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Automatable<T, V>, Storage<V>, Clearable {
+public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends ConfiguredStorage<T, V>, Storage<V>, Clearable {
     int size();
 
     boolean isEmpty();
@@ -113,7 +113,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Aut
 
     long extract(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context);
 
-    int getMaxCount(int slot);
+    long getMaxCount(int slot);
 
     /**
      * Returns the modification count of this inventory.
@@ -127,7 +127,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Aut
 
     boolean canAccept(int slot, @NotNull V variant);
 
-    int count(@NotNull T resource);
+    long count(@NotNull T resource);
 
     boolean containsAny(@NotNull Set<T> resources);
 

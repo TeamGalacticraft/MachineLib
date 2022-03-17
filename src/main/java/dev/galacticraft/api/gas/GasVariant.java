@@ -60,4 +60,9 @@ public interface GasVariant extends TransferVariant<Gas> {
     static GasVariant fromPacket(PacketByteBuf buf) {
         return GasVariantImpl.fromPacket(buf);
     }
+
+    default GasStack toStack(long amount) {
+        if (this.isBlank()) return GasStack.EMPTY;
+        return new GasStack(this, amount);
+    }
 }
