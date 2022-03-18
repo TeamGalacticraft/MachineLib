@@ -87,6 +87,11 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
+    public StorageView<ItemVariant> getSlot(int index) {
+        return this.inventory[index];
+    }
+
+    @Override
     public boolean isEmpty() {
         for (ItemSlot itemSlot : this.inventory) {
             if (!itemSlot.isResourceBlank()) {
@@ -102,12 +107,12 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public boolean canExtract(int slot) {
+    public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
 
     @Override
-    public boolean canInsert(int slot) {
+    public boolean canExposedInsert(int slot) {
         return this.insertion[slot];
     }
 
@@ -317,11 +322,17 @@ public class ItemStorageImpl implements ItemStorage {
 
     @Override
     public void clear() {
+        assert !Transaction.isOpen();
         for (ItemSlot itemSlot : this.inventory) {
             itemSlot.variant = ItemVariant.blank();
             itemSlot.amount = 0;
         }
         modCount.incrementUnsafe();
+    }
+
+    @Override
+    public @Nullable StorageView<ItemVariant> exactView(TransactionContext transaction, ItemVariant resource) {
+        return ItemStorage.super.exactView(transaction, resource);
     }
 
     @Override

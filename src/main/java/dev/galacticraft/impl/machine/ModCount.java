@@ -22,6 +22,7 @@
 
 package dev.galacticraft.impl.machine;
 
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
@@ -29,17 +30,35 @@ import org.jetbrains.annotations.NotNull;
 public class ModCount extends SnapshotParticipant<Integer> {
     private int count;
 
+    /**
+     * Warning: Modification count can go down if the transaction fails.
+     * Do not utilize the resulting mod count in a wider scope than the transaction, unless you are certain that the transaction (and all parents) succeeded
+     * @param transaction the transaction context
+     * @return the modification count.
+     */
     public int increment(@NotNull TransactionContext transaction) {
         updateSnapshots(transaction);
         return ++this.count;
     }
 
-    public int incrementAfter(@NotNull TransactionContext transaction) {
-        updateSnapshots(transaction);
-        return this.count++;
+    /**
+     * Warning: Do not call during a transaction.
+     * @return the modification count of this storage.
+     */
+    public int getModCount() {
+        if (Transaction.isOpen()) {
+            throw new IllegalStateException("getModCount() may not be called during a transaction.");
+        }
+        return this.count;
     }
 
-    public int getModCount() {
+    /**
+     * Warning: modification count CAN GO DOWN if a transaction is cancelled.
+     * Do not trust that an equal mod count is representative of the inventory's state if you are unsure about the transaction status of the current thread.
+     * @return the modification count of this storage.
+     */
+    @Deprecated
+    public int getModCountUnsafe() {
         return this.count;
     }
 
@@ -53,7 +72,11 @@ public class ModCount extends SnapshotParticipant<Integer> {
         this.count = snapshot;
     }
 
-    public void incrementUnsafe() {
-        this.count++;
+    /**
+     * Increments the counter without creating a snapshot.
+     */
+    public int incrementUnsafe() {
+        assert !Transaction.isOpen();
+        return ++this.count;
     }
 }

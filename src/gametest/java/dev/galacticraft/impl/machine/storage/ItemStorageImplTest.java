@@ -75,16 +75,14 @@ public final class ItemStorageImplTest implements MachineLibGametest {
 
     @GameTest(structureName = EMPTY_STRUCTURE, tickLimit = 0)
     void getModCount(@NotNull TestContext context) {
-        assertEquals(context, 0, this.storage.getModCount(), "Item Storage should not be modified");
+        assertEquals(context, 0, this.storage.getModCount(), "Item Storage should not be modified, as no transaction has occurred!");
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(context, 3, this.storage.insert(0, ItemVariant.of(Items.DIAMOND), 3, transaction), "Items should have been inserted into slot 0!");
-            assertEquals(context, 1, this.storage.getModCount(), "Item Storage should have been modified!");
             //abort transaction
         }
         assertEquals(context, 0, this.storage.getModCount(), "Item Storage should not be modified, as the transaction was aborted!");
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(context, 2, this.storage.insert(0, ItemVariant.of(Items.EXPERIENCE_BOTTLE), 2, transaction), "Items should have been inserted into slot 0!");
-            assertEquals(context, 1, this.storage.getModCount(), "Item Storage should have been modified!");
             transaction.commit();
         }
         assertEquals(context, 1, this.storage.getModCount(), "Item Storage should have been modified, as the transaction was committed!");

@@ -25,6 +25,7 @@ package dev.galacticraft.gametest;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.item.ItemStack;
 import net.minecraft.test.GameTest;
+import net.minecraft.test.GameTestException;
 import net.minecraft.test.TestContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,13 +59,19 @@ public interface MachineLibGametest extends FabricGameTest {
 
     default void assertTrue(@NotNull TestContext context, boolean b, @NotNull String message) {
         if (!b) {
-            context.throwGameTestException(format(message, true, b));
+            context.throwGameTestException(format(message, true, false));
         }
     }
 
     default void assertFalse(@NotNull TestContext context, boolean b, @NotNull String message) {
         if (b) {
-            context.throwGameTestException(format(message, false, b));
+            context.throwGameTestException(format(message, false, true));
+        }
+    }
+
+    default void assertEquals(@NotNull TestContext context, boolean a, boolean b, @NotNull String message) {
+        if (a != b) {
+            context.throwGameTestException(format(message, a, b));
         }
     }
 
@@ -128,6 +135,30 @@ public interface MachineLibGametest extends FabricGameTest {
                 bStr = b.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(b)) + "[" + b + "]";
             }
             context.throwGameTestException(format(message, aStr, bStr));
+        }
+    }
+
+    default <T extends Throwable> void assertThrows(@NotNull TestContext context, Class<T> clazz, Runnable runnable, @NotNull String message) {
+        try {
+            runnable.run();
+        } catch (Throwable throwable) {
+            if (!clazz.isInstance(throwable)) {
+                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName()));
+                gameTestException.addSuppressed(throwable);
+                throw gameTestException;
+            }
+        }
+    }
+
+    default <T extends Throwable> void assertThrowsExactly(@NotNull TestContext context, Class<T> clazz, Runnable runnable, @NotNull String message) {
+        try {
+            runnable.run();
+        } catch (Throwable throwable) {
+            if (!clazz.equals(throwable.getClass())) {
+                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName()));
+                gameTestException.addSuppressed(throwable);
+                throw gameTestException;
+            }
         }
     }
 

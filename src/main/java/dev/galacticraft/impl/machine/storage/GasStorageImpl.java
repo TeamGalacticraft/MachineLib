@@ -87,6 +87,11 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
+    public StorageView<GasVariant> getSlot(int index) {
+        return this.inventory[index];
+    }
+
+    @Override
     public boolean isEmpty() {
         for (GasSlot gasSlot : this.inventory) {
             if (!gasSlot.isResourceBlank()) {
@@ -102,12 +107,12 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
-    public boolean canExtract(int slot) {
+    public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
 
     @Override
-    public boolean canInsert(int slot) {
+    public boolean canExposedInsert(int slot) {
         return this.insertion[slot];
     }
 
@@ -313,6 +318,7 @@ public class GasStorageImpl implements GasStorage {
 
     @Override
     public void clear() {
+        assert !Transaction.isOpen();
         for (GasSlot gasSlot : this.inventory) {
             gasSlot.variant = GasVariant.blank();
             gasSlot.amount = 0;

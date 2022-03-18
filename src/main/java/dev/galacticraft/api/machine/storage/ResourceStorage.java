@@ -24,11 +24,13 @@ package dev.galacticraft.api.machine.storage;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Clearable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +43,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     @NotNull S getStack(int slot);
 
-    boolean canExtract(int slot);
+    boolean canExposedExtract(int slot);
 
-    boolean canInsert(int slot);
+    boolean canExposedInsert(int slot);
 
     default @NotNull S extract(int slot) {
         return this.extract(slot, (TransactionContext) null);
@@ -123,6 +125,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      */
     int getModCount();
 
+    @ApiStatus.Internal
+    StorageView<V> getSlot(int index);
+
     boolean canAccess(@NotNull PlayerEntity player);
 
     boolean canAccept(int slot, @NotNull V variant);
@@ -136,6 +141,10 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     @Override
     void clear();
 
+    @Override
+    default long getVersion() {
+        return this.getModCount();
+    }
 //    default ExposedStorage getExposedStorage(@NotNull Direction direction) {
 //        return this.getExposedStorages()[direction.ordinal()];
 //    }

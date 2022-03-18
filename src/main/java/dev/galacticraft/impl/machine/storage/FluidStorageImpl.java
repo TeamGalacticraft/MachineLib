@@ -87,6 +87,11 @@ public class FluidStorageImpl implements FluidStorage {
     }
 
     @Override
+    public StorageView<FluidVariant> getSlot(int index) {
+        return this.inventory[index];
+    }
+
+    @Override
     public boolean isEmpty() {
         for (FluidSlot fluidSlot : this.inventory) {
             if (!fluidSlot.isResourceBlank()) {
@@ -102,12 +107,12 @@ public class FluidStorageImpl implements FluidStorage {
     }
 
     @Override
-    public boolean canExtract(int slot) {
+    public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
 
     @Override
-    public boolean canInsert(int slot) {
+    public boolean canExposedInsert(int slot) {
         return this.insertion[slot];
     }
 
@@ -116,9 +121,11 @@ public class FluidStorageImpl implements FluidStorage {
         StoragePreconditions.notBlankNotNegative(resource, maxAmount);
         long inserted = 0;
         for (int i = 0; i < this.size(); i++) {
-            inserted += this.insert(i, resource, maxAmount - inserted, context);
-            if (inserted == maxAmount) {
-                break;
+            if (this.canAccept(i, resource)) {
+                inserted += this.insert(i, resource, maxAmount - inserted, context);
+                if (inserted == maxAmount) {
+                    break;
+                }
             }
         }
 

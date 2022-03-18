@@ -20,10 +20,24 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage;
+package dev.galacticraft.api.machine.storage.io;
 
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import dev.galacticraft.api.machine.storage.ResourceStorage;
+import dev.galacticraft.impl.machine.storage.io.ExposedSlot;
+import dev.galacticraft.impl.machine.storage.io.ExposedSlots;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
-public interface ExposedItemStorage extends Storage<ItemVariant> {
+public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage<V> {
+    @Contract("_, _, _, _ -> new")
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofType(ResourceStorage<T, V, ?> storage, SlotType<T, V> type, boolean insert, boolean extract) {
+        return new ExposedSlots<>(storage, type, insert, extract);
+    }
+
+    @Contract("_, _, _, _ -> new")
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofSlot(ResourceStorage<T, V, ?> storage, int slot, boolean insert, boolean extract) {
+        return new ExposedSlot<>(storage, slot, insert, extract);
+    }
 }
