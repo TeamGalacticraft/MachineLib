@@ -32,7 +32,11 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
-import net.minecraft.text.*;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.registry.RegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -47,16 +51,17 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     public static final SlotTypeImpl<Fluid, FluidVariant> WILDCARD_FLUID = new SlotTypeImpl<>(TextColor.fromRgb(0x8d32c7), new TranslatableText("ui.galacticraft.io_config.wildcard_fluid"), v -> true, ResourceFlow.BOTH, ResourceType.FLUID);
     public static final SlotTypeImpl<Gas, GasVariant> WILDCARD_GAS = new SlotTypeImpl<>(TextColor.fromRgb(0x9faac7), new TranslatableText("ui.galacticraft.io_config.wildcard_gas"), v -> true, ResourceFlow.BOTH, ResourceType.GAS);
 
+    private final @NotNull RegistryEntry.Reference<SlotType<?, ?>> reference = REGISTRY.createEntry(this);
     private final @NotNull TextColor color;
-    private final @NotNull Text name;
+    private final @NotNull TranslatableText name;
     private final @NotNull Predicate<V> filter;
     private final @NotNull ResourceFlow flow;
     private final @NotNull ResourceType<T, V> type;
 
-    public SlotTypeImpl(@NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+    public SlotTypeImpl(@NotNull TextColor color, @NotNull TranslatableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         this.color = color;
         this.filter = filter;
-        this.name = name.setStyle(Style.EMPTY.withColor(color));
+        this.name = (TranslatableText) name.setStyle(Style.EMPTY.withColor(color));
         this.flow = flow;
         this.type = type;
     }
@@ -84,6 +89,11 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     @Override
     public boolean willAccept(V variant) {
         return variant.isBlank() || this.filter.test(variant);
+    }
+
+    @Override
+    public RegistryEntry.Reference<SlotType<?, ?>> getReference() {
+        return this.reference;
     }
 
     @Override

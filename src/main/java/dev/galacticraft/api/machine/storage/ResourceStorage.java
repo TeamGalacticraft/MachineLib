@@ -22,12 +22,14 @@
 
 package dev.galacticraft.api.machine.storage;
 
-import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
+import com.mojang.datafixers.util.Either;
+import dev.galacticraft.api.machine.storage.io.*;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Clearable;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,6 +44,12 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     boolean isEmpty();
 
     @NotNull S getStack(int slot);
+
+    @NotNull V getVariant(int slot);
+
+    long getAmount(int slot);
+
+    @NotNull ResourceType<T, V> getResource();
 
     boolean canExposedExtract(int slot);
 
@@ -119,14 +127,20 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     /**
      * Returns the modification count of this inventory.
-     * Can go DOWN due to cancelled transactions.
-     *
+     * Do NOT call during a transaction
      * @return the modification count of this inventory.
      */
     int getModCount();
 
+    /**
+     * Returns the modification count of a particular slot in this inventory.
+     * Do NOT call during a transaction
+     * @return the modification count of a particular slot in this inventory.
+     */
+    int getSlotModCount(int index);
+
     @ApiStatus.Internal
-    StorageView<V> getSlot(int index);
+    SingleVariantStorage<V> getSlot(int index);
 
     boolean canAccess(@NotNull PlayerEntity player);
 
@@ -138,12 +152,32 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     boolean containsAny(@NotNull Tag<T> resources);
 
+    void writeNbt(@NotNull NbtCompound nbt);
+
+    void readNbt(@NotNull NbtCompound nbt);
+
     @Override
     void clear();
+
+    ExposedStorage<T, V> view();
 
     @Override
     default long getVersion() {
         return this.getModCount();
+    }
+
+    default Storage<V> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {
+        if (either != null) {
+            if (either.right().isPresent()) {
+                assert either.right().get().getType().willAcceptResource(this.getResource());
+                return ExposedStorage.ofType(this, (SlotType<T, V>) either.right().get(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+            } else {
+                //noinspection OptionalGetWithoutIsPresent - we can assert that left is present if right is not.
+                return ExposedStorage.ofSlot(this, either.left().get(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+            }
+        } else {
+            return ExposedStorage.of(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+        }
     }
 //    default ExposedStorage getExposedStorage(@NotNull Direction direction) {
 //        return this.getExposedStorages()[direction.ordinal()];

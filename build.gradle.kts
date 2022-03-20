@@ -93,6 +93,7 @@ dependencies {
         "fabric-registry-sync-v0",
         "fabric-renderer-api-v1",
         "fabric-resource-loader-v0",
+        "fabric-screen-handler-api-v1",
         "fabric-transfer-api-v1"
     ).forEach {
         modImplementation(fabricApi.module(it, fabric))

@@ -22,11 +22,15 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
+import dev.galacticraft.api.screen.StorageSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface ConfiguredStorage<T, V extends TransferVariant<T>> {
-    SlotType<T, V>[] getTypes();
+    @NotNull SlotType<T, V> @NotNull [] getTypes();
+
+    @NotNull StorageSyncHandler createSyncHandler();
 }

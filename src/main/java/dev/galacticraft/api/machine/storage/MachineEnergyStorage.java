@@ -20,27 +20,41 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.io;
+package dev.galacticraft.api.machine.storage;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
-import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.api.machine.storage.io.ExposedCapacitor;
+import dev.galacticraft.api.machine.storage.io.ResourceFlow;
+import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.nbt.NbtCompound;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import team.reborn.energy.api.EnergyStorage;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
-public final class NullConfiguredStorage implements ConfiguredStorage {
-    public static final ConfiguredStorage INSTANCE = new NullConfiguredStorage();
-    private static final SlotTypeImpl[] EMPTY = new SlotTypeImpl[0];
+public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
+    SlotType[] NO_SLOTS = new SlotType[0];
 
-    private NullConfiguredStorage() {}
-    @Override
-    public SlotTypeImpl[] getTypes() {
-        return EMPTY;
+    static MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
+        return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
     }
 
+    void setEnergy(long amount, TransactionContext context);
+
+    @ApiStatus.Internal
+    void setEnergyUnsafe(long amount);
+
     @Override
-    public @NotNull StorageSyncHandler createSyncHandler() {
-        return StorageSyncHandler.DEFAULT;
+    default @NotNull SlotType @NotNull [] getTypes() {
+        return NO_SLOTS;
     }
+
+    @NotNull ExposedCapacitor getExposedStorage(@NotNull ResourceFlow flow);
+
+    @NotNull ExposedCapacitor view();
+
+    void writeNbt(@NotNull NbtCompound nbt);
+
+    void readNbt(@NotNull NbtCompound nbt);
 }

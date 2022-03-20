@@ -26,15 +26,11 @@ import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.function.Consumer;
 
 public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStorage<T, V>, StorageView<V> {
     private final ResourceStorage<T, V, ?> storage;
@@ -59,7 +55,7 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
     @Override
     public long insert(V resource, long maxAmount, TransactionContext transaction) {
         if (this.supportsInsertion()) {
-            if (this.storage.canAccept(index, resource)) {
+            if (this.storage.canAccept(this.index, resource)) {
                 return this.storage.insert(this.index, resource, maxAmount, transaction);
             }
         }
@@ -74,7 +70,7 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
     @Override
     public long extract(V resource, long maxAmount, TransactionContext transaction) {
         if (this.supportsExtraction()) {
-            return this.storage.extract(index, resource, maxAmount, transaction);
+            return this.storage.extract(this.index, resource, maxAmount, transaction);
         }
         return 0;
     }
@@ -101,12 +97,16 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
 
     @Override
     public Iterator<StorageView<V>> iterator(TransactionContext transaction) {
-        return new SingleTransactiveIterator(transaction);
+        return new ExtractionLimitingIterator(this.storage.iterator(transaction));
     }
 
     @Override
     public @Nullable StorageView<V> exactView(TransactionContext transaction, V resource) {
-        return this;
+        if (this.getResource().equals(resource)) {
+            return this;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -114,42 +114,25 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
         return this.storage.getVersion();
     }
 
-    private class SingleTransactiveIterator implements Iterator<StorageView<V>>, Transaction.CloseCallback {
-        private boolean complete = false;
+    private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {
+        private int index = 0;
+        private final Iterator<StorageView<V>> iterator;
 
-        private SingleTransactiveIterator(TransactionContext context) {
-            context.addCloseCallback(this);
+        public ExtractionLimitingIterator(Iterator<StorageView<V>> iterator) {
+            this.iterator = iterator;
         }
 
         @Override
         public boolean hasNext() {
-            return !complete;
+            return this.iterator.hasNext();
         }
 
         @Override
         public StorageView<V> next() {
-            if (this.complete) {
+            if (!this.hasNext()) {
                 throw new NoSuchElementException();
             }
-            return ExposedSlot.this;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("remove");
-        }
-
-        @Override
-        public void forEachRemaining(@NotNull Consumer<? super StorageView<V>> action) {
-            Objects.requireNonNull(action);
-            while (this.hasNext()) {
-                action.accept(this.next());
-            }
-        }
-
-        @Override
-        public void onClose(TransactionContext transaction, TransactionContext.Result result) {
-            this.complete = true;
+            return new LimitedStorageView<>(this.iterator.next(), ExposedSlot.this.supportsExtraction() && ExposedSlot.this.index == this.index);
         }
     }
 }

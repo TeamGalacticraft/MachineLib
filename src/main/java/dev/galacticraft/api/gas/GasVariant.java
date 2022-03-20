@@ -45,16 +45,16 @@ public interface GasVariant extends TransferVariant<Gas> {
         return of(stack.getGas(), stack.getNbt());
     }
 
-    static GasVariant of(@NotNull Gas gas, @Nullable NbtCompound tag) {
-        return GasVariantImpl.of(gas, tag);
+    static GasVariant of(@NotNull Gas gas, @Nullable NbtCompound nbt) {
+        return GasVariantImpl.of(gas, nbt);
     }
 
     default Gas getGas() {
         return getObject();
     }
 
-    static GasVariant fromNbt(NbtCompound nbt) {
-        return GasVariantImpl.fromNbt(nbt);
+    static GasVariant readNbt(NbtCompound nbt) {
+        return GasVariantImpl.readNbt(nbt);
     }
 
     static GasVariant fromPacket(PacketByteBuf buf) {

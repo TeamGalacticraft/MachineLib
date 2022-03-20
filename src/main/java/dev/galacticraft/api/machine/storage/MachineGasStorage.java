@@ -22,24 +22,24 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.gas.Gas;
+import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.impl.machine.storage.ItemStorageImpl;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.machine.storage.MachineGasStorageImpl;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public interface ItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
+public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
     class Builder {
         private int size = 0;
-        private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
-        private final IntList counts = new IntArrayList();
+        private final List<SlotType<Gas, GasVariant>> types = new ArrayList<>();
+        private final LongList counts = new LongArrayList();
 
         public Builder() {}
 
@@ -47,12 +47,7 @@ public interface ItemStorage extends ResourceStorage<Item, ItemVariant, ItemStac
         public static @NotNull Builder create() {
             return new Builder();
         }
-
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type) {
-            return this.addSlot(type, 64);
-        }
-
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount) {
+        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, int maxCount) {
             maxCount = Math.min(maxCount, 64);
             this.size++;
             this.types.add(type);
@@ -61,8 +56,8 @@ public interface ItemStorage extends ResourceStorage<Item, ItemVariant, ItemStac
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull ItemStorageImpl build() {
-            return new ItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toIntArray());
+        public @NotNull MachineGasStorageImpl build() {
+            return new MachineGasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
         }
     }
 }

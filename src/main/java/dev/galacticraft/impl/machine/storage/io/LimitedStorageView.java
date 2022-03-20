@@ -20,29 +20,38 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl.machine.storage.io;
 
-import net.minecraft.network.PacketByteBuf;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
+public record LimitedStorageView<T>(StorageView<T> parent, boolean extract) implements StorageView<T> {
+    @Override
+    public long extract(T resource, long maxAmount, TransactionContext transaction) {
+        if (this.extract) {
+            return this.parent.extract(resource, maxAmount, transaction);
+        } else {
+            return 0L;
         }
+    }
 
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
+    @Override
+    public boolean isResourceBlank() {
+        return this.parent.isResourceBlank();
+    }
 
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
+    @Override
+    public T getResource() {
+        return this.parent.getResource();
+    }
 
-    boolean needsSyncing();
+    @Override
+    public long getAmount() {
+        return this.parent.getAmount();
+    }
 
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+    @Override
+    public long getCapacity() {
+        return this.parent.getCapacity();
+    }
 }

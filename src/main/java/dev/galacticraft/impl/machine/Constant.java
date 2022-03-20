@@ -22,6 +22,75 @@
 
 package dev.galacticraft.impl.machine;
 
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.text.Style;
+import net.minecraft.text.TextColor;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.math.MathHelper;
+
 public interface Constant {
     String MOD_ID = "machinelib";
+
+    interface Text {
+        Style DARK_GRAY_STYLE = Style.EMPTY.withColor(Formatting.DARK_GRAY);
+        Style GOLD_STYLE = Style.EMPTY.withColor(Formatting.GOLD);
+        Style GREEN_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
+        Style RED_STYLE = Style.EMPTY.withColor(Formatting.RED);
+        Style BLUE_STYLE = Style.EMPTY.withColor(Formatting.BLUE);
+        Style AQUA_STYLE = Style.EMPTY.withColor(Formatting.AQUA);
+        Style GRAY_STYLE = Style.EMPTY.withColor(Formatting.GRAY);
+        Style DARK_RED_STYLE = Style.EMPTY.withColor(Formatting.DARK_RED);
+        Style LIGHT_PURPLE_STYLE = Style.EMPTY.withColor(Formatting.LIGHT_PURPLE);
+        Style YELLOW_STYLE = Style.EMPTY.withColor(Formatting.YELLOW);
+        Style WHITE_STYLE = Style.EMPTY.withColor(Formatting.WHITE);
+
+        static Style getStorageLevelColor(double scale) {
+            return Style.EMPTY.withColor(TextColor.fromRgb(((int)(255 * scale) << 16) + (((int)(255 * ( 1.0 - scale))) << 8)));
+        }
+
+        static Style getRainbow(int ticks) {
+            return Style.EMPTY.withColor(TextColor.fromRgb(MathHelper.hsvToRgb(ticks / 1000.0f, 1, 1)));
+        }
+    }
+
+    interface Nbt {
+        String BLOCK_ENTITY_TAG = "BlockEntityTag";
+        String NO_DROP = "NoDrop";
+        String OWNER = "Owner";
+        String PROGRESS = "Progress";
+        String SIZE = "Size";
+        String MAX_SIZE = "MaxSize";
+        String FUEL_TIME = "FuelTime";
+        String FUEL_LENGTH = "FuelLength";
+        String TEAM = "Team";
+        String ACCESSIBILITY = "Accessibility";
+        String SECURITY = "Security";
+        String CONFIGURATION = "Configuration";
+        String VALUE = "Value";
+        String ENERGY = "Energy";
+        String AUTOMATION_TYPE = "AutomationType";
+        String BABY = "Baby";
+        String DIRECTION = "Direction";
+        String REDSTONE_INTERACTION_TYPE = "RedstoneInteraction";
+        String MATCH = "Match";
+        String IS_SLOT_ID = "IsSlotId";
+        String MAX_PROGRESS = "MaxProgress";
+        String COLOR = "Color";
+        String PULL = "Pull";
+        String HEAT = "Heat";
+        String INPUTS = "Inputs";
+        String OUTPUTS = "Outputs";
+        String SHAPED = "Shaped";
+        String ITEMS = "Items";
+        String GASES = "Gases";
+        String NAME = "Name";
+        String ID = "Id";
+        String RESOURCE = "Resource";
+        String FLOW = "Flow";
+        String AMOUNT = "Amount";
+    }
+
+    interface Property {
+        BooleanProperty ACTIVE = BooleanProperty.of("active");
+    }
 }

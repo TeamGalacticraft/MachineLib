@@ -20,29 +20,28 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl.client.util;
 
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.util.Identifier;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
+import java.util.Iterator;
+import java.util.List;
 
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
+/**
+ * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ */
+public interface SpriteUtil {
+    static SpriteIdentifier identifier(String path) {
+        return identifier(new Identifier(Constant.MOD_ID, path));
+    }
 
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
+    static SpriteIdentifier identifier(Identifier id) {
+        return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, id);
+    }
 
-    boolean needsSyncing();
-
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+    static Iterator<SpriteIdentifier> identifiers(List<Identifier> textureDependencies) {
+        return textureDependencies.stream().map(SpriteUtil::identifier).iterator();
+    }
 }

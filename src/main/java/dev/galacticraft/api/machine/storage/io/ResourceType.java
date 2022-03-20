@@ -26,7 +26,6 @@ import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.text.Style;
@@ -35,16 +34,18 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 
 public final class ResourceType<T, V> {
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.any").setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
-    public static final ResourceType<?, ?> NONE = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.none").setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.energy").setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.fluid").setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
-    public static final ResourceType<Gas, GasVariant> GAS = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.gas").setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(new TranslatableText("ui.galacticraft.side_option.item").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+    public static final ResourceType<?, ?> ANY = new ResourceType<>(0, new TranslatableText("ui.galacticraft.side_option.any").setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
+    public static final ResourceType<?, ?> NONE = new ResourceType<>(1, new TranslatableText("ui.galacticraft.side_option.none").setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
+    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText("ui.galacticraft.side_option.energy").setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
+    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(3, new TranslatableText("ui.galacticraft.side_option.fluid").setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
+    public static final ResourceType<Gas, GasVariant> GAS = new ResourceType<>(4, new TranslatableText("ui.galacticraft.side_option.gas").setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
+    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(5, new TranslatableText("ui.galacticraft.side_option.item").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
 
     private final Text name;
+    private final byte ordinal;
 
-    private ResourceType(Text name) {
+    private ResourceType(int ordinal, Text name) {
+        this.ordinal = (byte)ordinal;
         this.name = name;
     }
 
@@ -52,7 +53,27 @@ public final class ResourceType<T, V> {
         return this.name;
     }
 
-    public <OT, OV extends TransferVariant<OT>> boolean willAcceptResource(ResourceType<OT, OV> other) {
+    public boolean isSpecial() {
+        return this == ANY || this == NONE;
+    }
+
+    public byte getOrdinal() {
+        return ordinal;
+    }
+
+    public static ResourceType<?, ?> getFromOrdinal(byte b) {
+        return switch (b) {
+            case 0 -> ANY;
+            case 1 -> NONE;
+            case 2 -> ENERGY;
+            case 3 -> FLUID;
+            case 4 -> GAS;
+            case 5 -> ITEM;
+            default -> throw new IllegalStateException("Unexpected value: " + b);
+        };
+    }
+
+    public boolean willAcceptResource(ResourceType<?, ?> other) {
         return this != NONE && (this == other || this == ANY);
     }
 }

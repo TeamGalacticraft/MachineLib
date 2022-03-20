@@ -25,17 +25,23 @@ package dev.galacticraft.impl.machine.storage;
 import com.google.common.collect.Iterators;
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.api.machine.storage.GasStorage;
+import dev.galacticraft.api.machine.storage.MachineGasStorage;
+import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.gas.GasStack;
 import dev.galacticraft.impl.machine.ModCount;
+import dev.galacticraft.impl.machine.storage.slot.GasSlot;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,16 +51,17 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class GasStorageImpl implements GasStorage {
+public class MachineGasStorageImpl implements MachineGasStorage {
     private final int size;
-    private final GasSlot[] inventory;
-    private final SlotType<Gas, GasVariant>[] types;
-    private final boolean[] extraction;
-    private final boolean[] insertion;
+    private final @NotNull GasSlot[] inventory;
+    private final @NotNull SlotType<Gas, GasVariant>[] types;
+    private final boolean @NotNull [] extraction;
+    private final boolean @NotNull [] insertion;
 
-    private final ModCount modCount = new ModCount();
+    private final @NotNull ModCount modCount = new ModCount();
+    private final @NotNull ExposedStorage<Gas, GasVariant> view = ExposedStorage.of(this, false, false);
 
-    public GasStorageImpl(int size, SlotType<Gas, GasVariant>[] types, long[] counts) {
+    public MachineGasStorageImpl(int size, SlotType<Gas, GasVariant>[] types, long[] counts) {
         this.size = size;
         this.inventory = new GasSlot[this.size];
         this.extraction = new boolean[this.size];
@@ -87,7 +94,12 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
-    public StorageView<GasVariant> getSlot(int index) {
+    public int getSlotModCount(int index) {
+        return 0;
+    }
+
+    @Override
+    public SingleVariantStorage<GasVariant> getSlot(int index) {
         return this.inventory[index];
     }
 
@@ -107,6 +119,21 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
+    public @NotNull GasVariant getVariant(int slot) {
+        return this.inventory[slot].getResource();
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        return this.inventory[slot].getAmount();
+    }
+
+    @Override
+    public @NotNull ResourceType<Gas, GasVariant> getResource() {
+        return ResourceType.GAS;
+    }
+
+    @Override
     public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
@@ -121,9 +148,11 @@ public class GasStorageImpl implements GasStorage {
         StoragePreconditions.notBlankNotNegative(resource, maxAmount);
         long inserted = 0;
         for (int i = 0; i < this.size(); i++) {
-            inserted += this.insert(i, resource, maxAmount - inserted, context);
-            if (inserted == maxAmount) {
-                break;
+            if (this.canAccept(i, resource)) {
+                inserted += this.insert(i, resource, maxAmount - inserted, context);
+                if (inserted == maxAmount) {
+                    break;
+                }
             }
         }
 
@@ -161,7 +190,7 @@ public class GasStorageImpl implements GasStorage {
         StoragePreconditions.notNegative(amount);
 
         GasSlot invSlot = this.inventory[slot];
-        if (tag.values().contains(invSlot.variant.getGas())) {
+        if (tag.values().contains(invSlot.getResource().getGas())) {
             return this.extractVariant(invSlot, amount, context);
         } else {
             return GasStack.EMPTY;
@@ -173,7 +202,7 @@ public class GasStorageImpl implements GasStorage {
         StoragePreconditions.notNegative(amount);
 
         GasSlot invSlot = this.inventory[slot];
-        if (invSlot.variant.getGas() == gas) {
+        if (invSlot.getResource().getGas() == gas) {
             return this.extractVariant(invSlot, amount, context);
         } else {
             return GasStack.EMPTY;
@@ -182,18 +211,13 @@ public class GasStorageImpl implements GasStorage {
 
     @NotNull
     private GasStack extractVariant(@NotNull GasSlot invSlot, long amount, @Nullable TransactionContext context) {
-        long extracted = Math.min(invSlot.amount, amount);
+        long extracted = Math.min(invSlot.getAmount(), amount);
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.updateSnapshots(transaction);
-                GasStack stack = invSlot.variant.toStack(extracted);
-                invSlot.amount -= extracted;
-
-                if (invSlot.amount == 0) {
-                    invSlot.variant = GasVariant.blank();
-                }
-                modCount.increment(transaction);
-
+                GasStack stack = invSlot.copyStack();
+                stack.setAmount(extracted);
+                invSlot.extract(extracted, transaction);
+                this.modCount.increment(transaction);
                 transaction.commit();
                 return stack;
             }
@@ -205,11 +229,9 @@ public class GasStorageImpl implements GasStorage {
     public @NotNull GasStack replace(int slot, @NotNull GasVariant variant, long amount, @Nullable TransactionContext context) {
         try (Transaction transaction = Transaction.openNested(context)) {
             GasSlot invSlot = this.inventory[slot];
-            invSlot.updateSnapshots(transaction);
             GasStack currentStack = invSlot.copyStack();
-            invSlot.variant = variant;
-            invSlot.amount = amount;
-            modCount.increment(transaction);
+            invSlot.setStack(variant, amount, context);
+            this.modCount.increment(transaction);
             transaction.commit();
             return currentStack;
         }
@@ -222,20 +244,17 @@ public class GasStorageImpl implements GasStorage {
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.updateSnapshots(transaction);
-                invSlot.variant = variant;
-                invSlot.amount = amount;
-                modCount.increment(transaction);
+                invSlot.setStack(variant, amount, transaction);
+                this.modCount.increment(transaction);
                 transaction.commit();
                 return amount;
             }
         } else if (variant.equals(invSlot.getResource())) {
             try (Transaction transaction = Transaction.openNested(context)) {
-                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.amount);
+                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
                 if (inserted > 0) {
-                    invSlot.updateSnapshots(transaction);
-                    invSlot.amount += inserted;
-                    modCount.increment(transaction);
+                    invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
+                    this.modCount.increment(transaction);
                     transaction.commit();
                     return inserted;
                 }
@@ -249,17 +268,12 @@ public class GasStorageImpl implements GasStorage {
     @Override
     public long extract(int slot, @NotNull GasVariant variant, long amount, @Nullable TransactionContext context) {
         GasSlot invSlot = this.inventory[slot];
-        if (invSlot.variant.equals(variant)) {
-            long extracted = Math.min(invSlot.amount, amount);
+        if (invSlot.getResource().equals(variant)) {
+            long extracted = Math.min(invSlot.getAmount(), amount);
             if (extracted > 0) {
                 try (Transaction transaction = Transaction.openNested(context)) {
-                    invSlot.updateSnapshots(transaction);
-                    invSlot.amount -= extracted;
-
-                    if (invSlot.amount == 0) {
-                        invSlot.variant = GasVariant.blank();
-                    }
-                    modCount.increment(transaction);
+                    invSlot.extract(extracted, transaction);
+                    this.modCount.increment(transaction);
                     transaction.commit();
                     return extracted;
                 }
@@ -306,8 +320,8 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Gas> gass) {
-        List<Gas> values = gass.values();
+    public boolean containsAny(@NotNull Tag<Gas> tag) {
+        List<Gas> values = tag.values();
         for (GasSlot gasSlot : this.inventory) {
             if (values.contains(gasSlot.copyStack().getGas())) {
                 return true;
@@ -317,18 +331,54 @@ public class GasStorageImpl implements GasStorage {
     }
 
     @Override
+    public void writeNbt(@NotNull NbtCompound nbt) {
+        //todo
+    }
+
+    @Override
+    public void readNbt(@NotNull NbtCompound nbt) {
+
+    }
+
+    @Override
     public void clear() {
         assert !Transaction.isOpen();
         for (GasSlot gasSlot : this.inventory) {
             gasSlot.variant = GasVariant.blank();
             gasSlot.amount = 0;
+            gasSlot.modCount.incrementUnsafe();
         }
-        modCount.incrementUnsafe();
+        this.modCount.incrementUnsafe();
+    }
+
+    @Override
+    public ExposedStorage<Gas, GasVariant> view() {
+        return this.view;
     }
 
     @Override
     public SlotType<Gas, GasVariant>[] getTypes() {
         return this.types;
+    }
+
+    @Override
+    public @NotNull StorageSyncHandler createSyncHandler() {
+        return new StorageSyncHandler() {
+            @Override
+            public boolean needsSyncing() {
+                return false; //todo
+            }
+
+            @Override
+            public void sync(PacketByteBuf buf) {
+
+            }
+
+            @Override
+            public void read(PacketByteBuf buf) {
+
+            }
+        };
     }
 
     /*
@@ -349,7 +399,7 @@ public class GasStorageImpl implements GasStorage {
     private class CombinedIterator implements Iterator<StorageView<GasVariant>>, Transaction.CloseCallback {
         private boolean open = true;
         private final TransactionContext context;
-        private final Iterator<GasSlot> partIterator = Iterators.forArray(GasStorageImpl.this.inventory);
+        private final Iterator<GasSlot> partIterator = Iterators.forArray(MachineGasStorageImpl.this.inventory);
         // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
         private Iterator<StorageView<GasVariant>> currentPartIterator = null;
 
@@ -398,29 +448,6 @@ public class GasStorageImpl implements GasStorage {
         public void onClose(TransactionContext context, Transaction.Result result) {
             // As soon as the transaction is closed, this iterator is not valid anymore.
             open = false;
-        }
-    }
-
-    private static class GasSlot extends SingleVariantStorage<GasVariant> {
-        private final long capacity;
-
-        private GasSlot(long capacity) {
-            this.capacity = capacity;
-        }
-
-        @Override
-        protected GasVariant getBlankVariant() {
-            return GasVariant.blank();
-        }
-
-        @Override
-        protected long getCapacity(@NotNull GasVariant variant) {
-            return this.capacity;
-        }
-
-        public GasStack copyStack() {
-            if (this.variant.isBlank() || this.amount == 0) return GasStack.EMPTY;
-            return this.variant.toStack(this.amount);
         }
     }
 }

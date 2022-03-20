@@ -22,24 +22,24 @@
 
 package dev.galacticraft.api.machine.storage;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.impl.gas.GasStack;
-import dev.galacticraft.impl.machine.storage.GasStorageImpl;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public interface GasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
+public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
     class Builder {
         private int size = 0;
-        private final List<SlotType<Gas, GasVariant>> types = new ArrayList<>();
-        private final LongList counts = new LongArrayList();
+        private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
+        private final IntList counts = new IntArrayList();
 
         public Builder() {}
 
@@ -47,7 +47,12 @@ public interface GasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
         public static @NotNull Builder create() {
             return new Builder();
         }
-        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, int maxCount) {
+
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type) {
+            return this.addSlot(type, 64);
+        }
+
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount) {
             maxCount = Math.min(maxCount, 64);
             this.size++;
             this.types.add(type);
@@ -56,8 +61,8 @@ public interface GasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull GasStorageImpl build() {
-            return new GasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+        public @NotNull MachineItemStorageImpl build() {
+            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toIntArray());
         }
     }
 }

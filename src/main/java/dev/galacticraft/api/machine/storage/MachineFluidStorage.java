@@ -24,7 +24,7 @@ package dev.galacticraft.api.machine.storage;
 
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.fluid.FluidStack;
-import dev.galacticraft.impl.machine.storage.FluidStorageImpl;
+import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface FluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
+public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
     class Builder {
         private int size = 0;
         private final List<SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
@@ -61,8 +61,8 @@ public interface FluidStorage extends ResourceStorage<Fluid, FluidVariant, Fluid
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull FluidStorageImpl build() {
-            return new FluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+        public @NotNull MachineFluidStorageImpl build() {
+            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
         }
     }
 }

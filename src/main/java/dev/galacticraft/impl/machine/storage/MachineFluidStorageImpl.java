@@ -23,19 +23,25 @@
 package dev.galacticraft.impl.machine.storage;
 
 import com.google.common.collect.Iterators;
-import dev.galacticraft.api.machine.storage.ItemStorage;
+import dev.galacticraft.api.machine.storage.MachineFluidStorage;
+import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.ModCount;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,23 +51,24 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class ItemStorageImpl implements ItemStorage {
+public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
-    private final ItemSlot[] inventory;
-    private final SlotType<Item, ItemVariant>[] types;
-    private final boolean[] extraction;
-    private final boolean[] insertion;
+    private final @NotNull FluidSlot[] inventory;
+    private final @NotNull SlotType<Fluid, FluidVariant>[] types;
+    private final boolean @NotNull [] extraction;
+    private final boolean @NotNull [] insertion;
 
-    private final ModCount modCount = new ModCount();
+    private final @NotNull ModCount modCount = new ModCount();
+    private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.of(this, false, false);
 
-    public ItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, int[] counts) {
+    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts) {
         this.size = size;
-        this.inventory = new ItemSlot[this.size];
+        this.inventory = new FluidSlot[this.size];
         this.extraction = new boolean[this.size];
         this.insertion = new boolean[this.size];
 
         for (int i = 0; i < this.inventory.length; i++) {
-            this.inventory[i] = new ItemSlot(counts[i]);
+            this.inventory[i] = new FluidSlot(counts[i]);
             if (types[i].getFlow() == ResourceFlow.INPUT) {
                 this.insertion[i] = true;
                 this.extraction[i] = false;
@@ -87,14 +94,19 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public StorageView<ItemVariant> getSlot(int index) {
+    public int getSlotModCount(int index) {
+        return 0;
+    }
+
+    @Override
+    public SingleVariantStorage<FluidVariant> getSlot(int index) {
         return this.inventory[index];
     }
 
     @Override
     public boolean isEmpty() {
-        for (ItemSlot itemSlot : this.inventory) {
-            if (!itemSlot.isResourceBlank()) {
+        for (FluidSlot fluidSlot : this.inventory) {
+            if (!fluidSlot.isResourceBlank()) {
                 return false;
             }
         }
@@ -102,8 +114,23 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public @NotNull ItemStack getStack(int slot) {
+    public @NotNull FluidStack getStack(int slot) {
         return this.inventory[slot].copyStack();
+    }
+
+    @Override
+    public @NotNull FluidVariant getVariant(int slot) {
+        return this.inventory[slot].getResource();
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        return this.inventory[slot].getAmount();
+    }
+
+    @Override
+    public @NotNull ResourceType<Fluid, FluidVariant> getResource() {
+        return ResourceType.FLUID;
     }
 
     @Override
@@ -117,13 +144,15 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public long insert(ItemVariant resource, long maxAmount, @NotNull TransactionContext context) {
+    public long insert(FluidVariant resource, long maxAmount, @NotNull TransactionContext context) {
         StoragePreconditions.notBlankNotNegative(resource, maxAmount);
         long inserted = 0;
         for (int i = 0; i < this.size(); i++) {
-            inserted += this.insert(i, resource, maxAmount - inserted, context);
-            if (inserted == maxAmount) {
-                break;
+            if (this.canAccept(i, resource)) {
+                inserted += this.insert(i, resource, maxAmount - inserted, context);
+                if (inserted == maxAmount) {
+                    break;
+                }
             }
         }
 
@@ -131,7 +160,7 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public long extract(ItemVariant resource, long maxAmount, @NotNull TransactionContext context) {
+    public long extract(FluidVariant resource, long maxAmount, @NotNull TransactionContext context) {
         StoragePreconditions.notBlankNotNegative(resource, maxAmount);
         long extracted = 0;
         for (int i = 0; i < this.size(); i++) {
@@ -145,125 +174,106 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public Iterator<StorageView<ItemVariant>> iterator(@NotNull TransactionContext context) {
+    public Iterator<StorageView<FluidVariant>> iterator(@NotNull TransactionContext context) {
         return new CombinedIterator(context);
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack extract(int slot, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-        if (amount == 0) return ItemStack.EMPTY;
 
         return this.extractVariant(this.inventory[slot], amount, context);
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, @NotNull Tag<Item> tag, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack extract(int slot, @NotNull Tag<Fluid> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-        if (amount == 0) return ItemStack.EMPTY;
 
-        ItemSlot invSlot = this.inventory[slot];
-        if (tag.values().contains(invSlot.variant.getItem())) {
+        FluidSlot invSlot = this.inventory[slot];
+        if (tag.values().contains(invSlot.getResource().getFluid())) {
             return this.extractVariant(invSlot, amount, context);
         } else {
-            return ItemStack.EMPTY;
+            return FluidStack.EMPTY;
         }
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack extract(int slot, @NotNull Fluid fluid, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-        if (amount == 0) return ItemStack.EMPTY;
 
-        ItemSlot invSlot = this.inventory[slot];
-        if (invSlot.variant.getItem() == item) {
+        FluidSlot invSlot = this.inventory[slot];
+        if (invSlot.getResource().getFluid() == fluid) {
             return this.extractVariant(invSlot, amount, context);
         } else {
-            return ItemStack.EMPTY;
+            return FluidStack.EMPTY;
         }
     }
 
     @NotNull
-    private ItemStack extractVariant(@NotNull ItemSlot invSlot, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return ItemStack.EMPTY;
-        long extracted = Math.min(invSlot.amount, amount);
+    private FluidStack extractVariant(@NotNull FluidSlot invSlot, long amount, @Nullable TransactionContext context) {
+        long extracted = Math.min(invSlot.getAmount(), amount);
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.updateSnapshots(transaction);
-                ItemStack stack = invSlot.variant.toStack((int) extracted);
-                invSlot.amount -= extracted;
-
-                if (invSlot.amount == 0) {
-                    invSlot.variant = ItemVariant.blank();
-                }
-                modCount.increment(transaction);
-
+                FluidStack stack = invSlot.copyStack();
+                stack.setAmount(extracted);
+                invSlot.extract(extracted, transaction);
+                this.modCount.increment(transaction);
                 transaction.commit();
                 return stack;
             }
         }
-        return ItemStack.EMPTY;
+        return FluidStack.EMPTY;
     }
 
     @Override
-    public @NotNull ItemStack replace(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
         try (Transaction transaction = Transaction.openNested(context)) {
-            ItemSlot invSlot = this.inventory[slot];
-            invSlot.updateSnapshots(transaction);
-            ItemStack currentStack = invSlot.copyStack();
-            if (amount != 0) invSlot.variant = variant;
-            else invSlot.variant = ItemVariant.blank();
-            if (!variant.isBlank()) invSlot.amount = amount;
-            else invSlot.amount = 0;
-            modCount.increment(transaction);
+            FluidSlot invSlot = this.inventory[slot];
+            FluidStack currentStack = invSlot.copyStack();
+            invSlot.setStack(variant, amount, context);
+            this.modCount.increment(transaction);
             transaction.commit();
             return currentStack;
         }
     }
 
     @Override
-    public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        if (amount == 0 || variant.isBlank()) return 0;
-        ItemSlot invSlot = this.inventory[slot];
+    public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
+        if (amount == 0) return 0;
+        FluidSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.updateSnapshots(transaction);
-                invSlot.variant = variant;
-                invSlot.amount = amount;
-                modCount.increment(transaction);
+                invSlot.setStack(variant, amount, transaction);
+                this.modCount.increment(transaction);
                 transaction.commit();
                 return amount;
             }
         } else if (variant.equals(invSlot.getResource())) {
             try (Transaction transaction = Transaction.openNested(context)) {
-                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.amount);
+                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
                 if (inserted > 0) {
-                    invSlot.updateSnapshots(transaction);
-                    invSlot.amount += inserted;
-                    modCount.increment(transaction);
+                    invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
+                    this.modCount.increment(transaction);
                     transaction.commit();
                     return inserted;
                 }
+                return 0;
             }
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     @Override
-    public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        ItemSlot invSlot = this.inventory[slot];
-        if (invSlot.variant.equals(variant)) {
-            long extracted = Math.min(invSlot.amount, amount);
+    public long extract(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
+        FluidSlot invSlot = this.inventory[slot];
+        if (invSlot.getResource().equals(variant)) {
+            long extracted = Math.min(invSlot.getAmount(), amount);
             if (extracted > 0) {
                 try (Transaction transaction = Transaction.openNested(context)) {
-                    invSlot.updateSnapshots(transaction);
-                    invSlot.amount -= extracted;
-
-                    if (invSlot.amount == 0) {
-                        invSlot.variant = ItemVariant.blank();
-                    }
-                    modCount.increment(transaction);
+                    invSlot.extract(extracted, transaction);
+                    this.modCount.increment(transaction);
                     transaction.commit();
                     return extracted;
                 }
@@ -283,26 +293,26 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public boolean canAccept(int slot, @NotNull ItemVariant variant) {
+    public boolean canAccept(int slot, @NotNull FluidVariant variant) {
         return this.types[slot].willAccept(variant);
     }
 
     @Override
-    public long count(@NotNull Item item) {
+    public long count(@NotNull Fluid fluid) {
         long count = 0;
-        for (ItemSlot itemSlot : this.inventory) {
-            ItemStack stack = itemSlot.copyStack();
-            if (stack.getItem() == item) {
-                count += stack.getCount();
+        for (FluidSlot fluidSlot : this.inventory) {
+            FluidStack stack = fluidSlot.copyStack();
+            if (stack.getFluid() == fluid) {
+                count += stack.getAmount();
             }
         }
         return count;
     }
 
     @Override
-    public boolean containsAny(@NotNull Set<Item> items) {
-        for (ItemSlot itemSlot : this.inventory) {
-            if (items.contains(itemSlot.copyStack().getItem())) {
+    public boolean containsAny(@NotNull Set<Fluid> fluids) {
+        for (FluidSlot fluidSlot : this.inventory) {
+            if (fluids.contains(fluidSlot.copyStack().getFluid())) {
                 return true;
             }
         }
@@ -310,34 +320,65 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Item> items) {
-        List<Item> values = items.values();
-        for (ItemSlot itemSlot : this.inventory) {
-            if (values.contains(itemSlot.copyStack().getItem())) {
+    public boolean containsAny(@NotNull Tag<Fluid> tag) {
+        List<Fluid> values = tag.values();
+        for (FluidSlot fluidSlot : this.inventory) {
+            if (values.contains(fluidSlot.copyStack().getFluid())) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public void writeNbt(@NotNull NbtCompound nbt) {
+        //todo
+    }
+
+    @Override
+    public void readNbt(@NotNull NbtCompound nbt) {
+
     }
 
     @Override
     public void clear() {
         assert !Transaction.isOpen();
-        for (ItemSlot itemSlot : this.inventory) {
-            itemSlot.variant = ItemVariant.blank();
-            itemSlot.amount = 0;
+        for (FluidSlot fluidSlot : this.inventory) {
+            fluidSlot.variant = FluidVariant.blank();
+            fluidSlot.amount = 0;
+            fluidSlot.modCount.incrementUnsafe();
         }
-        modCount.incrementUnsafe();
+        this.modCount.incrementUnsafe();
     }
 
     @Override
-    public @Nullable StorageView<ItemVariant> exactView(TransactionContext transaction, ItemVariant resource) {
-        return ItemStorage.super.exactView(transaction, resource);
+    public ExposedStorage<Fluid, FluidVariant> view() {
+        return this.view;
     }
 
     @Override
-    public SlotType<Item, ItemVariant>[] getTypes() {
+    public SlotType<Fluid, FluidVariant>[] getTypes() {
         return this.types;
+    }
+
+    @Override
+    public @NotNull StorageSyncHandler createSyncHandler() {
+        return new StorageSyncHandler() {
+            @Override
+            public boolean needsSyncing() {
+                return false; //todo
+            }
+
+            @Override
+            public void sync(PacketByteBuf buf) {
+
+            }
+
+            @Override
+            public void read(PacketByteBuf buf) {
+
+            }
+        };
     }
 
     /*
@@ -355,12 +396,12 @@ public class ItemStorageImpl implements ItemStorage {
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-    private class CombinedIterator implements Iterator<StorageView<ItemVariant>>, Transaction.CloseCallback {
+    private class CombinedIterator implements Iterator<StorageView<FluidVariant>>, Transaction.CloseCallback {
         private boolean open = true;
         private final TransactionContext context;
-        private final Iterator<ItemSlot> partIterator = Iterators.forArray(ItemStorageImpl.this.inventory);
+        private final Iterator<FluidSlot> partIterator = Iterators.forArray(MachineFluidStorageImpl.this.inventory);
         // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
-        private Iterator<StorageView<ItemVariant>> currentPartIterator = null;
+        private Iterator<StorageView<FluidVariant>> currentPartIterator = null;
 
         private CombinedIterator(TransactionContext context) {
             this.context = context;
@@ -374,7 +415,7 @@ public class ItemStorageImpl implements ItemStorage {
         }
 
         @Override
-        public StorageView<ItemVariant> next() {
+        public StorageView<FluidVariant> next() {
             if (!open) {
                 throw new NoSuchElementException("The transaction for this iterator was closed.");
             }
@@ -383,7 +424,7 @@ public class ItemStorageImpl implements ItemStorage {
                 throw new NoSuchElementException();
             }
 
-            StorageView<ItemVariant> returned = currentPartIterator.next();
+            StorageView<FluidVariant> returned = currentPartIterator.next();
 
             // Advance the current part iterator
             if (!currentPartIterator.hasNext()) {
@@ -407,29 +448,6 @@ public class ItemStorageImpl implements ItemStorage {
         public void onClose(TransactionContext context, Transaction.Result result) {
             // As soon as the transaction is closed, this iterator is not valid anymore.
             open = false;
-        }
-    }
-
-    private static class ItemSlot extends SingleVariantStorage<ItemVariant> {
-        private final int capacity;
-
-        private ItemSlot(int capacity) {
-            this.capacity = capacity;
-        }
-
-        @Override
-        protected ItemVariant getBlankVariant() {
-            return ItemVariant.blank();
-        }
-
-        @Override
-        protected long getCapacity(@NotNull ItemVariant variant) {
-            return Math.min(this.capacity, variant.getItem().getMaxCount());
-        }
-
-        public ItemStack copyStack() {
-            if (this.variant.isBlank() || this.amount == 0) return ItemStack.EMPTY;
-            return this.variant.toStack((int) this.amount);
         }
     }
 }

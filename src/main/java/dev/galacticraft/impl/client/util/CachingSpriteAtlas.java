@@ -20,29 +20,33 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl.client.util;
 
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.Identifier;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
+/**
+ * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ */
+public class CachingSpriteAtlas implements Function<Identifier, Sprite> {
+    private final Map<Identifier, Sprite> cache = new HashMap<>();
+    private Function<Identifier, Sprite> atlas;
 
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
+    public CachingSpriteAtlas(Function<Identifier, Sprite> atlas) {
+        this.atlas = atlas;
+    }
 
-    boolean needsSyncing();
+    public void setAtlas(Function<Identifier, Sprite> atlas) {
+        this.atlas = atlas;
+        this.cache.clear();
+    }
 
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+    @Override
+    public Sprite apply(Identifier identifier) {
+        return this.cache.computeIfAbsent(identifier, atlas);
+    }
 }

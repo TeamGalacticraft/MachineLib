@@ -22,11 +22,20 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
+import com.mojang.serialization.Lifecycle;
+import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
+import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.DefaultedRegistry;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryEntry;
+import net.minecraft.util.registry.RegistryKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
@@ -35,8 +44,11 @@ import java.util.function.Predicate;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotType<T, V extends TransferVariant<T>> {
-    static <T, V extends TransferVariant<T>> SlotType<T, V> create(@NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
-        return new SlotTypeImpl<>(color, name, filter, flow, type);
+    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new Identifier("machinelib:none").toString(), RegistryKey.ofRegistry(new Identifier(Constant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).buildAndRegister();
+
+    static <T, V extends TransferVariant<T>> SlotType<T, V> create(Identifier id, @NotNull TextColor color, @NotNull TranslatableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+        if (type.isSpecial()) throw new IllegalArgumentException("Resource type cannot be special!");
+        return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, flow, type));
     }
 
     @NotNull TextColor getColor();
@@ -48,4 +60,7 @@ public interface SlotType<T, V extends TransferVariant<T>> {
     @NotNull ResourceFlow getFlow();
 
     boolean willAccept(V variant);
+
+    @ApiStatus.Internal
+    RegistryEntry.Reference<SlotType<?, ?>> getReference();
 }

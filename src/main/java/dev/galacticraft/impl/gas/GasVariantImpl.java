@@ -35,13 +35,13 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public class GasVariantImpl implements GasVariant {
-	public static GasVariant of(@NotNull Gas gas, @Nullable NbtCompound tag) {
+	public static GasVariant of(@NotNull Gas gas, @Nullable NbtCompound nbt) {
 		Objects.requireNonNull(gas, "Gas may not be null");
 
-		if (tag == null) {
+		if (nbt == null) {
 			return gas._getVariant();
 		} else {
-			return new GasVariantImpl(gas, tag);
+			return new GasVariantImpl(gas, nbt);
 		}
 	}
 
@@ -83,10 +83,10 @@ public class GasVariantImpl implements GasVariant {
 		return result;
 	}
 
-	public static GasVariant fromNbt(NbtCompound tag) {
+	public static GasVariant readNbt(NbtCompound nbt) {
 		try {
-			Gas gas = Gas.REGISTRY.get(new Identifier(tag.getString("gas")));
-			NbtCompound aTag = tag.contains("tag") ? tag.getCompound("tag") : null;
+			Gas gas = Gas.REGISTRY.get(new Identifier(nbt.getString("gas")));
+			NbtCompound aTag = nbt.contains("tag") ? nbt.getCompound("tag") : null;
 			return of(gas, aTag);
 		} catch (RuntimeException runtimeException) {
 			return GasVariant.blank();

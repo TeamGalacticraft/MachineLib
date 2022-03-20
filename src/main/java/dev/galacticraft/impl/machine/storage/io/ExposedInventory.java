@@ -24,36 +24,25 @@ package dev.galacticraft.impl.machine.storage.io;
 
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.SlotType;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
-public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
+public class ExposedInventory<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
     private final ResourceStorage<T, V, ?> storage;
-    private final SlotType<T, V> type;
     private final boolean insertion;
     private final boolean extraction;
-    private final boolean[] slots;
 
-    public ExposedSlots(ResourceStorage<T, V, ?> storage, SlotType<T, V> type, boolean allowInsertion, boolean allowExtraction) {
+    public ExposedInventory(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
         this.storage = storage;
-        this.type = type;
-
-        this.slots = new boolean[storage.size()];
-        SlotType<T, V>[] types = storage.getTypes();
         boolean insertion = false;
         boolean extraction = false;
-        for (int i = 0; i < types.length; i++) {
-            if (types[i].equals(this.type)) {
-                this.slots[i] = true;
-                if (allowInsertion) insertion |= storage.canExposedInsert(i);
-                if (allowExtraction) extraction |= storage.canExposedExtract(i);
-            }
+        for (int i = 0; i < this.storage.size(); i++) {
+            if (insert) insertion |= storage.canExposedInsert(i);
+            if (extract) extraction |= storage.canExposedExtract(i);
         }
         this.insertion = insertion;
         this.extraction = extraction;
@@ -66,10 +55,10 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
 
     @Override
     public long insert(V resource, long maxAmount, TransactionContext transaction) {
-        if (this.type.willAccept(resource) && this.supportsInsertion()) {
+        if (this.supportsInsertion()) {
             long inserted = 0;
             for (int i = 0; i < this.storage.size(); i++) {
-                if (this.slots[i] && this.storage.canExposedInsert(i)) {
+                if (this.storage.canExposedInsert(i)) {
                     inserted += this.storage.insert(i, resource, maxAmount - inserted, transaction);
                     if (inserted == maxAmount) {
                         break;
@@ -91,7 +80,7 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
         if (this.supportsExtraction()) {
             long extracted = 0;
             for (int i = 0; i < this.storage.size(); i++) {
-                if (this.slots[i] && this.storage.canExposedExtract(i)) {
+                if (this.storage.canExposedExtract(i)) {
                     extracted += this.storage.extract(i, resource, maxAmount - extracted, transaction);
                     if (extracted == maxAmount) {
                         break;
@@ -105,12 +94,12 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
 
     @Override
     public Iterator<StorageView<V>> iterator(TransactionContext transaction) {
-        return new ExtractionLimitingIterator(this.storage.iterator(transaction));
+        return new LimitedIterator(this.storage.iterator(transaction));
     }
 
     @Override
     public @Nullable StorageView<V> exactView(TransactionContext transaction, V resource) {
-        return null; //todo
+        return ExposedStorage.super.exactView(transaction, resource);
     }
 
     @Override
@@ -118,11 +107,11 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
         return this.storage.getVersion();
     }
 
-    private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {
-        private int index = 0;
+    private class LimitedIterator implements Iterator<StorageView<V>> {
+        private int i = 0;
         private final Iterator<StorageView<V>> iterator;
 
-        public ExtractionLimitingIterator(Iterator<StorageView<V>> iterator) {
+        public LimitedIterator(Iterator<StorageView<V>> iterator) {
             this.iterator = iterator;
         }
 
@@ -133,13 +122,7 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
 
         @Override
         public StorageView<V> next() {
-            if (!this.hasNext()) {
-                throw new NoSuchElementException();
-            }
-            return new LimitedStorageView<>(this.iterator.next(),
-                    ExposedSlots.this.supportsExtraction()
-                            && ExposedSlots.this.slots[this.index]
-                            && ExposedSlots.this.storage.canExposedExtract(this.index++));
+            return new LimitedStorageView<>(this.iterator.next(), ExposedInventory.this.supportsExtraction() && ExposedInventory.this.storage.canExposedExtract(i++));
         }
     }
 }

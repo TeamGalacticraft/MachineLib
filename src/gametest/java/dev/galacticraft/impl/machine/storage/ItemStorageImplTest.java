@@ -22,43 +22,51 @@
 
 package dev.galacticraft.impl.machine.storage;
 
-import dev.galacticraft.api.machine.storage.ItemStorage;
+import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.gametest.MachineLibGametest;
+import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.TextColor;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public final class ItemStorageImplTest implements MachineLibGametest {
     private static final String EMPTY_STRUCTURE = "machinelib-test:empty";
 
-    private ItemStorageImpl storage;
+    private static final SlotType<Item, ItemVariant> TEST_SLOT_0 = SlotType.create(
+            new Identifier(Constant.MOD_ID, "test_slot_0"),
+            TextColor.fromRgb(0xFFFFFF),
+            new TranslatableText("Slot 0"),
+            v -> true,
+            ResourceFlow.BOTH,
+            ResourceType.ITEM
+    );
+    private static final SlotType<Item, ItemVariant> TEST_SLOT_1 = SlotType.create(
+            new Identifier(Constant.MOD_ID, "test_slot_1"), TextColor.fromRgb(0xFFFFFF),
+            new TranslatableText("Slot 1"),
+            v -> v.getItem() != Items.DIAMOND,
+            ResourceFlow.BOTH,
+            ResourceType.ITEM
+    );
+
+
+    private MachineItemStorageImpl storage;
 
     @Override
     public void beforeEach(TestContext context) {
-        this.storage = ItemStorage.Builder.create()
-                .addSlot(SlotType.create(
-                        TextColor.fromRgb(0xFFFFFF),
-                        new LiteralText("Slot 0"),
-                        v -> true,
-                        ResourceFlow.BOTH,
-                        ResourceType.ITEM
-                ))
-                .addSlot(SlotType.create(
-                        TextColor.fromRgb(0xFFFFFF),
-                        new LiteralText("Slot 1"),
-                        v -> v.getItem() != Items.DIAMOND,
-                        ResourceFlow.BOTH,
-                        ResourceType.ITEM
-                ))
+        this.storage = MachineItemStorage.Builder.create()
+                .addSlot(TEST_SLOT_0)
+                .addSlot(TEST_SLOT_1)
                 .build();
     }
 
@@ -70,7 +78,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
     @GameTest(structureName = EMPTY_STRUCTURE, tickLimit = 0)
     void size(@NotNull TestContext context) {
         assertEquals(context, 2, this.storage.size(), "Item Storage should have exactly two slots!");
-        assertEquals(context, 0, ItemStorage.Builder.create().build().size(), "Item Storage should have no slots!");
+        assertEquals(context, 0, MachineItemStorage.Builder.create().build().size(), "Item Storage should have no slots!");
     }
 
     @GameTest(structureName = EMPTY_STRUCTURE, tickLimit = 0)

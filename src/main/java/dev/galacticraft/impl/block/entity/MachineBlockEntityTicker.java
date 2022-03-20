@@ -20,29 +20,29 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl.block.entity;
 
-import net.minecraft.network.PacketByteBuf;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
+/**
+ * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ */
+public class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEntityTicker<T> {
+    protected static final MachineBlockEntityTicker<? extends MachineBlockEntity> INSTANCE = new MachineBlockEntityTicker<>();
 
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
+    private MachineBlockEntityTicker() {}
 
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
+    public static <T extends BlockEntity> MachineBlockEntityTicker<T> getInstance() {
+        return (MachineBlockEntityTicker<T>) INSTANCE;
+    }
 
-    boolean needsSyncing();
-
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+    @Override
+    public void tick(World world, BlockPos pos, BlockState state, T machine) {
+        ((MachineBlockEntity) machine).tick(world, pos, state);
+    }
 }
