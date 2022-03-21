@@ -26,11 +26,12 @@ import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedCapacitor;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.screen.StorageSyncHandler;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtLong;
 import net.minecraft.network.PacketByteBuf;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +39,8 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     public final long capacity;
     private final long maxInput;
     private final long maxOutput;
+    private final ModCount modCount = new ModCount();
+
     public long amount = 0;
     private ExposedCapacitor view = new ExposedCapacitor(this, false, false);
 
@@ -50,21 +53,24 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
+            private int modCount = -1;
+
             @Override
             public boolean needsSyncing() {
-                return false;
+                return MachineEnergyStorageImpl.this.modCount.getModCount() != this.modCount;
             }
 
             @Override
             public void sync(PacketByteBuf buf) {
-
+                this.modCount = MachineEnergyStorageImpl.this.modCount.getModCount();
+                buf.writeLong(MachineEnergyStorageImpl.this.amount);
             }
 
             @Override
             public void read(PacketByteBuf buf) {
-
+                MachineEnergyStorageImpl.this.amount = buf.readLong();
             }
-        }; //todo
+        };
     }
 
     @Override
@@ -88,7 +94,8 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
 
         if (inserted > 0) {
             this.updateSnapshots(transaction);
-            amount += inserted;
+            this.modCount.increment(transaction);
+            this.amount += inserted;
             return inserted;
         }
 
@@ -106,7 +113,8 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
 
         if (extracted > 0) {
             updateSnapshots(transaction);
-            amount -= extracted;
+            this.modCount.increment(transaction);
+            this.amount -= extracted;
             return extracted;
         }
 
@@ -126,12 +134,14 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     @Override
     public void setEnergy(long amount, TransactionContext context) {
         this.updateSnapshots(context);
+        this.modCount.increment(context);
         this.amount = amount;
     }
 
     @Override
     public void setEnergyUnsafe(long amount) {
         assert !Transaction.isOpen();
+        this.modCount.incrementUnsafe();
         this.amount = amount;
     }
 
@@ -146,12 +156,14 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     }
 
     @Override
-    public void writeNbt(@NotNull NbtCompound nbt) {
-        nbt.putLong(Constant.Nbt.AMOUNT, this.amount);
+    public @NotNull NbtElement writeNbt() {
+        return NbtLong.of(this.amount);
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
-        this.amount = nbt.getLong(Constant.Nbt.AMOUNT);
+    public void readNbt(@NotNull NbtElement nbt) {
+        if (nbt.getType() == NbtElement.LONG_TYPE) {
+            this.amount = ((NbtLong)nbt).longValue();
+        }
     }
 }

@@ -24,8 +24,7 @@ package dev.galacticraft.api.machine;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 
 public interface ResourceProvider {
-    <T, V extends TransferVariant<T>> ConfiguredStorage<T, V> getResource(ResourceType<T, V> type);
+    ConfiguredStorage<?, ?> getResource(ResourceType<?, ?> type);
 }

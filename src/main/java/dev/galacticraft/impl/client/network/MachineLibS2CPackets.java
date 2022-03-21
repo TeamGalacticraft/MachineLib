@@ -20,31 +20,29 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl.client.network;
 
+import dev.galacticraft.api.screen.MachineScreenHandler;
+import dev.galacticraft.impl.machine.Constant;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.PacketByteBuf;
-import org.jetbrains.annotations.Contract;
+import net.minecraft.util.Identifier;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
-
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
-
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
-
-    @Contract(pure = true)
-    boolean needsSyncing();
-
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+@Environment(EnvType.CLIENT)
+public class MachineLibS2CPackets {
+    public static void register() {
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "storage_sync"), (client, handler, buf, responseSender) -> {
+            PacketByteBuf packet = PacketByteBufs.copy(buf);
+            client.execute(() -> {
+                if (client.player.currentScreenHandler instanceof MachineScreenHandler<?> machineHandler) {
+                    if (machineHandler.syncId == packet.readByte()) {
+                        machineHandler.recieveState(packet);
+                    }
+                }
+            });
+        });
+    }
 }

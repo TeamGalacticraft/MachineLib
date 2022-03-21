@@ -23,15 +23,20 @@
 package dev.galacticraft.impl.machine.storage;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.storage.MachineGasStorage;
+import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.GasSlot;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
@@ -41,6 +46,8 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +60,7 @@ import java.util.Set;
 
 public class MachineGasStorageImpl implements MachineGasStorage {
     private final int size;
+    private final TankDisplay[] displays;
     private final @NotNull GasSlot[] inventory;
     private final @NotNull SlotType<Gas, GasVariant>[] types;
     private final boolean @NotNull [] extraction;
@@ -61,8 +69,9 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     private final @NotNull ModCount modCount = new ModCount();
     private final @NotNull ExposedStorage<Gas, GasVariant> view = ExposedStorage.of(this, false, false);
 
-    public MachineGasStorageImpl(int size, SlotType<Gas, GasVariant>[] types, long[] counts) {
+    public MachineGasStorageImpl(int size, SlotType<Gas, GasVariant>[] types, long[] counts, TankDisplay[] displays) {
         this.size = size;
+        this.displays = displays;
         this.inventory = new GasSlot[this.size];
         this.extraction = new boolean[this.size];
         this.insertion = new boolean[this.size];
@@ -331,13 +340,28 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public void writeNbt(@NotNull NbtCompound nbt) {
-        //todo
+    public @NotNull NbtElement writeNbt() {
+        NbtList list = new NbtList();
+        for (GasSlot gasSlot : this.inventory) {
+            NbtCompound compound = gasSlot.variant.toNbt();
+            compound.putLong(Constant.Nbt.AMOUNT, gasSlot.amount);
+            list.add(compound);
+        }
+        return list;
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
-
+    public void readNbt(@NotNull NbtElement nbt) {
+        if (nbt.getType() == NbtElement.LIST_TYPE) {
+            NbtList list = ((NbtList) nbt);
+            for (int i = 0; i < list.size(); i++) {
+                NbtCompound compound = list.getCompound(i);
+                GasSlot slot = this.inventory[i];
+                slot.variant = GasVariant.readNbt(compound);
+                slot.amount = compound.getLong(Constant.Nbt.AMOUNT);
+                slot.modCount.incrementUnsafe();
+            }
+        }
     }
 
     @Override
@@ -364,21 +388,40 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
+            private int modCount = -1;
+
             @Override
             public boolean needsSyncing() {
-                return false; //todo
+                return MachineGasStorageImpl.this.getModCount() != this.modCount;
             }
 
             @Override
             public void sync(PacketByteBuf buf) {
-
+                this.modCount = MachineGasStorageImpl.this.modCount.getModCount();
+                for (GasSlot slot : MachineGasStorageImpl.this.inventory) {
+                    slot.variant.toPacket(buf);
+                    buf.writeLong(slot.amount);
+                }
             }
 
             @Override
             public void read(PacketByteBuf buf) {
-
+                for (GasSlot slot : MachineGasStorageImpl.this.inventory) {
+                    slot.variant = GasVariant.fromPacket(buf);
+                    slot.amount = buf.readLong();
+                }
             }
         };
+    }
+
+    @Override
+    public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
+        TankDisplay[] tankDisplays = this.displays;
+        ExposedStorage<Gas, GasVariant> of = ExposedStorage.of(this, true, true);
+        for (int i = 0; i < tankDisplays.length; i++) {
+            TankDisplay tankDisplay = tankDisplays[i];
+            handler.addTank(new Tank<>(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.GAS));
+        }
     }
 
     /*

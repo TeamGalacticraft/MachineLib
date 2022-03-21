@@ -28,7 +28,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
@@ -54,7 +54,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
 
     @NotNull ExposedCapacitor view();
 
-    void writeNbt(@NotNull NbtCompound nbt);
+    @NotNull NbtElement writeNbt();
 
-    void readNbt(@NotNull NbtCompound nbt);
+    void readNbt(@NotNull NbtElement nbt);
 }

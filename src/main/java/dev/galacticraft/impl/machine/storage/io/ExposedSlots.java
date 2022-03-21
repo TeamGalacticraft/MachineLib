@@ -25,6 +25,7 @@ package dev.galacticraft.impl.machine.storage.io;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
     private final ResourceStorage<T, V, ?> storage;
@@ -116,6 +118,31 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     @Override
     public long getVersion() {
         return this.storage.getVersion();
+    }
+
+    @Override
+    public V getResource(int slot) {
+        return this.storage.getVariant(slot);
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        return this.storage.getAmount(slot);
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        return this.storage.getMaxCount(slot);
+    }
+
+    @Override
+    public Storage<V> getSlot(int slot) {
+        return this.slots[slot] ? ExposedStorage.ofSlot(this.storage, slot, this.extraction, this.insertion) : ExposedStorage.ofSlot(this.storage, slot, false, false);
+    }
+
+    @Override
+    public Predicate<V> getFilter(int index) {
+        return v -> this.storage.canAccept(index, v);
     }
 
     private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {

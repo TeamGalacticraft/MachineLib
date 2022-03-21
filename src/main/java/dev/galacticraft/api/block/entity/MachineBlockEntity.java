@@ -30,11 +30,17 @@ import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.MachineGasStorage;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
+import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.api.transfer.v1.gas.GasStorage;
 import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.machine.storage.io.NullConfiguredStorage;
+import dev.galacticraft.impl.util.GenericStorageUtil;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -68,7 +74,7 @@ import java.util.Optional;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 @SuppressWarnings("UnstableApiUsage")
-public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory {
+public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, ResourceProvider {
     private final MachineConfiguration configuration = new MachineConfiguration();
 
     private boolean noDrop = false;
@@ -84,13 +90,20 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         super(type, pos, state);
     }
 
+    public static void registerComponents(BlockEntityType<? extends MachineBlockEntity> type) {
+        EnergyStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedCapacitor, type);
+        ItemStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedItemStorage, type);
+        FluidStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedFluidInv, type);
+        GasStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedGasInv, type);
+    }
+
     /**
      * The maximum amount of energy that this machine can hold.
      *
      * @return Energy capacity of this machine.
      */
     public long getEnergyCapacity() {
-        return Galacticraft.CONFIG_MANAGER.get().machineEnergyStorageSize();
+        return 30000; //todo config
     }
 
     /**
@@ -201,7 +214,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.gasStorage;
     }
 
-    public final @NotNull MachineFluidStorage fluidInv() {
+    public final @NotNull MachineFluidStorage fluidStorage() {
         return this.fluidStorage;
     }
 
@@ -255,6 +268,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return noDrop;
     }
 
+    @Override
+    public ConfiguredStorage<?, ?> getResource(@NotNull ResourceType<?, ?> type) {
+        if (type == ResourceType.ENERGY) return this.capacitor();
+        if (type == ResourceType.ITEM) return this.itemStorage();
+        if (type == ResourceType.FLUID) return this.fluidStorage();
+        if (type == ResourceType.GAS) return this.gasStorage();
+        return NullConfiguredStorage.INSTANCE;
+    }
 
     /**
      * Whether the current machine is enabled
@@ -330,7 +351,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     public boolean isTankFull(int tank) {
-        StorageView<FluidVariant> tank1 = this.fluidInv().getSlot(tank);
+        StorageView<FluidVariant> tank1 = this.fluidStorage().getSlot(tank);
         return tank1.getAmount() >= tank1.getCapacity();
     }
 
@@ -343,9 +364,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
-        this.capacitor.writeNbt(nbt);
-        this.itemStorage.writeNbt(nbt);
-        this.fluidStorage.writeNbt(nbt);
+        nbt.put(Constant.Nbt.ENERGY_STORAGE, this.capacitor.writeNbt());
+        nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
+        nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
+        nbt.put(Constant.Nbt.GAS_STORAGE, this.gasStorage.writeNbt());
         this.configuration.writeNbt(nbt);
         nbt.putBoolean(Constant.Nbt.NO_DROP, this.noDrop);
     }
@@ -353,9 +375,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        this.capacitor.readNbt(nbt);
-        this.itemStorage.readNbt(nbt);
-        this.fluidStorage.readNbt(nbt);
+        if (nbt.contains(Constant.Nbt.ENERGY_STORAGE)) this.capacitor.readNbt(nbt.get(Constant.Nbt.ENERGY_STORAGE));
+        if (nbt.contains(Constant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(nbt.get(Constant.Nbt.ITEM_STORAGE));
+        if (nbt.contains(Constant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(nbt.get(Constant.Nbt.FLUID_STORAGE));
+        if (nbt.contains(Constant.Nbt.GAS_STORAGE)) this.gasStorage.readNbt(nbt.get(Constant.Nbt.GAS_STORAGE));
         this.configuration.readNbt(nbt);
         this.noDrop = nbt.getBoolean(Constant.Nbt.NO_DROP);
         if (!this.world.isClient) {
@@ -365,7 +388,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
                 loaded = true;
             }
         } else {
-            ((WorldRendererAccessor) MinecraftClient.getInstance().worldRenderer).addChunkToRebuild(pos);
+            MinecraftClient.getInstance().worldRenderer.scheduleBlockRender(pos.getX(), pos.getY(), pos.getZ());
         }
     }
 
@@ -387,7 +410,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             if (storage.supportsExtraction()) {
                 Storage<FluidVariant> to = FluidStorage.SIDED.find(world, pos.offset(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
-                    FluidUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
+                    GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();
                 }
             }

@@ -24,12 +24,14 @@ package dev.galacticraft.impl.machine.storage.io;
 
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 public class ExposedInventory<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
     private final ResourceStorage<T, V, ?> storage;
@@ -41,7 +43,7 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
         boolean insertion = false;
         boolean extraction = false;
         for (int i = 0; i < this.storage.size(); i++) {
-            if (insert) insertion |= storage.canExposedInsert(i);
+            if (insert) extraction |= insertion |= storage.canExposedInsert(i); //if you can insert into a slot, you should be able to get your stuff back.
             if (extract) extraction |= storage.canExposedExtract(i);
         }
         this.insertion = insertion;
@@ -80,7 +82,7 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
         if (this.supportsExtraction()) {
             long extracted = 0;
             for (int i = 0; i < this.storage.size(); i++) {
-                if (this.storage.canExposedExtract(i)) {
+                if (this.storage.canExposedExtract(i) || this.storage.canExposedInsert(i)) {
                     extracted += this.storage.extract(i, resource, maxAmount - extracted, transaction);
                     if (extracted == maxAmount) {
                         break;
@@ -103,6 +105,31 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
     }
 
     @Override
+    public V getResource(int slot) {
+        return this.storage.getVariant(slot);
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        return this.storage.getAmount(slot);
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        return this.storage.getMaxCount(slot);
+    }
+
+    @Override
+    public Storage<V> getSlot(int slot) {
+        return ExposedStorage.ofSlot(this.storage, slot, this.extraction, this.insertion);
+    }
+
+    @Override
+    public Predicate<V> getFilter(int index) {
+        return v -> this.storage.canAccept(index, v);
+    }
+
+    @Override
     public long getVersion() {
         return this.storage.getVersion();
     }
@@ -122,7 +149,7 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
 
         @Override
         public StorageView<V> next() {
-            return new LimitedStorageView<>(this.iterator.next(), ExposedInventory.this.supportsExtraction() && ExposedInventory.this.storage.canExposedExtract(i++));
+            return new LimitedStorageView<>(this.iterator.next(), ExposedInventory.this.supportsExtraction() && (ExposedInventory.this.storage.canExposedExtract(i) | ExposedInventory.this.storage.canExposedInsert(i++)));
         }
     }
 }

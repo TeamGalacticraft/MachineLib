@@ -23,6 +23,8 @@
   ],
   "environment": "*",
   "entrypoints": {
+    "client": [ "dev.galacticraft.impl.MachineLibClient"],
+    "main": [ "dev.galacticraft.impl.MachineLib"]
   },
   "mixins": [
     "${modid}.mixins.json"

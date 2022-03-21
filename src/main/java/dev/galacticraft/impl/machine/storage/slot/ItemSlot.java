@@ -77,7 +77,7 @@ public class ItemSlot extends SingleVariantStorage<ItemVariant> {
 
     @Override
     public long getCapacity(@NotNull ItemVariant variant) {
-        return this.capacity;
+        return Math.min(this.capacity, variant.getItem().getMaxCount());
     }
 
     public ItemStack copyStack() {

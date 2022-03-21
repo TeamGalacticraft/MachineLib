@@ -22,9 +22,12 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
+import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.gas.GasStack;
 import dev.galacticraft.impl.machine.storage.MachineGasStorageImpl;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -36,9 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
+    <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+
     class Builder {
         private int size = 0;
         private final List<SlotType<Gas, GasVariant>> types = new ArrayList<>();
+        private final List<TankDisplay> displays = new ArrayList<>();
         private final LongList counts = new LongArrayList();
 
         public Builder() {}
@@ -47,17 +53,17 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
         public static @NotNull Builder create() {
             return new Builder();
         }
-        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, int maxCount) {
-            maxCount = Math.min(maxCount, 64);
+        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
-            this.counts.add(maxCount);
+            this.displays.add(type);
+            this.counts.add(capacity);
             return this;
         }
 
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineGasStorageImpl build() {
-            return new MachineGasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+            return new MachineGasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }
 }

@@ -23,26 +23,34 @@
 package dev.galacticraft.impl.machine.storage;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
+import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.ItemSlot;
+import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.tag.Tag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +59,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+//todo: more integer sanity checks?
 public class MachineItemStorageImpl implements MachineItemStorage {
     private final int size;
+    private final @NotNull ItemSlotDisplay[] displays;
     private final @NotNull ItemSlot[] inventory;
     private final @NotNull SlotType<Item, ItemVariant>[] types;
     private final boolean @NotNull [] extraction;
@@ -60,9 +70,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     private final ModCount modCount = new ModCount();
     private final @NotNull ExposedStorage<Item, ItemVariant> view = ExposedStorage.of(this, false, false);
+    private final Inventory playerInventory;
 
-    public MachineItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, long[] counts) {
+    public MachineItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, long[] counts, ItemSlotDisplay[] displays) {
         this.size = size;
+        this.displays = displays;
         this.inventory = new ItemSlot[this.size];
         this.extraction = new boolean[this.size];
         this.insertion = new boolean[this.size];
@@ -81,6 +93,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
             }
         }
         this.types = types;
+
+        this.playerInventory = new PlayerExposedVanillaInventory(this);
     }
 
     @Override
@@ -99,7 +113,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public SingleVariantStorage<ItemVariant> getSlot(int index) {
+    public ItemSlot getSlot(int index) {
         return this.inventory[index];
     }
 
@@ -331,13 +345,40 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public void writeNbt(@NotNull NbtCompound nbt) {
-        //todo
+    public <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler) {
+        for (int i = 0; i < this.displays.length; i++) {
+            handler.addSlot(new VanillaWrappedItemSlot(this, i, this.displays[i]));
+        }
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
+    public Inventory playerInventory() {
+        return this.playerInventory;
+    }
 
+    @Override
+    public @NotNull NbtElement writeNbt() {
+        NbtList list = new NbtList();
+        for (ItemSlot itemSlot : this.inventory) {
+            NbtCompound compound = itemSlot.variant.toNbt();
+            compound.putLong(Constant.Nbt.AMOUNT, itemSlot.amount);
+            list.add(compound);
+        }
+        return list;
+    }
+
+    @Override
+    public void readNbt(@NotNull NbtElement nbt) {
+        if (nbt.getType() == NbtElement.LIST_TYPE) {
+            NbtList list = ((NbtList) nbt);
+            for (int i = 0; i < list.size(); i++) {
+                NbtCompound compound = list.getCompound(i);
+                ItemSlot slot = this.inventory[i];
+                slot.variant = ItemVariant.fromNbt(compound);
+                slot.amount = compound.getLong(Constant.Nbt.AMOUNT);
+                slot.modCount.incrementUnsafe();
+            }
+        }
     }
 
     @Override
@@ -364,21 +405,35 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
+            private int modCount = -1;
+
             @Override
             public boolean needsSyncing() {
-                return false; //todo
+                return MachineItemStorageImpl.this.getModCount() != this.modCount;
             }
 
             @Override
             public void sync(PacketByteBuf buf) {
-
+                this.modCount = MachineItemStorageImpl.this.modCount.getModCount();
+                for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
+                    slot.variant.toPacket(buf);
+                    buf.writeLong(slot.amount);
+                }
             }
 
             @Override
             public void read(PacketByteBuf buf) {
-
+                for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
+                    slot.variant = ItemVariant.fromPacket(buf);
+                    slot.amount = buf.readLong();
+                }
             }
         };
+    }
+
+    @ApiStatus.Internal
+    public void incrementModCountUnsafe() {
+        this.modCount.incrementUnsafe();
     }
 
     /*

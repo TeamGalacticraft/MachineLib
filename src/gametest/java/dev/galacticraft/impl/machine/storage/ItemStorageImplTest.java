@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.machine.storage;
 
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
+import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
@@ -65,8 +66,8 @@ public final class ItemStorageImplTest implements MachineLibGametest {
     @Override
     public void beforeEach(TestContext context) {
         this.storage = MachineItemStorage.Builder.create()
-                .addSlot(TEST_SLOT_0)
-                .addSlot(TEST_SLOT_1)
+                .addSlot(TEST_SLOT_0, new ItemSlotDisplay(0, 0))
+                .addSlot(TEST_SLOT_1, new ItemSlotDisplay(0, 16))
                 .build();
     }
 

@@ -29,7 +29,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Clearable;
 import org.jetbrains.annotations.ApiStatus;
@@ -152,9 +152,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     boolean containsAny(@NotNull Tag<T> resources);
 
-    void writeNbt(@NotNull NbtCompound nbt);
+    @NotNull NbtElement writeNbt();
 
-    void readNbt(@NotNull NbtCompound nbt);
+    void readNbt(@NotNull NbtElement nbt);
 
     @Override
     void clear();

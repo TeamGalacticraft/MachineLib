@@ -31,7 +31,19 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage<V> {
+    V getResource(int slot);
+
+    long getAmount(int slot);
+
+    long getCapacity(int slot);
+
+    Storage<V> getSlot(int slot);
+
+    Predicate<V> getFilter(int index);
+
     @Contract("_, _, _ -> new")
     static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> of(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
         return new ExposedInventory<>(storage, insert, extract);

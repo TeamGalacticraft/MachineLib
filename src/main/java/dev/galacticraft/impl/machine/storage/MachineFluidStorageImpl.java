@@ -23,13 +23,18 @@
 package dev.galacticraft.impl.machine.storage;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
+import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
+import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -41,6 +46,8 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +60,7 @@ import java.util.Set;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
+    private final TankDisplay[] displays;
     private final @NotNull FluidSlot[] inventory;
     private final @NotNull SlotType<Fluid, FluidVariant>[] types;
     private final boolean @NotNull [] extraction;
@@ -61,8 +69,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final @NotNull ModCount modCount = new ModCount();
     private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.of(this, false, false);
 
-    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts) {
+    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts, TankDisplay[] displays) {
         this.size = size;
+        this.displays = displays;
         this.inventory = new FluidSlot[this.size];
         this.extraction = new boolean[this.size];
         this.insertion = new boolean[this.size];
@@ -331,13 +340,28 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public void writeNbt(@NotNull NbtCompound nbt) {
-        //todo
+    public @NotNull NbtElement writeNbt() {
+        NbtList list = new NbtList();
+        for (FluidSlot fluidSlot : this.inventory) {
+            NbtCompound compound = fluidSlot.variant.toNbt();
+            compound.putLong(Constant.Nbt.AMOUNT, fluidSlot.amount);
+            list.add(compound);
+        }
+        return list;
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
-
+    public void readNbt(@NotNull NbtElement nbt) {
+        if (nbt.getType() == NbtElement.LIST_TYPE) {
+            NbtList list = ((NbtList) nbt);
+            for (int i = 0; i < list.size(); i++) {
+                NbtCompound compound = list.getCompound(i);
+                FluidSlot slot = this.inventory[i];
+                slot.variant = FluidVariant.fromNbt(compound);
+                slot.amount = compound.getLong(Constant.Nbt.AMOUNT);
+                slot.modCount.incrementUnsafe();
+            }
+        }
     }
 
     @Override
@@ -364,21 +388,40 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
+            private int modCount = -1;
+
             @Override
             public boolean needsSyncing() {
-                return false; //todo
+                return MachineFluidStorageImpl.this.getModCount() != this.modCount;
             }
 
             @Override
             public void sync(PacketByteBuf buf) {
-
+                this.modCount = MachineFluidStorageImpl.this.modCount.getModCount();
+                for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
+                    slot.variant.toPacket(buf);
+                    buf.writeLong(slot.amount);
+                }
             }
 
             @Override
             public void read(PacketByteBuf buf) {
-
+                for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
+                    slot.variant = FluidVariant.fromPacket(buf);
+                    slot.amount = buf.readLong();
+                }
             }
         };
+    }
+
+    @Override
+    public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
+        TankDisplay[] tankDisplays = this.displays;
+        ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.of(this, true, true);
+        for (int i = 0; i < tankDisplays.length; i++) {
+            TankDisplay tankDisplay = tankDisplays[i];
+            handler.addTank(new Tank<>(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.FLUID));
+        }
     }
 
     /*

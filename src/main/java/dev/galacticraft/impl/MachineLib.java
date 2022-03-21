@@ -20,31 +20,14 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.screen;
+package dev.galacticraft.impl;
 
-import net.minecraft.network.PacketByteBuf;
-import org.jetbrains.annotations.Contract;
+import dev.galacticraft.impl.network.MachineLibC2SPackets;
+import net.fabricmc.api.ModInitializer;
 
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
-
-        @Override
-        public void sync(PacketByteBuf buf) {
-        }
-
-        @Override
-        public void read(PacketByteBuf buf) {
-        }
-    };
-
-    @Contract(pure = true)
-    boolean needsSyncing();
-
-    void sync(PacketByteBuf buf);
-
-    void read(PacketByteBuf buf);
+public class MachineLib implements ModInitializer {
+    @Override
+    public void onInitialize() {
+        MachineLibC2SPackets.register();
+    }
 }

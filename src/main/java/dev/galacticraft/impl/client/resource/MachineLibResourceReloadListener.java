@@ -20,29 +20,35 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.client.util;
+package dev.galacticraft.impl.client.resource;
 
+import dev.galacticraft.impl.client.model.MachineBakedModel;
 import dev.galacticraft.impl.machine.Constant;
-import net.minecraft.client.util.SpriteIdentifier;
+import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
-public interface SpriteUtil {
-    static SpriteIdentifier identifier(String path) {
-        return identifier(new Identifier(Constant.MOD_ID, path));
+public class MachineLibResourceReloadListener implements SimpleSynchronousResourceReloadListener {
+    private static final Identifier ID = new Identifier(Constant.MOD_ID, "reload_listener");
+
+    @Override
+    public Identifier getFabricId() {
+        return ID;
     }
 
-    static SpriteIdentifier identifier(Identifier id) {
-        return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, id);
+    @Override
+    public Collection<Identifier> getFabricDependencies() {
+        return Arrays.asList(ResourceReloadListenerKeys.MODELS, ResourceReloadListenerKeys.TEXTURES);
     }
 
-    static Iterator<SpriteIdentifier> identifiers(List<Identifier> textureDependencies) {
-        return textureDependencies.stream().map(SpriteUtil::identifier).iterator();
+    @Override
+    public void reload(ResourceManager resourceManager) {
+        MachineBakedModel.setSpriteAtlas(MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
     }
 }

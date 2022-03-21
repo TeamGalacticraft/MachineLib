@@ -26,6 +26,7 @@ import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 public interface Constant {
@@ -58,39 +59,49 @@ public interface Constant {
         String NO_DROP = "NoDrop";
         String OWNER = "Owner";
         String PROGRESS = "Progress";
-        String SIZE = "Size";
-        String MAX_SIZE = "MaxSize";
-        String FUEL_TIME = "FuelTime";
-        String FUEL_LENGTH = "FuelLength";
         String TEAM = "Team";
         String ACCESSIBILITY = "Accessibility";
         String SECURITY = "Security";
         String CONFIGURATION = "Configuration";
         String VALUE = "Value";
         String ENERGY = "Energy";
-        String AUTOMATION_TYPE = "AutomationType";
-        String BABY = "Baby";
-        String DIRECTION = "Direction";
         String REDSTONE_INTERACTION_TYPE = "RedstoneInteraction";
         String MATCH = "Match";
         String IS_SLOT_ID = "IsSlotId";
         String MAX_PROGRESS = "MaxProgress";
-        String COLOR = "Color";
-        String PULL = "Pull";
-        String HEAT = "Heat";
-        String INPUTS = "Inputs";
-        String OUTPUTS = "Outputs";
-        String SHAPED = "Shaped";
-        String ITEMS = "Items";
-        String GASES = "Gases";
-        String NAME = "Name";
-        String ID = "Id";
         String RESOURCE = "Resource";
         String FLOW = "Flow";
         String AMOUNT = "Amount";
+        String ENERGY_STORAGE = "EnergyStorage";
+        String ITEM_STORAGE = "ItemStorage";
+        String FLUID_STORAGE = "FluidStorage";
+        String GAS_STORAGE = "GasStorage";
     }
 
     interface Property {
         BooleanProperty ACTIVE = BooleanProperty.of("active");
+    }
+
+    interface ScreenTexture {
+        Identifier MACHINE_CONFIG_PANELS = new Identifier(Constant.MOD_ID, "textures/gui/machine_panels.png");
+        Identifier OVERLAY_BARS = new Identifier(Constant.MOD_ID, "textures/gui/overlay_bars.png");
+    }
+
+    interface TextureCoordinate {
+        int OVERLAY_TEX_WIDTH = 64;
+        int OVERLAY_TEX_HEIGHT = 64;
+
+        int OVERLAY_WIDTH = 16;
+        int OVERLAY_HEIGHT = 48;
+
+        int ENERGY_BACKGROUND_X = 0;
+        int ENERGY_BACKGROUND_Y = 0;
+        int ENERGY_X = 16;
+        int ENERGY_Y = 0;
+
+        int OXYGEN_BACKGROUND_X = 32;
+        int OXYGEN_BACKGROUND_Y = 0;
+        int OXYGEN_X = 48;
+        int OXYGEN_Y = 0;
     }
 }

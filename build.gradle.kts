@@ -27,7 +27,7 @@ plugins {
     `maven-publish`
     id("fabric-loom") version "0.11-SNAPSHOT"
     id("org.cadixdev.licenser") version "0.6.1"
-    id("io.github.juuxel.loom-quiltflower") version("1.6.0")
+    id("io.github.juuxel.loom-quiltflower") version("1.6.1")
 }
 
 val modId           = project.property("mod.id").toString()
@@ -89,6 +89,7 @@ dependencies {
         "fabric-api-lookup-api-v1",
         "fabric-gametest-api-v1",
         "fabric-lifecycle-events-v1",
+        "fabric-models-v0",
         "fabric-networking-api-v1",
         "fabric-registry-sync-v0",
         "fabric-renderer-api-v1",

@@ -28,14 +28,18 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
-import dev.galacticraft.api.client.model.MachineBakedModel;
+import dev.galacticraft.api.client.model.MachineModelRegistry;
+import dev.galacticraft.api.gas.Gas;
+import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.RedstoneInteractionType;
 import dev.galacticraft.api.machine.SecurityInfo;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
@@ -45,8 +49,14 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
+import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -54,8 +64,13 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.texture.MissingSprite;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.PacketByteBuf;
@@ -68,13 +83,12 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -82,10 +96,10 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public abstract class MachineHandledScreen<M extends MachineBlockEntity, H extends MachineScreenHandler<M>> extends HandledScreen<H> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
-    private static final ItemStack UNLIT_TORCH = new ItemStack(GalacticraftItem.UNLIT_TORCH);
+    private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "unlit_torch")));
     private static final ItemStack REDSTONE_TORCH = new ItemStack(Items.REDSTONE_TORCH);
-    private static final ItemStack WRENCH = new ItemStack(GalacticraftItem.STANDARD_WRENCH);
-    private static final ItemStack ALUMINUM_WIRE = new ItemStack(GalacticraftBlock.ALUMINUM_WIRE);
+    private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "standard_wrench")));
+    private static final ItemStack ALUMINUM_WIRE = new ItemStack(getOptionalItem(new Identifier("galacticraft", "aluminum_wire")));
 
     public static final int PANEL_WIDTH = 100;
     public static final int PANEL_HEIGHT = 93;
@@ -201,7 +215,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     protected Tank focusedTank = null;
 
     private @NotNull Identifier ownerSkin = new Identifier("textures/entity/steve.png");
-    private final MachineBakedModel.SpriteProvider spriteProvider;
+    private final MachineModelRegistry.SpriteProvider spriteProvider;
     private final List<Text> tooltipCache = new LinkedList<>();
     private final Identifier texture;
 
@@ -212,7 +226,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         this.machine = this.handler.machine;
         this.texture = texture;
 
-        this.spriteProvider = MachineBakedModel.SPRITE_PROVIDERS.getOrDefault(this.machine.getCachedState() == null ? world.getBlockState(pos).getBlock() : this.machine.getCachedState().getBlock(), MachineBakedModel.SpriteProvider.DEFAULT);
+        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.machine.getCachedState() == null ? world.getBlockState(pos).getBlock() : this.machine.getCachedState().getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
 
         MinecraftClient.getInstance().getSkinProvider().loadSkin(this.machine.security().getOwner(), (type, identifier, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && identifier != null) {
@@ -338,7 +352,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     private void drawMachineFace(MatrixStack matrices, int x, int y, MachineBlockEntity machine, BlockFace face) {
         ConfiguredMachineFace machineFace = machine.getConfiguration().getSideConfiguration().get(face);
-        drawSprite(matrices, x, y, 0, 16, 16, MachineBakedModel.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
+        drawSprite(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
     private void renderItemIcon(MatrixStack matrices, int x, int y, ItemStack stack) {
@@ -669,7 +683,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     public final void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         assert this.client != null;
         if (this.machine == null || !this.machine.security().hasAccess(handler.player)) {
-            this.onClose();
+            this.close();
             return;
         }
 
@@ -702,34 +716,64 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     protected void drawTanks(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         assert this.client != null;
         Int2IntArrayMap color = getTankColor(matrices, mouseX, mouseY);
-        color.defaultReturnValue(-1);
-        matrices.push();
-        matrices.translate(this.x, this.y, 0);
+        color.defaultReturnValue(0xFFFFFFFF);
+
         this.focusedTank = null;
-        for (Tank tank : this.handler.tanks) {
-            tank.render(matrices, this.client, this.world, this.pos, mouseX - this.x, mouseY - this.y, color.get(tank.index) != -1, color);
-            if (tank.isHoveredOverTank(mouseX - this.x, mouseY - this.y)) {
+        for (Tank<?, ?> tank : this.handler.tanks) {
+            fill(matrices, this.x + tank.getX(), this.y + tank.getY(), this.x + tank.getX() + tank.getWidth(), this.y + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
+
+            Fluid fluid;
+            if (tank.getResourceType() == ResourceType.FLUID) {
+                fluid = ((FluidVariant) tank.getResource()).getFluid();
+            } else if (tank.getResourceType() == ResourceType.GAS) {
+                fluid = ((GasVariant) tank.getResource()).getGas().getFluid();
+            } else {
+                fluid = Fluids.EMPTY;
+            }
+
+            Sprite sprite;
+            if (fluid == Fluids.EMPTY) {
+                sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
+            } else {
+                FluidRenderHandler fluidRenderHandler = FluidRenderHandlerRegistry.INSTANCE.get(fluid);
+                if (fluidRenderHandler == null) {
+                    sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
+                } else {
+                    sprite = fluidRenderHandler.getFluidSprites(world, pos, fluid.getDefaultState())[0];
+                }
+            }
+            RenderSystem.setShaderTexture(0, sprite.getAtlas().getId());
+            double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
+            DrawableUtil.drawTexturedQuad_F(matrices.peek().getPositionMatrix(), this.x, this.x + tank.getWidth(), this.y + tank.getHeight(), (float) (this.y + (v * tank.getHeight())), tank.getWidth(), sprite.getMinU(), sprite.getMaxU(), sprite.getMinV(), (float) (sprite.getMinV() + ((sprite.getMaxV() - sprite.getMinV()) * v)));
+            matrices.pop();
+
+            boolean shorten = true;
+            for (int y = this.y + tank.getY() + tank.getHeight() - 2; y > this.y + tank.getY(); y -= 3) {
+                fill(matrices, this.x + tank.getX(), y, this.x + tank.getX() + (tank.getWidth() / 2) + ((shorten = !shorten) ? -(tank.getWidth() / 8) : 0), y - 1, 0xFFB31212);
+            }
+            if (this.focusedTank == null && DrawableUtil.isWithin(mouseX, mouseY, this.x + tank.getX(), this.y + tank.getY(), tank.getWidth(), tank.getHeight())) {
                 this.focusedTank = tank;
-                tank.renderHighlight(matrices, this.client, this.world, this.pos, mouseX - this.x, mouseY - this.y);
+                RenderSystem.disableDepthTest();
+                RenderSystem.colorMask(true, true, true, false);
+                DrawableHelper.fill(matrices, this.x + tank.getX(), this.y + tank.getY(), this.x + tank.getWidth(), this.y + tank.getHeight(), 0x80ffffff);
+                RenderSystem.colorMask(true, true, true, true);
+                RenderSystem.enableDepthTest();
             }
         }
-        for (Tank tank : this.handler.tanks) {
-            tank.drawTooltip(matrices, this.client, this.world, this.pos, mouseX - this.x, mouseY - this.y);
-        }
-        matrices.pop();
 
-        color = getItemColor(matrices, mouseX, mouseY);
+        for (Tank<?, ?> tank : this.handler.tanks) {
+            tank.drawTooltip(matrices, this.client, this.x, this.y, mouseX, mouseY);
+        }
+
+        color = getItemColor(mouseX, mouseY);
         color.defaultReturnValue(-1);
         for (Slot slot : this.handler.slots) {
-            if (slot.inventory == this.machine.itemStorage()) {
-                int index = ((SlotAccessor) slot).getIndex();
+            if (slot instanceof VanillaWrappedItemSlot) {
+                int index = slot.getIndex();
                 if (color.get(index) != -1) {
                     RenderSystem.disableDepthTest();
                     int c = color.get(index);
-                    int r = (c >> 16 & 255);
-                    int g = (c >> 8 & 255);
-                    int b = (c & 255);
-                    c = 80; c <<= 8; c += r; c <<= 8; c += g; c <<= 8; c += b;
+                    c |= (255 << 24);
                     RenderSystem.colorMask(true, true, true, false);
                     fillGradient(matrices, this.x + slot.x, this.y + slot.y, this.x + slot.x + 16, this.y + slot.y + 16, c, c);
                     RenderSystem.colorMask(true, true, true, true);
@@ -745,27 +789,27 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             mouseY -= this.y + TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.fluidInv()));
+                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
             return out;
@@ -773,7 +817,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         return new Int2IntArrayMap();
     }
 
-    protected Int2IntArrayMap getItemColor(MatrixStack matrices, int mouseX, int mouseY) {
+    protected Int2IntArrayMap getItemColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX -= this.x - PANEL_WIDTH;
             mouseY -= this.y + TAB_HEIGHT + SPACING;
@@ -809,15 +853,15 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     private void groupFluid(Int2IntMap out, IntList list) {
         for (Tank tank : this.handler.tanks) {
-            if (list.contains(tank.index)) {
-                out.put(tank.index, this.machine.fluidInv().getTypes()[tank.index].getColor().getRgb());
+            if (list.contains(tank.getIndex())) {
+                out.put(tank.getIndex(), this.machine.fluidStorage().getTypes()[tank.getIndex()].getColor().getRgb());
             }
         }
     }
 
     private void groupItem(Int2IntMap out, IntList list) {
         for (Slot slot : this.handler.slots) {
-            int index = ((SlotAccessor) slot).getIndex();
+            int index = slot.getIndex();
             if (list.contains(index)) {
                 out.put(index, this.machine.itemStorage().getTypes()[index].getColor().getRgb());
             }
@@ -857,7 +901,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     private void groupStack(MatrixStack matrices, IntList list) {
         for (Slot slot : this.handler.slots) {
-            int index = ((SlotAccessor) slot).getIndex();
+            int index = slot.getIndex();
             if (list.contains(index)) {
                 drawSlotOverlay(matrices, slot);
             }
@@ -865,7 +909,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     }
 
     private void drawSlotOverlay(MatrixStack matrices, Slot slot) {
-        int index = ((SlotAccessor) slot).getIndex();
+        int index = slot.getIndex();
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         RenderSystem.disableTexture();
@@ -914,6 +958,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             boolean tankMod = false;
             if (this.focusedTank != null && button == 0) {
                 tankMod = this.focusedTank.acceptStack(ContainerItemContext.ofPlayerCursor(this.handler.player, this.handler));
+                if (tankMod) {
+                    PacketByteBuf packetByteBuf = PacketByteBufs.create().writeVarInt(this.handler.syncId);
+                    packetByteBuf.writeInt(this.focusedTank.id);
+                    ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "tank_modify"), packetByteBuf);
+                }
             }
             return this.checkTabsClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
         } else {
@@ -952,6 +1001,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     public int getY() {
         return this.y;
+    }
+
+    private static Item getOptionalItem(Identifier id) {
+        return Registry.ITEM.getOrEmpty(id).orElse(Items.BARRIER);
     }
 
     public enum Tab {
@@ -1006,18 +1059,114 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                 return;
             }
-            List<AutomationType> types = ConfiguredMachineFace.getValidTypes(machine);
-            int i = types.indexOf(sideOption.getAutomationType());
-            if (!back) {
-                if (++i == types.size()) i = 0;
-            } else {
-                if (i == 0) i = types.size();
-                i--;
+            Map<ResourceType<?, ?>, List<ResourceFlow>> map = new IdentityHashMap<>();
+
+            for (SlotType<Item, ItemVariant> type : machine.itemStorage().getTypes()) {
+                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ITEM, l -> new ArrayList<>());
+                if (type.getFlow() == ResourceFlow.BOTH) {
+                    flows.set(0, ResourceFlow.INPUT);
+                    flows.set(1, ResourceFlow.OUTPUT);
+                    flows.set(2, ResourceFlow.BOTH);
+                    break;
+                } else {
+                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
+                    if (flows.size() == 3) break;
+                }
             }
-            sideOption.setOption(types.get(i));
+
+            for (SlotType<Fluid, FluidVariant> type : machine.fluidStorage().getTypes()) {
+                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.FLUID, l -> new ArrayList<>());
+                if (type.getFlow() == ResourceFlow.BOTH) {
+                    flows.set(0, ResourceFlow.INPUT);
+                    flows.set(1, ResourceFlow.OUTPUT);
+                    flows.set(2, ResourceFlow.BOTH);
+                    break;
+                } else {
+                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
+                    if (flows.size() == 3) break;
+                }
+            }
+
+            for (SlotType<Gas, GasVariant> type : machine.gasStorage().getTypes()) {
+                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.GAS, l -> new ArrayList<>());
+                if (type.getFlow() == ResourceFlow.BOTH) {
+                    flows.set(0, ResourceFlow.INPUT);
+                    flows.set(1, ResourceFlow.OUTPUT);
+                    flows.set(2, ResourceFlow.BOTH);
+                    break;
+                } else {
+                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
+                    if (flows.size() == 3) break;
+                }
+            }
+
+            if (machine.energyExtractionRate() > 0) {
+                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>());
+                if (machine.energyInsertionRate() > 0) {
+                    flows.set(0, ResourceFlow.INPUT);
+                    flows.set(1, ResourceFlow.OUTPUT);
+                    flows.set(2, ResourceFlow.BOTH);
+                } else {
+                    flows.set(0, ResourceFlow.OUTPUT);
+                }
+            } else if (machine.energyInsertionRate() > 0) {
+                map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).set(0, ResourceFlow.INPUT);
+            }
+
+            ResourceType outType = null;
+            ResourceFlow outFlow = null;
+
+            ResourceType[] normalTypes = ResourceType.normalTypes();
+            for (int i = 0; i < normalTypes.length; i++) {
+                ResourceType type = normalTypes[i];
+                if (type == sideOption.getType()) {
+                    List<ResourceFlow> resourceFlows = map.get(type);
+                    if (resourceFlows != null) {
+                        int idx = resourceFlows.indexOf(sideOption.getFlow());
+                        if (idx + (back ? -1 : 1) == (back ? -1 : resourceFlows.size())) {
+                            if (i + (back ? -1 : 1) == (back ? -1 : normalTypes.length)) {
+                                for (int i1 = back ? normalTypes.length - 1 : 0; back ? i1 >= 0 : i1 < normalTypes.length;) {
+                                    if (map.get(normalTypes[i1]) != null) {
+                                        outType = normalTypes[i1];
+                                        break;
+                                    }
+                                    if (back) {
+                                        i1--;
+                                    } else {
+                                        i1++;
+                                    }
+                                }
+                            } else {
+                                outType = normalTypes[i + (back ? -1 : 1)];
+                            }
+                            outFlow = map.get(outType).get(back ? map.get(outType).size() : 0);
+                        } else {
+                            outType = type;
+                            outFlow = resourceFlows.get(idx + (back ? -1 : 1));
+                        }
+                    } else {
+                        for (int i1 = back ? normalTypes.length - 1 : 0; back ? i1 >= 0 : i1 < normalTypes.length;) {
+                            if (map.get(normalTypes[i1]) != null) {
+                                outType = normalTypes[i1];
+                                break;
+                            }
+                            if (back) {
+                                i1--;
+                            } else {
+                                i1++;
+                            }
+                        }
+                        outFlow = map.get(outType).get(0);
+                    }
+                    break;
+                }
+            }
+            assert outType != null;
+            assert outFlow != null;
+            sideOption.setOption(outType, outFlow);
             sideOption.setMatching(null);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-            buf.writeByte(face.ordinal()).writeBoolean(false).writeByte(sideOption.getAutomationType().getIndex());
+            buf.writeByte(face.ordinal()).writeBoolean(false).writeByte(sideOption.getType().getOrdinal()).writeByte(sideOption.getFlow().ordinal());
             ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
 
         }), //LEFT
@@ -1031,17 +1180,18 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
                 return;
             }
-            SlotType<?>[] slotTypes = sideOption.getAutomationType().getLinkedResources(machine).getTypes();
+
+            SlotType<?, ?>[] slotTypes = machine.getResource(sideOption.getType()).getTypes();
             slotTypes = Arrays.copyOf(slotTypes, slotTypes.length);
             int s = 0;
             for (int i = 0; i < slotTypes.length; i++) {
-                if (!slotTypes[i].getType().equalToOrBroaderThan(sideOption.getAutomationType())) {
+                if (!slotTypes[i].getType().willAcceptResource(sideOption.getType())) {
                     slotTypes[i] = null;
                     s++;
                 }
             }
             if (s > 0) {
-                SlotType[] tmp = new SlotType[slotTypes.length - s];
+                SlotType<?, ?>[] tmp = new SlotType[slotTypes.length - s];
                 s = 0;
                 for (int i = 0; i < slotTypes.length; i++) {
                     if (slotTypes[i] == null) {
@@ -1054,7 +1204,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             }
             int i = 0;
             if (sideOption.getMatching() != null && sideOption.getMatching().right().isPresent()) {
-                SlotType slotType = sideOption.getMatching().right().get();
+                SlotType<?, ?> slotType = sideOption.getMatching().right().get();
                 for (; i < slotTypes.length; i++) {
                     if (slotTypes[i] == slotType) break;
                 }
@@ -1066,12 +1216,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             if (i == -1) i = slotTypes.length - 1;
             sideOption.setMatching(Either.right(slotTypes[i]));
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-            buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(SlotType.SLOT_TYPES.getRawId(slotTypes[i]));
+            buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(SlotType.REGISTRY.getRawId(slotTypes[i]));
             ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
         }), //RIGHT
         CHANGE_MATCH_SLOT((player, machine, face, back, reset) -> {
             ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
-            if (sideOption.getAutomationType().willAccept(ResourceType.ENERGY) || sideOption.getAutomationType() == AutomationType.NONE) return;
+            if (sideOption.getType().isSpecial() || sideOption.getType() == ResourceType.ENERGY) return;
             if (reset) {
                 sideOption.setMatching(null);
                 PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
@@ -1084,11 +1234,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             if (sideOption.getMatching() != null && sideOption.getMatching().left().isPresent()) {
                 i = sideOption.getMatching().left().get();
                 sideOption.setMatching(null);
-                list = new IntArrayList(sideOption.getMatching(sideOption.getAutomationType().getLinkedResources(machine)));
+                list = new IntArrayList(sideOption.getMatching(machine.getResource(sideOption.getType())));
                 i = list.indexOf(i);
             }
             if (list == null)
-                list = new IntArrayList(sideOption.getMatching(sideOption.getAutomationType().getLinkedResources(machine)));
+                list = new IntArrayList(sideOption.getMatching(machine.getResource(sideOption.getType())));
 
             if (!back) {
                 if (++i == list.size()) i = 0;

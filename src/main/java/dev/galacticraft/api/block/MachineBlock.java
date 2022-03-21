@@ -30,7 +30,6 @@ import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
 import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -51,6 +50,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -139,10 +139,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         if (stack != null && stack.getNbt() != null && stack.getNbt().contains(Constant.Nbt.BLOCK_ENTITY_TAG)) {
             NbtCompound nbt = stack.getNbt().getCompound(Constant.Nbt.BLOCK_ENTITY_TAG);
             tooltip.add(LiteralText.EMPTY);
-            if (nbt.contains(Constant.Nbt.ENERGY, NbtType.INT)) tooltip.add(new TranslatableText("ui.galacticraft.machine.current_energy", new LiteralText(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-            if (nbt.contains(Constant.Nbt.SECURITY, NbtType.COMPOUND)) {
+            if (nbt.contains(Constant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText("ui.galacticraft.machine.current_energy", new LiteralText(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+            if (nbt.contains(Constant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
                 NbtCompound security = nbt.getCompound(Constant.Nbt.SECURITY);
-                if (security.contains(Constant.Nbt.OWNER, NbtType.COMPOUND)) {
+                if (security.contains(Constant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
                     GameProfile profile = NbtHelper.toGameProfile(security.getCompound(Constant.Nbt.OWNER));
                     MutableText text1 = new TranslatableText("ui.galacticraft.machine.security.owner", new LiteralText(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
                     if (Screen.hasControlDown()) {

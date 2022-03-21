@@ -23,13 +23,23 @@
 package dev.galacticraft.api.screen;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.client.screen.Tank;
+import dev.galacticraft.impl.machine.Constant;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -37,19 +47,24 @@ import java.util.ArrayList;
 public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends ScreenHandler {
     public final PlayerEntity player;
     public final M machine;
-
-    public final List<Tank> tanks = new ArrayList<>();
+    protected final List<StorageSyncHandler> syncHandlers = new ArrayList<>(4);
+    public List<Tank<?, ?>> tanks = new ArrayList<>();
 
     protected MachineScreenHandler(int syncId, PlayerEntity player, M machine, ScreenHandlerType<? extends MachineScreenHandler<M>> handlerType) {
         super(handlerType, syncId);
         this.player = player;
         this.machine = machine;
-        this.machine.itemStorage().createSlots(player, this::addSlot);
-        this.machine.fluidInv().createTanks(player, this::addTank);
 
-        if (!machine.fluidInv().parts.isEmpty()) this.addProperties(new FluidTankPropertyDelegate(machine.fluidInv()));
-        if (machine.getEnergyCapacity() > 0) this.addProperties(new CapacitorProperty(machine.capacitor()));
-        this.addProperty(new StatusProperty(machine));
+        this.machine.itemStorage().addSlots(this);
+        this.machine.fluidStorage().addTanks(this);
+        this.machine.gasStorage().addTanks(this);
+
+        this.syncHandlers.add(this.machine.itemStorage().createSyncHandler());
+        this.syncHandlers.add(this.machine.fluidStorage().createSyncHandler());
+        this.syncHandlers.add(this.machine.gasStorage().createSyncHandler());
+        this.syncHandlers.add(this.machine.capacitor().createSyncHandler());
+
+        this.addProperty(new StatusProperty(this.machine));
     }
 
     @Override
@@ -104,9 +119,58 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         return machine.security().hasAccess(player);
     }
 
-    public Tank addTank(Tank tank) {
+    @Override
+    public void syncState() {
+        super.syncState();
+        assert player instanceof ServerPlayerEntity;
+
+        int sync = 0;
+        for (StorageSyncHandler syncHandler : this.syncHandlers) {
+            if (syncHandler.needsSyncing()) sync++;
+        }
+
+        if (sync > 0) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeByte(this.syncId);
+            buf.writeVarInt(sync);
+            for (int i = 0; i < this.syncHandlers.size(); i++) {
+                StorageSyncHandler handler = this.syncHandlers.get(i);
+                if (handler.needsSyncing()) {
+                    buf.writeVarInt(i);
+                    handler.sync(buf);
+                }
+            }
+            ServerPlayNetworking.send(((ServerPlayerEntity) this.player), new Identifier(Constant.MOD_ID, "storage_sync"), buf);
+        }
+    }
+
+    public void recieveState(@NotNull PacketByteBuf buf) {
+        int sync = buf.readVarInt();
+        for (int i = 0; i < sync; i++) {
+            this.syncHandlers.get(buf.readVarInt()).read(buf);
+        }
+    }
+
+    public void addTank(@NotNull Tank<?, ?> tank) {
         tank.id = this.tanks.size();
         this.tanks.add(tank);
-        return tank;
+    }
+
+    private static class StatusProperty extends Property {
+        private final MachineBlockEntity machine;
+
+        public StatusProperty(MachineBlockEntity machine) {
+            this.machine = machine;
+        }
+
+        @Override
+        public int get() {
+            return machine.getStatus().getIndex();
+        }
+
+        @Override
+        public void set(int value) {
+            machine.setStatusById(value);
+        }
     }
 }

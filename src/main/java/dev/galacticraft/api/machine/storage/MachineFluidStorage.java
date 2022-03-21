@@ -22,7 +22,10 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -36,9 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
+    <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+
     class Builder {
         private int size = 0;
         private final List<SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
+        private final List<TankDisplay> displays = new ArrayList<>();
         private final LongList counts = new LongArrayList();
 
         public Builder() {}
@@ -48,21 +54,17 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
             return new Builder();
         }
 
-        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type) {
-            return this.addSlot(type, 64);
-        }
-
-        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, int maxCount) {
-            maxCount = Math.min(maxCount, 64);
+        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, int capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
-            this.counts.add(maxCount);
+            this.displays.add(display);
+            this.counts.add(capacity);
             return this;
         }
 
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineFluidStorageImpl build() {
-            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray());
+            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }
 }

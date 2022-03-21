@@ -24,6 +24,8 @@ package dev.galacticraft.api.gas;
 
 import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.impl.gas.GasVariantImpl;
+import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
@@ -32,19 +34,23 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.util.registry.RegistryKey;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Gas {
-    public static final Registry<Gas> REGISTRY = new DefaultedRegistry<>("galacticraft-api:empty", RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas")), Lifecycle.stable(), Gas::getReference);
-    public static final Gas EMPTY = new Gas(new TranslatableText("gas.galacticraft-api.empty"), "");
+    public static final Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("galacticraft-api:empty", RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas")), Lifecycle.stable(), Gas::getReference)).buildAndRegister();
+    public static final Gas EMPTY = new Gas(new TranslatableText("gas.galacticraft-api.empty"), new Identifier("minecraft", "empty"), "");
 
     private final TranslatableText name;
+    private final @Nullable Identifier fluid;
     private final String symbol;
     private final String displaySymbol;
     private final GasVariant variant = new GasVariantImpl(this, null);
     private final RegistryEntry.Reference<Gas> reference = REGISTRY.createEntry(this);
 
-    public Gas(TranslatableText name, String symbol) {
+    public Gas(TranslatableText name, @Nullable Identifier fluid, String symbol) {
         this.name = name;
+        this.fluid = fluid;
         this.symbol = symbol;
         this.displaySymbol = this.symbol
                 .replaceAll("0", "₀")
@@ -68,7 +74,11 @@ public class Gas {
     }
 
     public Text getName() {
-        return name;
+        return this.name;
+    }
+
+    public String getTranslationKey() {
+        return this.name.getKey();
     }
 
     public String getSymbol() {
@@ -77,6 +87,10 @@ public class Gas {
 
     public String symbolForDisplay() {
         return this.displaySymbol;
+    }
+
+    public @NotNull Fluid getFluid() {
+        return Registry.FLUID.get(this.fluid);
     }
 
     public RegistryEntry.Reference<Gas> getReference() {

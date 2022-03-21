@@ -22,11 +22,15 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Contract;
@@ -36,10 +40,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
+    <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler);
+
+    Inventory playerInventory();
+
     class Builder {
         private int size = 0;
         private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
-        private final IntList counts = new IntArrayList();
+        private final List<ItemSlotDisplay> displays = new ArrayList<>();
+        private final LongList counts = new LongArrayList();
 
         public Builder() {}
 
@@ -48,21 +57,22 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
             return new Builder();
         }
 
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type) {
-            return this.addSlot(type, 64);
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, @NotNull ItemSlotDisplay display) {
+            return this.addSlot(type, 64, display);
         }
 
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount) {
+        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount, @NotNull ItemSlotDisplay display) {
             maxCount = Math.min(maxCount, 64);
             this.size++;
             this.types.add(type);
+            this.displays.add(display);
             this.counts.add(maxCount);
             return this;
         }
 
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineItemStorageImpl build() {
-            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toIntArray());
+            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new ItemSlotDisplay[0]));
         }
     }
 }
