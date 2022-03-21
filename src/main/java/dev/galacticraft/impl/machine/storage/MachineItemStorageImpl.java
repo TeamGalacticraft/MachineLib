@@ -253,7 +253,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
+        if (!this.canAccept(slot, variant) || amount == 0) return 0;
         ItemSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));

@@ -31,19 +31,23 @@ import org.jetbrains.annotations.Nullable;
 
 public class GasStack {
     public static final GasStack EMPTY = new GasStack(Gas.EMPTY, null, 0);
-    private final @NotNull Gas fluid;
+    private final @NotNull Gas gas;
     private @Nullable NbtCompound nbt;
     private long amount;
     private boolean empty;
 
-    public GasStack(@NotNull Gas fluid, @Nullable NbtCompound nbt, long amount) {
-        this.fluid = fluid;
+    public GasStack(@NotNull Gas gas, @Nullable NbtCompound nbt, long amount) {
+        this.gas = gas;
         this.nbt = nbt;
         this.amount = amount;
-        if (amount == 0 || this.fluid == Gas.EMPTY) {
+        if (amount == 0 || this.gas == Gas.EMPTY) {
             this.empty = true;
         }
         this.empty = this.testEmpty();
+    }
+
+    public GasStack(@NotNull Gas gas, long amount) {
+        this(gas, null, amount);
     }
 
     public GasStack(GasVariant gasVariant, long amount) {
@@ -58,6 +62,10 @@ public class GasStack {
     @Contract(pure = true)
     public @Nullable NbtCompound getNbt() {
         return this.nbt;
+    }
+
+    public static boolean canCombine(@NotNull GasStack a, @NotNull GasStack b) {
+        return a.getGas() == b.getGas() && (a.nbt != null ? (b.nbt != null && a.nbt.equals(b.nbt)) : b.nbt == null);
     }
 
     @Contract()
@@ -79,7 +87,7 @@ public class GasStack {
     }
 
     public Gas getGas() {
-        return this.empty ? Gas.EMPTY : this.fluid;
+        return this.empty ? Gas.EMPTY : this.gas;
     }
 
     public long getAmount() {

@@ -248,7 +248,7 @@ public class MachineGasStorageImpl implements MachineGasStorage {
 
     @Override
     public long insert(int slot, @NotNull GasVariant variant, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
+        if (!this.canAccept(slot, variant) || amount == 0) return 0;
         GasSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));

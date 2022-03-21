@@ -23,7 +23,8 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "dev.galacticraft.impl.machine.storage.ItemStorageImplTest"
+      "dev.galacticraft.gametest.storage.item.ItemStorageImplTest",
+      "dev.galacticraft.gametest.storage.fluid.FluidStorageImplTest"
     ]
   },
   "depends": {

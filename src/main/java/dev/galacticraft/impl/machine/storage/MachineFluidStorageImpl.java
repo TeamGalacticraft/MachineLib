@@ -248,7 +248,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
+        if (!this.canAccept(slot, variant) || amount == 0) return 0;
         FluidSlot invSlot = this.inventory[slot];
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));

@@ -47,8 +47,16 @@ public class FluidStack {
         this.empty = this.testEmpty();
     }
 
-    public FluidStack(FluidVariant variant, long amount) {
+    public FluidStack(@NotNull Fluid fluid, long amount) {
+        this(fluid, null, amount);
+    }
+
+    public FluidStack(@NotNull FluidVariant variant, long amount) {
         this(variant.getFluid(), variant.copyNbt(), amount);
+    }
+
+    public static boolean canCombine(@NotNull FluidStack a, @NotNull FluidStack b) {
+        return a.getFluid() == b.getFluid() && (a.nbt != null ? (b.nbt != null && a.nbt.equals(b.nbt)) : b.nbt == null);
     }
 
     public void setAmount(long amount) {
