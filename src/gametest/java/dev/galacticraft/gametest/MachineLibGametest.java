@@ -57,74 +57,74 @@ public interface MachineLibGametest extends FabricGameTest {
         }
     }
 
-    default void assertTrue(@NotNull TestContext context, boolean b, @NotNull String message) {
+    default void assertTrue(boolean b, @NotNull String message) {
         if (!b) {
-            context.throwGameTestException(format(message, true, false));
+            throw new GameTestException(format(message, true, false));
         }
     }
 
-    default void assertFalse(@NotNull TestContext context, boolean b, @NotNull String message) {
+    default void assertFalse(boolean b, @NotNull String message) {
         if (b) {
-            context.throwGameTestException(format(message, false, true));
+            throw new GameTestException(format(message, false, true));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, boolean a, boolean b, @NotNull String message) {
+    default void assertEquals(boolean a, boolean b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, byte a, byte b, @NotNull String message) {
+    default void assertEquals(byte a, byte b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, short a, short b, @NotNull String message) {
+    default void assertEquals(short a, short b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, int a, int b, @NotNull String message) {
+    default void assertEquals(int a, int b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, long a, long b, @NotNull String message) {
+    default void assertEquals(long a, long b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, float a, float b, @NotNull String message) {
+    default void assertEquals(float a, float b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, double a, double b, @NotNull String message) {
+    default void assertEquals(double a, double b, @NotNull String message) {
         if (a != b) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertEquals(@NotNull TestContext context, Object a, Object b, @NotNull String message) {
+    default void assertEquals(Object a, Object b, @NotNull String message) {
         if (!Objects.equals(a, b)) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
     //apparently itemstack does not implement Object#equals()
-    default void assertEquals(@NotNull TestContext context, ItemStack a, ItemStack b, @NotNull String message) {
+    default void assertEquals(ItemStack a, ItemStack b, @NotNull String message) {
         if (a == null || b == null || !ItemStack.canCombine(a, b) || a.getCount() != b.getCount()) {
-            context.throwGameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b));
         }
     }
 
-    default void assertSame(@NotNull TestContext context, Object a, Object b, @NotNull String message) {
+    default void assertSame(Object a, Object b, @NotNull String message) {
         if (a != b) {
             String aStr = "null";
             String bStr = "null";
@@ -134,11 +134,11 @@ public interface MachineLibGametest extends FabricGameTest {
             if (b != null) {
                 bStr = b.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(b)) + "[" + b + "]";
             }
-            context.throwGameTestException(format(message, aStr, bStr));
+            throw new GameTestException(format(message, aStr, bStr));
         }
     }
 
-    default <T extends Throwable> void assertThrows(@NotNull TestContext context, Class<T> clazz, Runnable runnable, @NotNull String message) {
+    default <T extends Throwable> void assertThrows(Class<T> clazz, Runnable runnable, @NotNull String message) {
         try {
             runnable.run();
         } catch (Throwable throwable) {
@@ -146,11 +146,14 @@ public interface MachineLibGametest extends FabricGameTest {
                 GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName()));
                 gameTestException.addSuppressed(throwable);
                 throw gameTestException;
+            } else {
+                return;
             }
         }
+        throw new GameTestException(format(message, clazz.getName(), "<none>"));
     }
 
-    default <T extends Throwable> void assertThrowsExactly(@NotNull TestContext context, Class<T> clazz, Runnable runnable, @NotNull String message) {
+    default <T extends Throwable> void assertThrowsExactly(Class<T> clazz, Runnable runnable, @NotNull String message) {
         try {
             runnable.run();
         } catch (Throwable throwable) {

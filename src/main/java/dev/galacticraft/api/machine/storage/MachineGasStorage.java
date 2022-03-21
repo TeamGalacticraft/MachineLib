@@ -56,7 +56,7 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
         public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
-            this.displays.add(type);
+            this.displays.add(display);
             this.counts.add(capacity);
             return this;
         }
