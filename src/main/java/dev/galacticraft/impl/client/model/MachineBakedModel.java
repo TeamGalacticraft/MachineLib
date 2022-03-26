@@ -110,7 +110,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     @ApiStatus.Internal
     public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
     public static final List<Identifier> TEXTURE_DEPENDENCIES = new LinkedList<>();
-    private static final MachineConfiguration CONFIGURATION = new MachineConfiguration();
+    private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
 
     protected MachineBakedModel() {}
 
@@ -211,7 +211,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         NbtCompound tag = stack.getNbt();
         if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, NbtElement.COMPOUND_TYPE)) {
             CONFIGURATION.readNbt(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG));
-            ConfiguredMachineFace machineFace = CONFIGURATION.getSideConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
+            ConfiguredMachineFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),
                             null,
@@ -227,7 +227,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return true;
     }
 
-    public static Sprite getSprite(BlockFace face, MachineBlockEntity machine, ItemStack stack, MachineModelRegistry.SpriteProvider provider, ResourceType<?, ?> type, ResourceFlow flow) {
+    public static Sprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         switch (flow) {
             case INPUT -> {
                 if (type == ResourceType.ENERGY) {

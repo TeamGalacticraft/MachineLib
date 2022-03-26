@@ -39,7 +39,7 @@ public class MachineLibS2CPackets {
             client.execute(() -> {
                 if (client.player.currentScreenHandler instanceof MachineScreenHandler<?> machineHandler) {
                     if (machineHandler.syncId == packet.readByte()) {
-                        machineHandler.recieveState(packet);
+                        machineHandler.receiveState(packet);
                     }
                 }
             });

@@ -43,12 +43,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public class SecurityInfo {
+public class SecuritySettings {
     private @Nullable GameProfile owner;
     private @Nullable Identifier team;
     private @NotNull Accessibility accessibility;
 
-    public SecurityInfo() {
+    public SecuritySettings() {
         this.accessibility = Accessibility.PUBLIC;
         this.team = null;
     }
@@ -104,7 +104,8 @@ public class SecurityInfo {
         return team;
     }
 
-    public NbtCompound toTag(NbtCompound nbt) {
+    public NbtCompound toNbt() {
+        NbtCompound nbt = new NbtCompound();
         if (this.getOwner() != null) {
             nbt.put(Constant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
         }
@@ -115,7 +116,7 @@ public class SecurityInfo {
         return nbt;
     }
 
-    public void fromTag(NbtCompound nbt) {
+    public void fromNbt(@NotNull NbtCompound nbt) {
         if (nbt.contains(Constant.Nbt.OWNER)) {
             this.owner = NbtHelper.toGameProfile(nbt.getCompound(Constant.Nbt.OWNER));
         }
@@ -127,7 +128,7 @@ public class SecurityInfo {
         this.accessibility = Accessibility.valueOf(nbt.getString(Constant.Nbt.ACCESSIBILITY));
     }
 
-    public void sendPacket(BlockPos pos, ServerPlayerEntity player) {
+    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayerEntity player) {
         assert this.owner != null;
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);

@@ -60,11 +60,6 @@ val gametestSourceSet = sourceSets.create("gametest") {
 }
 
 loom {
-    accessWidenerPath.set(project.file("src/main/resources/${modId}.accesswidener"))
-    mixin {
-        add(sourceSets.main.get(), "${modId}.refmap.json")
-    }
-
     runs {
         register("gametest") {
             server()

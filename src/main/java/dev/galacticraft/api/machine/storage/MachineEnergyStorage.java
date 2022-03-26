@@ -30,13 +30,15 @@ import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
 public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     SlotType[] NO_SLOTS = new SlotType[0];
 
-    static MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
+    @Contract("_, _, _ -> new")
+    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
     }
 

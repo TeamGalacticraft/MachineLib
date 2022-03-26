@@ -104,7 +104,12 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public int getSlotModCount(int index) {
-        return 0;
+        return this.inventory[index].getModCount();
+    }
+
+    @Override
+    public boolean isFull(int slot) {
+        return this.inventory[slot].getAmount() == this.inventory[slot].getCapacity();
     }
 
     @Override
@@ -381,7 +386,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public SlotType<Fluid, FluidVariant>[] getTypes() {
+    public SlotType<Fluid, FluidVariant> @NotNull [] getTypes() {
         return this.types;
     }
 
@@ -420,7 +425,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.of(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
-            handler.addTank(new Tank<>(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.FLUID));
+            handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.FLUID));
         }
     }
 

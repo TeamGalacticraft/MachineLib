@@ -139,6 +139,8 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      */
     int getSlotModCount(int index);
 
+    boolean isFull(int slot);
+
     @ApiStatus.Internal
     SingleVariantStorage<V> getSlot(int index);
 
@@ -179,8 +181,4 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
             return ExposedStorage.of(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
         }
     }
-//    default ExposedStorage getExposedStorage(@NotNull Direction direction) {
-//        return this.getExposedStorages()[direction.ordinal()];
-//    }
-//    ExposedStorage[] getExposedStorages();
 }

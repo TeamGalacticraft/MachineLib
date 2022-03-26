@@ -63,80 +63,80 @@ public interface MachineLibGametest extends FabricGameTest {
 
     default void assertTrue(boolean b, @NotNull String message) {
         if (!b) {
-            throw new GameTestException(format(message, true, false));
+            throw new GameTestException(format(message, true, false, 1));
         }
     }
 
     default void assertFalse(boolean b, @NotNull String message) {
         if (b) {
-            throw new GameTestException(format(message, false, true));
+            throw new GameTestException(format(message, false, true, 1));
         }
     }
 
     default void assertEquals(boolean a, boolean b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(byte a, byte b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(short a, short b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(int a, int b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(long a, long b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(float a, float b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(double a, double b, @NotNull String message) {
         if (a != b) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(Object a, Object b, @NotNull String message) {
         if (!Objects.equals(a, b)) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     //apparently itemstack does not implement Object#equals()
     default void assertEquals(ItemStack a, ItemStack b, @NotNull String message) {
         if (a == null || b == null || !ItemStack.canCombine(a, b) || a.getCount() != b.getCount()) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(FluidStack a, FluidStack b, @NotNull String message) {
         if (a == null || b == null || !FluidStack.canCombine(a, b) || a.getAmount() != b.getAmount()) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
     default void assertEquals(GasStack a, GasStack b, @NotNull String message) {
         if (a == null || b == null || !GasStack.canCombine(a, b) || a.getAmount() != b.getAmount()) {
-            throw new GameTestException(format(message, a, b));
+            throw new GameTestException(format(message, a, b, 1));
         }
     }
 
@@ -150,7 +150,7 @@ public interface MachineLibGametest extends FabricGameTest {
             if (b != null) {
                 bStr = b.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(b)) + "[" + b + "]";
             }
-            throw new GameTestException(format(message, aStr, bStr));
+            throw new GameTestException(format(message, aStr, bStr, 1));
         }
     }
 
@@ -159,14 +159,14 @@ public interface MachineLibGametest extends FabricGameTest {
             runnable.run();
         } catch (Throwable throwable) {
             if (!clazz.isInstance(throwable)) {
-                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName()));
+                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName(), 1));
                 gameTestException.addSuppressed(throwable);
                 throw gameTestException;
             } else {
                 return;
             }
         }
-        throw new GameTestException(format(message, clazz.getName(), "<none>"));
+        throw new GameTestException(format(message, clazz.getName(), "<none>", 1));
     }
 
     default <T extends Throwable> void assertThrowsExactly(Class<T> clazz, Runnable runnable, @NotNull String message) {
@@ -174,14 +174,14 @@ public interface MachineLibGametest extends FabricGameTest {
             runnable.run();
         } catch (Throwable throwable) {
             if (!clazz.equals(throwable.getClass())) {
-                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName()));
+                GameTestException gameTestException = new GameTestException(format(message, clazz.getName(), throwable.getClass().getName(), 1));
                 gameTestException.addSuppressed(throwable);
                 throw gameTestException;
             }
         }
     }
 
-    default String format(@NotNull String message, Object expected, Object found) {
-        return message  + " [Expected: " + expected + ", Found: " + found + "] (Line: " + StackWalker.getInstance().walk(s -> s.skip(2).findFirst().map(StackWalker.StackFrame::getLineNumber).orElse(-1)) + ")";
+    default String format(@NotNull String message, Object expected, Object found, int depth) {
+        return message  + " [Expected: " + expected + ", Found: " + found + "] (Line: " + StackWalker.getInstance().walk(s -> s.skip(depth + 1).findFirst().map(StackWalker.StackFrame::getLineNumber).orElse(-1)) + ")";
     }
 }

@@ -43,23 +43,48 @@ public interface MachineModelRegistry {
     Identifier MACHINE = new Identifier(Constant.MOD_ID, "block/machine");
     Identifier MACHINE_SIDE = new Identifier(Constant.MOD_ID, "block/machine_side");
 
+    /**
+     * Registers a sprite provider for a block.
+     * @param block The block to register the provider for.
+     * @param provider The provider to register.
+     */
     static void register(Block block, SpriteProvider provider) {
         MachineBakedModel.register(block, provider);
     }
 
-    static Collection<Identifier> getTextureDependencies() {
-        return MachineBakedModel.TEXTURE_DEPENDENCIES;
-    }
-
+    /**
+     * Returns the registered sprite provider for a block.
+     * @param block The block to get the provider for.
+     * @return The registered provider, or null if none is registered.
+     */
     static @Nullable SpriteProvider getSpriteProvider(Block block) {
         return MachineBakedModel.SPRITE_PROVIDERS.get(block);
     }
 
+    /**
+     * Returns the registered sprite provider for a block.
+     * @param block The block to get the provider for.
+     * @param defaultProvider The default provider to return if none is registered.
+     * @return The registered provider, or the default provider if none is registered.
+     */
     static SpriteProvider getSpriteProviderOrElseGet(Block block, SpriteProvider defaultProvider) {
         return MachineBakedModel.SPRITE_PROVIDERS.getOrDefault(block, defaultProvider);
     }
 
-    static Sprite getSprite(BlockFace face, MachineBlockEntity machine, ItemStack stack, MachineModelRegistry.SpriteProvider provider, ResourceType<?, ?> type, ResourceFlow flow) {
+    /**
+     * Returns the sprite of a machine block for a given face.
+     * Either the stack or the block entity must be provided.
+     * @param face The face to get the sprite for.
+     * @param machine The machine to get the sprite for.
+     *                If null, the stack must be provided.
+     * @param stack The stack to get the sprite for.
+     *              If null, the block entity must be provided.
+     * @param provider The provider to get the sprite for.
+     * @param type The type of resource to get the sprite for.
+     * @param flow The flow of the resource to get the sprite for.
+     * @return The sprite of the machine block for the given face.
+     */
+    static Sprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         return MachineBakedModel.getSprite(face, machine, stack, provider, type, flow);
     }
 
@@ -80,31 +105,63 @@ public interface MachineModelRegistry {
         @Contract(pure = true, value = "null,null,_,_->fail;!null,!null,_,_->fail")
         @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas);
 
+        /**
+         * Returns a simple sprite provider which has a different sprite for the front face.
+         * @param front The sprite to use for the front face.
+         * @return The sprite provider.
+         */
         @Contract("_ -> new")
         static @NotNull SpriteProvider frontFace(Identifier front) {
             return new MachineBakedModel.FrontFaceSpriteProvider(front);
         }
 
+        /**
+         * Returns a simple sprite provider which has a single sprite for all faces.
+         * @param id The sprite to use for all faces.
+         * @return The sprite provider.
+         */
         @Contract("_ -> new")
         static @NotNull SpriteProvider single(Identifier id) {
             return new MachineBakedModel.SingleSpriteProvider(id);
         }
 
+        /**
+         * Returns a sprite provider that has a different front and back face, and uses machine side sprites.
+         * @param id The sprite to use for the front and back face.
+         * @return The sprite provider.
+         */
         @Contract("_ -> new")
         static @NotNull SpriteProvider zAxisSided(Identifier id) {
             return zAxisSided(id, id);
         }
 
+        /**
+         * Returns a sprite provider that has a different front and back face.
+         * @param id The sprite to use for the front and back face.
+         * @return The sprite provider.
+         */
         @Contract("_ -> new")
         static @NotNull SpriteProvider zAxis(Identifier id) {
             return zAxis(id, id);
         }
 
+        /**
+         * Returns a sprite provider that has a different front and back face.
+         * @param front The sprite to use for the front face.
+         * @param back The sprite to use for the back face.
+         * @return The sprite provider.
+         */
         @Contract("_, _ -> new")
         static @NotNull SpriteProvider zAxisSided(Identifier front, Identifier back) {
             return new MachineBakedModel.ZAxisSpriteProvider(front, back, true);
         }
 
+        /**
+         * Returns a sprite provider that has a different front and back face, and uses machine side sprites.
+         * @param front The sprite to use for the front face.
+         * @param back The sprite to use for the back face.
+         * @return The sprite provider.
+         */
         @Contract("_, _ -> new")
         static @NotNull SpriteProvider zAxis(Identifier front, Identifier back) {
             return new MachineBakedModel.ZAxisSpriteProvider(front, back, false);

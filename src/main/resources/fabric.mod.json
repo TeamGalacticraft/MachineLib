@@ -26,10 +26,6 @@
     "client": [ "dev.galacticraft.impl.MachineLibClient"],
     "main": [ "dev.galacticraft.impl.MachineLib"]
   },
-  "mixins": [
-    "${modid}.mixins.json"
-  ],
-  "accessWidener": "${modid}.accesswidener",
   "depends": {
     "fabricloader": ">=0.13",
     "minecraft": ">=1.18.2",

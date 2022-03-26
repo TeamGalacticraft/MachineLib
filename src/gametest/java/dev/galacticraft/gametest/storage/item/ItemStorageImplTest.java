@@ -38,6 +38,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.test.GameTest;
+import net.minecraft.test.GameTestException;
 import net.minecraft.test.TestContext;
 import net.minecraft.text.TextColor;
 import net.minecraft.text.TranslatableText;
@@ -93,6 +94,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
     void insert__generic(@NotNull TestContext context) {
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(6, this.storage.insert(ItemVariant.of(Items.POTATO), 6, transaction), "Expected 6 potatoes to be inserted!");
+            assertSlotContains(0, ItemVariant.of(Items.POTATO), 6, "Expected inventory to contain 6 potatoes!");
         }
     }
 
@@ -102,6 +104,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
 
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(12, this.storage.insert(ItemVariant.of(Items.YELLOW_DYE), 12, transaction), "Expected 12 yellow dye to be inserted!");
+            assertSlotContains(1, ItemVariant.of(Items.YELLOW_DYE), 12, "Expected inventory to contain 12 yellow dye!");
         }
     }
 
@@ -112,6 +115,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
 
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(6, this.storage.insert(ItemVariant.of(Items.HONEYCOMB), 6, transaction), "Expected 6 honeycombs to be inserted!");
+            assertSlotContains(0, ItemVariant.of(Items.HONEYCOMB), 12, "Expected inventory to contain 12 honeycombs!");
         }
     }
 
@@ -141,6 +145,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
 
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(0, this.storage.insert(ItemVariant.of(Items.DIAMOND), 14, transaction), "Expected 0 diamonds to be inserted!");
+            assertSlotContains(1, ItemVariant.blank(), 0, "Expected inventory to contain 0 diamonds!");
         }
     }
 
@@ -522,6 +527,15 @@ public final class ItemStorageImplTest implements MachineLibGametest {
         ItemSlot slot = this.storage.getSlot(index);
         slot.variant = variant;
         slot.amount = amount;
+    }
+
+    private void assertSlotContains(int index, @NotNull ItemVariant variant, long amount, String message) {
+        ItemSlot slot = this.storage.getSlot(index);
+        if (!variant.equals(slot.variant)) {
+            throw new GameTestException(format(message, variant, slot.variant, 1));
+        } else if (amount != slot.amount) {
+            throw new GameTestException(format(message, amount, slot.amount, 1));
+        }
     }
 
     private void fillSlotType(int index) {

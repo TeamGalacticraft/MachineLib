@@ -30,14 +30,33 @@ import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * An enum representing a face of a block.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public enum BlockFace {
+    /**
+     * The face of a block that is facing forwards.
+     */
     FRONT(new TranslatableText("ui.galacticraft.machine.configuration.front"), true),
+    /**
+     * The face of a block that is facing to the right, when facing in the direction the block is facing.
+     */
     RIGHT(new TranslatableText("ui.galacticraft.machine.configuration.right"), true),
+    /**
+     * The face of a block that is facing backwards.
+     */
     BACK(new TranslatableText("ui.galacticraft.machine.configuration.back"), true),
+    /**
+     * The face of a block that is facing to the left, when facing in the direction the block is facing.
+     */
     LEFT(new TranslatableText("ui.galacticraft.machine.configuration.left"), true),
+    /**
+     * The top face of a block.
+     */
     TOP(new TranslatableText("ui.galacticraft.machine.configuration.top"), false),
+    /**
+     * The bottom face of a block.
+     */
     BOTTOM(new TranslatableText("ui.galacticraft.machine.configuration.bottom"), false);
 
     private final MutableText name;
@@ -48,10 +67,20 @@ public enum BlockFace {
         this.horizontal = horizontal;
     }
 
+    /**
+     * The name of this face.
+     * @return The name of this face.
+     */
     public Text getName() {
         return name;
     }
 
+    /**
+     * Gets the face corresponding to the given direction and rotation.
+     * @param facing The rotation to get the face for.
+     * @param target The direction to get the face for.
+     * @return The face corresponding to the given direction and rotation.
+     */
     @NotNull
     public static BlockFace toFace(Direction facing, Direction target) {
         assert facing.getAxis() != Direction.Axis.Y;
@@ -95,6 +124,11 @@ public enum BlockFace {
         };
     }
 
+    /**
+     * Converts this face to the corresponding direction, based on the rotation of the block.
+     * @param facing The rotation of the block.
+     * @return The corresponding direction.
+     */
     @NotNull
     public Direction toDirection(Direction facing) {
         assert facing == Direction.NORTH || facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.WEST;
@@ -138,6 +172,10 @@ public enum BlockFace {
         };
     }
 
+    /**
+     * Returns the opposite face.
+     * @return The opposite face.
+     */
     public BlockFace getOpposite() {
         return switch (this) {
             case BOTTOM -> TOP;
@@ -149,10 +187,18 @@ public enum BlockFace {
         };
     }
 
+    /**
+     * Whether this face is a horizontal face.
+     * @return Whether this face is a horizontal face.
+     */
     public boolean horizontal() {
         return this.horizontal;
     }
 
+    /**
+     * Whether this face is a vertical face.
+     * @return Whether this face is a vertical face.
+     */
     public boolean vertical() {
         return !this.horizontal;
     }

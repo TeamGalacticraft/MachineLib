@@ -22,76 +22,33 @@
 
 package dev.galacticraft.api.machine;
 
-import dev.galacticraft.impl.machine.Constant;
-import net.minecraft.entity.player.PlayerEntity;
+import dev.galacticraft.impl.machine.MachineConfigurationImpl;
 import net.minecraft.nbt.NbtCompound;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public class MachineConfiguration {
-    private MachineStatus status = MachineStatus.NULL;
-    private RedstoneInteractionType redstone = RedstoneInteractionType.IGNORE;
-    private final MachineIOConfig configuration = new MachineIOConfig();
-    private final SecurityInfo security = new SecurityInfo();
-
-    public void setStatus(MachineStatus status) {
-        this.status = status;
+public interface MachineConfiguration {
+    @Contract(" -> new")
+    static @NotNull MachineConfiguration create() {
+        return new MachineConfigurationImpl();
     }
 
-    public void setRedstone(RedstoneInteractionType redstone) {
-        this.redstone = redstone;
-    }
+    void setStatus(@NotNull MachineStatus status);
 
-    public MachineIOConfig getSideConfiguration() {
-        return this.configuration;
-    }
+    void setRedstoneActivation(@NotNull RedstoneActivation redstone);
 
-    public SecurityInfo getSecurity() {
-        return this.security;
-    }
+    @NotNull MachineIOConfig getIOConfiguration();
 
-    public MachineStatus getStatus() {
-        return this.status;
-    }
+    @NotNull SecuritySettings getSecurity();
 
-    public RedstoneInteractionType getRedstoneInteraction() {
-        return this.redstone;
-    }
+    @NotNull MachineStatus getStatus();
 
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        nbt.put(Constant.Nbt.SECURITY, this.getSecurity().toTag(new NbtCompound()));
-        nbt.put(Constant.Nbt.CONFIGURATION, this.getSideConfiguration().toTag(new NbtCompound()));
-        this.redstone.toTag(nbt);
-        return nbt;
-    }
+    @NotNull RedstoneActivation getRedstoneActivation();
 
-    public NbtCompound toClientNbt(NbtCompound nbt, PlayerEntity player) {
-        if (security.hasAccess(player)) {
-            nbt.put(Constant.Nbt.SECURITY, this.getSecurity().toTag(new NbtCompound()));
-            nbt.put(Constant.Nbt.CONFIGURATION, this.getSideConfiguration().toTag(new NbtCompound()));
-            this.redstone.toTag(nbt);
-        }
-        return nbt;
-    }
+    @NotNull NbtCompound writeNbt(@NotNull NbtCompound nbt);
 
-    public void readNbt(NbtCompound nbt) {
-        this.getSecurity().fromTag(nbt.getCompound(Constant.Nbt.SECURITY));
-        this.getSideConfiguration().fromTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
-        this.redstone = RedstoneInteractionType.fromTag(nbt);
-    }
-
-    public static MachineConfiguration fromClientTag(NbtCompound nbt) {
-        MachineConfiguration configuration = new MachineConfiguration();
-        if (nbt.contains(Constant.Nbt.REDSTONE_INTERACTION_TYPE)) {
-            configuration.setRedstone(RedstoneInteractionType.fromTag(nbt));
-        }
-        if (nbt.contains(Constant.Nbt.CONFIGURATION)) {
-            configuration.getSideConfiguration().fromTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
-        }
-        if (nbt.contains(Constant.Nbt.SECURITY)) {
-            configuration.getSecurity().fromTag(nbt.getCompound(Constant.Nbt.SECURITY));
-        }
-        return configuration;
-    }
+    void readNbt(@NotNull NbtCompound nbt);
 }

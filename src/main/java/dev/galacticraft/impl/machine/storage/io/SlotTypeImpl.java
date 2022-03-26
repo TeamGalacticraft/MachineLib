@@ -22,17 +22,11 @@
 
 package dev.galacticraft.impl.machine.storage.io;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.machine.Constant;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
@@ -49,10 +43,9 @@ import java.util.function.Predicate;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T, V> {
-    public static final SlotTypeImpl<?, ?> NONE = Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), new TranslatableText("ui.galacticraft.io_config.none"), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
-    public static final SlotTypeImpl<Item, ItemVariant> WILDCARD_ITEM = Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "wildcard_item"), new SlotTypeImpl<>(TextColor.fromRgb(0x8d32c7), new TranslatableText("ui.galacticraft.io_config.wildcard_item"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM));
-    public static final SlotTypeImpl<Fluid, FluidVariant> WILDCARD_FLUID = Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "wildcard_fluid"), new SlotTypeImpl<>(TextColor.fromRgb(0x8d32c7), new TranslatableText("ui.galacticraft.io_config.wildcard_fluid"), v -> true, ResourceFlow.BOTH, ResourceType.FLUID));
-    public static final SlotTypeImpl<Gas, GasVariant> WILDCARD_GAS = Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "wildcard_gas"), new SlotTypeImpl<>(TextColor.fromRgb(0x9faac7), new TranslatableText("ui.galacticraft.io_config.wildcard_gas"), v -> true, ResourceFlow.BOTH, ResourceType.GAS));
+    static {
+        Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), new TranslatableText("ui.galacticraft.io_config.none"), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
+    }
 
     private final @NotNull RegistryEntry.Reference<SlotType<?, ?>> reference = REGISTRY.createEntry(this);
     private final @NotNull TextColor color;

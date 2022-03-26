@@ -24,8 +24,8 @@ package dev.galacticraft.api.block;
 
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.machine.RedstoneInteractionType;
-import dev.galacticraft.api.machine.SecurityInfo;
+import dev.galacticraft.api.machine.RedstoneActivation;
+import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
 import dev.galacticraft.impl.machine.Constant;
@@ -67,6 +67,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -74,10 +75,16 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * The base block for all machines.
+ *
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
+ * @see MachineBlockEntity
  */
 public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWithEntity {
-    public static final BooleanProperty ARBITRARY_BOOLEAN_PROPERTY = BooleanProperty.of("update");
+    /**
+     * This property represents whether or not the machine is active.
+     * It is used for world rendering purposes.
+     */
     public static final BooleanProperty ACTIVE = Constant.Property.ACTIVE;
 
     protected MachineBlock(Settings settings) {
@@ -87,7 +94,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         super.appendProperties(builder);
-        builder.add(Properties.HORIZONTAL_FACING, ARBITRARY_BOOLEAN_PROPERTY, ACTIVE);
+        builder.add(ACTIVE);
     }
 
     @Override
@@ -95,7 +102,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
 
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
-        return this.getDefaultState().with(Properties.HORIZONTAL_FACING, context.getPlayerFacing().getOpposite()).with(ARBITRARY_BOOLEAN_PROPERTY, false).with(ACTIVE, false);
+        return this.getDefaultState().with(Properties.HORIZONTAL_FACING, context.getPlayerFacing().getOpposite()).with(ACTIVE, false);
     }
 
     @Override
@@ -113,7 +120,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
 
     @Override
     public final void appendTooltip(ItemStack stack, BlockView view, List<Text> tooltip, TooltipContext context) {
-        Text text = machineInfo(stack, view, context.isAdvanced());
+        Text text = machineDescription(stack, view, context.isAdvanced());
         if (text != null) {
             if (Screen.hasShiftDown()) {
                 char[] line = text instanceof TranslatableText ? I18n.translate(((TranslatableText) text).getKey()).toCharArray() : text.getString().toCharArray();
@@ -149,10 +156,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                         text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
                     }
                     tooltip.add(text1);
-                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecurityInfo.Accessibility.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
+                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecuritySettings.Accessibility.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(new TranslatableText("ui.galacticraft.machine.redstone.redstone", RedstoneInteractionType.fromTag(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
+            tooltip.add(new TranslatableText("ui.galacticraft.machine.redstone.redstone", RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
         }
     }
 
@@ -166,7 +173,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         if (!world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
-                SecurityInfo security = machine.security();
+                SecuritySettings security = machine.security();
                 if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
                 if (security.isOwner(player.getGameProfile())) {
                     security.sendPacket(pos, (ServerPlayerEntity) player);
@@ -204,7 +211,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     public List<ItemStack> getDroppedStacks(BlockState state, LootContext.Builder builder) {
         BlockEntity entity = builder.get(LootContextParameters.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
-            if (machine.noDrops()) return Collections.emptyList();
+            if (machine.dropItemsOnBreak()) return Collections.emptyList();
         }
         return super.getDroppedStacks(state, builder);
     }
@@ -222,11 +229,18 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         return stack;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public <B extends BlockEntity> BlockEntityTicker<B> getTicker(World world, BlockState state, BlockEntityType<B> type) {
         return MachineBlockEntityTicker.getInstance();
     }
 
-    public abstract Text machineInfo(ItemStack stack, BlockView view, boolean advanced);
+    /**
+     * Returns this machine's description for the tooltip when LSHIFT is pressed.
+     * @param stack The item stack (the contained item is this block).
+     * @param view The world.
+     * @param advanced Whether advanced tooltips are enabled.
+     * @return This machine's description.
+     */
+    public abstract Text machineDescription(ItemStack stack, BlockView view, boolean advanced);
 }

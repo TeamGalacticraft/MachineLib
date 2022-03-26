@@ -63,6 +63,5 @@ public interface SlotType<T, V extends TransferVariant<T>> {
 
     boolean willAccept(V variant);
 
-    @ApiStatus.Internal
-    RegistryEntry.Reference<SlotType<?, ?>> getReference();
+    @ApiStatus.Internal RegistryEntry.Reference<SlotType<?, ?>> getReference();
 }

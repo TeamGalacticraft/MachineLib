@@ -26,6 +26,7 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.screen.Tank;
+import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
@@ -56,10 +57,10 @@ public class MachineLibC2SPackets {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.security().hasAccess(player)) {
                                 if (i == -1) {
-                                    machine.getConfiguration().getSideConfiguration().get(face).setMatching(null);
+                                    machine.getConfiguration().getIOConfiguration().get(face).setMatching(null);
                                     return;
                                 }
-                                machine.getConfiguration().getSideConfiguration().get(face).setMatching(Either.left(i));
+                                machine.getConfiguration().getIOConfiguration().get(face).setMatching(Either.left(i));
                             }
                         }
                     });
@@ -70,11 +71,11 @@ public class MachineLibC2SPackets {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.security().hasAccess(player)) {
                                 if (i == -1) {
-                                    machine.getConfiguration().getSideConfiguration().get(face).setMatching(null);
+                                    machine.getConfiguration().getIOConfiguration().get(face).setMatching(null);
                                     return;
                                 }
                                 SlotType<?, ?> type = SlotType.REGISTRY.get(i);
-                                machine.getConfiguration().getSideConfiguration().get(face).setMatching(Either.right(type));
+                                machine.getConfiguration().getIOConfiguration().get(face).setMatching(Either.right(type));
                             }
                         }
                     });
@@ -86,8 +87,8 @@ public class MachineLibC2SPackets {
                     if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.security().hasAccess(player)) {
-                            machine.getConfiguration().getSideConfiguration().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
-                            machine.getConfiguration().getSideConfiguration().get(face).setMatching(null);
+                            machine.getConfiguration().getIOConfiguration().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
+                            machine.getConfiguration().getIOConfiguration().get(face).setMatching(null);
                             machine.sync();
                         }
                     }
@@ -111,27 +112,28 @@ public class MachineLibC2SPackets {
     private static <T, V extends TransferVariant<T>> boolean acceptStack(@NotNull Tank<T, V> tank, @NotNull ContainerItemContext context) {
         Storage<V> storage = context.find(getLookup(tank.getResourceType()));
         if (storage != null) {
-            if (storage.supportsExtraction() && tank.storage.supportsInsertion()) {
+            ExposedStorage<T, V> eStorage = tank.getStorage();
+            if (storage.supportsExtraction() && eStorage.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     V storedResource;
                     if (tank.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, tank.storage.getFilter(tank.getIndex()), transaction);
+                        storedResource = StorageUtil.findStoredResource(storage, eStorage.getFilter(tank.getIndex()), transaction);
                     } else {
                         storedResource = tank.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericStorageUtil.move(storedResource, storage, tank.storage.getSlot(tank.getIndex()), Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, storage, eStorage.getSlot(tank.getIndex()), Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && tank.storage.supportsExtraction()) {
+            } else if (storage.supportsInsertion() && eStorage.supportsExtraction()) {
                 V storedResource = tank.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericStorageUtil.move(storedResource, tank.storage.getSlot(tank.getIndex()), storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, eStorage.getSlot(tank.getIndex()), storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }

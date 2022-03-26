@@ -32,6 +32,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.compat.ReadOnlySubInv;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.ItemSlot;
@@ -109,7 +110,12 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public int getSlotModCount(int index) {
-        return 0;
+        return this.inventory[index].getModCount();
+    }
+
+    @Override
+    public boolean isFull(int slot) {
+        return this.inventory[slot].getAmount() == this.inventory[slot].getCapacity();
     }
 
     @Override
@@ -357,6 +363,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public Inventory subInv(int start, int size) {
+        return new ReadOnlySubInv(this, start, size);
+    }
+
+    @Override
     public @NotNull NbtElement writeNbt() {
         NbtList list = new NbtList();
         for (ItemSlot itemSlot : this.inventory) {
@@ -398,7 +409,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public SlotType<Item, ItemVariant>[] getTypes() {
+    public SlotType<Item, ItemVariant> @NotNull [] getTypes() {
         return this.types;
     }
 

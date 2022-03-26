@@ -32,7 +32,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
 
-public class GasStorage {
+public final class GasStorage {
     public static final BlockApiLookup<Storage<GasVariant>, Direction> SIDED =
             BlockApiLookup.get(new Identifier(Constant.MOD_ID, "sided_gas_storage"), Storage.asClass(), Direction.class);
 

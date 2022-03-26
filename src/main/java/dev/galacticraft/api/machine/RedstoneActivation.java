@@ -26,22 +26,24 @@ import dev.galacticraft.impl.machine.Constant;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public enum RedstoneInteractionType implements StringIdentifiable {
+public enum RedstoneActivation implements StringIdentifiable {
     /**
      * Ignores redstone entirely.
      */
@@ -57,14 +59,14 @@ public enum RedstoneInteractionType implements StringIdentifiable {
      */
     HIGH(new TranslatableText("ui.galacticraft.redstone.high"), Constant.Text.RED_STYLE);
 
-    private final MutableText name;
+    private final Text name;
 
-    RedstoneInteractionType(TranslatableText name, Style style) {
+    RedstoneActivation(@NotNull TranslatableText name, @NotNull Style style) {
         this.name = name.setStyle(style);
     }
 
-    public static RedstoneInteractionType fromString(String string) {
-        return RedstoneInteractionType.valueOf(string.toUpperCase(Locale.ROOT));
+    public static RedstoneActivation fromString(@NotNull String string) {
+        return RedstoneActivation.valueOf(string.toUpperCase(Locale.ROOT));
     }
 
     public void sendPacket(BlockPos pos, ServerPlayerEntity player) {
@@ -75,19 +77,23 @@ public enum RedstoneInteractionType implements StringIdentifiable {
     }
 
     public Text getName() {
-        return name;
+        return this.name;
     }
 
     @Override
-    public String asString() {
+    public @NotNull String asString() {
         return this.name().toLowerCase(Locale.ROOT);
     }
 
-    public void toTag(NbtCompound nbt) {
-        nbt.putString(Constant.Nbt.REDSTONE_INTERACTION_TYPE, this.asString());
+    public NbtElement writeNbt() {
+        return NbtString.of(this.asString());
     }
 
-    public static RedstoneInteractionType fromTag(NbtCompound nbt) {
-        return fromString(nbt.getString(Constant.Nbt.REDSTONE_INTERACTION_TYPE));
+    public static @NotNull RedstoneActivation readNbt(@NotNull NbtElement nbt) {
+        if (nbt.getType() == NbtElement.STRING_TYPE) {
+            return fromString(nbt.asString());
+        } else {
+            throw new IllegalArgumentException("Expected a string, got " + nbt.getType());
+        }
     }
 }

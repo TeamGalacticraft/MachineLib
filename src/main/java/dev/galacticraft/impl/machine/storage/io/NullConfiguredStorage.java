@@ -35,7 +35,7 @@ public final class NullConfiguredStorage implements ConfiguredStorage {
 
     private NullConfiguredStorage() {}
     @Override
-    public SlotTypeImpl[] getTypes() {
+    public SlotTypeImpl @NotNull [] getTypes() {
         return EMPTY;
     }
 

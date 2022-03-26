@@ -44,6 +44,20 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
 
     Inventory playerInventory();
 
+    default Inventory subInv(int size) {
+        return this.subInv(0, size);
+    }
+
+    /**
+     * Returns a sub inventory of the given size starting at the given index.
+     * Read only.
+     *
+     * @param start
+     * @param size
+     * @return
+     */
+    Inventory subInv(int start, int size);
+
     class Builder {
         private int size = 0;
         private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();

@@ -26,126 +26,89 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;
-import dev.galacticraft.impl.machine.Constant;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import dev.galacticraft.impl.block.ConfiguredMachineFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public class ConfiguredMachineFace {
-    private ResourceType<?, ?> type;
-    private ResourceFlow flow;
-    private @Nullable Either<Integer, SlotType<?, ?>> matching = null;
-    private @Nullable Object storage = null;
-
-    public ConfiguredMachineFace(ResourceType<?, ?> type, ResourceFlow flow) {
-        this.type = type;
-        this.flow = flow;
+public interface ConfiguredMachineFace {
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull ConfiguredMachineFace of(ResourceType<?, ?> type, ResourceFlow flow) {
+        return new ConfiguredMachineFaceImpl(type, flow);
+    }
+    @Contract(value = " -> new", pure = true)
+    static @NotNull ConfiguredMachineFace create() {
+        return new ConfiguredMachineFaceImpl(ResourceType.NONE, ResourceFlow.BOTH);
     }
 
-    public void setOption(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
-        this.type = type;
-        this.flow = flow;
-        this.matching = null;
-        this.storage = null;
-    }
+    /**
+     * Configures this face to accept the given resource type and flow.
+     * @param type The type of resource to accept.
+     * @param flow The flow direction of the resource.
+     */
+    void setOption(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow);
 
-    public void setMatching(@Nullable Either<Integer, SlotType<?, ?>> matching) {
-        assert matching.right().isEmpty() || this.type.willAcceptResource(matching.right().get().getType());
-        this.matching = matching;
-        this.storage = null;
-    }
+    /**
+     * Sets the filter of this face.
+     * @param matching the filter to set.
+     */
+    void setMatching(@Nullable Either<Integer, SlotType<?, ?>> matching);
 
-    public ResourceType<?, ?> getType() {
-        return type;
-    }
+    /**
+     * Returns the type of resource that this face is configured to accept.
+     * @return The type of resource that this face is configured to accept.
+     */
+    ResourceType<?, ?> getType();
 
-    public ResourceFlow getFlow() {
-        return flow;
-    }
+    /**
+     * Returns the flow direction of this face.
+     * @return The flow direction of this face.
+     */
+    ResourceFlow getFlow();
 
-    public @Nullable Either<Integer, SlotType<?, ?>> getMatching() {
-        return matching;
-    }
+    /**
+     * Returns the filter of this face.
+     * @return The filter of this face.
+     */
+    @Nullable Either<Integer, SlotType<?, ?>> getMatching();
 
-    public <T, V extends TransferVariant<T>> ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
-        if (this.getType().willAcceptResource(storage.getResource())) {
-            if (this.storage == null) this.storage = storage.getExposedStorage(this.matching, this.flow);
-            return (ExposedStorage<T, V>) this.storage;
-        }
-        return storage.view();
-    }
+    /**
+     * Returns the exposed storage of this face.
+     * If the type of storage is invalid for this slot, it will be replaced with a read only storage view.
+     * @param storage The storage to use.
+     * @param <T> The type of storage.
+     * @param <V> The type of resource.
+     * @return The exposed storage of this face.
+     */
+    <T, V extends TransferVariant<T>> ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage);
 
-    public ExposedCapacitor getExposedStorage(@NotNull MachineEnergyStorage storage) {
-        if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.matching == null) {
-            if (this.storage == null) this.storage = storage.getExposedStorage(this.flow);
-            return (ExposedCapacitor) this.storage;
-        }
-        return storage.view();
-    }
+    /**
+     * Returns the exposed energy storage of this face.
+     * If the type of storage is not an energy storage, it will be replaced with a read only storage view.
+     * @param storage The storage to use.
+     * @return The exposed energy storage of this face.
+     */
+    ExposedCapacitor getExposedStorage(@NotNull MachineEnergyStorage storage);
 
-    public <T, V extends TransferVariant<T>> int[] getMatching(ConfiguredStorage<T, V> automatable) {
-        if (matching != null) {
-            if (matching.left().isPresent()) {
-                return new int[]{matching.left().get()};
-            } else {
-                IntList types = new IntArrayList();
-                SlotType<T, V>[] slots = automatable.getTypes();
-                SlotType<?, ?> type = matching.right().get();
-                for (int i = 0; i < slots.length; i++) {
-                    if (slots[i].equals(type)) {
-                        types.add(i);
-                    }
-                }
-                return types.toIntArray();
-            }
-        } else {
-            IntList types = new IntArrayList();
-            SlotType<T, V>[] slots = automatable.getTypes();
-            for (int i = 0; i < slots.length; i++) {
-                SlotType<T, V> slot = slots[i];
-                if (slot.getType().willAcceptResource(this.type)) {
-                    if (slot.getFlow().canFlowIn(this.flow)) {
-                        types.add(i);
-                    }
-                }
-            }
-            return types.toIntArray();
-        }
-    }
+    /**
+     * Returns the matching slots of this face in the provided storage.
+     * @param storage The storage to match.
+     * @param <T> The type of storage.
+     * @param <V> The type of resource.
+     * @return The matching slots of this face in the provided storage.
+     */
+    <T, V extends TransferVariant<T>> int[] getMatching(ConfiguredStorage<T, V> storage);
 
-    public NbtCompound toTag(@NotNull NbtCompound nbt) {
-        nbt.putByte(Constant.Nbt.FLOW, (byte) this.flow.ordinal());
-        nbt.putByte(Constant.Nbt.RESOURCE, this.type.getOrdinal());
-        nbt.putBoolean(Constant.Nbt.MATCH, this.matching != null);
-        if (this.matching != null) {
-            nbt.putBoolean(Constant.Nbt.IS_SLOT_ID, this.matching.left().isPresent());
-            if (this.matching.left().isPresent()) {
-                nbt.putInt(Constant.Nbt.VALUE, this.matching.left().get());
-            } else {
-                nbt.putString(Constant.Nbt.VALUE, this.matching.right().orElseThrow(RuntimeException::new).getReference().registryKey().getValue().toString());
-            }
-        }
-        return nbt;
-    }
+    /**
+     * Write the face to a new nbt compound.
+     * @return The nbt compound that was written to.
+     */
+    NbtCompound writeNbt();
 
-    public void fromTag(@NotNull NbtCompound nbt) {
-        this.type = ResourceType.getFromOrdinal(nbt.getByte(Constant.Nbt.RESOURCE));
-        this.flow = ResourceFlow.values()[nbt.getByte(Constant.Nbt.FLOW)];
-        if (nbt.getBoolean(Constant.Nbt.MATCH)) {
-            if (nbt.getBoolean(Constant.Nbt.IS_SLOT_ID)) {
-                this.matching = Either.left(nbt.getInt(Constant.Nbt.VALUE));
-            } else {
-                this.matching = Either.right(SlotType.REGISTRY.get(new Identifier(nbt.getString(Constant.Nbt.VALUE))));
-            }
-        } else {
-            this.matching = null;
-        }
-    }
+    void readNbt(@NotNull NbtCompound nbt);
 }

@@ -25,17 +25,7 @@ package dev.galacticraft.api.machine.storage.io;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import team.reborn.energy.api.EnergyStorage;
 
-public class ExposedCapacitor implements EnergyStorage {
-    private final EnergyStorage parent;
-    private final boolean insertion;
-    private final boolean extraction;
-
-    public ExposedCapacitor(EnergyStorage parent, boolean insertion, boolean extraction) {
-        this.parent = parent;
-        this.insertion = insertion;
-        this.extraction = extraction;
-    }
-
+public record ExposedCapacitor(EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
     @Override
     public boolean supportsInsertion() {
         return this.insertion;

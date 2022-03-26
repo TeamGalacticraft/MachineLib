@@ -65,7 +65,7 @@ public interface Constant {
         String CONFIGURATION = "Configuration";
         String VALUE = "Value";
         String ENERGY = "Energy";
-        String REDSTONE_INTERACTION_TYPE = "RedstoneInteraction";
+        String REDSTONE_ACTIVATION = "RedstoneActivation";
         String MATCH = "Match";
         String IS_SLOT_ID = "IsSlotId";
         String MAX_PROGRESS = "MaxProgress";

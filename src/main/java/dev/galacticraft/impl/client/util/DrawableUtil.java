@@ -29,8 +29,13 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Matrix4f;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -115,5 +120,16 @@ public class DrawableUtil {
             return s;
         }
         return s.substring(0, Math.min(s.length(), dot + 1 + places));
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public static @NotNull MutableText getEnergyDisplay(long amount) {
+        if (amount > 1_000_000L) {
+            return new LiteralText(roundForDisplay(amount / 1_000_000.0, 3) + " MgJ");
+        } else if (amount > 1_000L) {
+            return new LiteralText(roundForDisplay(amount / 1_000.0, 3) + " kgJ");
+        } else {
+            return new LiteralText(amount + " gJ");
+        }
     }
 }

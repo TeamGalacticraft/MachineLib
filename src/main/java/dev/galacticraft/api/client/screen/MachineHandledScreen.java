@@ -31,8 +31,9 @@ import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.api.machine.RedstoneInteractionType;
-import dev.galacticraft.api.machine.SecurityInfo;
+import dev.galacticraft.api.machine.MachineStatus;
+import dev.galacticraft.api.machine.RedstoneActivation;
+import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
@@ -219,6 +220,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private final List<Text> tooltipCache = new LinkedList<>();
     private final Identifier texture;
 
+    protected int capacitorX = 8;
+    protected int capacitorY = 8;
+    protected int capacitorHeight = 48;
+
     public MachineHandledScreen(H handler, PlayerInventory inv, Text title, Identifier texture) {
         super(handler, inv, title);
         this.pos = this.handler.machine.getPos();
@@ -262,9 +267,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             if (Tab.REDSTONE.isOpen()) {
                 matrices.push();
                 matrices.translate(-PANEL_WIDTH, SPACING, 0);
-                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneInteractionType.IGNORE);
-                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneInteractionType.LOW);
-                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneInteractionType.HIGH);
+                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.IGNORE);
+                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.LOW);
+                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.HIGH);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
                 this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, REDSTONE);
                 this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
@@ -325,9 +330,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
                 this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
 
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecurityInfo.Accessibility.PUBLIC || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecurityInfo.Accessibility.TEAM || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecurityInfo.Accessibility.PRIVATE || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.PUBLIC || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.TEAM || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.PRIVATE || !machine.security().isOwner(this.handler.player));
                 this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, ICON_LOCK_PARTY_U, ICON_LOCK_PARTY_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
@@ -351,7 +356,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     }
 
     private void drawMachineFace(MatrixStack matrices, int x, int y, MachineBlockEntity machine, BlockFace face) {
-        ConfiguredMachineFace machineFace = machine.getConfiguration().getSideConfiguration().get(face);
+        ConfiguredMachineFace machineFace = machine.getConfiguration().getIOConfiguration().get(face);
         drawSprite(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
@@ -407,17 +412,17 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 return true;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneInteractionType.IGNORE);
+                this.setRedstone(RedstoneActivation.IGNORE);
                 this.playButtonSound();
                 return true;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneInteractionType.LOW);
+                this.setRedstone(RedstoneActivation.LOW);
                 this.playButtonSound();
                 return true;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneInteractionType.HIGH);
+                this.setRedstone(RedstoneActivation.HIGH);
                 this.playButtonSound();
                 return true;
             }
@@ -514,17 +519,17 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityInfo.Accessibility.PRIVATE);
+                    this.setAccessibility(SecuritySettings.Accessibility.PRIVATE);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityInfo.Accessibility.TEAM);
+                    this.setAccessibility(SecuritySettings.Accessibility.TEAM);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityInfo.Accessibility.PUBLIC);
+                    this.setAccessibility(SecuritySettings.Accessibility.PUBLIC);
                     this.playButtonSound();
                     return true;
                 }
@@ -542,12 +547,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         return false;
     }
 
-    protected void setAccessibility(SecurityInfo.Accessibility accessibility) {
+    protected void setAccessibility(SecuritySettings.Accessibility accessibility) {
         this.machine.security().setAccessibility(accessibility);
         ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer((Long.SIZE / Byte.SIZE) + 1).writeByte(accessibility.ordinal())));
     }
 
-    protected void setRedstone(RedstoneInteractionType redstone) {
+    protected void setRedstone(RedstoneActivation redstone) {
         this.machine.setRedstone(redstone);
         ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "redstone_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer((Long.SIZE / Byte.SIZE) + 1).writeByte(redstone.ordinal())));
     }
@@ -561,13 +566,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             mouseX += PANEL_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneInteractionType.IGNORE.getName(), mX, mY);
+                this.renderTooltip(matrices, RedstoneActivation.IGNORE.getName(), mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneInteractionType.LOW.getName(), mX, mY);
+                this.renderTooltip(matrices, RedstoneActivation.LOW.getName(), mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneInteractionType.HIGH.getName(), mX, mY);
+                this.renderTooltip(matrices, RedstoneActivation.HIGH.getName(), mX, mY);
             }
         } else {
             mouseX += TAB_WIDTH;
@@ -632,13 +637,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityInfo.Accessibility.PRIVATE.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.Accessibility.PRIVATE.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityInfo.Accessibility.TEAM.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.Accessibility.TEAM.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityInfo.Accessibility.PUBLIC.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.Accessibility.PUBLIC.getName(), mX, mY);
                 }
             } else {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
@@ -662,7 +667,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     protected void renderFaceTooltip(MatrixStack matrices, BlockFace face, int mouseX, int mouseY) {
         tooltipCache.add(face.getName());
-        ConfiguredMachineFace configuredFace = this.machine.getConfiguration().getSideConfiguration().get(face);
+        ConfiguredMachineFace configuredFace = this.machine.getConfiguration().getIOConfiguration().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
             tooltipCache.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
@@ -707,7 +712,35 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         this.renderBackground(matrices, delta, mouseX, mouseY);
         this.drawConfigTabs(matrices, mouseX, mouseY, delta);
         this.drawTanks(matrices, mouseX, mouseY, delta);
+        this.drawCapacitor(matrices, mouseX, mouseY, delta);
         this.handleSlotHighlight(matrices, mouseX, mouseY, delta);
+    }
+
+    private void drawCapacitor(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+        if (this.machine.capacitor().getCapacity() > 0) {
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
+            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, this.y + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            float scale = (float) ((double) this.machine.capacitor().getAmount() / (double) this.machine.capacitor().getCapacity());
+            DrawableUtil.drawProgressTexture(matrices, this.x, (int) (this.y + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+
+            if (DrawableUtil.isWithin(mouseX, mouseY, this.x + this.capacitorX, this.y + this.capacitorY, 16, this.capacitorHeight)) {
+                List<Text> lines = new ArrayList<>();
+                MachineStatus status = this.machine.getStatus();
+                if (status != MachineStatus.NULL) {
+                    lines.add(new TranslatableText("ui.galacticraft.machine.status").setStyle(Constant.Text.GRAY_STYLE).append(status.getName()));
+                }
+                lines.add(new TranslatableText("ui.galacticraft.machine.current_energy", DrawableUtil.getEnergyDisplay(this.machine.capacitor().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+                lines.add(new TranslatableText("ui.galacticraft.machine.max_energy", DrawableUtil.getEnergyDisplay(this.machine.capacitor().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                this.appendEnergyTooltip(lines);
+
+                assert this.client.currentScreen != null;
+                matrices.translate(0.0D, 0.0D, 1.0D);
+                this.client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
+                matrices.translate(0.0D, 0.0D, -1.0D);
+            }
+        }
     }
 
     protected void renderBackground(MatrixStack matrices, float delta, int mouseX, int mouseY) {
@@ -908,7 +941,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    private void drawSlotOverlay(MatrixStack matrices, Slot slot) {
+    private void drawSlotOverlay(@NotNull MatrixStack matrices, @NotNull Slot slot) {
         int index = slot.getIndex();
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
@@ -960,7 +993,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 tankMod = this.focusedTank.acceptStack(ContainerItemContext.ofPlayerCursor(this.handler.player, this.handler));
                 if (tankMod) {
                     PacketByteBuf packetByteBuf = PacketByteBufs.create().writeVarInt(this.handler.syncId);
-                    packetByteBuf.writeInt(this.focusedTank.id);
+                    packetByteBuf.writeInt(this.focusedTank.getId());
                     ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "tank_modify"), packetByteBuf);
                 }
             }
@@ -1256,9 +1289,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }); //MID
 
         static final SideConfigurationAction[] VALUES = SideConfigurationAction.values();
-        private final SecurityUpdater updater;
+        private final IOConfigUpdater updater;
 
-        SideConfigurationAction(SecurityUpdater updater) {
+        SideConfigurationAction(IOConfigUpdater updater) {
             this.updater = updater;
         }
 
@@ -1267,7 +1300,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
 
         @FunctionalInterface
-        interface SecurityUpdater {
+        interface IOConfigUpdater {
             void update(ClientPlayerEntity player, MachineBlockEntity machine, BlockFace face, boolean back, boolean reset);
         }
     }

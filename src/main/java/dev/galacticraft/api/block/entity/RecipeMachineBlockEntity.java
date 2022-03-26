@@ -51,10 +51,27 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
         this.recipeType = recipeType;
     }
 
+    /**
+     * The crafting inventory of the machine.
+     * Will not be modified.
+     * @return The crafting inventory of the machine.
+     */
     protected abstract @NotNull C craftingInv();
 
+    /**
+     * Inserts the recipe's output into the machine's inventory.
+     * @param recipe The recipe to output.
+     * @param transaction The current transaction.
+     * @return Whether the recipe was successfully output.
+     */
     protected abstract boolean outputStacks(R recipe, TransactionContext transaction);
 
+    /**
+     * Extracts the recipe's input from the machine's inventory.
+     * @param recipe The recipe to extract.
+     * @param transaction The current transaction.
+     * @return Whether the recipe was successfully extracted.
+     */
     protected abstract boolean extractCraftingMaterials(R recipe, TransactionContext transaction);
 
     @Override
@@ -80,12 +97,23 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
         }
     }
 
+    /**
+     * Whether the machine can output the given recipe.
+     * @param recipe The recipe to check.
+     * @param context The current transaction.
+     * @return Whether the machine can output the given recipe.
+     */
     protected boolean canOutput(R recipe, @Nullable TransactionContext context) {
         try (Transaction transaction = Transaction.openNested(context)) {
             return outputStacks(recipe, transaction);
         }
     }
 
+    /**
+     * Crafts the given recipe.
+     * @param recipe The recipe to craft.
+     * @param transaction The current transaction.
+     */
     protected void craft(R recipe, TransactionContext transaction) {
         try (Transaction inner = Transaction.openNested(transaction)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
@@ -100,53 +128,102 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
         else this.setRecipeAndProgress(recipe);
     }
 
+    /**
+     * Resets the progress of the machine.
+     */
     protected void resetRecipeProgress() {
         this.activeRecipe(null);
         this.progress(0);
         this.maxProgress(0);
     }
 
+    /**
+     * Sets the recipe and resets progress of the machine.
+     * @param recipe The recipe to set.
+     */
     protected void setRecipeAndProgress(@NotNull R recipe) {
         this.activeRecipe(recipe);
         this.maxProgress(this.getProcessTime(recipe));
         this.progress(0);
     }
 
+    /**
+     * Returns the recipe type of the machine.
+     * @return The recipe type of the machine.
+     */
     public RecipeType<R> recipeType() {
         return this.recipeType;
     }
 
+    /**
+     * Finds the first valid recipe in the machine's inventory.
+     * @return The first valid recipe in the machine's inventory.
+     */
     protected @Nullable R findValidRecipe() {
         assert this.world != null;
         return this.world.getRecipeManager().getFirstMatch(this.recipeType(), this.craftingInv(), this.world).orElse(null);
     }
 
+    /**
+     * Returns the process time of the given recipe.
+     * @param recipe The recipe to get the process time of.
+     * @return The process time of the given recipe.
+     */
     protected abstract int getProcessTime(@NotNull R recipe);
 
+    /**
+     * Sets and returns the crafting progress of the machine.
+     * @param progress The progress to set.
+     * @return The progress of the machine.
+     */
     public int progress(int progress) {
         return this.progress = progress;
     }
 
+    /**
+     * Sets the maximum progress of the machine.
+     * @param maxProgress The maximum progress to set.
+     */
     public void maxProgress(int maxProgress) {
         this.maxProgress = maxProgress;
     }
 
+    /**
+     * Returns the progress of the machine.
+     * @return The progress of the machine.
+     */
     public int progress() {
         return this.progress;
     }
 
+    /**
+     * Returns the active recipe of the machine.
+     * @return The active recipe of the machine.
+     */
     public @Nullable R activeRecipe() {
         return this.activeRecipe;
     }
 
+    /**
+     * Sets the active recipe of the machine.
+     * @param activeRecipe The recipe to set.
+     */
     protected void activeRecipe(@Nullable R activeRecipe) {
         this.activeRecipe = activeRecipe;
     }
 
+    /**
+     * Returns the maximum progress of the machine.
+     * @return The maximum progress of the machine.
+     */
     public int maxProgress() {
         return this.maxProgress;
     }
 
+    /**
+     * Returns whether the machine is currently processing a recipe.
+     * @return Whether the machine is currently processing a recipe.
+     */
     public boolean active() {
         return this.maxProgress > 0;
     }
@@ -169,23 +246,5 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     public void setWorld(World world) {
         super.setWorld(world);
         this.activeRecipe(this.findValidRecipe());
-    }
-
-    @FunctionalInterface
-    public interface RecipeTimeFunction<C extends Inventory, R extends Recipe<C>> {
-        /**
-         * Returns the process length of the recipe.
-         * @param recipe The recipe to get the process length of
-         * @return the process length of the recipe.
-         */
-        int getRecipeLength(R recipe);
-    }
-
-    @FunctionalInterface
-    public interface ItemOutputFunction {
-        /**
-         * Be sure to copy the stack (even if you don't change anything else)
-         */
-        ItemStack getOutput(ItemStack stack);
     }
 }

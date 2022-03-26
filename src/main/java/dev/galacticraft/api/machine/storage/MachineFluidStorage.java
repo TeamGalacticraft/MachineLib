@@ -54,7 +54,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
             return new Builder();
         }
 
-        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, int capacity, TankDisplay display) {
+        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
             this.displays.add(display);

@@ -104,7 +104,12 @@ public class MachineGasStorageImpl implements MachineGasStorage {
 
     @Override
     public int getSlotModCount(int index) {
-        return 0;
+        return this.inventory[index].getModCount();
+    }
+
+    @Override
+    public boolean isFull(int slot) {
+        return this.inventory[slot].getAmount() == this.inventory[slot].getCapacity();
     }
 
     @Override
@@ -381,7 +386,7 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public SlotType<Gas, GasVariant>[] getTypes() {
+    public SlotType<Gas, GasVariant> @NotNull [] getTypes() {
         return this.types;
     }
 
@@ -420,7 +425,7 @@ public class MachineGasStorageImpl implements MachineGasStorage {
         ExposedStorage<Gas, GasVariant> of = ExposedStorage.of(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
-            handler.addTank(new Tank<>(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.GAS));
+            handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.GAS));
         }
     }
 

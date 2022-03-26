@@ -23,6 +23,7 @@
 package dev.galacticraft.api.gas;
 
 import com.mojang.serialization.Lifecycle;
+import dev.galacticraft.impl.gas.GasImpl;
 import dev.galacticraft.impl.gas.GasVariantImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.fluid.Fluid;
@@ -34,25 +35,25 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.util.registry.RegistryKey;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Gas {
-    public static final Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("galacticraft-api:empty", RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas")), Lifecycle.stable(), Gas::getReference)).buildAndRegister();
-    public static final Gas EMPTY = new Gas(new TranslatableText("gas.galacticraft-api.empty"), new Identifier("minecraft", "empty"), "");
+public interface Gas {
+    RegistryKey<Registry<Gas>> REGISTRY_KEY = RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas"));
+    Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("galacticraft-api:empty", REGISTRY_KEY, Lifecycle.stable(), Gas::getReference)).buildAndRegister();
+    Gas EMPTY = Registry.register(REGISTRY, new Identifier("galacticraft-api:empty"), new GasImpl(new TranslatableText("gas.galacticraft-api.empty"), new Identifier("minecraft", "empty"), "", ""));
 
-    private final TranslatableText name;
-    private final @Nullable Identifier fluid;
-    private final String symbol;
-    private final String displaySymbol;
-    private final GasVariant variant = new GasVariantImpl(this, null);
-    private final RegistryEntry.Reference<Gas> reference = REGISTRY.createEntry(this);
-
-    public Gas(TranslatableText name, @Nullable Identifier fluid, String symbol) {
-        this.name = name;
-        this.fluid = fluid;
-        this.symbol = symbol;
-        this.displaySymbol = this.symbol
+    /**
+     * Creates a new gas.
+     * @param name The name of the gas
+     * @param fluid The fluid associated with the gas
+     * @param symbol The symbol of the gas
+     * @return The newly created gas
+     */
+    @Contract("_, _, _ -> new")
+    static @NotNull Gas create(TranslatableText name, @Nullable Identifier fluid, String symbol) {
+        return new GasImpl(name, fluid, symbol, symbol
                 .replaceAll("0", "₀")
                 .replaceAll("1", "₁")
                 .replaceAll("2", "₂")
@@ -62,43 +63,35 @@ public class Gas {
                 .replaceAll("6", "₆")
                 .replaceAll("7", "₇")
                 .replaceAll("8", "₈")
-                .replaceAll("9", "₉");
+                .replaceAll("9", "₉"));
     }
 
-    public static int getRawId(Gas gas) {
+    static int getRawId(Gas gas) {
         return REGISTRY.getRawId(gas);
     }
 
-    public static Gas byRawId(int id) {
+    static Gas byRawId(int id) {
         return REGISTRY.get(id);
     }
 
-    public Text getName() {
-        return this.name;
-    }
+    Text getName();
 
-    public String getTranslationKey() {
-        return this.name.getKey();
-    }
+    String getTranslationKey();
 
-    public String getSymbol() {
-        return symbol;
-    }
+    String getSymbol();
 
-    public String symbolForDisplay() {
-        return this.displaySymbol;
-    }
+    String symbolForDisplay();
 
-    public @NotNull Fluid getFluid() {
-        return Registry.FLUID.get(this.fluid);
-    }
+    @NotNull Fluid getFluid();
 
-    public RegistryEntry.Reference<Gas> getReference() {
-        return reference;
-    }
+    RegistryEntry.Reference<Gas> getReference();
 
+    /**
+     * Returns the gas variant associated with this gas.
+     * This is an internal method and should not be used by other mods.
+     * @return The gas variant associated with this gas
+     * @see GasVariant#of(Gas)
+     */
     @ApiStatus.Internal
-    public GasVariant _getVariant() {
-        return variant;
-    }
+    GasVariant _getVariant();
 }

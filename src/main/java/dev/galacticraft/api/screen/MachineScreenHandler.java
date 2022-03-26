@@ -25,17 +25,18 @@ package dev.galacticraft.api.screen;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.screen.property.StatusProperty;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -97,15 +98,20 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         return stack;
     }
 
+    /**
+     * Creates player inventory slots for this screen in the default inventory formation.
+     * @param x The x position of the top left slot.
+     * @param y The y position of the top left slot.
+     */
     protected void addPlayerInventorySlots(int x, int y) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                super.addSlot(new Slot(this.player.getInventory(), j + i * 9 + 9, x + j * 18, y + i * 18));
+                this.addSlot(new Slot(this.player.getInventory(), j + i * 9 + 9, x + j * 18, y + i * 18));
             }
         }
 
         for (int i = 0; i < 9; ++i) {
-            super.addSlot(new Slot(this.player.getInventory(), i, x + i * 18, y + 58));
+            this.addSlot(new Slot(this.player.getInventory(), i, x + i * 18, y + 58));
         }
     }
 
@@ -116,12 +122,17 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
 
     @Override
     public boolean canUse(PlayerEntity player) {
-        return machine.security().hasAccess(player);
+        return this.machine.security().hasAccess(player);
     }
 
     @Override
     public void syncState() {
         super.syncState();
+        this.syncStorages();
+    }
+
+    @ApiStatus.Internal
+    private void syncStorages() {
         assert player instanceof ServerPlayerEntity;
 
         int sync = 0;
@@ -144,7 +155,8 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         }
     }
 
-    public void recieveState(@NotNull PacketByteBuf buf) {
+    @ApiStatus.Internal
+    public void receiveState(@NotNull PacketByteBuf buf) {
         int sync = buf.readVarInt();
         for (int i = 0; i < sync; i++) {
             this.syncHandlers.get(buf.readVarInt()).read(buf);
@@ -152,25 +164,8 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     }
 
     public void addTank(@NotNull Tank<?, ?> tank) {
-        tank.id = this.tanks.size();
+        tank.setId(this.tanks.size());
         this.tanks.add(tank);
     }
 
-    private static class StatusProperty extends Property {
-        private final MachineBlockEntity machine;
-
-        public StatusProperty(MachineBlockEntity machine) {
-            this.machine = machine;
-        }
-
-        @Override
-        public int get() {
-            return machine.getStatus().getIndex();
-        }
-
-        @Override
-        public void set(int value) {
-            machine.setStatusById(value);
-        }
-    }
 }

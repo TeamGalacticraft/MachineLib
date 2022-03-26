@@ -22,7 +22,7 @@
 
 package dev.galacticraft.impl;
 
-import dev.galacticraft.api.client.model.MachineUnbakedModel;
+import dev.galacticraft.impl.client.model.MachineUnbakedModel;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
 import dev.galacticraft.impl.client.network.MachineLibS2CPackets;
 import dev.galacticraft.impl.client.resource.MachineLibResourceReloadListener;

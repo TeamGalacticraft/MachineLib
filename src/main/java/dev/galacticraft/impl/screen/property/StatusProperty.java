@@ -20,33 +20,25 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine;
+package dev.galacticraft.impl.screen.property;
 
-import dev.galacticraft.api.block.ConfiguredMachineFace;
-import dev.galacticraft.api.block.util.BlockFace;
-import dev.galacticraft.impl.machine.MachineIOConfigImpl;
-import net.minecraft.nbt.NbtCompound;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import net.minecraft.screen.Property;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
-public interface MachineIOConfig {
-    @Contract(" -> new")
-    static @NotNull MachineIOConfig create() {
-        return new MachineIOConfigImpl();
+public class StatusProperty extends Property {
+    private final MachineBlockEntity machine;
+
+    public StatusProperty(MachineBlockEntity machine) {
+        this.machine = machine;
     }
 
-    /**
-     * Please do not modify the returned {@link ConfiguredMachineFace}
-     *
-     * @param face the block face to pull the option from
-     * @return a {@link ConfiguredMachineFace} assigned to the given face.
-     */
-    ConfiguredMachineFace get(@NotNull BlockFace face);
+    @Override
+    public int get() {
+        return machine.getStatus().getIndex();
+    }
 
-    @NotNull NbtCompound writeNbt();
-
-    void readNbt(@NotNull NbtCompound nbt);
+    @Override
+    public void set(int value) {
+        machine.setStatusById(value);
+    }
 }
