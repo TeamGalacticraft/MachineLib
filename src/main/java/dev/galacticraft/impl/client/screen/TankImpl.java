@@ -33,8 +33,11 @@ import dev.galacticraft.impl.util.GenericStorageUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
@@ -154,7 +157,7 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
             } else {
                 translatableText = new TranslatableText("ui.galacticraft.machine.tank.fluid");
             }
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(new LiteralText(getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE)));
+            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
             lines.add(new TranslatableText("ui.galacticraft.machine.tank.amount").setStyle(Constant.Text.GRAY_STYLE).append(amount.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
             client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
         }
@@ -162,42 +165,15 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
     }
 
     @Environment(EnvType.CLIENT)
-    private String getName(@NotNull TransferVariant<?> object) {
+    private Text getName(@NotNull TransferVariant<?> object) {
         Object obj = object.getObject();
         if (obj instanceof Gas) {
-            return I18n.translate(((Gas) obj).getTranslationKey());
-        } else if (obj instanceof Fluid fluid) {
-            Identifier id = Registry.FLUID.getId(fluid);
-            if (I18n.hasTranslation("fluid." + id.getNamespace() + "." + id.getPath())) {
-                return I18n.translate("fluid." + id.getNamespace() + "." + id.getPath());
-            } else if (I18n.hasTranslation("block." + id.getNamespace() + "." + id.getPath())) {
-                return I18n.translate("block." + id.getNamespace() + "." + id.getPath());
-            } else {
-                Item bucketItem = ((Fluid) obj).getBucketItem();
-                if (bucketItem == Items.AIR) {
-                    return guessNameFromId(id);
-                } else {
-                    return I18n.translate(bucketItem.getTranslationKey()).replace(I18n.translate("item.minecraft.bucket"), "").trim();
-                }
-            }
-
+            return new TranslatableText(((Gas) obj).getTranslationKey());
+        } else if (object instanceof FluidVariant variant) {
+            return FluidVariantRendering.getName(variant);
         } else {
-            return "Invalid tank entry?!";
+            return Text.of("Invalid tank entry?!");
         }
-    }
-
-    @NotNull
-    private String guessNameFromId(@NotNull Identifier id) {
-        char[] chars = id.getPath().replace("flowing", "").replace("still", "").replace("_", " ").trim().toCharArray();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < chars.length; i++) {
-            if (i == 0 || chars[i - 1] == ' ') {
-                builder.append(Character.toUpperCase(chars[i]));
-            } else {
-                builder.append(chars[i]);
-            }
-        }
-        return builder.toString();
     }
 
     @Override

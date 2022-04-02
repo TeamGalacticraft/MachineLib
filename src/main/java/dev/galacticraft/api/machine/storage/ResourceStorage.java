@@ -141,6 +141,8 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     boolean isFull(int slot);
 
+    boolean isEmpty(int slot);
+
     @ApiStatus.Internal
     SingleVariantStorage<V> getSlot(int index);
 

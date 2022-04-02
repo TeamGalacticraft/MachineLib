@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public interface Gas {
     RegistryKey<Registry<Gas>> REGISTRY_KEY = RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas"));
     Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("galacticraft-api:empty", REGISTRY_KEY, Lifecycle.stable(), Gas::getReference)).buildAndRegister();
@@ -82,7 +84,7 @@ public interface Gas {
 
     String symbolForDisplay();
 
-    @NotNull Fluid getFluid();
+    @NotNull Optional<Fluid> getFluid();
 
     RegistryEntry.Reference<Gas> getReference();
 

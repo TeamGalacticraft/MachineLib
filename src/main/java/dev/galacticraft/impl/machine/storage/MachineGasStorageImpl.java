@@ -113,7 +113,12 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public SingleVariantStorage<GasVariant> getSlot(int index) {
+    public boolean isEmpty(int slot) {
+        return this.inventory[slot].getAmount() == 0;
+    }
+
+    @Override
+    public GasSlot getSlot(int index) {
         return this.inventory[index];
     }
 

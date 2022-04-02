@@ -119,6 +119,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public boolean isEmpty(int slot) {
+        return this.inventory[slot].getAmount() == 0;
+    }
+
+    @Override
     public ItemSlot getSlot(int index) {
         return this.inventory[index];
     }

@@ -113,6 +113,11 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
+    public boolean isEmpty(int slot) {
+        return this.inventory[slot].getAmount() == 0;
+    }
+
+    @Override
     public SingleVariantStorage<FluidVariant> getSlot(int index) {
         return this.inventory[index];
     }

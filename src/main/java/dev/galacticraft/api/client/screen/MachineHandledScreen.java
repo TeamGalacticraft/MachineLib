@@ -53,6 +53,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -755,30 +756,38 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         for (Tank<?, ?> tank : this.handler.tanks) {
             fill(matrices, this.x + tank.getX(), this.y + tank.getY(), this.x + tank.getX() + tank.getWidth(), this.y + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
-            Fluid fluid;
-            if (tank.getResourceType() == ResourceType.FLUID) {
-                fluid = ((FluidVariant) tank.getResource()).getFluid();
-            } else if (tank.getResourceType() == ResourceType.GAS) {
-                fluid = ((GasVariant) tank.getResource()).getGas().getFluid();
-            } else {
-                fluid = Fluids.EMPTY;
-            }
-
-            Sprite sprite;
-            if (fluid == Fluids.EMPTY) {
-                sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
-            } else {
-                FluidRenderHandler fluidRenderHandler = FluidRenderHandlerRegistry.INSTANCE.get(fluid);
-                if (fluidRenderHandler == null) {
-                    sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
+            if (tank.getAmount() > 0) {
+                Sprite sprite;
+                boolean fillFromTop = false;
+                int fluidColor = 0xFFFFFF;
+                if (tank.getResourceType() == ResourceType.FLUID) {
+                    FluidVariant resource = (FluidVariant) tank.getResource();
+                    fillFromTop = FluidVariantRendering.fillsFromTop(resource);
+                    sprite = FluidVariantRendering.getSprite(resource);
+                    fluidColor = FluidVariantRendering.getColor(resource);
+                } else if (tank.getResourceType() == ResourceType.GAS) {
+                    fillFromTop = true;
+                    Optional<Fluid> fluid = ((GasVariant) tank.getResource()).getGas().getFluid();
+                    if (fluid.isPresent()) {
+                        FluidVariant of = FluidVariant.of(fluid.get(), tank.getResource().copyNbt());
+                        sprite = FluidVariantRendering.getSprite(of);
+                        fluidColor = FluidVariantRendering.getColor(of);
+                    } else {
+                        sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
+                    }
                 } else {
-                    sprite = fluidRenderHandler.getFluidSprites(world, pos, fluid.getDefaultState())[0];
+                    sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
+                }
+
+                RenderSystem.setShaderTexture(0, sprite.getAtlas().getId());
+                RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
+                double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
+                if (!fillFromTop) {
+                    DrawableUtil.drawTexturedQuad_F(matrices.peek().getPositionMatrix(), this.x, this.x + tank.getWidth(), this.y + tank.getHeight(), (float) (this.y + (v * tank.getHeight())), tank.getWidth(), sprite.getMinU(), sprite.getMaxU(), sprite.getMinV(), (float) (sprite.getMinV() + ((sprite.getMaxV() - sprite.getMinV()) * v)));
+                } else {
+                    DrawableUtil.drawTexturedQuad_F(matrices.peek().getPositionMatrix(), this.x, this.x + tank.getWidth(), this.y, (float) (this.y + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getMinU(), sprite.getMaxU(), sprite.getMinV(), (float) (sprite.getMinV() + ((sprite.getMaxV() - sprite.getMinV()) * v)));
                 }
             }
-            RenderSystem.setShaderTexture(0, sprite.getAtlas().getId());
-            double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
-            DrawableUtil.drawTexturedQuad_F(matrices.peek().getPositionMatrix(), this.x, this.x + tank.getWidth(), this.y + tank.getHeight(), (float) (this.y + (v * tank.getHeight())), tank.getWidth(), sprite.getMinU(), sprite.getMaxU(), sprite.getMinV(), (float) (sprite.getMinV() + ((sprite.getMaxV() - sprite.getMinV()) * v)));
-            matrices.pop();
 
             boolean shorten = true;
             for (int y = this.y + tank.getY() + tank.getHeight() - 2; y > this.y + tank.getY(); y -= 3) {

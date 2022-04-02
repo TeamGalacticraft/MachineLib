@@ -35,6 +35,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public class GasImpl implements Gas {
     private final TranslatableText name;
     private final @Nullable Identifier fluid;
@@ -75,8 +77,8 @@ public class GasImpl implements Gas {
     }
 
     @Override
-    public @NotNull Fluid getFluid() {
-        return Registry.FLUID.get(this.fluid);
+    public @NotNull Optional<Fluid> getFluid() {
+        return Registry.FLUID.getOrEmpty(this.fluid);
     }
 
     @Override
