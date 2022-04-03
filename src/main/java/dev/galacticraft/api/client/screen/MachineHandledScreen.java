@@ -666,7 +666,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    protected void renderFaceTooltip(MatrixStack matrices, BlockFace face, int mouseX, int mouseY) {
+    protected void renderFaceTooltip(MatrixStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
         tooltipCache.add(face.getName());
         ConfiguredMachineFace configuredFace = this.machine.getConfiguration().getIOConfiguration().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
