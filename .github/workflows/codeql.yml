@@ -39,4 +39,4 @@ jobs:
           arguments: checkLicenses build
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@2
+        uses: github/codeql-action/analyze@v2
