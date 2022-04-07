@@ -20,33 +20,52 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.api.transfer.v1;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.transfer.v1.LongTransactiveHolderImpl;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+public interface LongTransactiveHolder extends TransactiveHolder<Long> {
+    @Contract("_ -> new")
+    static @NotNull LongTransactiveHolder create(long value) {
+        return new LongTransactiveHolderImpl(value);
+    }
+    /**
+     * @deprecated Use {@link #getLong()} instead.
+     */
+    @Override
+    @Deprecated
+    default @NotNull Long get() {
+        return this.getLong();
+    }
+
+    /**
+     * @deprecated Use {@link #setLong(long, TransactionContext)} instead.
+     */
+    @Override
+    @Deprecated
+    default void set(@NotNull Long value, @NotNull TransactionContext context) {
+        this.setLong(value, context);
     }
 
     @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    default void setUnsafe(Long value) {
+        this.setLongUnsafe(value);
     }
 
-    @Contract(pure = true)
-    @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
-    }
+    long getLong();
 
-    @Contract(pure = true)
-    @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
-    }
+    long setLong(long value, @NotNull TransactionContext context);
+
+    long setLongUnsafe(long value);
+
+    long increment(@NotNull TransactionContext context);
+
+    long decrement(@NotNull TransactionContext context);
+
+    long increment(long amount, @NotNull TransactionContext context);
+
+    long decrement(long amount, @NotNull TransactionContext context);
 }

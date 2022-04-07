@@ -103,6 +103,11 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
+    public int getModCountUnsafe() {
+        return this.modCount.getModCountUnsafe();
+    }
+
+    @Override
     public int getSlotModCount(int index) {
         return this.inventory[index].getModCount();
     }
@@ -427,7 +432,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
         TankDisplay[] tankDisplays = this.displays;
-        ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.of(this, true, true);
+        ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.ofPlayer(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
             handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.FLUID));

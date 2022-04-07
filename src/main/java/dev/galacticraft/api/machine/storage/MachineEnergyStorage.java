@@ -23,10 +23,10 @@
 package dev.galacticraft.api.machine.storage;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
-import dev.galacticraft.api.machine.storage.io.ExposedCapacitor;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
+import dev.galacticraft.impl.machine.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,8 +39,14 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
 
     @Contract("_, _, _ -> new")
     static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
+        if (energyCapacity < 0) throw new IllegalArgumentException("Energy capacity cannot be negative");
+        if (energyCapacity == 0) return EmptyMachineEnergyStorage.INSTANCE;
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
     }
+
+    boolean isFull();
+
+    boolean isEmpty();
 
     void setEnergy(long amount, TransactionContext context);
 
@@ -52,9 +58,9 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
         return NO_SLOTS;
     }
 
-    @NotNull ExposedCapacitor getExposedStorage(@NotNull ResourceFlow flow);
+    @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow);
 
-    @NotNull ExposedCapacitor view();
+    @NotNull EnergyStorage view();
 
     @NotNull NbtElement writeNbt();
 

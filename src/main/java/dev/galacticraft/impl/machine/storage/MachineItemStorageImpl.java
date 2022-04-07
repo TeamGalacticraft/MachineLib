@@ -109,6 +109,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public int getModCountUnsafe() {
+        return this.modCount.getModCountUnsafe();
+    }
+
+    @Override
     public int getSlotModCount(int index) {
         return this.inventory[index].getModCount();
     }
@@ -240,7 +245,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
                 ItemStack stack = invSlot.copyStack();
-                stack.setCount((int)extracted);
+                stack.setCount(Math.toIntExact(extracted));
                 invSlot.extract(extracted, transaction);
                 this.modCount.increment(transaction);
                 transaction.commit();

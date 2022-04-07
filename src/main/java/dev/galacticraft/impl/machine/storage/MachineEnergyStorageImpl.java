@@ -23,7 +23,7 @@
 package dev.galacticraft.impl.machine.storage;
 
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
-import dev.galacticraft.api.machine.storage.io.ExposedCapacitor;
+import dev.galacticraft.api.machine.storage.io.ExposedEnergyStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.machine.ModCount;
@@ -34,6 +34,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtLong;
 import net.minecraft.network.PacketByteBuf;
 import org.jetbrains.annotations.NotNull;
+import team.reborn.energy.api.EnergyStorage;
 
 public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implements MachineEnergyStorage {
     public final long capacity;
@@ -42,7 +43,7 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     private final ModCount modCount = new ModCount();
 
     public long amount = 0;
-    private ExposedCapacitor view = new ExposedCapacitor(this, false, false);
+    private ExposedEnergyStorage view = new ExposedEnergyStorage(this, false, false);
 
     public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput) {
         this.capacity = capacity;
@@ -112,7 +113,7 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
         long extracted = Math.min(this.amount, Math.min(maxAmount, this.maxOutput));
 
         if (extracted > 0) {
-            updateSnapshots(transaction);
+            this.updateSnapshots(transaction);
             this.modCount.increment(transaction);
             this.amount -= extracted;
             return extracted;
@@ -132,6 +133,16 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     }
 
     @Override
+    public boolean isFull() {
+        return this.amount == this.capacity;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.amount == 0;
+    }
+
+    @Override
     public void setEnergy(long amount, TransactionContext context) {
         this.updateSnapshots(context);
         this.modCount.increment(context);
@@ -146,12 +157,12 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     }
 
     @Override
-    public @NotNull ExposedCapacitor getExposedStorage(@NotNull ResourceFlow flow) {
-        return new ExposedCapacitor(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+    public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
+        return new ExposedEnergyStorage(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
     }
 
     @Override
-    public @NotNull ExposedCapacitor view() {
+    public @NotNull EnergyStorage view() {
         return this.view;
     }
 

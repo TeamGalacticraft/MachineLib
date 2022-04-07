@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.screen.property;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.MachineStatus;
 import net.minecraft.screen.Property;
 
 public class StatusProperty extends Property {
@@ -34,11 +35,11 @@ public class StatusProperty extends Property {
 
     @Override
     public int get() {
-        return machine.getStatus().getIndex();
+        return MachineStatus.REGISTRY.getRawId(this.machine.getStatus());
     }
 
     @Override
     public void set(int value) {
-        machine.setStatusById(value);
+        this.machine.setStatus(MachineStatus.REGISTRY.getOrThrow(value));
     }
 }

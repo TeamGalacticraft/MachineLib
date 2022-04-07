@@ -32,6 +32,7 @@ import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import team.reborn.energy.api.EnergyStorage;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -93,7 +94,7 @@ public interface ConfiguredMachineFace {
      * @param storage The storage to use.
      * @return The exposed energy storage of this face.
      */
-    ExposedCapacitor getExposedStorage(@NotNull MachineEnergyStorage storage);
+    EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage);
 
     /**
      * Returns the matching slots of this face in the provided storage.

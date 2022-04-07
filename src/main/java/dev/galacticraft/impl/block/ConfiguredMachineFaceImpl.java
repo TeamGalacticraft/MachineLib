@@ -35,6 +35,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import team.reborn.energy.api.EnergyStorage;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -107,10 +108,10 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public ExposedCapacitor getExposedStorage(@NotNull MachineEnergyStorage storage) {
+    public EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage) {
         if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.matching == null) {
             if (this.storage == null) this.storage = storage.getExposedStorage(this.flow);
-            return (ExposedCapacitor) this.storage;
+            return (EnergyStorage) this.storage;
         }
         return storage.view();
     }

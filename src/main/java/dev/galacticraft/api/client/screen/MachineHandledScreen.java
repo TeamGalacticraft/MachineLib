@@ -50,8 +50,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -71,7 +69,6 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -718,22 +715,22 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     }
 
     private void drawCapacitor(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        if (this.machine.capacitor().getCapacity() > 0) {
+        if (this.machine.energyStorage().getCapacity() > 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
             DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, this.y + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
-            float scale = (float) ((double) this.machine.capacitor().getAmount() / (double) this.machine.capacitor().getCapacity());
+            float scale = (float) ((double) this.machine.energyStorage().getAmount() / (double) this.machine.energyStorage().getCapacity());
             DrawableUtil.drawProgressTexture(matrices, this.x, (int) (this.y + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.x + this.capacitorX, this.y + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Text> lines = new ArrayList<>();
                 MachineStatus status = this.machine.getStatus();
-                if (status != MachineStatus.NULL) {
+                if (status != MachineStatus.INVALID) {
                     lines.add(new TranslatableText("ui.galacticraft.machine.status").setStyle(Constant.Text.GRAY_STYLE).append(status.getName()));
                 }
-                lines.add(new TranslatableText("ui.galacticraft.machine.current_energy", DrawableUtil.getEnergyDisplay(this.machine.capacitor().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-                lines.add(new TranslatableText("ui.galacticraft.machine.max_energy", DrawableUtil.getEnergyDisplay(this.machine.capacitor().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                lines.add(new TranslatableText("ui.galacticraft.machine.current_energy", DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+                lines.add(new TranslatableText("ui.galacticraft.machine.max_energy", DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
                 this.appendEnergyTooltip(lines);
 
                 assert this.client.currentScreen != null;
@@ -1142,16 +1139,16 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 }
             }
 
-            if (machine.energyExtractionRate() > 0) {
+            if (machine.getEnergyItemExtractionRate() > 0) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>());
-                if (machine.energyInsertionRate() > 0) {
+                if (machine.getEnergyItemInsertionRate() > 0) {
                     flows.set(0, ResourceFlow.INPUT);
                     flows.set(1, ResourceFlow.OUTPUT);
                     flows.set(2, ResourceFlow.BOTH);
                 } else {
                     flows.set(0, ResourceFlow.OUTPUT);
                 }
-            } else if (machine.energyInsertionRate() > 0) {
+            } else if (machine.getEnergyItemInsertionRate() > 0) {
                 map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).set(0, ResourceFlow.INPUT);
             }
 

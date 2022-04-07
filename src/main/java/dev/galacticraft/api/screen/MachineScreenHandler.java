@@ -63,7 +63,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         this.syncHandlers.add(this.machine.itemStorage().createSyncHandler());
         this.syncHandlers.add(this.machine.fluidStorage().createSyncHandler());
         this.syncHandlers.add(this.machine.gasStorage().createSyncHandler());
-        this.syncHandlers.add(this.machine.capacitor().createSyncHandler());
+        this.syncHandlers.add(this.machine.energyStorage().createSyncHandler());
 
         this.addProperty(new StatusProperty(this.machine));
     }

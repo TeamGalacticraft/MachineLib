@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.machine.storage.io;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
+import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +32,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class NullConfiguredStorage implements ConfiguredStorage {
     public static final ConfiguredStorage INSTANCE = new NullConfiguredStorage();
-    private static final SlotTypeImpl[] EMPTY = new SlotTypeImpl[0];
+    private static final SlotType[] EMPTY = new SlotType[0];
 
     private NullConfiguredStorage() {}
     @Override
-    public SlotTypeImpl @NotNull [] getTypes() {
+    public SlotType @NotNull [] getTypes() {
         return EMPTY;
     }
 

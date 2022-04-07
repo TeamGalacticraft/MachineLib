@@ -27,6 +27,7 @@ import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
+import dev.galacticraft.impl.machine.storage.empty.EmptyMachineItemStorage;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -58,6 +59,10 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      */
     Inventory subInv(int start, int size);
 
+    static MachineItemStorage empty() {
+        return EmptyMachineItemStorage.INSTANCE;
+    }
+
     class Builder {
         private int size = 0;
         private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
@@ -85,7 +90,8 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull MachineItemStorageImpl build() {
+        public @NotNull MachineItemStorage build() {
+            if (this.size == 0) return empty();
             return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new ItemSlotDisplay[0]));
         }
     }

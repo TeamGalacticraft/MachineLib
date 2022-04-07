@@ -20,38 +20,52 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.io;
+package dev.galacticraft.api.transfer.v1;
 
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import dev.galacticraft.impl.transfer.v1.IntTransactiveHolderImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
-public record LimitedStorageView<T>(StorageView<T> parent, boolean extract) implements StorageView<T> {
+public interface IntTransactiveHolder extends TransactiveHolder<Integer> {
+    @Contract("_ -> new")
+    static @NotNull IntTransactiveHolder create(int value) {
+        return new IntTransactiveHolderImpl(value);
+    }
+    /**
+     * @deprecated Use {@link #getInt()} instead.
+     */
     @Override
-    public long extract(T resource, long maxAmount, TransactionContext transaction) {
-        if (this.extract) {
-            return this.parent.extract(resource, maxAmount, transaction);
-        } else {
-            return 0L;
-        }
+    @Deprecated
+    default @NotNull Integer get() {
+        return this.getInt();
+    }
+
+    /**
+     * @deprecated Use {@link #setInt(int, TransactionContext)} instead.
+     */
+    @Override
+    @Deprecated
+    default void set(@NotNull Integer value, @NotNull TransactionContext context) {
+        this.setInt(value, context);
     }
 
     @Override
-    public boolean isResourceBlank() {
-        return this.parent.isResourceBlank();
+    default void setUnsafe(Integer value) {
+        this.setIntUnsafe(value);
     }
 
-    @Override
-    public T getResource() {
-        return this.parent.getResource();
-    }
+    int getInt();
 
-    @Override
-    public long getAmount() {
-        return this.parent.getAmount();
-    }
+    int setInt(int value, @NotNull TransactionContext context);
 
-    @Override
-    public long getCapacity() {
-        return this.parent.getCapacity();
-    }
+    int setIntUnsafe(int value);
+
+    int increment(@NotNull TransactionContext context);
+
+    int decrement(@NotNull TransactionContext context);
+
+    int increment(int amount, @NotNull TransactionContext context);
+
+    int decrement(int amount, @NotNull TransactionContext context);
 }

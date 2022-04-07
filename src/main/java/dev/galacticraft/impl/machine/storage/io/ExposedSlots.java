@@ -163,7 +163,7 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
             if (!this.hasNext()) {
                 throw new NoSuchElementException();
             }
-            return new LimitedStorageView<>(this.iterator.next(),
+            return UnmodifiableStorageView.maybeCreate(this.iterator.next(),
                     ExposedSlots.this.supportsExtraction()
                             && ExposedSlots.this.slots[this.index]
                             && ExposedSlots.this.storage.canExposedExtract(this.index++));

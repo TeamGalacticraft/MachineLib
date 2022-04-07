@@ -133,6 +133,13 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     int getModCount();
 
     /**
+     * Returns the modification count of this inventory.
+     * The modification count may go down if a transaction fails.
+     * @return the modification count of this inventory.
+     */
+    int getModCountUnsafe();
+
+    /**
      * Returns the modification count of a particular slot in this inventory.
      * Do NOT call during a transaction
      * @return the modification count of a particular slot in this inventory.

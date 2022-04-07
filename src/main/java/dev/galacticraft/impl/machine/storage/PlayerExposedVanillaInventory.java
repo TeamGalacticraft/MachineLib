@@ -99,7 +99,7 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
 
     @Override
     public int count(Item item) {
-        return (int)this.storage.count(item);
+        return Math.toIntExact(this.storage.count(item));
     }
 
     @Override

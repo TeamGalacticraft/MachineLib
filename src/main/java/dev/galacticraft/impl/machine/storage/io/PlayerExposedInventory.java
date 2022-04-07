@@ -28,24 +28,22 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-public class ExposedInventory<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
+public class PlayerExposedInventory<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
     private final ResourceStorage<T, V, ?> storage;
     private final boolean insertion;
     private final boolean extraction;
 
-    public ExposedInventory(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+    public PlayerExposedInventory(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
         this.storage = storage;
         boolean insertion = false;
         boolean extraction = false;
         for (int i = 0; i < this.storage.size(); i++) {
-            if (insert) insertion |= storage.canExposedInsert(i);
+            if (insert) extraction |= insertion |= storage.canExposedInsert(i); //if you can insert into a slot, you should be able to get your stuff back.
             if (extract) extraction |= storage.canExposedExtract(i);
         }
         this.insertion = insertion;
@@ -84,7 +82,7 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
         if (this.supportsExtraction()) {
             long extracted = 0;
             for (int i = 0; i < this.storage.size(); i++) {
-                if (this.storage.canExposedExtract(i)) {
+                if (this.storage.canExposedExtract(i) || this.storage.canExposedInsert(i)) {
                     extracted += this.storage.extract(i, resource, maxAmount - extracted, transaction);
                     if (extracted == maxAmount) {
                         break;
@@ -149,10 +147,9 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
             return this.iterator.hasNext();
         }
 
-        @Contract(" -> new")
         @Override
-        public @NotNull StorageView<V> next() {
-            return UnmodifiableStorageView.maybeCreate(this.iterator.next(), ExposedInventory.this.supportsExtraction() && ExposedInventory.this.storage.canExposedExtract(i++));
+        public StorageView<V> next() {
+            return UnmodifiableStorageView.maybeCreate(this.iterator.next(), PlayerExposedInventory.this.supportsExtraction() && (PlayerExposedInventory.this.storage.canExposedExtract(i) | PlayerExposedInventory.this.storage.canExposedInsert(i++)));
         }
     }
 }

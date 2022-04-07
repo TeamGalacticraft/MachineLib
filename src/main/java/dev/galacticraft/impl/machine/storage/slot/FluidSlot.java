@@ -23,51 +23,14 @@
 package dev.galacticraft.impl.machine.storage.slot;
 
 import dev.galacticraft.impl.fluid.FluidStack;
-import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.fluid.Fluid;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public class FluidSlot extends SingleVariantStorage<FluidVariant> {
-    public final ModCount modCount = new ModCount();
-    private final long capacity;
-
+public final class FluidSlot extends ResourceSlot<Fluid, FluidVariant, FluidStack> {
     public FluidSlot(long capacity) {
-        this.capacity = capacity;
-    }
-
-    public int getModCount() {
-        return this.modCount.getModCount();
-    }
-
-    public void setStack(FluidVariant variant, long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.variant = variant;
-        this.amount = amount;
-    }
-
-    public void setVariant(FluidVariant variant, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.variant = variant;
-    }
-
-    public void setAmount(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.amount = amount;
-    }
-
-    public void extract(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.amount -= amount;
-        assert this.amount >= 0;
-        if (this.amount == 0) {
-            this.variant = FluidVariant.blank();
-        }
+        super(capacity);
     }
 
     @Override
@@ -75,13 +38,15 @@ public class FluidSlot extends SingleVariantStorage<FluidVariant> {
         return FluidVariant.blank();
     }
 
+    @Contract(pure = true)
     @Override
-    public long getCapacity(@NotNull FluidVariant variant) {
-        return this.capacity;
+    protected @NotNull FluidStack getEmptyStack() {
+        return FluidStack.EMPTY;
     }
 
-    public FluidStack copyStack() {
-        if (this.variant.isBlank() || this.amount == 0) return FluidStack.EMPTY;
-        return new FluidStack(this.variant, this.amount);
+    @Contract(pure = true)
+    @Override
+    protected @NotNull FluidStack createStack(@NotNull FluidVariant variant, long amount) {
+        return new FluidStack(variant, amount);
     }
 }

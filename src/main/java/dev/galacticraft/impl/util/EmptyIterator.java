@@ -20,33 +20,27 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.impl.util;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+public final class EmptyIterator implements Iterator {
+    private static final EmptyIterator INSTANCE = new EmptyIterator();
+
+    private EmptyIterator() {}
+
+    public static <T> Iterator<T> getInstance() {
+        return EmptyIterator.INSTANCE;
     }
 
     @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    public boolean hasNext() {
+        return false;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
-    }
-
-    @Contract(pure = true)
-    @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
+    public Object next() {
+        throw new NoSuchElementException("No more elements");
     }
 }

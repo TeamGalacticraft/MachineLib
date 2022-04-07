@@ -20,33 +20,45 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.api.machine.storage.io;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import team.reborn.energy.api.EnergyStorage;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+public record ExposedEnergyStorage(EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
+    @Override
+    public boolean supportsInsertion() {
+        return this.insertion;
     }
 
     @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    public long insert(long maxAmount, TransactionContext transaction) {
+        if (this.supportsInsertion()) {
+            return this.parent.insert(maxAmount, transaction);
+        }
+        return 0;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
+    public boolean supportsExtraction() {
+        return this.extraction;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
+    public long extract(long maxAmount, TransactionContext transaction) {
+        if (this.supportsExtraction()) {
+            return this.parent.extract(maxAmount, transaction);
+        }
+        return 0;
+    }
+
+    @Override
+    public long getAmount() {
+        return 0;
+    }
+
+    @Override
+    public long getCapacity() {
+        return 0;
     }
 }

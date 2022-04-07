@@ -198,7 +198,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
             MachineItemStorage inv = machine.itemStorage();
             List<ItemEntity> entities = new ArrayList<>();
             try (Transaction transaction = Transaction.openOuter()) {
-                inv.iterator(transaction).forEachRemaining(view -> entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack((int) view.extract(view.getResource(), view.getAmount(), transaction)))));
+                inv.iterator(transaction).forEachRemaining(view -> entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction))))));
                 transaction.commit();
             }
             for (ItemEntity itemEntity : entities) {
@@ -211,7 +211,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     public List<ItemStack> getDroppedStacks(BlockState state, LootContext.Builder builder) {
         BlockEntity entity = builder.get(LootContextParameters.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
-            if (machine.dropItemsOnBreak()) return Collections.emptyList();
+            if (machine.dontDropItems()) return Collections.emptyList();
         }
         return super.getDroppedStacks(state, builder);
     }

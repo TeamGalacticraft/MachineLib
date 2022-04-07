@@ -71,7 +71,7 @@ public final class ItemStorageImplTest implements MachineLibGametest {
 
     @Override
     public void beforeEach(TestContext context) {
-        this.storage = MachineItemStorage.Builder.create()
+        this.storage = (MachineItemStorageImpl) MachineItemStorage.Builder.create()
                 .addSlot(TEST_SLOT_0, new ItemSlotDisplay(0, 0))
                 .addSlot(TEST_SLOT_1, new ItemSlotDisplay(0, 16))
                 .build();

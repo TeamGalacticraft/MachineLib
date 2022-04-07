@@ -20,33 +20,41 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.impl.machine.storage.io;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+public record UnmodifiableStorageView<T>(StorageView<T> parent) implements StorageView<T> {
+    public static <T> StorageView<T> maybeCreate(StorageView<T> parent, boolean extract) {
+        if (extract) { // if the storage is able to extract, then there is no need to limit it
+            return parent;
+        }
+        return new UnmodifiableStorageView<>(parent);
     }
 
     @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    public long extract(T resource, long maxAmount, TransactionContext transaction) {
+        return 0L;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
+    public boolean isResourceBlank() {
+        return this.parent.isResourceBlank();
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
+    public T getResource() {
+        return this.parent.getResource();
+    }
+
+    @Override
+    public long getAmount() {
+        return this.parent.getAmount();
+    }
+
+    @Override
+    public long getCapacity() {
+        return this.parent.getCapacity();
     }
 }

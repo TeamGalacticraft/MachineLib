@@ -22,38 +22,40 @@
 
 package dev.galacticraft.api.machine;
 
-import net.minecraft.text.LiteralText;
+import com.mojang.serialization.Lifecycle;
+import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.machine.MachineStatusImpl;
+import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.DefaultedRegistry;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineStatus {
-    MachineStatus NULL = new MachineStatus() {
-        @Override
-        public @NotNull Text getName() {
-            return LiteralText.EMPTY;
-        }
+    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", RegistryKey.<MachineStatus>ofRegistry(new Identifier(Constant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+    MachineStatus INVALID = createAndRegister(new Identifier(Constant.MOD_ID, "invalid"), new TranslatableText("ui.machinelib.machine_status.invalid"), Type.OTHER);
 
-        @Override
-        public @NotNull StatusType getType() {
-            return StatusType.OTHER;
-        }
+    static MachineStatus createAndRegister(@NotNull Identifier id, @NotNull Text name, @NotNull MachineStatus.Type type) {
+        return Registry.register(REGISTRY, id, create(name, type));
+    }
 
-        @Override
-        public int getIndex() {
-            return 0;
-        }
-    };
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull MachineStatus create(@NotNull Text name, @NotNull MachineStatus.Type type) {
+        return new MachineStatusImpl(name, type);
+    }
 
     @NotNull Text getName();
 
-    @NotNull StatusType getType();
+    @NotNull MachineStatus.Type getType();
 
-    int getIndex();
-
-    enum StatusType {
+    enum Type {
         /**
          * The machine is active
          */
@@ -97,7 +99,7 @@ public interface MachineStatus {
 
         private final boolean active;
 
-        StatusType(boolean active) {
+        Type(boolean active) {
             this.active = active;
         }
 

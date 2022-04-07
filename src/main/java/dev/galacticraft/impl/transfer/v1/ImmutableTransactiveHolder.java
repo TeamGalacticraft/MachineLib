@@ -20,33 +20,46 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.impl.transfer.v1;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
-import org.jetbrains.annotations.Contract;
+import dev.galacticraft.api.transfer.v1.TransactiveHolder;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+/**
+ * @param <T> The type of object held by this holder. MUST be immutable.
+ */
+public class ImmutableTransactiveHolder<T> extends SnapshotParticipant<T> implements TransactiveHolder<T> {
+    private T value;
+
+    public ImmutableTransactiveHolder(T value) {
+        this.value = value;
     }
 
     @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    public T get() {
+        return this.value;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
+    public void set(T value, @NotNull TransactionContext context) {
+        this.updateSnapshots(context);
+        this.value = value;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
+    public void setUnsafe(T value) {
+        this.value = value;
+    }
+
+    @Override
+    protected T createSnapshot() {
+        return this.value;
+    }
+
+    @Override
+    protected void readSnapshot(T snapshot) {
+        this.value = snapshot;
     }
 }

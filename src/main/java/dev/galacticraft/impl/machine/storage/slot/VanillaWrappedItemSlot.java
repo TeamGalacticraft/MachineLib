@@ -30,15 +30,16 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 public class VanillaWrappedItemSlot extends Slot {
-    private final MachineItemStorageImpl storage;
-    private final Pair<Identifier, Identifier> icon;
+    private final @NotNull MachineItemStorageImpl storage;
+    private final @Nullable Pair<Identifier, Identifier> icon;
 
-    public VanillaWrappedItemSlot(MachineItemStorageImpl storage, int index, ItemSlotDisplay display) {
+    public VanillaWrappedItemSlot(@NotNull MachineItemStorageImpl storage, int index, @NotNull ItemSlotDisplay display) {
         super(storage.playerInventory(), index, display.x(), display.y());
         this.storage = storage;
         this.icon = display.icon();
@@ -77,12 +78,12 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public int getMaxItemCount() {
-        return (int) this.storage.getSlot(this.getIndex()).getCapacity();
+        return Math.toIntExact(this.storage.getSlot(this.getIndex()).getCapacity());
     }
 
     @Override
     public int getMaxItemCount(ItemStack stack) {
-        return (int) this.storage.getSlot(this.getIndex()).getCapacity(ItemVariant.of(stack));
+        return Math.toIntExact(this.storage.getSlot(this.getIndex()).getCapacity(ItemVariant.of(stack)));
     }
 
     @Override
@@ -108,7 +109,7 @@ public class VanillaWrappedItemSlot extends Slot {
     @Override //return failed
     public ItemStack insertStack(ItemStack stack, int count) {
         long inserted = this.storage.insert(this.getIndex(), ItemVariant.of(stack), count, null);
-        stack.setCount((int) (count - inserted));
+        stack.setCount(Math.toIntExact(count - inserted));
         return stack;
     }
 

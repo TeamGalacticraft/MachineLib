@@ -41,7 +41,6 @@ import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.GasSlot;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -100,6 +99,11 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     @Override
     public int getModCount() {
         return this.modCount.getModCount();
+    }
+
+    @Override
+    public int getModCountUnsafe() {
+        return this.modCount.getModCountUnsafe();
     }
 
     @Override
@@ -427,7 +431,7 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     @Override
     public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
         TankDisplay[] tankDisplays = this.displays;
-        ExposedStorage<Gas, GasVariant> of = ExposedStorage.of(this, true, true);
+        ExposedStorage<Gas, GasVariant> of = ExposedStorage.ofPlayer(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
             handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.GAS));

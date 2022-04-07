@@ -26,6 +26,7 @@ import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.impl.machine.storage.io.ExposedInventory;
 import dev.galacticraft.impl.machine.storage.io.ExposedSlot;
 import dev.galacticraft.impl.machine.storage.io.ExposedSlots;
+import dev.galacticraft.impl.machine.storage.io.PlayerExposedInventory;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import org.jetbrains.annotations.Contract;
@@ -47,6 +48,11 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
     @Contract("_, _, _ -> new")
     static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> of(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
         return new ExposedInventory<>(storage, insert, extract);
+    }
+
+    @Contract("_, _, _ -> new")
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofPlayer(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+        return new PlayerExposedInventory<>(storage, insert, extract);
     }
 
     @Contract("_, _, _, _ -> new")

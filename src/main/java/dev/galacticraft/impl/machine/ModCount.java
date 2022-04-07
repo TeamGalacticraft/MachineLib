@@ -57,7 +57,6 @@ public class ModCount extends SnapshotParticipant<Integer> {
      * Do not trust that an equal mod count is representative of the inventory's state if you are unsure about the transaction status of the current thread.
      * @return the modification count of this storage.
      */
-    @Deprecated
     public int getModCountUnsafe() {
         return this.count;
     }

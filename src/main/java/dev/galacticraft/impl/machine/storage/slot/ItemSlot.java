@@ -22,52 +22,15 @@
 
 package dev.galacticraft.impl.machine.storage.slot;
 
-import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public class ItemSlot extends SingleVariantStorage<ItemVariant> {
-    public final ModCount modCount = new ModCount();
-    private final long capacity;
-
+public final class ItemSlot extends ResourceSlot<Item, ItemVariant, ItemStack> {
     public ItemSlot(long capacity) {
-        this.capacity = capacity;
-    }
-
-    public int getModCount() {
-        return this.modCount.getModCount();
-    }
-
-    public void setStack(ItemVariant variant, long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.variant = variant;
-        this.amount = amount;
-    }
-
-    public void setVariant(ItemVariant variant, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.variant = variant;
-    }
-
-    public void setAmount(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.amount = amount;
-    }
-
-    public void extract(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.amount -= amount;
-        assert this.amount >= 0;
-        if (this.amount == 0) {
-            this.variant = ItemVariant.blank();
-        }
+        super(capacity);
     }
 
     @Override
@@ -75,13 +38,15 @@ public class ItemSlot extends SingleVariantStorage<ItemVariant> {
         return ItemVariant.blank();
     }
 
+    @Contract(pure = true)
     @Override
-    public long getCapacity(@NotNull ItemVariant variant) {
-        return Math.min(this.capacity, variant.getItem().getMaxCount());
+    protected @NotNull ItemStack getEmptyStack() {
+        return ItemStack.EMPTY;
     }
 
-    public ItemStack copyStack() {
-        if (this.variant.isBlank() || this.amount == 0) return ItemStack.EMPTY;
-        return this.variant.toStack((int)this.amount);
+    @Contract(pure = true)
+    @Override
+    protected @NotNull ItemStack createStack(@NotNull ItemVariant variant, long amount) {
+        return variant.toStack(Math.toIntExact(amount));
     }
 }

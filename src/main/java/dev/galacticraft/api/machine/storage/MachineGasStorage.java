@@ -30,6 +30,7 @@ import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.gas.GasStack;
 import dev.galacticraft.impl.machine.storage.MachineGasStorageImpl;
+import dev.galacticraft.impl.machine.storage.empty.EmptyMachineGasStorage;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.Contract;
@@ -40,6 +41,10 @@ import java.util.List;
 
 public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
     <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+
+    static MachineGasStorage empty() {
+        return EmptyMachineGasStorage.INSTANCE;
+    }
 
     class Builder {
         private int size = 0;
@@ -53,6 +58,7 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
         public static @NotNull Builder create() {
             return new Builder();
         }
+
         public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
@@ -62,7 +68,8 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull MachineGasStorageImpl build() {
+        public @NotNull MachineGasStorage build() {
+            if (this.size == 0) return empty();
             return new MachineGasStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }

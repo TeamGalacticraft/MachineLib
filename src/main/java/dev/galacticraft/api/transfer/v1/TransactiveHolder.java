@@ -20,33 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.api.transfer.v1;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
-import dev.galacticraft.impl.gas.GasStack;
+import dev.galacticraft.impl.transfer.v1.ImmutableTransactiveHolder;
+import dev.galacticraft.impl.transfer.v1.ListeningImmutableTransactiveHolder;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public final class GasSlot extends ResourceSlot<Gas, GasVariant, GasStack> {
-    public GasSlot(long capacity) {
-        super(capacity);
+public interface TransactiveHolder<T> {
+    @Contract("_ -> new")
+    static <T> @NotNull TransactiveHolder<T> immutableHolder(T value) {
+        return new ImmutableTransactiveHolder<>(value);
     }
 
-    @Override
-    protected GasVariant getBlankVariant() {
-        return GasVariant.blank();
+    @Contract("_ -> new")
+    static <T> @NotNull TransactiveHolder<T> immutableHolderListener(T value, CommitListener<T> listener) {
+        return new ListeningImmutableTransactiveHolder<>(value, listener);
     }
 
-    @Contract(pure = true)
-    @Override
-    protected @NotNull GasStack getEmptyStack() {
-        return GasStack.EMPTY;
-    }
+    T get();
 
-    @Contract(pure = true)
-    @Override
-    protected @NotNull GasStack createStack(@NotNull GasVariant variant, long amount) {
-        return variant.toStack(amount);
+    void set(T value, @NotNull TransactionContext context);
+
+    void setUnsafe(T value);
+
+    interface CommitListener<T> {
+        void onCommit(T value);
     }
 }

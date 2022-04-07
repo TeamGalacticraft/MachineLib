@@ -83,7 +83,7 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     }
 
     @Override
-    public boolean willAccept(V variant) {
+    public boolean willAccept(@NotNull V variant) {
         return variant.isBlank() || this.filter.test(variant);
     }
 

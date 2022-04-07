@@ -28,6 +28,7 @@ import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
+import dev.galacticraft.impl.machine.storage.empty.EmptyMachineFluidStorage;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -40,6 +41,10 @@ import java.util.List;
 
 public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
     <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+
+    static MachineFluidStorage empty() {
+        return EmptyMachineFluidStorage.INSTANCE;
+    }
 
     class Builder {
         private int size = 0;
@@ -63,7 +68,8 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
         }
 
         @Contract(pure = true, value = " -> new")
-        public @NotNull MachineFluidStorageImpl build() {
+        public @NotNull MachineFluidStorage build() {
+            if (this.size == 0) return empty();
             return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }

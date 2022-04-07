@@ -31,7 +31,6 @@ import dev.galacticraft.gametest.MachineLibGametest;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
-import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -70,7 +69,7 @@ public final class FluidStorageImplTest implements MachineLibGametest {
 
     @Override
     public void beforeEach(TestContext context) {
-        this.storage = MachineFluidStorage.Builder.create()
+        this.storage = (MachineFluidStorageImpl) MachineFluidStorage.Builder.create()
                 .addSlot(TEST_SLOT_0, 64, DISPLAY)
                 .addSlot(TEST_SLOT_1, 64, DISPLAY)
                 .build();

@@ -32,7 +32,7 @@ import java.util.Objects;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public class MachineConfigurationImpl implements MachineConfiguration {
-    private MachineStatus status = MachineStatus.NULL;
+    private MachineStatus status = MachineStatus.INVALID;
     private RedstoneActivation redstone = RedstoneActivation.IGNORE;
     private final MachineIOConfig configuration = MachineIOConfig.create();
     private final SecuritySettings security = new SecuritySettings();
