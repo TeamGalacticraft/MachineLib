@@ -59,14 +59,24 @@ val gametestSourceSet = sourceSets.create("gametest") {
     resources.srcDir("src/gametest/resources")
 }
 
+val testmodSourceSet = sourceSets.create("testmod") {
+    java.srcDir("src/testmod/java")
+    resources.srcDir("src/testmod/resources")
+}
+
 loom {
     runs {
         register("gametest") {
             server()
             name("Game Test")
             source(gametestSourceSet)
-//            property("fabric.log.level", "debug")
             vmArgs("-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml", "-ea")
+        }
+        register("testmod") {
+            client()
+            name("Test Mod")
+            source(testmodSourceSet)
+            vmArg("-ea")
         }
     }
 }
@@ -178,6 +188,13 @@ tasks.named<ProcessResources>("processGametestResources") {
     duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
-tasks.getByName("gametestClasses").dependsOn("classes")
-gametestSourceSet.compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
-gametestSourceSet.runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+tasks.named<ProcessResources>("processTestmodResources") {
+    duplicatesStrategy = DuplicatesStrategy.WARN
+}
+
+tasks.getByName("gametestClasses").dependsOn("classes", "testmodClasses")
+tasks.getByName("testmodClasses").dependsOn("classes")
+testmodSourceSet.compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
+testmodSourceSet.runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+gametestSourceSet.compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output + testmodSourceSet.output
+gametestSourceSet.runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output + testmodSourceSet.output
