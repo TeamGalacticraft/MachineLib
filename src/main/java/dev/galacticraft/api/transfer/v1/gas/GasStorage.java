@@ -32,14 +32,24 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
 
+/**
+ * Transfer type for gases.
+ */
 public final class GasStorage {
+    /**
+     * Transfer lookup for gases in the world.
+     */
     public static final BlockApiLookup<Storage<GasVariant>, Direction> SIDED =
             BlockApiLookup.get(new Identifier(Constant.MOD_ID, "sided_gas_storage"), Storage.asClass(), Direction.class);
 
+    /**
+     * Transfer lookup for gases in the inventory.
+     */
     public static final ItemApiLookup<Storage<GasVariant>, ContainerItemContext> ITEM =
             ItemApiLookup.get(new Identifier(Constant.MOD_ID, "gas_storage"), Storage.asClass(), ContainerItemContext.class);
 
     private GasStorage() {
+        throw new AssertionError("No instances");
     }
 
     static {

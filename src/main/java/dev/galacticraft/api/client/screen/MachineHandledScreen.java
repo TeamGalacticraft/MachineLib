@@ -84,12 +84,16 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
 /**
+ * Handles most of the boilerplate code for machine screens.
+ * Handles the rendering of tanks, configuration panels and capacitors.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 @Environment(EnvType.CLIENT)
@@ -100,9 +104,21 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "standard_wrench")));
     private static final ItemStack ALUMINUM_WIRE = new ItemStack(getOptionalItem(new Identifier("galacticraft", "aluminum_wire")));
 
+    /**
+     * The width of a configuration panel.
+     */
     public static final int PANEL_WIDTH = 100;
+    /**
+     * The height of a configuration panel.
+     */
     public static final int PANEL_HEIGHT = 93;
+    /**
+     * The width of a configuration tab.
+     */
     public static final int TAB_WIDTH = 22;
+    /**
+     * The height of a configuration tab.
+     */
     public static final int TAB_HEIGHT = 22;
 
     private static final int SPACING = 4;
@@ -208,21 +224,72 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private static final int SECURITY_STATE_TEXT_X = 11;
     private static final int SECURITY_STATE_TEXT_Y = 53;
 
+    /**
+     * An array used for ordering tooltip text to avoid re-allocating multiple times per frame.
+     * Not thread safe.
+     */
+    @ApiStatus.Internal
+    private static final List<Text> TOOLTIP_ARRAY = new ArrayList<>();
+
+    /**
+     * The position of the machine.
+     */
     protected final BlockPos pos;
+
+    /**
+     * The world the machine is in.
+     */
     protected final World world;
+
+    /**
+     * The machine this screen is attached to.
+     */
     protected final M machine;
-    protected Tank focusedTank = null;
 
+    /**
+     * The tank that is currently hovered over.
+     */
+    protected @Nullable Tank focusedTank = null;
+
+    /**
+     * The skin of the owner of this machine.
+     * Defaults to steve if the skin cannot be found.
+     */
     private @NotNull Identifier ownerSkin = new Identifier("textures/entity/steve.png");
-    private final MachineModelRegistry.SpriteProvider spriteProvider;
-    private final List<Text> tooltipCache = new LinkedList<>();
-    private final Identifier texture;
 
+    /**
+     * The sprite provider for the machne block. Used to render the machine on the IO configuration panel.
+     */
+    private final MachineModelRegistry.SpriteProvider spriteProvider;
+
+    /**
+     * The texture of the background screen.
+     */
+    private final @NotNull Identifier texture;
+
+    /**
+     * The x-position of the capacitor.
+     */
     protected int capacitorX = 8;
+
+    /**
+     * The y-position of the capacitor.
+     */
     protected int capacitorY = 8;
+
+    /**
+     * The height of the capacitor.
+     */
     protected int capacitorHeight = 48;
 
-    public MachineHandledScreen(H handler, PlayerInventory inv, Text title, Identifier texture) {
+    /**
+     * Creates a new screen from the given screen handler.
+     * @param handler The screen handler to create the screen from.
+     * @param inv The inventory of the machine.
+     * @param title The title of the screen.
+     * @param texture The texture of the background screen.
+     */
+    protected MachineHandledScreen(@NotNull H handler, @NotNull PlayerInventory inv, @NotNull Text title, @NotNull Identifier texture) {
         super(handler, inv, title);
         this.pos = this.handler.machine.getPos();
         this.world = inv.player.world;
@@ -244,10 +311,21 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         this.titleX = (this.backgroundWidth - this.textRenderer.getWidth(this.title)) / 2;
     }
 
+    /**
+     * Appends additional information to the capacitor's tooltip.
+     * @param list The list to append to.
+     */
     public void appendEnergyTooltip(List<Text> list) {
     }
 
-    public void drawConfigTabs(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    /**
+     * Draws the configuration panels and their contents.
+     * @param matrices The matrix stack.
+     * @param mouseX The mouse's x-position.
+     * @param mouseY The mouse's y-position.
+     * @param delta The delta time.
+     */
+    protected void drawConfigurationPanels(@NotNull MatrixStack matrices, int mouseX, int mouseY, float delta) {
         assert this.client != null;
         if (this.machine != null) {
             final MachineBlockEntity machine = this.machine;
@@ -328,9 +406,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
                 this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
 
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.PUBLIC || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.TEAM || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getAccessibility() == SecuritySettings.Accessibility.PRIVATE || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.PUBLIC || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.TEAM || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.PRIVATE || !machine.security().isOwner(this.handler.player));
                 this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, ICON_LOCK_PARTY_U, ICON_LOCK_PARTY_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
@@ -338,7 +416,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security")
                         .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
                 this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.state",
-                        machine.security().getAccessibility().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
+                        machine.security().getSecurityLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
 //                assert machine.getSecurity().getOwner() != null;
 //                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
 //                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
@@ -349,16 +427,37 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    protected void drawTitle(MatrixStack matrices) {
+    /**
+     * Draws the title of the machine.
+     * @param matrices the matrix stack
+     * @see #titleX
+     * @see #titleY
+     */
+    protected void drawTitle(@NotNull MatrixStack matrices) {
         this.textRenderer.draw(matrices, this.title, this.titleX, this.titleY, 0xFFFFFFFF);
     }
 
-    private void drawMachineFace(MatrixStack matrices, int x, int y, MachineBlockEntity machine, BlockFace face) {
+    /**
+     * Draws the sprite of a given machine face.
+     * @param matrices the matrix stack
+     * @param x the x position to draw at
+     * @param y the y position to draw at
+     * @param machine the machine to draw
+     * @param face the face to draw
+     */
+    private void drawMachineFace(@NotNull MatrixStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
         ConfiguredMachineFace machineFace = machine.getConfiguration().getIOConfiguration().get(face);
         drawSprite(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
-    private void renderItemIcon(MatrixStack matrices, int x, int y, ItemStack stack) {
+    /**
+     * Renders the icon of the given item, without any extra effects.
+     * @param matrices the matrix stack
+     * @param x the x position to draw at
+     * @param y the y position to draw at
+     * @param stack the item to render
+     */
+    private void renderItemIcon(@NotNull MatrixStack matrices, int x, int y, @NotNull ItemStack stack) {
         assert this.client != null;
         BakedModel model = this.itemRenderer.getModel(stack, this.world, this.handler.player, 8910823);
         matrices.push();
@@ -380,6 +479,17 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         matrices.pop();
     }
 
+    /**
+     * Draws a 16x16 button at the given position.
+     * The button will be highlighted if the mouse is hovering over it.
+     * @param matrices the matrix stack
+     * @param x the x-position to draw at
+     * @param y the y-position to draw at
+     * @param mouseX the mouse's x-position
+     * @param mouseY the mouse's y-position
+     * @param delta the delta time
+     * @param pressed whether the button is pressed
+     */
     public void drawButton(MatrixStack matrices, int x, int y, double mouseX, double mouseY, float delta, boolean pressed) {
         assert this.client != null;
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
@@ -394,7 +504,15 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    public boolean checkTabsClick(double mouseX, double mouseY, int button) {
+    /**
+     * Handles mouse input for the configuration panels.
+     * @param mouseX the mouse's x-position
+     * @param mouseY the mouse's y-position
+     * @param button the button code that was pressed
+     * @return whether the button was handled
+     * @see GLFW
+     */
+    public boolean checkConfigurationPanelClick(double mouseX, double mouseY, int button) {
         assert this.client != null;
         assert this.machine != null;
 
@@ -517,17 +635,17 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.Accessibility.PRIVATE);
+                    this.setAccessibility(SecuritySettings.SecurityLevel.PRIVATE);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.Accessibility.TEAM);
+                    this.setAccessibility(SecuritySettings.SecurityLevel.TEAM);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.Accessibility.PUBLIC);
+                    this.setAccessibility(SecuritySettings.SecurityLevel.PUBLIC);
                     this.playButtonSound();
                     return true;
                 }
@@ -545,17 +663,31 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         return false;
     }
 
-    protected void setAccessibility(SecuritySettings.Accessibility accessibility) {
-        this.machine.security().setAccessibility(accessibility);
-        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer((Long.SIZE / Byte.SIZE) + 1).writeByte(accessibility.ordinal())));
+    /**
+     * Sets the accessibility of the machine and syncs it to the server.
+     * @param securityLevel The accessibility to set.
+     */
+    protected void setAccessibility(@NotNull SecuritySettings.SecurityLevel securityLevel) {
+        this.machine.security().setSecurityLevel(securityLevel);
+        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer((Long.SIZE / Byte.SIZE) + 1).writeByte(securityLevel.ordinal())));
     }
 
-    protected void setRedstone(RedstoneActivation redstone) {
+    /**
+     * Sets the redstone mode of the machine and syncs it to the server.
+     * @param redstone The redstone mode to set.
+     */
+    protected void setRedstone(@NotNull RedstoneActivation redstone) {
         this.machine.setRedstone(redstone);
         ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "redstone_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer((Long.SIZE / Byte.SIZE) + 1).writeByte(redstone.ordinal())));
     }
 
-    protected void drawTabTooltips(MatrixStack matrices, int mouseX, int mouseY) {
+    /**
+     * Draws the tooltips of the configuration panel.
+     * @param matrices The matrices to use.
+     * @param mouseX The mouse's x-position.
+     * @param mouseY The mouse's y-position.
+     */
+    protected void drawConfigurationPanelTooltips(MatrixStack matrices, int mouseX, int mouseY) {
         final MachineBlockEntity machine = this.machine;
         final int mX = mouseX, mY = mouseY;
         mouseX = mX - this.x;
@@ -635,13 +767,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.Accessibility.PRIVATE.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.PRIVATE.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.Accessibility.TEAM.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.TEAM.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.Accessibility.PUBLIC.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.PUBLIC.getName(), mX, mY);
                 }
             } else {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
@@ -663,23 +795,30 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
+    /**
+     * Renders the tooltip for the given face.
+     * @param matrices The matrix stack
+     * @param face The face to render the tooltip for
+     * @param mouseX The mouse's x-position
+     * @param mouseY The mouse's y-position
+     */
     protected void renderFaceTooltip(MatrixStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
-        tooltipCache.add(face.getName());
+        TOOLTIP_ARRAY.add(face.getName());
         ConfiguredMachineFace configuredFace = this.machine.getConfiguration().getIOConfiguration().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
-            tooltipCache.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
+            TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
         if (configuredFace.getMatching() != null) {
             if (configuredFace.getMatching().left().isPresent()) {
-                tooltipCache.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
             } else {
                 assert configuredFace.getMatching().right().isPresent();
-                tooltipCache.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", configuredFace.getMatching().right().get().getName()).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", configuredFace.getMatching().right().get().getName()).setStyle(Constant.Text.GRAY_STYLE));
             }
         }
-        this.renderTooltip(matrices, tooltipCache, mouseX, mouseY);
+        this.renderTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
 
-        tooltipCache.clear();
+        TOOLTIP_ARRAY.clear();
     }
 
     @Override
@@ -696,6 +835,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         this.drawMouseoverTooltip(matrices, mouseX, mouseY);
     }
 
+    /**
+     * Renders the foreground of the screen.
+     * @param matrices The matrix stack
+     * @param mouseX The mouse's x-position
+     * @param mouseY The mouse's y-position
+     * @param delta The delta time
+     */
     protected void renderForeground(MatrixStack matrices, int mouseX, int mouseY, float delta) {
     }
 
@@ -707,14 +853,22 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         RenderSystem.setShaderTexture(0, this.texture);
 
         this.drawTexture(matrices, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
-        this.renderBackground(matrices, delta, mouseX, mouseY);
-        this.drawConfigTabs(matrices, mouseX, mouseY, delta);
+        this.renderBackground(matrices, mouseX, mouseY, delta);
+        this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
         this.drawTanks(matrices, mouseX, mouseY, delta);
         this.drawCapacitor(matrices, mouseX, mouseY, delta);
         this.handleSlotHighlight(matrices, mouseX, mouseY, delta);
     }
 
-    private void drawCapacitor(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    /**
+     * Draws the capacitor of this machine.
+     * If the machine has no capacitor, this method does nothing.
+     * @param matrices The matrix stack
+     * @param mouseX The mouse's x-position
+     * @param mouseY The mouse's y-position
+     * @param delta The delta time
+     */
+    protected void drawCapacitor(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         if (this.machine.energyStorage().getCapacity() > 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -741,12 +895,26 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    protected void renderBackground(MatrixStack matrices, float delta, int mouseX, int mouseY) {
+    /**
+     * Draws the background of this machine.
+     * @param matrices The matrix stack
+     * @param mouseX The mouse's x-position
+     * @param mouseY The mouse's y-position
+     * @param delta The delta time
+     */
+    protected void renderBackground(MatrixStack matrices, int mouseX, int mouseY, float delta) {
     }
 
+    /**
+     * Draws the (fluid and gas) tanks of this machine.
+     * @param matrices The matrix stack
+     * @param mouseX The mouse's x-position
+     * @param mouseY The mouse's y-position
+     * @param delta The delta time
+     */
     protected void drawTanks(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         assert this.client != null;
-        Int2IntArrayMap color = getTankColor(matrices, mouseX, mouseY);
+        Int2IntArrayMap color = getTankColor(mouseX, mouseY);
         color.defaultReturnValue(0xFFFFFFFF);
 
         this.focusedTank = null;
@@ -822,7 +990,14 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    protected Int2IntArrayMap getTankColor(MatrixStack matrices, int mouseX, int mouseY) {
+    /**
+     * Returns a map of the tank slot colors highlighted for the hovered configuration.
+     * @param mouseX The mouse's x-position.
+     * @param mouseY The mouse's y-position.
+     * @return A map of the tank slot colors highlighted for the hovered configuration.
+     */
+    @ApiStatus.Internal
+    private @NotNull Int2IntArrayMap getTankColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX -= this.x - PANEL_WIDTH;
             mouseY -= this.y + TAB_HEIGHT + SPACING;
@@ -856,6 +1031,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         return new Int2IntArrayMap();
     }
 
+    /**
+     * Returns a map of the item slot colors highlighted for the hovered configuration.
+     * @param mouseX The mouse's x-position.
+     * @param mouseY The mouse's y-position.
+     * @return A map of the item slot colors highlighted for the hovered configuration.
+     */
+    @ApiStatus.Internal
     protected Int2IntArrayMap getItemColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX -= this.x - PANEL_WIDTH;
@@ -890,6 +1072,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         return new Int2IntArrayMap();
     }
 
+    @ApiStatus.Internal
     private void groupFluid(Int2IntMap out, IntList list) {
         for (Tank tank : this.handler.tanks) {
             if (list.contains(tank.getIndex())) {
@@ -898,6 +1081,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
+    @ApiStatus.Internal
     private void groupItem(Int2IntMap out, IntList list) {
         for (Slot slot : this.handler.slots) {
             int index = slot.getIndex();
@@ -907,7 +1091,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    protected void handleSlotHighlight(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    @ApiStatus.Internal
+    private void handleSlotHighlight(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX -= PANEL_WIDTH + this.x;
             mouseY -= this.y + TAB_HEIGHT + SPACING;
@@ -938,6 +1123,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
+    @ApiStatus.Internal
     private void groupStack(MatrixStack matrices, IntList list) {
         for (Slot slot : this.handler.slots) {
             int index = slot.getIndex();
@@ -947,7 +1133,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
     }
 
-    private void drawSlotOverlay(@NotNull MatrixStack matrices, @NotNull Slot slot) {
+    /**
+     * Draws a coloured box around the slot, based on the slot's type.
+     * @param matrices the matrix stack
+     * @param slot the slot to box
+     */
+    protected void drawSlotOverlay(@NotNull MatrixStack matrices, @NotNull Slot slot) {
         int index = slot.getIndex();
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
@@ -961,24 +1152,18 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.getZOffset(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb());
-        tessellator.draw();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         fillGradient(matrices.peek().getPositionMatrix(), bufferBuilder,
                 slot.x - 1, slot.y + 17,
                 slot.x + 17, slot.y - 1,
                 this.getZOffset(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb());
-        tessellator.draw();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         fillGradient(matrices.peek().getPositionMatrix(), bufferBuilder,
                 slot.x + 17, slot.y + 17,
                 slot.x + 17, slot.y - 1,
                 this.getZOffset(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb(),
                 this.machine.itemStorage().getTypes()[index].getColor().getRgb());
-        tessellator.draw();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         fillGradient(matrices.peek().getPositionMatrix(), bufferBuilder,
                 slot.x + 17, slot.y - 1,
                 slot.x - 1, slot.y - 1,
@@ -993,7 +1178,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isAllowed()) {
+        if (hasAccess()) {
             boolean tankMod = false;
             if (this.focusedTank != null && button == 0) {
                 tankMod = this.focusedTank.acceptStack(ContainerItemContext.ofPlayerCursor(this.handler.player, this.handler));
@@ -1003,7 +1188,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                     ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "tank_modify"), packetByteBuf);
                 }
             }
-            return this.checkTabsClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
+            return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
         } else {
             return false;
         }
@@ -1011,19 +1196,26 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     @Override
     protected void drawMouseoverTooltip(MatrixStack matrices, int mouseX, int mouseY) {
-        if (isAllowed()) {
+        if (hasAccess()) {
             super.drawMouseoverTooltip(matrices, mouseX, mouseY);
-            this.drawTabTooltips(matrices, mouseX, mouseY);
+            this.drawConfigurationPanelTooltips(matrices, mouseX, mouseY);
         }
     }
 
-    public boolean isAllowed() {
+    /**
+     * Returns whether the player has access to the machine.
+     * @return whether the player has access to the machine
+     */
+    public boolean hasAccess() {
         if (this.machine != null) {
-            return this.machine.security().hasAccess(handler.player);
+            return this.machine.security().hasAccess(this.handler.player);
         }
         return false;
     }
 
+    /**
+     * Plays a button click sound.
+     */
     private void playButtonSound() {
         assert this.client != null;
         this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -1034,18 +1226,34 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         this.drawTitle(matrices);
     }
 
+    /**
+     * Returns the x offset of the screen.
+     * @return the x offset of the screen
+     */
     public int getX() {
         return this.x;
     }
 
+    /**
+     * Returns the y offset of the screen.
+     * @return the y offset of the screen
+     */
     public int getY() {
         return this.y;
     }
 
+    /**
+     * Returns the requested item based on the id, or defaults to a barrier if nto found.
+     * @param id the id of the item
+     * @return the item stack
+     */
     private static Item getOptionalItem(Identifier id) {
         return Registry.ITEM.getOrEmpty(id).orElse(Items.BARRIER);
     }
 
+    /**
+     * The four different types of configuration panel.
+     */
     public enum Tab {
         REDSTONE(TAB_REDSTONE_U, TAB_REDSTONE_V, PANEL_REDSTONE_U, PANEL_REDSTONE_V, true),
         CONFIGURATION(TAB_CONFIG_U, TAB_CONFIG_V, PANEL_CONFIG_U, PANEL_CONFIG_V, true),
@@ -1220,7 +1428,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 return;
             }
 
-            SlotType<?, ?>[] slotTypes = machine.getResource(sideOption.getType()).getTypes();
+            SlotType<?, ?>[] slotTypes = machine.getStorage(sideOption.getType()).getTypes();
             slotTypes = Arrays.copyOf(slotTypes, slotTypes.length);
             int s = 0;
             for (int i = 0; i < slotTypes.length; i++) {
@@ -1273,11 +1481,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             if (sideOption.getMatching() != null && sideOption.getMatching().left().isPresent()) {
                 i = sideOption.getMatching().left().get();
                 sideOption.setMatching(null);
-                list = new IntArrayList(sideOption.getMatching(machine.getResource(sideOption.getType())));
+                list = new IntArrayList(sideOption.getMatching(machine.getStorage(sideOption.getType())));
                 i = list.indexOf(i);
             }
             if (list == null)
-                list = new IntArrayList(sideOption.getMatching(machine.getResource(sideOption.getType())));
+                list = new IntArrayList(sideOption.getMatching(machine.getStorage(sideOption.getType())));
 
             if (!back) {
                 if (++i == list.size()) i = 0;

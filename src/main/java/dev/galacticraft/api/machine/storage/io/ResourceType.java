@@ -32,55 +32,119 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Defines the types of resources that can be stored in a {@link ConfiguredStorage}.
+ * Has compile-time generics to allow for more specific resource filtering.
+ * @param <T> The inner type of resource.
+ * @param <V> The resource variant type.
+ */
 public final class ResourceType<T, V> {
+    /**
+     * No resources can be stored/transferred.
+     */
     public static final ResourceType<?, ?> NONE = new ResourceType<>(0, new TranslatableText("ui.galacticraft.side_option.none").setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
+    /**
+     * All resources can be stored/transferred.
+     */
     public static final ResourceType<?, ?> ANY = new ResourceType<>(1, new TranslatableText("ui.galacticraft.side_option.any").setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
+    /**
+     * Energy can be stored/transferred.
+     */
     public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText("ui.galacticraft.side_option.energy").setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
+    /**
+     * Items can be stored/transferred.
+     */
     public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, new TranslatableText("ui.galacticraft.side_option.item").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+    /**
+     * Fluids can be stored/transferred.
+     */
     public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText("ui.galacticraft.side_option.fluid").setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
+    /**
+     * Gas can be stored/transferred.
+     */
     public static final ResourceType<Gas, GasVariant> GAS = new ResourceType<>(5, new TranslatableText("ui.galacticraft.side_option.gas").setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
 
-    private final Text name;
+    /**
+     * The name of the resource type.
+     */
+    private final @NotNull Text name;
+    /**
+     * The ID of the resource type.
+     */
     private final byte ordinal;
 
-    private ResourceType(int ordinal, Text name) {
+    private ResourceType(int ordinal, @NotNull Text name) {
         this.ordinal = (byte)ordinal;
         this.name = name;
     }
 
-    public static ResourceType[] types() {
+    /**
+     * Returns an array of all resource types.
+     * @return An array of all resource types.
+     */
+    @Contract(value = " -> new", pure = true)
+    public static ResourceType @NotNull [] types() {
         return new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID, GAS};
     }
 
-    public static ResourceType[] normalTypes() {
+    /**
+     * Returns an array of all resource types except {@link #NONE} and {@link #ANY}.
+     * @return An array of all resource types except {@link #NONE} and {@link #ANY}.
+     */
+    @Contract(value = " -> new", pure = true)
+    public static ResourceType @NotNull [] normalTypes() {
         return new ResourceType[] {ENERGY, ITEM, FLUID, GAS};
     }
 
-    public Text getName() {
+    /**
+     * Returns the name of the resource type.
+     * @return
+     */
+    public @NotNull Text getName() {
         return this.name;
     }
 
+    /**
+     * Returns whether the resource type is {@link #NONE} or {@link #ANY}.
+     * @return Whether the resource type is {@link #NONE} or {@link #ANY}.
+     */
     public boolean isSpecial() {
         return this == ANY || this == NONE;
     }
 
+    /**
+     * Returns the ID of the resource type.
+     * @return The ID of the resource type.
+     */
     public byte getOrdinal() {
         return ordinal;
     }
 
-    public static ResourceType<?, ?> getFromOrdinal(byte b) {
-        return switch (b) {
+    /**
+     * Returns the resource type with the given ID.
+     * @param id The ID of the resource type.
+     * @return The resource type with the given ID.
+     */
+    public static ResourceType<?, ?> getFromOrdinal(byte id) {
+        return switch (id) {
             case 0 -> ANY;
             case 1 -> NONE;
             case 2 -> ENERGY;
             case 3 -> FLUID;
             case 4 -> GAS;
             case 5 -> ITEM;
-            default -> throw new IllegalStateException("Unexpected value: " + b);
+            default -> throw new IllegalStateException("Unexpected id: " + id);
         };
     }
 
+    /**
+     * Returns whether the given resource type is compatible with this resource type.
+     * @param other The other resource type.
+     * @return Whether the given resource type is compatible with this resource type.
+     */
     public boolean willAcceptResource(ResourceType<?, ?> other) {
         return this != NONE && (this == other || this == ANY);
     }

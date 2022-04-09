@@ -28,27 +28,66 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * A class that holds the configuration of a machine.
+ * Can be used to save and load the configuration of a machine.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineConfiguration {
+    /**
+     * Creates a new MachineConfiguration.
+     * @return A new MachineConfiguration.
+     */
     @Contract(" -> new")
     static @NotNull MachineConfiguration create() {
         return new MachineConfigurationImpl();
     }
 
+    /**
+     * Sets the status of the machine.
+     * @param status The status of the machine.
+     */
     void setStatus(@NotNull MachineStatus status);
 
+    /**
+     * Sets the redstone activation of the machine.
+     * @param redstone The redstone activation of the machine.
+     */
     void setRedstoneActivation(@NotNull RedstoneActivation redstone);
 
+    /**
+     * Returns the I/O configuration of the machine.
+     * @return The I/O configuration of the machine.
+     */
     @NotNull MachineIOConfig getIOConfiguration();
 
+    /**
+     * Returns the security configuration of the machine.
+     * @return The security configuration of the machine.
+     */
     @NotNull SecuritySettings getSecurity();
 
+    /**
+     * Returns the status of the machine.
+     * @return The status of the machine.
+     */
     @NotNull MachineStatus getStatus();
 
+    /**
+     * Returns the redstone activation of the machine.
+     * @return The redstone activation of the machine.
+     */
     @NotNull RedstoneActivation getRedstoneActivation();
 
+    /**
+     * Serializes the machine configuration to NBT.
+     * @param nbt The NBT compound to serialize to.
+     * @return The NBT compound.
+     */
     @NotNull NbtCompound writeNbt(@NotNull NbtCompound nbt);
 
+    /**
+     * Deserializes the machine configuration from NBT.
+     * @param nbt The NBT compound to deserialize from.
+     */
     void readNbt(@NotNull NbtCompound nbt);
 }

@@ -87,6 +87,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
      */
     public static final BooleanProperty ACTIVE = Constant.Property.ACTIVE;
 
+    /**
+     * Creates a new machine block.
+     * @param settings The settings for the block.
+     */
     protected MachineBlock(Settings settings) {
         super(settings);
     }
@@ -156,7 +160,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                         text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
                     }
                     tooltip.add(text1);
-                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecuritySettings.Accessibility.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
+                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecuritySettings.SecurityLevel.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
                 }
             }
             tooltip.add(new TranslatableText("ui.galacticraft.machine.redstone.redstone", RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
@@ -221,7 +225,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         ItemStack stack = super.getPickStack(view, pos, state);
         NbtCompound nbt = (stack.getNbt() != null ? stack.getNbt() : new NbtCompound());
         BlockEntity blockEntity = view.getBlockEntity(pos);
-        if (blockEntity != null) {
+        if (blockEntity != null) { // todo: limit to IO config
             nbt.put(Constant.Nbt.BLOCK_ENTITY_TAG, blockEntity.createNbt());
         }
 

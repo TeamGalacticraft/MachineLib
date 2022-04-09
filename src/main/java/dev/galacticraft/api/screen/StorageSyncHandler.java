@@ -25,6 +25,9 @@ package dev.galacticraft.api.screen;
 import net.minecraft.network.PacketByteBuf;
 import org.jetbrains.annotations.Contract;
 
+/**
+ * Handles syncing of storage contents between the server and client.
+ */
 public interface StorageSyncHandler {
     StorageSyncHandler DEFAULT = new StorageSyncHandler() {
         @Override
@@ -41,10 +44,22 @@ public interface StorageSyncHandler {
         }
     };
 
+    /**
+     * Returns whether the storage needs syncing.
+     * @return Whether the storage needs syncing.
+     */
     @Contract(pure = true)
     boolean needsSyncing();
 
+    /**
+     * Serializes the contents of the storage to the given buffer. Called on the (logical) server.
+     * @param buf The buffer to write to.
+     */
     void sync(PacketByteBuf buf);
 
+    /**
+     * Deserializes the contents of the storage from the given buffer. Called on the client.
+     * @param buf The buffer to read from.
+     */
     void read(PacketByteBuf buf);
 }

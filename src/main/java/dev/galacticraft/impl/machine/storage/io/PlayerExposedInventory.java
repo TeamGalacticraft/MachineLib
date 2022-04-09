@@ -125,8 +125,8 @@ public class PlayerExposedInventory<T, V extends TransferVariant<T>> implements 
     }
 
     @Override
-    public Predicate<V> getFilter(int index) {
-        return v -> this.storage.canAccept(index, v);
+    public Predicate<V> getFilter(int slot) {
+        return v -> this.storage.canAccept(slot, v);
     }
 
     @Override

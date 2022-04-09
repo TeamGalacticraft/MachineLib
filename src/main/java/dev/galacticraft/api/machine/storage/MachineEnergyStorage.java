@@ -34,6 +34,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
+/**
+ * A simple energy storage implementation that allows for the restriction of input and output of energy.
+ */
 public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     SlotType[] NO_SLOTS = new SlotType[0];
 
@@ -44,25 +47,63 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
     }
 
+    /**
+     * Returns whether the energy storage is full (cannot insert more energy).
+     * An energy storage can be both full and empty at the same time.
+     * @return Whether the energy storage is full
+     */
     boolean isFull();
 
+    /**
+     * Returns whether the energy storage is empty (contains no energy).
+     * An energy storage can be both full and empty at the same time.
+     * @return Whether the energy storage is empty
+     */
     boolean isEmpty();
 
-    void setEnergy(long amount, TransactionContext context);
+    /**
+     * Sets the energy stored to the given amount.
+     * @param amount The amount of energy to set the energy stored to
+     * @param context The transaction context
+     */
+    void setEnergy(long amount, @NotNull TransactionContext context);
 
+    /**
+     * Sets the energy stored to the given amount, without using a transaction.
+     * Used for syncing the energy stored between client and server.
+     * Use at your own risk.
+     * @param amount The amount of energy to set the energy stored to
+     */
     @ApiStatus.Internal
     void setEnergyUnsafe(long amount);
+
+    /**
+     * Returns an exposed energy storage that has restricted input and output.
+     * @param flow The resource flow
+     * @return The exposed energy storage
+     */
+    @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow);
+
+    /**
+     * Returns a read-only view of the energy storage.
+     * @return The read-only view of the energy storage
+     */
+    @NotNull EnergyStorage view();
+
+    /**
+     * Serializes the energy storage to NBT.
+     * @return The serialized NBT
+     */
+    @NotNull NbtElement writeNbt();
+
+    /**
+     * Deserializes the energy storage from NBT.
+     * @param nbt The NBT to deserialize from
+     */
+    void readNbt(@NotNull NbtElement nbt);
 
     @Override
     default @NotNull SlotType @NotNull [] getTypes() {
         return NO_SLOTS;
     }
-
-    @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow);
-
-    @NotNull EnergyStorage view();
-
-    @NotNull NbtElement writeNbt();
-
-    void readNbt(@NotNull NbtElement nbt);
 }

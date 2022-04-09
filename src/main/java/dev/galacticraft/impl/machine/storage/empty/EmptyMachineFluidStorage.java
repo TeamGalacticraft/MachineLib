@@ -121,13 +121,13 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull FluidStack extract(int slot, @NotNull Fluid resource, long amount, @Nullable TransactionContext context) {
-        return FluidStack.EMPTY;
+    public long extract(int slot, @NotNull Fluid resource, long amount, @Nullable TransactionContext context) {
+        return 0;
     }
 
     @Override
     public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        return FluidStack.EMPTY;
+        return new FluidStack(variant.getFluid(), variant.copyNbt(), amount);
     }
 
     @Override
@@ -156,7 +156,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public int getSlotModCount(int index) {
+    public int getSlotModCount(int slot) {
         return 0;
     }
 
@@ -171,12 +171,12 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public SingleVariantStorage<FluidVariant> getSlot(int index) {
+    public SingleVariantStorage<FluidVariant> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
     @Override
-    public Predicate<FluidVariant> getFilter(int index) {
+    public Predicate<FluidVariant> getFilter(int slot) {
         return Predicates.alwaysFalse();
     }
 
@@ -201,7 +201,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Fluid> resources) {
+    public boolean containsAny(@NotNull Tag<Fluid> tag) {
         return false;
     }
 

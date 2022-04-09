@@ -28,12 +28,32 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
+/**
+ * Default builtin machine statuses.
+ */
 public final class MachineStatuses {
-    private MachineStatuses() {}
+    private MachineStatuses() {
+        throw new IllegalStateException("MachineStatuses cannot be instantiated");
+    }
 
+    /**
+     * The machine does not have enough energy to run.
+     */
     public static final MachineStatus NOT_ENOUGH_ENERGY = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "not_enough_energy"), new TranslatableText("machine_status.machinelib.not_enough_energy").setStyle(Style.EMPTY.withColor(Formatting.RED)), MachineStatus.Type.MISSING_ENERGY);
+    /**
+     * The machine does not have the proper recipe inputs.
+     */
     public static final MachineStatus INVALID_RECIPE = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "invalid_recipe"), new TranslatableText("machine_status.machinelib.invalid_recipe").setStyle(Style.EMPTY.withColor(Formatting.RED)), MachineStatus.Type.MISSING_ITEMS);
+    /**
+     * The output slot is full.
+     */
     public static final MachineStatus OUTPUT_FULL = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "output_full"), new TranslatableText("machine_status.machinelib.output_full").setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    /**
+     * The energy storage is full.
+     */
     public static final MachineStatus CAPACITOR_FULL = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "capacitor_full"), new TranslatableText("machine_status.machinelib.capacitor_full").setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    /**
+     * The machine is not running.
+     */
     public static final MachineStatus IDLE = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "idle"), new TranslatableText("machine_status.machinelib.idle").setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.MISSING_RESOURCE);
 }

@@ -41,10 +41,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
+    /**
+     * Adds slots to a screen handler for display.
+     * @param handler The screen handler to add slots to.
+     * @param <M> The type of machine.
+     */
     <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler);
 
+    /**
+     * Player-exposed inventory for screen handlers.
+     * @return The player-exposed inventory.
+     */
     Inventory playerInventory();
 
+    /**
+     * Creates a sub-inventory of the given size starting at {@code 0}.
+     * Read only.
+     *
+     * @param size The size of the sub-inventory.
+     * @return The sub-inventory.
+     */
     default Inventory subInv(int size) {
         return this.subInv(0, size);
     }
@@ -53,16 +69,32 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * Returns a sub inventory of the given size starting at the given index.
      * Read only.
      *
-     * @param start
-     * @param size
-     * @return
+     * @param start The index to start at.
+     * @param size The size of the sub-inventory.
+     * @return The sub-inventory.
      */
     Inventory subInv(int start, int size);
 
+    /**
+     * Returns the default empty storage.
+     * @return The default empty storage.
+     */
     static MachineItemStorage empty() {
         return EmptyMachineItemStorage.INSTANCE;
     }
 
+    /**
+     * Creates a new item storage builder.
+     * @return The new item storage builder.
+     */
+    @Contract(value = " -> new", pure = true)
+    static @NotNull Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for creating a new item storage.
+     */
     class Builder {
         private int size = 0;
         private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
@@ -76,10 +108,23 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
             return new Builder();
         }
 
+        /**
+         * Adds a slot to the builder.
+         * @param type The type of slot.
+         * @param display The display for the slot.
+         * @return The builder.
+         */
         public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, @NotNull ItemSlotDisplay display) {
             return this.addSlot(type, 64, display);
         }
 
+        /**
+         * Adds a slot to the builder.
+         * @param type The type of slot.
+         * @param maxCount The maximum count of items in the slot. Clamped to {@code 64} and cannot be negative.
+         * @param display The display for the slot.
+         * @return The builder.
+         */
         public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount, @NotNull ItemSlotDisplay display) {
             maxCount = Math.min(maxCount, 64);
             this.size++;
@@ -89,6 +134,10 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
             return this;
         }
 
+        /**
+         * Builds the item storage.
+         * @return The item storage.
+         */
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineItemStorage build() {
             if (this.size == 0) return empty();

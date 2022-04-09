@@ -23,7 +23,6 @@
 package dev.galacticraft.api.block.util;
 
 import dev.galacticraft.impl.machine.Constant;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.Direction;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * An enum representing a face of a block.
+ * Used in machine I/O face calculations.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public enum BlockFace {
@@ -59,10 +59,10 @@ public enum BlockFace {
      */
     BOTTOM(new TranslatableText("ui.galacticraft.machine.configuration.bottom"), false);
 
-    private final MutableText name;
+    private final Text name;
     private final boolean horizontal;
 
-    BlockFace(MutableText name, boolean horizontal) {
+    BlockFace(@NotNull TranslatableText name, boolean horizontal) {
         this.name = name.setStyle(Constant.Text.GOLD_STYLE);
         this.horizontal = horizontal;
     }
@@ -82,7 +82,7 @@ public enum BlockFace {
      * @return The face corresponding to the given direction and rotation.
      */
     @NotNull
-    public static BlockFace toFace(Direction facing, Direction target) {
+    public static BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) {
         assert facing.getAxis() != Direction.Axis.Y;
 
         if (target == Direction.DOWN) {

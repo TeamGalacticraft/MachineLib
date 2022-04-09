@@ -36,25 +36,57 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents the status of a machine.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineStatus {
+    /**
+     * Registry for machine statuses.
+     * All machine statuses should be registered in this registry to be used.
+     */
     Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", RegistryKey.<MachineStatus>ofRegistry(new Identifier(Constant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+    /**
+     * Default machine status.
+     */
     MachineStatus INVALID = createAndRegister(new Identifier(Constant.MOD_ID, "invalid"), new TranslatableText("ui.machinelib.machine_status.invalid"), Type.OTHER);
 
+    /**
+     * Creates a new machine status and registers it in the registry.
+     * @param id The ID of the machine status.
+     * @param name The name of the machine status.
+     * @param type The type of the machine status.
+     * @return The newly created machine status.
+     */
     static MachineStatus createAndRegister(@NotNull Identifier id, @NotNull Text name, @NotNull MachineStatus.Type type) {
         return Registry.register(REGISTRY, id, create(name, type));
     }
 
+    /**
+     * Creates a new machine status.
+     * @param name The name of the machine status.
+     * @param type The type of the machine status.
+     * @return The newly created machine status.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull MachineStatus create(@NotNull Text name, @NotNull MachineStatus.Type type) {
         return new MachineStatusImpl(name, type);
     }
 
+    /**
+     * Returns the name of the machine status.
+     * @return The name of the machine status.
+     */
     @NotNull Text getName();
 
+    /**
+     * Returns the type of the machine status.
+     * @return The type of the machine status.
+     */
     @NotNull MachineStatus.Type getType();
 
+    /**
+     * Represents the types of machine statuses.
+     */
     enum Type {
         /**
          * The machine is active

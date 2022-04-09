@@ -43,14 +43,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Screen handler for machines.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends ScreenHandler {
+    /**
+     * The player who is currently interacting with this screen handler.
+     */
     public final PlayerEntity player;
+    /**
+     * The machine this screen handler is for.
+     */
     public final M machine;
+    /**
+     * The storage sync handlers for this screen handler.
+     */
     protected final List<StorageSyncHandler> syncHandlers = new ArrayList<>(4);
+    /**
+     * The tanks contained in this screen handler.
+     */
     public List<Tank<?, ?>> tanks = new ArrayList<>();
 
+    /**
+     * Creates a new screen handler for a machine.
+     * @param syncId The sync id for this screen handler.
+     * @param player The player who is interacting with this screen handler.
+     * @param machine The machine this screen handler is for.
+     * @param handlerType The type of screen handler this is.
+     */
     protected MachineScreenHandler(int syncId, PlayerEntity player, M machine, ScreenHandlerType<? extends MachineScreenHandler<M>> handlerType) {
         super(handlerType, syncId);
         this.player = player;
@@ -131,6 +151,9 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         this.syncStorages();
     }
 
+    /**
+     * Syncs the storages in this screen handler.
+     */
     @ApiStatus.Internal
     private void syncStorages() {
         assert player instanceof ServerPlayerEntity;
@@ -155,6 +178,10 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         }
     }
 
+    /**
+     * Receives and deserialized storage sync packets from the server.
+     * @param buf The packet buffer.
+     */
     @ApiStatus.Internal
     public void receiveState(@NotNull PacketByteBuf buf) {
         int sync = buf.readVarInt();
@@ -163,9 +190,12 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         }
     }
 
+    /**
+     * Adds a tank to the screen.
+     * @param tank The tank to add.
+     */
     public void addTank(@NotNull Tank<?, ?> tank) {
         tank.setId(this.tanks.size());
         this.tanks.add(tank);
     }
-
 }

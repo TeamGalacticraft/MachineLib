@@ -28,7 +28,9 @@ import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface Constant {
     String MOD_ID = "machinelib";
 

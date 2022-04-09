@@ -22,5 +22,11 @@
 
 package dev.galacticraft.api.machine.storage.display;
 
+/**
+ * Display information for a tank.
+ * @param x The x position of the tank.
+ * @param y The y position of the tank.
+ * @param height The height of the tank.
+ */
 public record TankDisplay(int x, int y, int height) {
 }

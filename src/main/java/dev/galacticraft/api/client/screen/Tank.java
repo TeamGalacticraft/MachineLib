@@ -52,20 +52,54 @@ public interface Tank<T, V extends TransferVariant<T>> {
         return new TankImpl<>(storage, index, x, y, height, type);
     }
 
+    /**
+     * Returns the resource that is currently in this tank.
+     * @return The resource that is currently in this tank.
+     */
     V getResource();
 
+    /**
+     * Returns the index of this tank in the storage.
+     * @return The index of this tank in the storage.
+     */
     int getIndex();
 
+    /**
+     * Retunrs the x-position of this tank.
+     * @return The x-position of this tank.
+     */
     int getX();
 
+    /**
+     * Returns the y-position of this tank.
+     * @return The y-position of this tank.
+     */
     int getY();
 
+    /**
+     * Returns the height of this tank.
+     * @return The height of this tank.
+     */
     int getHeight();
 
+    /**
+     * Returns the width of this tank.
+     * Currently, always returns {@code 16}.
+     * @return The width of this tank.
+     */
     int getWidth();
 
+    /**
+     * Returns the id of this tank (the index of the tank in the screen).
+     * @return The id of this tank.
+     */
     int getId();
 
+    /**
+     * Sets the id of this tank.
+     * @param id The id of this tank.
+     */
+    @ApiStatus.Internal
     void setId(int id);
 
     void drawTooltip(@NotNull MatrixStack matrices, MinecraftClient client, int x, int y, int mouseX, int mouseY);

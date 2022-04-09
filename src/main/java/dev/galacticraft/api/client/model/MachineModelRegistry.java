@@ -36,9 +36,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.function.Function;
 
+/**
+ * A registry for {@link MachineBakedModel} sprite providers.
+ * Use {@link #register(Block, SpriteProvider)} to register a sprite provider for a block.
+ */
 public interface MachineModelRegistry {
     Identifier MACHINE = new Identifier(Constant.MOD_ID, "block/machine");
     Identifier MACHINE_SIDE = new Identifier(Constant.MOD_ID, "block/machine_side");

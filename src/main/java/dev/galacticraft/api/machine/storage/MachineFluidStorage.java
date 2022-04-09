@@ -39,13 +39,37 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fluid storage for machines.
+ */
 public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
+    /**
+     * Adds tanks to a screen handler for display.
+     * @param handler The screen handler to add tanks to.
+     * @param <M> The type of machine.
+     */
     <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
 
+    /**
+     * Returns the default empty fluid storage.
+     * @return The default empty fluid storage.
+     */
     static MachineFluidStorage empty() {
         return EmptyMachineFluidStorage.INSTANCE;
     }
 
+    /**
+     * Creates a new fluid storage builder.
+     * @return The fluid storage builder.
+     */
+    @Contract(value = " -> new", pure = true)
+    static @NotNull Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for creating fluid storages.
+     */
     class Builder {
         private int size = 0;
         private final List<SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
@@ -54,11 +78,22 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
 
         public Builder() {}
 
+        /**
+         * Creates a new builder.
+         * @return The new builder.
+         */
         @Contract(value = " -> new", pure = true)
         public static @NotNull Builder create() {
             return new Builder();
         }
 
+        /**
+         * Adds a tank to the storage.
+         * @param type The type of tank.
+         * @param capacity The capacity of the tank.
+         * @param display The display for the tank.
+         * @return The builder.
+         */
         public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
@@ -67,6 +102,10 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
             return this;
         }
 
+        /**
+         * Builds the machine fluid storage.
+         * @return The machine fluid storage.
+         */
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineFluidStorage build() {
             if (this.size == 0) return empty();

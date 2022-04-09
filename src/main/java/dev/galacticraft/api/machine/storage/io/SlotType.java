@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Predicate;
 
 /**
+ * Used for filtering, flow and I/O configuration of resources.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotType<T, V extends TransferVariant<T>> {
@@ -53,14 +54,35 @@ public interface SlotType<T, V extends TransferVariant<T>> {
         return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, flow, type));
     }
 
+    /**
+     * Returns the color of the slot type.
+     * @return The color of the slot type.
+     */
     @NotNull TextColor getColor();
 
+    /**
+     * Returns the name of the slot type.
+     * @return The name of the slot type.
+     */
     @NotNull Text getName();
 
+    /**
+     * Returns the resource type of the slot type.
+     * @return The resource type of the slot type.
+     */
     @NotNull ResourceType<T, V> getType();
 
+    /**
+     * Returns the exposed resource flow of the slot type.
+     * @return The exposed resource flow of the slot type.
+     */
     @NotNull ResourceFlow getFlow();
 
+    /**
+     * Returns whether the slot type is valid for the given resource.
+     * @param variant The resource variant.
+     * @return Whether the slot type is valid for the given resource.
+     */
     boolean willAccept(@NotNull V variant);
 
     @ApiStatus.Internal RegistryEntry.Reference<SlotType<?, ?>> getReference();

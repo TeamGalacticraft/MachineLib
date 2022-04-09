@@ -114,8 +114,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public int getSlotModCount(int index) {
-        return this.inventory[index].getModCount();
+    public int getSlotModCount(int slot) {
+        return this.inventory[slot].getModCount();
     }
 
     @Override
@@ -129,8 +129,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public ItemSlot getSlot(int index) {
-        return this.inventory[index];
+    public ItemSlot getSlot(int slot) {
+        return this.inventory[slot];
     }
 
     @Override
@@ -228,15 +228,9 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
+    public @NotNull long extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-
-        ItemSlot invSlot = this.inventory[slot];
-        if (invSlot.getResource().getItem() == item) {
-            return this.extractVariant(invSlot, amount, context);
-        } else {
-            return ItemStack.EMPTY;
-        }
+        return this.extract(slot, ItemVariant.of(item), amount, context);
     }
 
     @NotNull

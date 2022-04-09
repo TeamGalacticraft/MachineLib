@@ -44,11 +44,11 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     /**
      * The type of resource that this face is configured to accept.
      */
-    private ResourceType<?, ?> type;
+    private @NotNull ResourceType<?, ?> type;
     /**
      * The flow direction of this face.
      */
-    private ResourceFlow flow;
+    private @NotNull ResourceFlow flow;
     /**
      * The filter of this face.
      * <p>
@@ -63,7 +63,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
      */
     private @Nullable Object storage = null;
 
-    public ConfiguredMachineFaceImpl(ResourceType<?, ?> type, ResourceFlow flow) {
+    public ConfiguredMachineFaceImpl(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         this.type = type;
         this.flow = flow;
     }

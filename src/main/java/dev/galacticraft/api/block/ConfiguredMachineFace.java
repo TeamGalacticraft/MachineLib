@@ -35,13 +35,26 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
+ * Represents a face of a {@link dev.galacticraft.api.block.entity.MachineBlockEntity} that has been configured to
+ * accept certain types of resources.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface ConfiguredMachineFace {
+    /**
+     * Creates a new {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     * @param type The type of resource to accept.
+     * @param flow The flow direction of the resource.
+     * @return A new {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     */
     @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull ConfiguredMachineFace of(ResourceType<?, ?> type, ResourceFlow flow) {
+    static @NotNull ConfiguredMachineFace of(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         return new ConfiguredMachineFaceImpl(type, flow);
     }
+
+    /**
+     * Creates a new, blank {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     * @return A new, blank {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     */
     @Contract(value = " -> new", pure = true)
     static @NotNull ConfiguredMachineFace create() {
         return new ConfiguredMachineFaceImpl(ResourceType.NONE, ResourceFlow.BOTH);
@@ -106,10 +119,14 @@ public interface ConfiguredMachineFace {
     <T, V extends TransferVariant<T>> int[] getMatching(ConfiguredStorage<T, V> storage);
 
     /**
-     * Write the face to a new nbt compound.
+     * Write the configuration to a new nbt compound.
      * @return The nbt compound that was written to.
      */
     NbtCompound writeNbt();
 
+    /**
+     * Read the configuration from the given nbt compound.
+     * @param nbt The nbt compound to read from.
+     */
     void readNbt(@NotNull NbtCompound nbt);
 }

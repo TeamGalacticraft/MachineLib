@@ -27,22 +27,51 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 
+/**
+ * A resource flow is a way to describe how a resource can be transferred between two storages.
+ */
 public enum ResourceFlow {
+    /**
+     * Resources can flow into the machine.
+     */
     INPUT(new TranslatableText("ui.galacticraft.side_option.in").setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
+    /**
+     * Resources can flow out of the machine.
+     */
     OUTPUT(new TranslatableText("ui.galacticraft.side_option.out").setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
+    /**
+     * Resources can flow into and out of the machine.
+     */
     BOTH(new TranslatableText("ui.galacticraft.side_option.io").setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
 
+    /**
+     * The name of the flow direction.
+     */
     private final Text name;
 
+
+    /**
+     * Creates a new resource flow.
+     * @param name The name of the flow direction.
+     */
     ResourceFlow(Text name) {
         this.name = name;
     }
 
+    /**
+     * Returns the name of the flow direction.
+     * @return The name of the flow direction.
+     */
     public Text getName() {
         return this.name;
     }
 
-    public boolean canFlowIn(ResourceFlow direction) {
-        return this == direction || this == BOTH;
+    /**
+     * Returns whether this flow can flow into the given flow.
+     * @param flow The flow to check.
+     * @return Whether this flow can flow into the given flow.
+     */
+    public boolean canFlowIn(ResourceFlow flow) {
+        return this == flow || this == BOTH;
     }
 }

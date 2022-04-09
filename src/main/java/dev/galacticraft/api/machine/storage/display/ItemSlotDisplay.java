@@ -25,6 +25,12 @@ package dev.galacticraft.api.machine.storage.display;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.util.Identifier;
 
+/**
+ * Display information for an item slot.
+ * @param x The x position of the slot.
+ * @param y The y position of the slot.
+ * @param icon The icon to display in the slot.
+ */
 public record ItemSlotDisplay(int x, int y, Pair<Identifier, Identifier> icon) {
     public ItemSlotDisplay(int x, int y) {
         this(x, y, null);

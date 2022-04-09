@@ -141,8 +141,8 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     }
 
     @Override
-    public Predicate<V> getFilter(int index) {
-        return v -> this.storage.canAccept(index, v);
+    public Predicate<V> getFilter(int slot) {
+        return v -> this.storage.canAccept(slot, v);
     }
 
     private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {

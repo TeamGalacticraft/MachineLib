@@ -25,7 +25,6 @@ package dev.galacticraft.api.machine;
 import dev.galacticraft.impl.machine.Constant;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
@@ -41,11 +40,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 /**
+ * Represents the behavior of a machine when it is activated by redstone.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public enum RedstoneActivation implements StringIdentifiable {
     /**
-     * Ignores redstone entirely.
+     * Ignores redstone entirely (always running).
      */
     IGNORE(new TranslatableText("ui.galacticraft.redstone.ignore"), Constant.Text.GRAY_STYLE),
 
@@ -59,16 +59,29 @@ public enum RedstoneActivation implements StringIdentifiable {
      */
     HIGH(new TranslatableText("ui.galacticraft.redstone.high"), Constant.Text.RED_STYLE);
 
+    /**
+     * The name of the redstone activation state.
+     */
     private final Text name;
 
     RedstoneActivation(@NotNull TranslatableText name, @NotNull Style style) {
         this.name = name.setStyle(style);
     }
 
+    /**
+     * Returns the redstone activation state from the given string identifier.
+     * @param string The string identifier.
+     * @return The redstone activation state.
+     */
     public static RedstoneActivation fromString(@NotNull String string) {
         return RedstoneActivation.valueOf(string.toUpperCase(Locale.ROOT));
     }
 
+    /**
+     * Sends a packet to the client to update the redstone activation state.
+     * @param pos The position of the machine.
+     * @param player The player to send the packet to.
+     */
     public void sendPacket(BlockPos pos, ServerPlayerEntity player) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
@@ -76,6 +89,10 @@ public enum RedstoneActivation implements StringIdentifiable {
         ServerPlayNetworking.send(player, new Identifier(Constant.MOD_ID, "redstone_update"), buf);
     }
 
+    /**
+     * Returns the name of the redstone activation state.
+     * @return The name of the redstone activation state.
+     */
     public Text getName() {
         return this.name;
     }
@@ -85,10 +102,19 @@ public enum RedstoneActivation implements StringIdentifiable {
         return this.name().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Serializes the redstone activation state to NBT.
+     * @return The NBT element.
+     */
     public NbtElement writeNbt() {
         return NbtString.of(this.asString());
     }
 
+    /**
+     * Deserializes the redstone activation state from NBT.
+     * @param nbt The NBT element.
+     * @return The redstone activation state.
+     */
     public static @NotNull RedstoneActivation readNbt(@NotNull NbtElement nbt) {
         if (nbt.getType() == NbtElement.STRING_TYPE) {
             return fromString(nbt.asString());

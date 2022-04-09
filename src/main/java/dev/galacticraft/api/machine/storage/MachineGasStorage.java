@@ -39,13 +39,37 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Gas storage for machines.
+ */
 public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasStack> {
+    /**
+     * Adds tanks to a screen handler for display.
+     * @param handler The screen handler to add tanks to.
+     * @param <M> The type of machine.
+     */
     <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
 
+    /**
+     * Returns the default empty storage.
+     * @return The default empty storage.
+     */
     static MachineGasStorage empty() {
         return EmptyMachineGasStorage.INSTANCE;
     }
 
+    /**
+     * Creates a new gas storage builder.
+     * @return The new gas storage builder.
+     */
+    @Contract(value = " -> new", pure = true)
+    static @NotNull Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for creating gas storages.
+     */
     class Builder {
         private int size = 0;
         private final List<SlotType<Gas, GasVariant>> types = new ArrayList<>();
@@ -54,12 +78,23 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
 
         public Builder() {}
 
+        /**
+         * Creates a new gas storage builder.
+         * @return The new gas storage builder.
+         */
         @Contract(value = " -> new", pure = true)
         public static @NotNull Builder create() {
             return new Builder();
         }
 
-        public @NotNull Builder addSlot(SlotType<Gas, GasVariant> type, long capacity, TankDisplay display) {
+        /**
+         * Adds a tank to the storage.
+         * @param type The type of tank.
+         * @param capacity The capacity of the tank.
+         * @param display The display for the tank.
+         * @return The builder.
+         */
+        public @NotNull Builder addTank(SlotType<Gas, GasVariant> type, long capacity, TankDisplay display) {
             this.size++;
             this.types.add(type);
             this.displays.add(display);
@@ -67,6 +102,10 @@ public interface MachineGasStorage extends ResourceStorage<Gas, GasVariant, GasS
             return this;
         }
 
+        /**
+         * Builds the gas storage.
+         * @return The gas storage.
+         */
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineGasStorage build() {
             if (this.size == 0) return empty();

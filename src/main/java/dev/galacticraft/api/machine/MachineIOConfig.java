@@ -30,9 +30,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Stores the configuration of a machine's IO for all six faces.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineIOConfig {
+    /**
+     * Creates a new {@link MachineIOConfig}.
+     * @return a new {@link MachineIOConfig}
+     */
     @Contract(" -> new")
     static @NotNull MachineIOConfig create() {
         return new MachineIOConfigImpl();
@@ -46,7 +51,15 @@ public interface MachineIOConfig {
      */
     ConfiguredMachineFace get(@NotNull BlockFace face);
 
+    /**
+     * Serializes the {@link MachineIOConfig} to NBT.
+     * @return a NBT compound containing the serialized {@link MachineIOConfig}
+     */
     @NotNull NbtCompound writeNbt();
 
+    /**
+     * Deserializes the {@link MachineIOConfig} from NBT.
+     * @param nbt the NBT compound containing the serialized {@link MachineIOConfig}
+     */
     void readNbt(@NotNull NbtCompound nbt);
 }

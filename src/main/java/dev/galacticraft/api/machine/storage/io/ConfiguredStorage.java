@@ -27,10 +27,19 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * A storage that can be configured for use in machine I/O faces and synced to the client.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface ConfiguredStorage<T, V extends TransferVariant<T>> {
+    /**
+     * Returns the slot type of each slot in the storage.
+     * @return The slot type of each slot in the storage.
+     */
     @NotNull SlotType<T, V> @NotNull [] getTypes();
 
+    /**
+     * Creates a storage sync handler for this storage.
+     * @return A storage sync handler for this storage.
+     */
     @NotNull StorageSyncHandler createSyncHandler();
 }

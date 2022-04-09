@@ -24,7 +24,6 @@ package dev.galacticraft.api.gas;
 
 import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.impl.gas.GasImpl;
-import dev.galacticraft.impl.gas.GasVariantImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.text.Text;
@@ -42,9 +41,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public interface Gas {
-    RegistryKey<Registry<Gas>> REGISTRY_KEY = RegistryKey.ofRegistry(new Identifier("galacticraft-api", "gas"));
-    Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("galacticraft-api:empty", REGISTRY_KEY, Lifecycle.stable(), Gas::getReference)).buildAndRegister();
-    Gas EMPTY = Registry.register(REGISTRY, new Identifier("galacticraft-api:empty"), new GasImpl(new TranslatableText("gas.galacticraft-api.empty"), new Identifier("minecraft", "empty"), "", ""));
+    /**
+     * The {@link RegistryKey} of the {@link Gas} registry.
+     * @see #REGISTRY
+     */
+    RegistryKey<Registry<Gas>> REGISTRY_KEY = RegistryKey.ofRegistry(new Identifier("machinelib", "gas"));
+    /**
+     * The gas registry. All gases must be registered here, otherwise the game will crash.
+     * @see #REGISTRY_KEY
+     */
+    Registry<Gas> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:empty", REGISTRY_KEY, Lifecycle.stable(), Gas::getReference)).buildAndRegister();
+    /**
+     * The default gas.
+     * Technically, this isn't a gas, but it's used to represent the lack of a gas.
+     */
+    Gas EMPTY = Registry.register(REGISTRY, new Identifier("machinelib:empty"), new GasImpl(new TranslatableText("gas.machinelib.empty"), new Identifier("minecraft", "empty"), "", ""));
 
     /**
      * Creates a new gas.
@@ -68,25 +79,61 @@ public interface Gas {
                 .replaceAll("9", "₉"));
     }
 
+    /**
+     * Returns the raw integer id of the provided gas.
+     * @param gas The gas to get the id of
+     * @return The id of the gas
+     */
     static int getRawId(Gas gas) {
         return REGISTRY.getRawId(gas);
     }
 
+    /**
+     * Returns the gas with the provided id.
+     * @param id The raw id of the gas
+     * @return The gas with the provided id
+     */
     static Gas byRawId(int id) {
         return REGISTRY.get(id);
     }
 
+    /**
+     * Returns the name of this gas.
+     * @return The name of this gas
+     */
     Text getName();
 
+    /**
+     * Returns the translation key of this gas' name.
+     * @return The translation key of this gas' name
+     */
     String getTranslationKey();
 
+    /**
+     * Returns the symbol of this gas.
+     * @return The symbol of this gas
+     */
     String getSymbol();
 
+    /**
+     * Returns the symbol of this gas, with the appropriate superscripts.
+     * @return The symbol of this gas, with the appropriate superscripts
+     */
     String symbolForDisplay();
 
+    /**
+     * Returns the fluid associated with this gas.
+     * @return The fluid associated with this gas
+     */
     @NotNull Optional<Fluid> getFluid();
 
-    RegistryEntry.Reference<Gas> getReference();
+    /**
+     * Returns the registry reference of this gas.
+     * Ensures that there are no unregistered gases in the game.
+     * @return The registry reference of this gas
+     */
+    @ApiStatus.Internal
+    @NotNull RegistryEntry.Reference<Gas> getReference();
 
     /**
      * Returns the gas variant associated with this gas.

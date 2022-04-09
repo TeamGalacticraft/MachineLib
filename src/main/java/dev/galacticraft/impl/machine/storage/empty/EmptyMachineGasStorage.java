@@ -121,13 +121,13 @@ public enum EmptyMachineGasStorage implements MachineGasStorage, ExposedStorage<
     }
 
     @Override
-    public @NotNull GasStack extract(int slot, @NotNull Gas resource, long amount, @Nullable TransactionContext context) {
-        return GasStack.EMPTY;
+    public long extract(int slot, @NotNull Gas resource, long amount, @Nullable TransactionContext context) {
+        return 0;
     }
 
     @Override
     public @NotNull GasStack replace(int slot, @NotNull GasVariant variant, long amount, @Nullable TransactionContext context) {
-        return GasStack.EMPTY;
+        return variant.toStack(amount);
     }
 
     @Override
@@ -156,7 +156,7 @@ public enum EmptyMachineGasStorage implements MachineGasStorage, ExposedStorage<
     }
 
     @Override
-    public int getSlotModCount(int index) {
+    public int getSlotModCount(int slot) {
         return 0;
     }
 
@@ -171,12 +171,12 @@ public enum EmptyMachineGasStorage implements MachineGasStorage, ExposedStorage<
     }
 
     @Override
-    public SingleVariantStorage<GasVariant> getSlot(int index) {
+    public SingleVariantStorage<GasVariant> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
     @Override
-    public Predicate<GasVariant> getFilter(int index) {
+    public Predicate<GasVariant> getFilter(int slot) {
         return Predicates.alwaysFalse();
     }
 
@@ -201,7 +201,7 @@ public enum EmptyMachineGasStorage implements MachineGasStorage, ExposedStorage<
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Gas> resources) {
+    public boolean containsAny(@NotNull Tag<Gas> tag) {
         return false;
     }
 

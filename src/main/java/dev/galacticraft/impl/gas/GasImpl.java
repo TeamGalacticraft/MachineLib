@@ -82,7 +82,8 @@ public class GasImpl implements Gas {
     }
 
     @Override
-    public RegistryEntry.Reference<Gas> getReference() {
+    @ApiStatus.Internal
+    public @NotNull RegistryEntry.Reference<Gas> getReference() {
         return this.reference;
     }
 

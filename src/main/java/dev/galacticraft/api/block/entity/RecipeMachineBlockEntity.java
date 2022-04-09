@@ -35,30 +35,53 @@ import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 /**
+ * A machine block entity that processes recipes.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Recipe<C>> extends MachineBlockEntity {
+    /**
+     * The recipe type that this machine processes.
+     */
     private final @NotNull RecipeType<R> recipeType;
 
+    /**
+     * The number of times the machine's inventory has been modified.
+     * Used to determine if the machine's active recipe must be recalculated.
+     */
+    @ApiStatus.Internal
     private int inventoryModCount = -1;
+
+    /**
+     * The machine's active recipe. If there is no active recipe, this will be {@code null}.
+     */
     private @Nullable R activeRecipe = null;
+
+    /**
+     * The progress of the machine's current recipe.
+     * Counts upwards until it reaches {@link #maxProgress maximum rogress}.
+     */
     private int progress = 0;
+
+    /**
+     * The time it takes to complete the recipe (in ticks).
+     */
     private int maxProgress = 0;
 
-    public RecipeMachineBlockEntity(BlockEntityType<? extends RecipeMachineBlockEntity<C, R>> type, BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
+    protected RecipeMachineBlockEntity(@NotNull BlockEntityType<? extends RecipeMachineBlockEntity<C, R>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
         super(type, pos, state);
         this.recipeType = recipeType;
     }
 
     /**
      * The crafting inventory of the machine.
-     * Will not be modified.
+     * Used to determine the machine's active recipe. Will not be modified.
      * @return The crafting inventory of the machine.
      */
     protected abstract @NotNull C craftingInv();
@@ -79,8 +102,18 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      */
     protected abstract boolean extractCraftingMaterials(R recipe, TransactionContext context);
 
+    /**
+     * Returns the machine status to use when the machine is working.
+     * @return The machine status to use when the machine is working.
+     */
     protected abstract @NotNull MachineStatus workingStatus();
 
+    /**
+     * Extracts the neccecary resources to run this machine.
+     * This can be energy, fuel, or any other resource.
+     * @param context The current transaction.
+     * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
+     */
     protected @Nullable MachineStatus extractResourcesToWork(@NotNull TransactionContext context) {
         return null;
     }
@@ -88,6 +121,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     @Override
     public @NotNull MachineStatus tick() {
         if (this.inventoryModCount != this.itemStorage().getModCount()) {
+            this.world.getProfiler().push("recipe_test");
             this.inventoryModCount = this.itemStorage().getModCount();
             Optional<R> optional = this.findValidRecipe();
             if (optional.isPresent()) {
@@ -103,19 +137,25 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
                 this.resetRecipe();
                 return MachineStatuses.INVALID_RECIPE;
             }
+            this.world.getProfiler().pop();
         }
         if (this.activeRecipe != null) {
+            this.world.getProfiler().push("working_transaction");
             try (Transaction transaction = Transaction.openOuter()) {
                 MachineStatus status = this.extractResourcesToWork(transaction);
                 if (status == null) {
                     if (++this.progress >= this.getMaxProgress()) {
+                        this.world.getProfiler().push("crafting");
                         this.craft(this.activeRecipe, transaction);
+                        this.world.getProfiler().pop();
                     }
                     transaction.commit();
                     return this.workingStatus();
                 } else {
                     return status;
                 }
+            } finally {
+                this.world.getProfiler().pop();
             }
         } else {
             if (this.getStatus() == MachineStatuses.OUTPUT_FULL) return MachineStatuses.OUTPUT_FULL; //preserve full state
@@ -123,9 +163,14 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
         }
     }
 
-
+    /**
+     * Sets the current recipe to the given recipe.
+     * If the recipe is different from the current recipe, the progress is reset.
+     * @param recipe The recipe to set.
+     *               If {@code null}, the recipe will be reset.
+     */
     private void updateRecipe(R recipe) {
-        if (this.getActiveRecipe() != recipe) {
+        if (this.getActiveRecipe() != recipe || recipe == null) {
             this.setActiveRecipe(recipe);
             this.setMaxProgress(this.getProcessTime(recipe));
             this.setProgress(0);
@@ -135,10 +180,10 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     /**
      * Crafts the given recipe.
      * @param recipe The recipe to craft.
-     * @param transaction The current transaction.
+     * @param context The current transaction.
      */
-    protected void craft(R recipe, @Nullable TransactionContext transaction) {
-        try (Transaction inner = Transaction.openNested(transaction)) {
+    protected void craft(R recipe, @Nullable TransactionContext context) {
+        try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
                 if (this.outputStacks(recipe, inner)) {
                     inner.commit();
@@ -148,7 +193,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     /**
-     * Resets the progress of the machine.
+     * Resets the progress of the machine and clears the active recipe.
      */
     protected void resetRecipe() {
         this.setActiveRecipe(null);
@@ -166,6 +211,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
 
     /**
      * Finds the first valid recipe in the machine's inventory.
+     * Will always test for the current recipe first.
      * @return The first valid recipe in the machine's inventory.
      */
     protected @NotNull Optional<R> findValidRecipe() {
@@ -211,7 +257,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     /**
-     * Returns the active recipe of the machine.
+     * Returns the active recipe of the machine. May be {@code null}.
      * @return The active recipe of the machine.
      */
     public @Nullable R getActiveRecipe() {

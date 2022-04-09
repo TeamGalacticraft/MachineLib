@@ -108,8 +108,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public int getSlotModCount(int index) {
-        return this.inventory[index].getModCount();
+    public int getSlotModCount(int slot) {
+        return this.inventory[slot].getModCount();
     }
 
     @Override
@@ -123,8 +123,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public SingleVariantStorage<FluidVariant> getSlot(int index) {
-        return this.inventory[index];
+    public SingleVariantStorage<FluidVariant> getSlot(int slot) {
+        return this.inventory[slot];
     }
 
     @Override
@@ -222,15 +222,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public @NotNull FluidStack extract(int slot, @NotNull Fluid fluid, long amount, @Nullable TransactionContext context) {
+    public long extract(int slot, @NotNull Fluid fluid, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-
-        FluidSlot invSlot = this.inventory[slot];
-        if (invSlot.getResource().getFluid() == fluid) {
-            return this.extractVariant(invSlot, amount, context);
-        } else {
-            return FluidStack.EMPTY;
-        }
+        return this.extract(slot, FluidVariant.of(fluid), amount, context);
     }
 
     @NotNull

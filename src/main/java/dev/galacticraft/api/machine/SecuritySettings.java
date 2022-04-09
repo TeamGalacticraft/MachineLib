@@ -41,58 +41,98 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a security setting of a machine.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public class SecuritySettings {
-    private @Nullable GameProfile owner;
-    private @Nullable Identifier team;
-    private @NotNull Accessibility accessibility;
+    /**
+     * The profile of the player who owns the linked machine.
+     */
+    private @Nullable GameProfile owner = null;
+    /**
+     * The team of the player who owns the linked machine.
+     */
+    private @Nullable Identifier team = null;
+    /**
+     * The security level of the linked machine.
+     */
+    private @NotNull SecuritySettings.SecurityLevel securityLevel = SecurityLevel.PUBLIC;
 
-    public SecuritySettings() {
-        this.accessibility = Accessibility.PUBLIC;
-        this.team = null;
-    }
-
+    /**
+     * Returns whether the player is the owner of the linked machine.
+     * @param player The player to check.
+     * @return Whether the player is the owner of the linked machine.
+     */
     @Contract(pure = true)
     public boolean isOwner(@NotNull PlayerEntity player) {
-        return isOwner(player.getGameProfile());
+        return this.isOwner(player.getGameProfile());
     }
 
+    /**
+     * Returns whether the game profile is the owner of the linked machine.
+     * @param profile The game profile to check.
+     * @return Whether the game profile is the owner of the linked machine.
+     */
     @Contract(pure = true)
     public boolean isOwner(GameProfile profile) {
         if (this.owner == null) return false;
         return this.owner.equals(profile);
     }
 
+    /**
+     * Whether the player is allowed to access the linked machine.
+     * @param player The player to check.
+     * @return Whether the player is allowed to access the linked machine.
+     */
     @Contract(pure = true)
     public boolean hasAccess(PlayerEntity player) {
-        if (accessibility == Accessibility.PUBLIC) {
+        if (this.securityLevel == SecurityLevel.PUBLIC) {
             return true;
-        } else if (accessibility == Accessibility.TEAM) {
+        } else if (this.securityLevel == SecurityLevel.TEAM) {
             if (this.isOwner(player)) return true;
             return false; //todo: teams
-        } else if (accessibility == Accessibility.PRIVATE) {
+        } else if (this.securityLevel == SecurityLevel.PRIVATE) {
             return this.isOwner(player);
         }
         return false;
     }
 
-    public @NotNull Accessibility getAccessibility() {
-        return accessibility;
+    /**
+     * Returns the security level of the linked machine.
+     * @return The security level of the linked machine.
+     */
+    public @NotNull SecuritySettings.SecurityLevel getSecurityLevel() {
+        return this.securityLevel;
     }
 
-    public void setAccessibility(@NotNull Accessibility accessibility) {
-        this.accessibility = accessibility;
+    /**
+     * Sets the security level of the linked machine.
+     * @param securityLevel The security level to set.
+     */
+    public void setSecurityLevel(@NotNull SecuritySettings.SecurityLevel securityLevel) {
+        this.securityLevel = securityLevel;
     }
 
+    /**
+     * Returns the game profile of the owner of the linked machine.
+     * @return
+     */
     public @Nullable GameProfile getOwner() {
         return this.owner;
     }
 
+    /**
+     * Sets the player who owns the linked machine.
+     * @param owner The playrt to set.
+     */
     public void setOwner(/*@NotNull Teams teams, */@NotNull PlayerEntity owner) { //todo: teams
         this.setOwner(/*teams, */owner.getGameProfile());
     }
 
+    /**
+     * Sets the game profile of the owner of the linked machine.
+     * @param owner The game profile to set.
+     */
     public void setOwner(/*@NotNull Teams teams, */@NotNull GameProfile owner) {
         if (this.getOwner() == null) {
             this.owner = owner;
@@ -100,22 +140,34 @@ public class SecuritySettings {
         }
     }
 
+    /**
+     * Returns the team of the owner of the linked machine.
+     * @return The team of the owner of the linked machine.
+     */
     public @Nullable Identifier getTeam() {
         return team;
     }
 
+    /**
+     * Serializes the security settings to nbt.
+     * @return The serialized security settings.
+     */
     public NbtCompound toNbt() {
         NbtCompound nbt = new NbtCompound();
         if (this.getOwner() != null) {
             nbt.put(Constant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
         }
-        nbt.putString(Constant.Nbt.ACCESSIBILITY, this.accessibility.name());
+        nbt.putString(Constant.Nbt.ACCESSIBILITY, this.securityLevel.name());
         if (this.getTeam() != null) {
-            nbt.putString(Constant.Nbt.TEAM, team.toString());
+            nbt.putString(Constant.Nbt.TEAM, this.team.toString());
         }
         return nbt;
     }
 
+    /**
+     * Deserializes the security settings from nbt.
+     * @param nbt The nbt to deserialize from.
+     */
     public void fromNbt(@NotNull NbtCompound nbt) {
         if (nbt.contains(Constant.Nbt.OWNER)) {
             this.owner = NbtHelper.toGameProfile(nbt.getCompound(Constant.Nbt.OWNER));
@@ -125,26 +177,46 @@ public class SecuritySettings {
             this.team = new Identifier(nbt.getString(Constant.Nbt.TEAM));
         }
 
-        this.accessibility = Accessibility.valueOf(nbt.getString(Constant.Nbt.ACCESSIBILITY));
+        this.securityLevel = SecurityLevel.valueOf(nbt.getString(Constant.Nbt.ACCESSIBILITY));
     }
 
+    /**
+     * Sends the security settings to the client.
+     * @param pos The position of the machine.
+     * @param player The player to send the settings to.
+     */
     public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayerEntity player) {
         assert this.owner != null;
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
-        buf.writeByte(this.accessibility.ordinal());
+        buf.writeByte(this.securityLevel.ordinal());
         buf.writeNbt(NbtHelper.writeGameProfile(new NbtCompound(), this.owner));
         ServerPlayNetworking.send(player, new Identifier(Constant.MOD_ID, "security_update"), buf);
     }
 
-    public enum Accessibility implements StringIdentifiable {
+    /**
+     * Represents the level of protection a machine has from other players.
+     */
+    public enum SecurityLevel implements StringIdentifiable {
+        /**
+         * All players can use this machine.
+         */
         PUBLIC(new TranslatableText("ui.galacticraft.machine.security.accessibility.public")),
+        /**
+         * Only team members can use this machine.
+         */
         TEAM(new TranslatableText("ui.galacticraft.machine.security.accessibility.team")),
+        /**
+         * Only the owner can use this machine.
+         */
         PRIVATE(new TranslatableText("ui.galacticraft.machine.security.accessibility.private"));
 
-        private final TranslatableText name;
+        /**
+         * The name of the security level.
+         */
+        private final Text name;
 
-        Accessibility(TranslatableText name) {
+        SecurityLevel(TranslatableText name) {
             this.name = name;
         }
 
@@ -153,6 +225,10 @@ public class SecuritySettings {
             return this.toString();
         }
 
+        /**
+         * Returns the name of the security level.
+         * @return The name of the security level.
+         */
         public Text getName() {
             return this.name;
         }

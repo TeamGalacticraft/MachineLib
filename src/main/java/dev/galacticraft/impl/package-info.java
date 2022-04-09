@@ -20,46 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.transfer.v1;
+@ApiStatus.Internal
+package dev.galacticraft.impl;
 
-import dev.galacticraft.api.transfer.v1.TransactiveHolder;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @param <T> The type of object held by this holder. MUST be immutable.
- */
-public class ImmutableTransactiveHolder<T> extends SnapshotParticipant<T> implements TransactiveHolder<T> {
-    private T value;
-
-    public ImmutableTransactiveHolder(T value) {
-        this.value = value;
-    }
-
-    @Override
-    public T get() {
-        return this.value;
-    }
-
-    @Override
-    public void set(T value, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.value = value;
-    }
-
-    @Override
-    public void setUnsafe(T value) {
-        this.value = value;
-    }
-
-    @Override
-    protected T createSnapshot() {
-        return this.value;
-    }
-
-    @Override
-    protected void readSnapshot(T snapshot) {
-        this.value = snapshot;
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

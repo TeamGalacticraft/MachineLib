@@ -107,8 +107,8 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public int getSlotModCount(int index) {
-        return this.inventory[index].getModCount();
+    public int getSlotModCount(int slot) {
+        return this.inventory[slot].getModCount();
     }
 
     @Override
@@ -122,8 +122,8 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public GasSlot getSlot(int index) {
-        return this.inventory[index];
+    public GasSlot getSlot(int slot) {
+        return this.inventory[slot];
     }
 
     @Override
@@ -221,15 +221,9 @@ public class MachineGasStorageImpl implements MachineGasStorage {
     }
 
     @Override
-    public @NotNull GasStack extract(int slot, @NotNull Gas gas, long amount, @Nullable TransactionContext context) {
+    public long extract(int slot, @NotNull Gas gas, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-
-        GasSlot invSlot = this.inventory[slot];
-        if (invSlot.getResource().getGas() == gas) {
-            return this.extractVariant(invSlot, amount, context);
-        } else {
-            return GasStack.EMPTY;
-        }
+        return this.extract(slot, GasVariant.of(gas), amount, context);
     }
 
     @NotNull

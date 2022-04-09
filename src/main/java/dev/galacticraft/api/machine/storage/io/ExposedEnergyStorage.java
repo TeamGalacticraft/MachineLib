@@ -25,6 +25,12 @@ package dev.galacticraft.api.machine.storage.io;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import team.reborn.energy.api.EnergyStorage;
 
+/**
+ * An {@link EnergyStorage} that can be configured to restrict input and output.
+ * @param parent The parent {@link EnergyStorage}
+ * @param insertion Whether this {@link EnergyStorage} can accept energy
+ * @param extraction Whether this {@link EnergyStorage} can extract energy
+ */
 public record ExposedEnergyStorage(EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
     @Override
     public boolean supportsInsertion() {
@@ -54,11 +60,11 @@ public record ExposedEnergyStorage(EnergyStorage parent, boolean insertion, bool
 
     @Override
     public long getAmount() {
-        return 0;
+        return this.parent.getAmount();
     }
 
     @Override
     public long getCapacity() {
-        return 0;
+        return this.parent.getCapacity();
     }
 }
