@@ -20,181 +20,112 @@
  * SOFTWARE.
  */
 
-import java.time.format.DateTimeFormatter
-
 plugins {
-    java
-    `maven-publish`
-    id("fabric-loom") version "0.11-SNAPSHOT"
-    id("org.cadixdev.licenser") version "0.6.1"
-    id("io.github.juuxel.loom-quiltflower") version("1.6.1")
+    id("fabric-loom") version "0.11-SNAPSHOT" apply false
+    id("io.github.juuxel.loom-quiltflower") version("1.7.0") apply false
+    id("org.cadixdev.licenser") version "0.6.1" apply false
 }
 
-val modId           = project.property("mod.id").toString()
-val modVersion      = project.property("mod.version").toString()
-val modName         = project.property("mod.name").toString()
-val modGroup        = project.property("mod.group").toString()
+val modGroup = rootProject.property("mod.group").toString()
 
-val minecraft       = project.property("minecraft.version").toString()
-val yarn            = project.property("yarn.build").toString()
-val loader          = project.property("loader.version").toString()
-val fabric          = project.property("fabric.version").toString()
-val energy          = project.property("energy.version").toString()
+val minecraft = rootProject.property("minecraft.version").toString()
+val yarn = rootProject.property("yarn.build").toString()
+val loader = rootProject.property("loader.version").toString()
+val fabric = rootProject.property("fabric.version").toString()
+val energy = rootProject.property("energy.version").toString()
 
-group = modGroup
-version ="$modVersion+$minecraft"
-
-base.archivesName.set(modName)
-
-java {
-    targetCompatibility = JavaVersion.VERSION_17
-    sourceCompatibility = JavaVersion.VERSION_17
-
-    withSourcesJar()
-    withJavadocJar()
-}
-
-val gametestSourceSet = sourceSets.create("gametest") {
-    java.srcDir("src/gametest/java")
-    resources.srcDir("src/gametest/resources")
-}
-
-val testmodSourceSet = sourceSets.create("testmod") {
-    java.srcDir("src/testmod/java")
-    resources.srcDir("src/testmod/resources")
-}
-
-loom {
-    runs {
-        register("gametest") {
-            server()
-            name("Game Test")
-            source(gametestSourceSet)
-            vmArgs("-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml", "-ea")
-        }
-        register("testmod") {
-            client()
-            name("Test Mod")
-            source(testmodSourceSet)
-            vmArg("-ea")
+allprojects {
+    apply(plugin = "org.cadixdev.licenser")
+    extensions.getByType(org.cadixdev.gradle.licenser.LicenseExtension::class).apply {
+        setHeader(rootProject.file("LICENSE_HEADER.txt"))
+        include("**/dev/galacticraft/**/*.java")
+        include("build.gradle.kts")
+        ext {
+            set("year", "2022")
+            set("company", "Team Galacticraft")
         }
     }
 }
 
-repositories {
-}
+subprojects {
+    apply(plugin = "java")
+    apply(plugin = "fabric-loom")
+    apply(plugin = "io.github.juuxel.loom-quiltflower")
 
-dependencies {
-    minecraft("com.mojang:minecraft:$minecraft")
-    mappings("net.fabricmc:yarn:$minecraft+build.$yarn:v2")
-    modImplementation("net.fabricmc:fabric-loader:$loader")
+    val modId = project.property("mod.id").toString()
+    val modVersion = project.property("mod.version").toString()
+    val modName = project.property("mod.name").toString()
+    val fabricModules = project.property("fabric.modules").toString().split(',')
 
-    listOf(
-        "fabric-api-base",
-        "fabric-api-lookup-api-v1",
-        "fabric-gametest-api-v1",
-        "fabric-lifecycle-events-v1",
-        "fabric-models-v0",
-        "fabric-networking-api-v1",
-        "fabric-registry-sync-v0",
-        "fabric-renderer-api-v1",
-        "fabric-resource-loader-v0",
-        "fabric-screen-handler-api-v1",
-        "fabric-transfer-api-v1"
-    ).forEach {
-        modImplementation(fabricApi.module(it, fabric))
+    group = modGroup
+    version = "$modVersion+$minecraft"
+
+    extensions.getByType(BasePluginExtension::class).archivesName.set(modName)
+
+    extensions.getByType(JavaPluginExtension::class).apply {
+        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
     }
 
-    include(modApi("teamreborn:energy:$energy") {
-        exclude(group = "net.fabricmc.fabric-api")
-    }) {
-        exclude(group = "net.fabricmc.fabric-api")
-    }
+    extensions.getByType(net.fabricmc.loom.api.LoomGradleExtensionAPI::class).shareCaches()
 
-    modRuntimeOnly("net.fabricmc.fabric-api:fabric-api:$fabric")
-}
+    dependencies {
+        "minecraft"("com.mojang:minecraft:$minecraft")
+        "mappings"("net.fabricmc:yarn:$minecraft+build.$yarn:v2")
+        "modImplementation"("net.fabricmc:fabric-loader:$loader")
 
-tasks.processResources {
-    inputs.property("version", project.version)
-
-    filesMatching("fabric.mod.json") {
-        expand("version" to project.version, "modid" to modId)
-    }
-
-    // Minify json resources
-    // https://stackoverflow.com/questions/41028030/gradle-minimize-json-resources-in-processresources#41029113
-    doLast {
-        fileTree(mapOf("dir" to outputs.files.asPath, "includes" to listOf("**/*.json", "**/*.mcmeta"))).forEach {
-                file: File -> file.writeText(groovy.json.JsonOutput.toJson(groovy.json.JsonSlurper().parse(file)))
+        val fabricApi = net.fabricmc.loom.configuration.FabricApiExtension(this@subprojects);
+        fabricModules.forEach {
+            "modCompileOnly"(fabricApi.module(it, fabric))
         }
-    }
-}
 
-tasks.test {
-    dependsOn(tasks.getByName("runGametest"))
-}
-
-tasks.withType<JavaCompile> {
-    dependsOn(tasks.checkLicenses)
-    options.encoding = "UTF-8"
-    options.release.set(17)
-}
-
-tasks.jar {
-    from("LICENSE")
-    manifest {
-        attributes(
-            "Implementation-Title"     to modName,
-            "Implementation-Version"   to "${project.version}",
-            "Implementation-Vendor"    to "Team Galacticraft",
-            "Implementation-Timestamp" to DateTimeFormatter.ISO_DATE_TIME,
-            "Maven-Artifact"           to "${project.group}:${modName}:${project.version}",
-            "ModSide"                  to "BOTH"
-        )
-    }
-}
-
-publishing {
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId = "dev.galacticraft"
-            artifactId = modName
-
-            from(components["java"])
+        "include"("modApi"("teamreborn:energy:$energy") {
+            exclude(group = "net.fabricmc.fabric-api")
+        }) {
+            exclude(group = "net.fabricmc.fabric-api")
         }
+
+        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fabric")
     }
-    repositories {
-        maven("https://maven.galacticraft.dev/") {
-            name = "maven"
-            credentials(PasswordCredentials::class)
-            authentication {
-                register("basic", BasicAuthentication::class)
+
+    tasks.withType<ProcessResources>() {
+        inputs.property("version", project.version)
+
+        filesMatching("fabric.mod.json") {
+            expand("version" to project.version, "modid" to modId)
+        }
+
+        // Minify json resources
+        // https://stackoverflow.com/questions/41028030/gradle-minimize-json-resources-in-processresources#41029113
+        doLast {
+            fileTree(
+                mapOf(
+                    "dir" to outputs.files.asPath,
+                    "includes" to listOf("**/*.json", "**/*.mcmeta")
+                )
+            ).forEach { file: File ->
+                file.writeText(groovy.json.JsonOutput.toJson(groovy.json.JsonSlurper().parse(file)))
             }
         }
     }
-}
 
-license {
-    setHeader(project.file("LICENSE_HEADER.txt"))
-    include("**/dev/galacticraft/**/*.java")
-    include("build.gradle.kts")
-    ext {
-        set("year", "2022")
-        set("company", "Team Galacticraft")
+    tasks.withType<JavaCompile> {
+        dependsOn(tasks.getByName("checkLicenses"))
+        options.encoding = "UTF-8"
+        options.release.set(17)
+    }
+
+    tasks.withType<Jar>() {
+        from("LICENSE")
+        manifest {
+            attributes(
+                "Implementation-Title" to modName,
+                "Implementation-Version" to "${project.version}",
+                "Implementation-Vendor" to "Team Galacticraft",
+                "Implementation-Timestamp" to java.time.format.DateTimeFormatter.ISO_DATE_TIME,
+                "Maven-Artifact" to "${project.group}:${modName}:${project.version}",
+                "ModSide" to "BOTH"
+            )
+        }
     }
 }
-
-tasks.named<ProcessResources>("processGametestResources") {
-    duplicatesStrategy = DuplicatesStrategy.WARN
-}
-
-tasks.named<ProcessResources>("processTestmodResources") {
-    duplicatesStrategy = DuplicatesStrategy.WARN
-}
-
-tasks.getByName("gametestClasses").dependsOn("classes", "testmodClasses")
-tasks.getByName("testmodClasses").dependsOn("classes")
-testmodSourceSet.compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
-testmodSourceSet.runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
-gametestSourceSet.compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output + testmodSourceSet.output
-gametestSourceSet.runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output + testmodSourceSet.output

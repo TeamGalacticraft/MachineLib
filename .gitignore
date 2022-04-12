@@ -213,7 +213,7 @@ modules.xml
 ### Gradle ###
 .gradle
 **/build/
-!src/**/build/
+!lib/src/**/build/
 
 # Ignore Gradle GUI config
 gradle-app.setting

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "machinelib-test",
+  "version": "0.0.0",
+
+  "name": "MachineLib Test Mod",
+  "description": "Test mod and GameTests for MachineLib.",
+  "license": "MIT",
+  "contact": {
+    "homepage": "https://galacticraft.team/",
+    "sources": "https://github.com/TeamGalacticraft/MachineLib/",
+    "issues": "https://github.com/TeamGalacticraft/MachineLib/issues/"
+  },
+  "authors": [
+    {
+      "name": "Team Galacticraft",
+      "contact": {
+        "homepage": "https://github.com/TeamGalacticraft/",
+        "discord": "https://discord.gg/n3QqhMYyFK"
+      }
+    }
+  ],
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.galacticraft.machinelib.testmod.TestMod"
+    ],
+    "fabric-gametest": [
+      "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageImplTest",
+      "dev.galacticraft.machinelib.gametest.storage.fluid.FluidStorageImplTest"
+    ]
+  },
+  "depends": {
+    "machinelib": ">=0.1.0"
+  }
+}
