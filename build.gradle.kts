@@ -40,10 +40,6 @@ allprojects {
         setHeader(rootProject.file("LICENSE_HEADER.txt"))
         include("**/dev/galacticraft/**/*.java")
         include("build.gradle.kts")
-        ext {
-            set("year", "2022")
-            set("company", "Team Galacticraft")
-        }
     }
 }
 
