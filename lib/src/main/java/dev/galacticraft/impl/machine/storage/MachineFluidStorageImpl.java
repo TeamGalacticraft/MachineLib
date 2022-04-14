@@ -37,10 +37,11 @@ import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
+import dev.galacticraft.impl.machine.storage.slot.ResourceSlot;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -60,6 +61,7 @@ import java.util.Set;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
+    private boolean[] allowsGas;
     private final TankDisplay[] displays;
     private final @NotNull FluidSlot[] inventory;
     private final @NotNull SlotType<Fluid, FluidVariant>[] types;
@@ -69,8 +71,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final @NotNull ModCount modCount = new ModCount();
     private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.of(this, false, false);
 
-    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts, TankDisplay[] displays) {
+    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts, boolean[] allowsGas, TankDisplay[] displays) {
         this.size = size;
+        this.allowsGas = allowsGas;
         this.displays = displays;
         this.inventory = new FluidSlot[this.size];
         this.extraction = new boolean[this.size];
@@ -109,21 +112,21 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public int getSlotModCount(int slot) {
-        return this.inventory[slot].getModCount();
+        return this.getSlot(slot).getModCount();
     }
 
     @Override
     public boolean isFull(int slot) {
-        return this.inventory[slot].getAmount() == this.inventory[slot].getCapacity();
+        return this.getAmount(slot) == this.getCapacity(slot);
     }
 
     @Override
     public boolean isEmpty(int slot) {
-        return this.inventory[slot].getAmount() == 0;
+        return this.getSlot(slot).getAmount() == 0;
     }
 
     @Override
-    public SingleVariantStorage<FluidVariant> getSlot(int slot) {
+    public ResourceSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
         return this.inventory[slot];
     }
 
@@ -139,17 +142,17 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public @NotNull FluidStack getStack(int slot) {
-        return this.inventory[slot].copyStack();
+        return this.getSlot(slot).copyStack();
     }
 
     @Override
     public @NotNull FluidVariant getVariant(int slot) {
-        return this.inventory[slot].getResource();
+        return this.getSlot(slot).getResource();
     }
 
     @Override
     public long getAmount(int slot) {
-        return this.inventory[slot].getAmount();
+        return this.getSlot(slot).getAmount();
     }
 
     @Override
@@ -205,15 +208,14 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public @NotNull FluidStack extract(int slot, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
-
-        return this.extractVariant(this.inventory[slot], amount, context);
+        return this.extractVariant(this.getSlot(slot), amount, context);
     }
 
     @Override
     public @NotNull FluidStack extract(int slot, @NotNull Tag<Fluid> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
-        FluidSlot invSlot = this.inventory[slot];
+        ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
         if (tag.values().contains(invSlot.getResource().getFluid())) {
             return this.extractVariant(invSlot, amount, context);
         } else {
@@ -228,7 +230,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @NotNull
-    private FluidStack extractVariant(@NotNull FluidSlot invSlot, long amount, @Nullable TransactionContext context) {
+    private FluidStack extractVariant(@NotNull ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot, long amount, @Nullable TransactionContext context) {
         long extracted = Math.min(invSlot.getAmount(), amount);
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
@@ -245,8 +247,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
         try (Transaction transaction = Transaction.openNested(context)) {
-            FluidSlot invSlot = this.inventory[slot];
+            ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
             FluidStack currentStack = invSlot.copyStack();
             invSlot.setStack(variant, amount, context);
             this.modCount.increment(transaction);
@@ -257,8 +260,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
         if (!this.canAccept(slot, variant) || amount == 0) return 0;
-        FluidSlot invSlot = this.inventory[slot];
+        ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
@@ -285,7 +289,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long extract(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        FluidSlot invSlot = this.inventory[slot];
+        StoragePreconditions.notBlankNotNegative(variant, amount);
+        ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
         if (invSlot.getResource().equals(variant)) {
             long extracted = Math.min(invSlot.getAmount(), amount);
             if (extracted > 0) {
@@ -302,7 +307,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long getMaxCount(int slot) {
-        return this.inventory[slot].getCapacity();
+        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -312,6 +317,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public boolean canAccept(int slot, @NotNull FluidVariant variant) {
+        if (!this.allowsGases(slot) && FluidVariantAttributes.isLighterThanAir(variant)) return false;
         return this.types[slot].willAccept(variant);
     }
 
@@ -352,8 +358,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     public @NotNull NbtElement writeNbt() {
         NbtList list = new NbtList();
         for (FluidSlot fluidSlot : this.inventory) {
-            NbtCompound compound = fluidSlot.variant.toNbt();
-            compound.putLong(Constant.Nbt.AMOUNT, fluidSlot.amount);
+            NbtCompound compound = fluidSlot.getResource().toNbt();
+            compound.putLong(Constant.Nbt.AMOUNT, fluidSlot.getAmount());
             list.add(compound);
         }
         return list;
@@ -365,10 +371,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             NbtList list = ((NbtList) nbt);
             for (int i = 0; i < list.size(); i++) {
                 NbtCompound compound = list.getCompound(i);
-                FluidSlot slot = this.inventory[i];
-                slot.variant = FluidVariant.fromNbt(compound);
-                slot.amount = compound.getLong(Constant.Nbt.AMOUNT);
-                slot.modCount.incrementUnsafe();
+                this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
             }
         }
     }
@@ -377,9 +380,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     public void clear() {
         assert !Transaction.isOpen();
         for (FluidSlot fluidSlot : this.inventory) {
-            fluidSlot.variant = FluidVariant.blank();
-            fluidSlot.amount = 0;
-            fluidSlot.modCount.incrementUnsafe();
+            fluidSlot.setStackUnsafe(FluidVariant.blank(), 0, true);
         }
         this.modCount.incrementUnsafe();
     }
@@ -387,6 +388,18 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public ExposedStorage<Fluid, FluidVariant> view() {
         return this.view;
+    }
+
+    @Override
+    public void setSlot(int slot, FluidVariant variant, long amount, boolean markDirty) {
+        assert !Transaction.isOpen();
+        this.inventory[slot].setStackUnsafe(variant, amount, markDirty);
+        if (markDirty) this.modCount.incrementUnsafe();
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -408,19 +421,23 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             public void sync(PacketByteBuf buf) {
                 this.modCount = MachineFluidStorageImpl.this.modCount.getModCount();
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
-                    slot.variant.toPacket(buf);
-                    buf.writeLong(slot.amount);
+                    slot.getResource().toPacket(buf);
+                    buf.writeLong(slot.getAmount());
                 }
             }
 
             @Override
             public void read(PacketByteBuf buf) {
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
-                    slot.variant = FluidVariant.fromPacket(buf);
-                    slot.amount = buf.readLong();
+                    slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readLong(), false);
                 }
             }
         };
+    }
+
+    @Override
+    public boolean allowsGases(int slot) {
+        return this.allowsGas[slot];
     }
 
     @Override
@@ -429,7 +446,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.ofPlayer(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
-            handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height(), ResourceType.FLUID));
+            handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height()));
         }
     }
 

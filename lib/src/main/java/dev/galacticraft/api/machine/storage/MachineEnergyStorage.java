@@ -29,9 +29,9 @@ import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.NbtElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
@@ -74,7 +74,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
      * Use at your own risk.
      * @param amount The amount of energy to set the energy stored to
      */
-    @ApiStatus.Internal
+    @TestOnly
     void setEnergyUnsafe(long amount);
 
     /**

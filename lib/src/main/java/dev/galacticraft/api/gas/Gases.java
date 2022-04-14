@@ -23,6 +23,7 @@
 package dev.galacticraft.api.gas;
 
 import dev.galacticraft.impl.machine.Constant;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -35,165 +36,149 @@ public final class Gases {
     /**
      * Hydrogen gas.
      */
-    public static final Gas HYDROGEN = Gas.create(
+    public static final Fluid HYDROGEN = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.hydrogen"),
-            null,
-            "H2"
+            new Identifier(Constant.MOD_ID, "gas/hydrogen"), "H2"
     );
     public static final Identifier NITROGEN_ID = new Identifier(Constant.MOD_ID, "nitrogen");
     /**
      * Nitrogen gas.
      */
-    public static final Gas NITROGEN = Gas.create(
+    public static final Fluid NITROGEN = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.nitrogen"),
-            null,
-            "N2"
+            new Identifier(Constant.MOD_ID, "gas/nitrogen"), "N2"
     );
     public static final Identifier OXYGEN_ID = new Identifier(Constant.MOD_ID, "oxygen");
     /**
      * Oxygen gas.
      */
-    public static final Gas OXYGEN = Gas.create(
+    public static final Fluid OXYGEN = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.oxygen"),
-            null,
-            "O2"
+            new Identifier(Constant.MOD_ID, "gas/oxygen"), "O2"
     );
     public static final Identifier CARBON_DIOXIDE_ID = new Identifier(Constant.MOD_ID, "carbon_dioxide");
     /**
      * Carbon dioxide.
      */
-    public static final Gas CARBON_DIOXIDE = Gas.create(
+    public static final Fluid CARBON_DIOXIDE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.carbon_dioxide"),
-            null,
-            "CO2"
+            new Identifier(Constant.MOD_ID, "gas/carbon_dioxide"), "CO2"
     );
     public static final Identifier WATER_VAPOR_ID = new Identifier(Constant.MOD_ID, "water_vapor");
     /**
      * Water vapor.
      */
-    public static final Gas WATER_VAPOR = Gas.create(
+    public static final Fluid WATER_VAPOR = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.water_vapor"),
-            null,
-            "H2O"
+            new Identifier(Constant.MOD_ID, "gas/water_vapor"), "H2O"
     );
     public static final Identifier METHANE_ID = new Identifier(Constant.MOD_ID, "methane");
     /**
      * Methane.
      */
-    public static final Gas METHANE = Gas.create(
+    public static final Fluid METHANE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.methane"),
-            null,
-            "CH4"
+            new Identifier(Constant.MOD_ID, "gas/methane"), "CH4"
     );
     public static final Identifier HELIUM_ID = new Identifier(Constant.MOD_ID, "helium");
     /**
      * Helium.
      */
-    public static final Gas HELIUM = Gas.create(
+    public static final Fluid HELIUM = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.helium"),
-            null,
-            "He"
+            new Identifier(Constant.MOD_ID, "gas/helium"), "He"
     );
     public static final Identifier ARGON_ID = new Identifier(Constant.MOD_ID, "argon");
     /**
      * Argon.
      */
-    public static final Gas ARGON = Gas.create(
+    public static final Fluid ARGON = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.argon"),
-            null,
-            "Ar"
+            new Identifier(Constant.MOD_ID, "gas/argon"), "Ar"
     );
     public static final Identifier NEON_ID = new Identifier(Constant.MOD_ID, "neon");
     /**
      * Neon.
      */
-    public static final Gas NEON = Gas.create(
+    public static final Fluid NEON = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.neon"),
-            null,
-            "Ne"
+            new Identifier(Constant.MOD_ID, "gas/neon"), "Ne"
     );
     public static final Identifier KRYPTON_ID = new Identifier(Constant.MOD_ID, "krypton");
     /**
      * Krypton.
      */
-    public static final Gas KRYPTON = Gas.create(
+    public static final Fluid KRYPTON = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.krypton"),
-            null,
-            "Kr"
+            new Identifier(Constant.MOD_ID, "gas/krypton"), "Kr"
     );
     public static final Identifier NITROUS_OXIDE_ID = new Identifier(Constant.MOD_ID, "nitrous_oxide");
     /**
      * Nitrous oxide.
      */
-    public static final Gas NITROUS_OXIDE = Gas.create(
+    public static final Fluid NITROUS_OXIDE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.nitrous_oxide"),
-            null,
-            "N2O"
+            new Identifier(Constant.MOD_ID, "gas/nitrous_oxide"), "N2O"
     );
     public static final Identifier CARBON_MONOXIDE_ID = new Identifier(Constant.MOD_ID, "carbon_monoxide");
     /**
      * Carbon monoxide.
      */
-    public static final Gas CARBON_MONOXIDE = Gas.create(
+    public static final Fluid CARBON_MONOXIDE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.carbon_monoxide"),
-            null,
-            "CO"
+            new Identifier(Constant.MOD_ID, "gas/carbon_monoxide"), "CO"
     );
     public static final Identifier XENON_ID = new Identifier(Constant.MOD_ID, "xenon");
     /**
      * Xenon.
      */
-    public static final Gas XENON = Gas.create(
+    public static final Fluid XENON = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.xenon"),
-            null,
-            "Xe"
+            new Identifier(Constant.MOD_ID, "gas/xenon"), "Xe"
     );
     public static final Identifier OZONE_ID = new Identifier(Constant.MOD_ID, "ozone");
     /**
      * Ozone.
      */
-    public static final Gas OZONE = Gas.create(
+    public static final Fluid OZONE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.ozone"),
-            null,
-            "O3"
+            new Identifier(Constant.MOD_ID, "gas/ozone"), "O3"
     );
     public static final Identifier NITROUS_DIOXIDE_ID = new Identifier(Constant.MOD_ID, "nitrous_dioxide");
     /**
      * Nitrous dioxide.
      */
-    public static final Gas NITROUS_DIOXIDE = Gas.create(
+    public static final Fluid NITROUS_DIOXIDE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.nitrous_dioxide"),
-            null,
-            "NO2"
+            new Identifier(Constant.MOD_ID, "gas/nitrous_dioxide"), "NO2"
     );
     public static final Identifier IODINE_ID = new Identifier(Constant.MOD_ID, "iodine");
     /**
      * Iodine.
      */
-    public static final Gas IODINE = Gas.create(
+    public static final Fluid IODINE = GasFluid.create(
             new TranslatableText("ui.machinelib.gases.iodine"),
-            null,
-            "I2"
+            new Identifier(Constant.MOD_ID, "gas/iodine"), "I2"
     );
 
     public static void init() {}
 
     static {
-        Registry.register(Gas.REGISTRY, HYDROGEN_ID, HYDROGEN);
-        Registry.register(Gas.REGISTRY, NITROGEN_ID, NITROGEN);
-        Registry.register(Gas.REGISTRY, OXYGEN_ID, OXYGEN);
-        Registry.register(Gas.REGISTRY, CARBON_DIOXIDE_ID, CARBON_DIOXIDE);
-        Registry.register(Gas.REGISTRY, WATER_VAPOR_ID, WATER_VAPOR);
-        Registry.register(Gas.REGISTRY, METHANE_ID, METHANE);
-        Registry.register(Gas.REGISTRY, HELIUM_ID, HELIUM);
-        Registry.register(Gas.REGISTRY, ARGON_ID, ARGON);
-        Registry.register(Gas.REGISTRY, NEON_ID, NEON);
-        Registry.register(Gas.REGISTRY, KRYPTON_ID, KRYPTON);
-        Registry.register(Gas.REGISTRY, NITROUS_OXIDE_ID, NITROUS_OXIDE);
-        Registry.register(Gas.REGISTRY, CARBON_MONOXIDE_ID, CARBON_MONOXIDE);
-        Registry.register(Gas.REGISTRY, XENON_ID, XENON);
-        Registry.register(Gas.REGISTRY, OZONE_ID, OZONE);
-        Registry.register(Gas.REGISTRY, NITROUS_DIOXIDE_ID, NITROUS_DIOXIDE);
-        Registry.register(Gas.REGISTRY, IODINE_ID, IODINE);
+        Registry.register(Registry.FLUID, HYDROGEN_ID, HYDROGEN);
+        Registry.register(Registry.FLUID, NITROGEN_ID, NITROGEN);
+        Registry.register(Registry.FLUID, OXYGEN_ID, OXYGEN);
+        Registry.register(Registry.FLUID, CARBON_DIOXIDE_ID, CARBON_DIOXIDE);
+        Registry.register(Registry.FLUID, WATER_VAPOR_ID, WATER_VAPOR);
+        Registry.register(Registry.FLUID, METHANE_ID, METHANE);
+        Registry.register(Registry.FLUID, HELIUM_ID, HELIUM);
+        Registry.register(Registry.FLUID, ARGON_ID, ARGON);
+        Registry.register(Registry.FLUID, NEON_ID, NEON);
+        Registry.register(Registry.FLUID, KRYPTON_ID, KRYPTON);
+        Registry.register(Registry.FLUID, NITROUS_OXIDE_ID, NITROUS_OXIDE);
+        Registry.register(Registry.FLUID, CARBON_MONOXIDE_ID, CARBON_MONOXIDE);
+        Registry.register(Registry.FLUID, XENON_ID, XENON);
+        Registry.register(Registry.FLUID, OZONE_ID, OZONE);
+        Registry.register(Registry.FLUID, NITROUS_DIOXIDE_ID, NITROUS_DIOXIDE);
+        Registry.register(Registry.FLUID, IODINE_ID, IODINE);
     }
 }

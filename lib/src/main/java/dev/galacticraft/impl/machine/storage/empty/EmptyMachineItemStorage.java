@@ -224,6 +224,10 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
+    public void setSlot(int slot, ItemVariant variant, long amount, boolean markDirty) {
+    }
+
+    @Override
     public Storage<ItemVariant> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {
         return this;
     }

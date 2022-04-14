@@ -36,6 +36,7 @@ import dev.galacticraft.impl.compat.ReadOnlySubInv;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.ItemSlot;
+import dev.galacticraft.impl.machine.storage.slot.ResourceSlot;
 import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
@@ -115,21 +116,21 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public int getSlotModCount(int slot) {
-        return this.inventory[slot].getModCount();
+        return this.getSlot(slot).getModCount();
     }
 
     @Override
     public boolean isFull(int slot) {
-        return this.inventory[slot].getAmount() == this.inventory[slot].getCapacity();
+        return this.getSlot(slot).getAmount() == this.getSlot(slot).getCapacity();
     }
 
     @Override
     public boolean isEmpty(int slot) {
-        return this.inventory[slot].getAmount() == 0;
+        return this.getSlot(slot).getAmount() == 0;
     }
 
     @Override
-    public ItemSlot getSlot(int slot) {
+    public ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
         return this.inventory[slot];
     }
 
@@ -145,17 +146,17 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public @NotNull ItemStack getStack(int slot) {
-        return this.inventory[slot].copyStack();
+        return this.getSlot(slot).copyStack();
     }
 
     @Override
     public @NotNull ItemVariant getVariant(int slot) {
-        return this.inventory[slot].getResource();
+        return this.getSlot(slot).getResource();
     }
 
     @Override
     public long getAmount(int slot) {
-        return this.inventory[slot].getAmount();
+        return this.getSlot(slot).getAmount();
     }
 
     @Override
@@ -212,14 +213,14 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
-        return this.extractVariant(this.inventory[slot], amount, context);
+        return this.extractVariant(this.getSlot(slot), amount, context);
     }
 
     @Override
     public @NotNull ItemStack extract(int slot, @NotNull Tag<Item> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
-        ItemSlot invSlot = this.inventory[slot];
+        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
         if (tag.values().contains(invSlot.getResource().getItem())) {
             return this.extractVariant(invSlot, amount, context);
         } else {
@@ -234,7 +235,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @NotNull
-    private ItemStack extractVariant(@NotNull ItemSlot invSlot, long amount, @Nullable TransactionContext context) {
+    private ItemStack extractVariant(@NotNull ResourceSlot<Item, ItemVariant, ItemStack> invSlot, long amount, @Nullable TransactionContext context) {
         long extracted = Math.min(invSlot.getAmount(), amount);
         if (extracted > 0) {
             try (Transaction transaction = Transaction.openNested(context)) {
@@ -251,8 +252,9 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public @NotNull ItemStack replace(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
         try (Transaction transaction = Transaction.openNested(context)) {
-            ItemSlot invSlot = this.inventory[slot];
+            ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
             ItemStack currentStack = invSlot.copyStack();
             invSlot.setStack(variant, amount, context);
             this.modCount.increment(transaction);
@@ -263,8 +265,9 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
         if (!this.canAccept(slot, variant) || amount == 0) return 0;
-        ItemSlot invSlot = this.inventory[slot];
+        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
         if (invSlot.isResourceBlank()) {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
@@ -291,7 +294,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        ItemSlot invSlot = this.inventory[slot];
+        StoragePreconditions.notBlankNotNegative(variant, amount);
+        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
         if (invSlot.getResource().equals(variant)) {
             long extracted = Math.min(invSlot.getAmount(), amount);
             if (extracted > 0) {
@@ -308,7 +312,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long getMaxCount(int slot) {
-        return this.inventory[slot].getCapacity();
+        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -375,8 +379,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     public @NotNull NbtElement writeNbt() {
         NbtList list = new NbtList();
         for (ItemSlot itemSlot : this.inventory) {
-            NbtCompound compound = itemSlot.variant.toNbt();
-            compound.putLong(Constant.Nbt.AMOUNT, itemSlot.amount);
+            NbtCompound compound = itemSlot.getResource().toNbt();
+            compound.putLong(Constant.Nbt.AMOUNT, itemSlot.getAmount());
             list.add(compound);
         }
         return list;
@@ -388,10 +392,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
             NbtList list = ((NbtList) nbt);
             for (int i = 0; i < list.size(); i++) {
                 NbtCompound compound = list.getCompound(i);
-                ItemSlot slot = this.inventory[i];
-                slot.variant = ItemVariant.fromNbt(compound);
-                slot.amount = compound.getLong(Constant.Nbt.AMOUNT);
-                slot.modCount.incrementUnsafe();
+                this.getSlot(i).setStackUnsafe(ItemVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
             }
         }
     }
@@ -400,9 +401,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     public void clear() {
         assert !Transaction.isOpen();
         for (ItemSlot itemSlot : this.inventory) {
-            itemSlot.variant = ItemVariant.blank();
-            itemSlot.amount = 0;
-            itemSlot.modCount.incrementUnsafe();
+            itemSlot.setStackUnsafe(ItemVariant.blank(), 0, true);
         }
         this.modCount.incrementUnsafe();
     }
@@ -410,6 +409,18 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     @Override
     public ExposedStorage<Item, ItemVariant> view() {
         return this.view;
+    }
+
+    @Override
+    public void setSlot(int slot, ItemVariant variant, long amount, boolean markDirty) {
+        assert !Transaction.isOpen();
+        this.getSlot(slot).setStackUnsafe(variant, amount, markDirty);
+        if (markDirty) this.modCount.incrementUnsafe();
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -431,16 +442,15 @@ public class MachineItemStorageImpl implements MachineItemStorage {
             public void sync(PacketByteBuf buf) {
                 this.modCount = MachineItemStorageImpl.this.modCount.getModCount();
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.variant.toPacket(buf);
-                    buf.writeLong(slot.amount);
+                    slot.getResource().toPacket(buf);
+                    buf.writeLong(slot.getAmount());
                 }
             }
 
             @Override
             public void read(PacketByteBuf buf) {
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.variant = ItemVariant.fromPacket(buf);
-                    slot.amount = buf.readLong();
+                    slot.setStackUnsafe(ItemVariant.fromPacket(buf), buf.readLong(), false);
                 }
             }
         };

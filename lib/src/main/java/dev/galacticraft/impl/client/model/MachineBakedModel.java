@@ -236,8 +236,6 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_IN);
                 } else if (type == ResourceType.FLUID) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_IN);
-                } else if (type == ResourceType.GAS) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_GAS_IN);
                 } else if (type == ResourceType.ANY) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_IN);
                 }
@@ -249,8 +247,6 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_OUT);
                 } else if (type == ResourceType.FLUID) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_OUT);
-                } else if (type == ResourceType.GAS) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_GAS_OUT);
                 } else if (type == ResourceType.ANY) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_OUT);
                 }
@@ -262,8 +258,6 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_IO);
                 } else if (type == ResourceType.FLUID) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_IO);
-                } else if (type == ResourceType.GAS) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_GAS_IO);
                 } else if (type == ResourceType.ANY) {
                     return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_IO);
                 }

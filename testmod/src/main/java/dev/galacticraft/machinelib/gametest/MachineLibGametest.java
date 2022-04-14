@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.gametest;
 
 import dev.galacticraft.impl.fluid.FluidStack;
-import dev.galacticraft.impl.gas.GasStack;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.item.ItemStack;
 import net.minecraft.test.GameTest;
@@ -130,12 +129,6 @@ public interface MachineLibGametest extends FabricGameTest {
 
     default void assertEquals(FluidStack a, FluidStack b, @NotNull String message) {
         if (a == null || b == null || !FluidStack.canCombine(a, b) || a.getAmount() != b.getAmount()) {
-            throw new GameTestException(format(message, a, b, 1));
-        }
-    }
-
-    default void assertEquals(GasStack a, GasStack b, @NotNull String message) {
-        if (a == null || b == null || !GasStack.canCombine(a, b) || a.getAmount() != b.getAmount()) {
             throw new GameTestException(format(message, a, b, 1));
         }
     }

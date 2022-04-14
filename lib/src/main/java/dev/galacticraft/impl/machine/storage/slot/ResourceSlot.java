@@ -23,15 +23,21 @@
 package dev.galacticraft.impl.machine.storage.slot;
 
 import dev.galacticraft.impl.machine.ModCount;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SingleVariantStorage<V> {
+public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements SingleSlotStorage<V> {
     public final ModCount modCount = new ModCount();
     private final long capacity;
+    private V variant;
+    private long amount;
 
     public ResourceSlot(long capacity) {
         this.capacity = capacity;
@@ -41,22 +47,38 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         return this.modCount.getModCount();
     }
 
-    public void setStack(V variant, long amount, @NotNull TransactionContext context) {
+    @TestOnly
+    public void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty) {
+        StoragePreconditions.notNegative(amount);
+        if (amount == 0) variant = this.getBlankVariant();
+        else if (variant.isBlank()) amount = 0;
+        this.variant = variant;
+        this.amount = amount;
+        if (markDirty) this.modCount.incrementUnsafe();
+    }
+
+    public void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context) {
+        StoragePreconditions.notNegative(amount);
         this.updateSnapshots(context);
         this.modCount.increment(context);
+        if (amount == 0) variant = this.getBlankVariant();
+        else if (variant.isBlank()) amount = 0;
         this.variant = variant;
         this.amount = amount;
     }
 
-    public void setVariant(V variant, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.variant = variant;
-    }
-
     public void setAmount(long amount, @NotNull TransactionContext context) {
+        StoragePreconditions.notNegative(amount);
+        if (this.variant.isBlank()) {
+            if (amount != 0) {
+                throw new IllegalArgumentException("Cannot set amount of blank variant");
+            }
+        }
         this.updateSnapshots(context);
         this.modCount.increment(context);
+        if (amount == 0) {
+            this.variant = this.getBlankVariant();
+        }
         this.amount = amount;
     }
 
@@ -70,10 +92,9 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         }
     }
 
-    @Override
-    public long getCapacity(@NotNull V variant) {
-        return this.capacity;
-    }
+    protected abstract V getBlankVariant();
+
+    protected abstract long getVariantCapacity(V variant);
 
     @Contract(pure = true)
     protected abstract @NotNull S getEmptyStack();
@@ -84,5 +105,86 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
     public @NotNull S copyStack() {
         if (this.variant.isBlank() || this.amount == 0) return this.getEmptyStack();
         return this.createStack(this.variant, this.amount);
+    }
+
+    @Override
+    public long insert(V variant, long maxAmount, @NotNull TransactionContext transaction) {
+        StoragePreconditions.notBlankNotNegative(variant, maxAmount);
+
+        if ((variant.equals(this.variant) || this.variant.isBlank())) {
+            long insertedAmount = Math.min(maxAmount, Math.min(this.capacity, getCapacity(variant)) - this.amount);
+
+            if (insertedAmount > 0) {
+                updateSnapshots(transaction);
+
+                if (this.variant.isBlank()) {
+                    this.variant = variant;
+                    this.amount = insertedAmount;
+                } else {
+                    this.amount += insertedAmount;
+                }
+            }
+
+            return insertedAmount;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public long extract(V variant, long amount, @NotNull TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
+
+        if (variant.equals(this.variant)) {
+            long extractedAmount = Math.min(amount, this.amount);
+
+            if (extractedAmount > 0) {
+                updateSnapshots(context);
+                this.amount -= extractedAmount;
+
+                if (this.amount == 0) {
+                    this.variant = getBlankVariant();
+                }
+            }
+
+            return extractedAmount;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public boolean isResourceBlank() {
+        return this.variant.isBlank();
+    }
+
+    @Override
+    public V getResource() {
+        return this.variant;
+    }
+
+    @Override
+    public long getAmount() {
+        return this.amount;
+    }
+
+    @Override
+    public long getCapacity() {
+        return this.getCapacity(this.variant);
+    }
+
+    public long getCapacity(V variant) {
+        return Math.min(this.getVariantCapacity(variant), this.capacity);
+    }
+
+    @Override
+    protected ResourceAmount<V> createSnapshot() {
+        return new ResourceAmount<>(this.variant, this.amount);
+    }
+
+    @Override
+    protected void readSnapshot(@NotNull ResourceAmount<V> snapshot) {
+        this.variant = snapshot.resource();
+        this.amount = snapshot.amount();
     }
 }

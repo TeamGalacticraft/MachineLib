@@ -22,16 +22,26 @@
 
 package dev.galacticraft.impl;
 
+import dev.galacticraft.api.gas.GasFluid;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
 import dev.galacticraft.impl.client.model.MachineUnbakedModel;
 import dev.galacticraft.impl.client.network.MachineLibS2CPackets;
 import dev.galacticraft.impl.client.resource.MachineLibResourceReloadListener;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
+import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
+import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.resource.ResourceType;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 
 import java.util.Collections;
+import java.util.List;
 
 public class MachineLibClient implements ClientModInitializer {
     @Override
@@ -49,6 +59,17 @@ public class MachineLibClient implements ClientModInitializer {
             }
             return null;
         });
+
+        for (GasFluid gasFluid : GasFluid.GAS_FLUIDS) {
+            FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
+                @Override
+                public void appendTooltip(FluidVariant fluidVariant, List<Text> tooltip, TooltipContext tooltipContext) {
+                    tooltip.add(new TranslatableText("tooltip.machinelib.gas"));
+                    if (tooltipContext.isAdvanced()) tooltip.add(Text.of(gasFluid.getSymbolForDisplay()));
+                }
+            });
+            FluidRenderHandlerRegistry.INSTANCE.register(gasFluid, new SimpleFluidRenderHandler(gasFluid.getTexture(), gasFluid.getTexture(), null, gasFluid.getTint()));
+        }
 
         MachineLibS2CPackets.register();
     }

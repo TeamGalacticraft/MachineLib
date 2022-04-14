@@ -12,6 +12,10 @@ java {
     withJavadocJar()
 }
 
+tasks.javadoc {
+    exclude("**/impl/**")
+}
+
 publishing {
     publications {
         register("mavenJava", MavenPublication::class) {

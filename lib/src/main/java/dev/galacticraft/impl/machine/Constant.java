@@ -77,7 +77,6 @@ public interface Constant {
         String ENERGY_STORAGE = "EnergyStorage";
         String ITEM_STORAGE = "ItemStorage";
         String FLUID_STORAGE = "FluidStorage";
-        String GAS_STORAGE = "GasStorage";
     }
 
     interface Property {

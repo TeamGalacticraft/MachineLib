@@ -24,15 +24,12 @@ package dev.galacticraft.api.block.entity;
 
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.api.block.util.BlockFace;
-import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.*;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
-import dev.galacticraft.api.machine.storage.MachineGasStorage;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.transfer.v1.gas.GasStorage;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.storage.io.NullConfiguredStorage;
 import dev.galacticraft.impl.util.GenericStorageUtil;
@@ -111,12 +108,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();
 
     /**
-     * The gas storage for this machine.
-     * @see #gasStorage()
-     */
-    private final @NotNull MachineGasStorage gasStorage = this.createGasStorage();
-
-    /**
      * Creates a new machine block entity.
      * @param type The type of block entity.
      * @param pos The position of this machine.
@@ -134,7 +125,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         EnergyStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedEnergyStorage, type);
         ItemStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedItemStorage, type);
         FluidStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedFluidInv, type);
-        GasStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedGasInv, type);
     }
 
     /**
@@ -208,14 +198,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Creates a gas storage for this machine.
-     * @return The gas storage configured for this machine.
-     */
-    protected @NotNull MachineGasStorage createGasStorage() {
-        return MachineGasStorage.empty();
-    }
-
-    /**
      * Sets the redstone activation mode of this machine.
      * @param redstone the redstone activation mode to use.
      */
@@ -274,15 +256,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Returns the gas storage of this machine.
-     * @return the gas storage of this machine.
-     * @see #createGasStorage()
-     */
-    public final @NotNull MachineGasStorage gasStorage() {
-        return this.gasStorage;
-    }
-
-    /**
      * Returns the security settings of this machine.
      * @return the security settings of this machine.
      */
@@ -319,7 +292,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (type == ResourceType.ENERGY) return this.energyStorage();
         if (type == ResourceType.ITEM) return this.itemStorage();
         if (type == ResourceType.FLUID) return this.fluidStorage();
-        if (type == ResourceType.GAS) return this.gasStorage();
         return NullConfiguredStorage.INSTANCE;
     }
 
@@ -402,22 +374,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.getIOConfig().get(face).getExposedStorage(this.fluidStorage);
     }
 
-    private @NotNull Storage<GasVariant> getExposedGasInv(@NotNull Direction direction) {
-        assert this.world != null;
-        return this.getExposedGasInv(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
-    }
-
-    private @NotNull Storage<GasVariant> getExposedGasInv(@NotNull BlockFace face) {
-        return this.getIOConfig().get(face).getExposedStorage(this.gasStorage);
-    }
-
     @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
         nbt.put(Constant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
         nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
         nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
-        nbt.put(Constant.Nbt.GAS_STORAGE, this.gasStorage.writeNbt());
         this.configuration.writeNbt(nbt);
         nbt.putBoolean(Constant.Nbt.NO_DROP, this.noDrop);
     }
@@ -428,7 +390,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ENERGY_STORAGE)));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ITEM_STORAGE)));
         if (nbt.contains(Constant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.FLUID_STORAGE)));
-        if (nbt.contains(Constant.Nbt.GAS_STORAGE)) this.gasStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.GAS_STORAGE)));
         this.configuration.readNbt(nbt);
         this.noDrop = nbt.getBoolean(Constant.Nbt.NO_DROP);
         assert this.world != null;
@@ -460,19 +421,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             Storage<FluidVariant> storage = this.getExposedFluidInv(direction);
             if (storage.supportsExtraction()) {
                 Storage<FluidVariant> to = FluidStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
-                try (Transaction transaction = Transaction.openOuter()) {
-                    GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
-                    transaction.commit();
-                }
-            }
-        }
-    }
-
-    public void trySpreadGases() {
-        for (Direction direction : Direction.values()) {
-            Storage<GasVariant> storage = this.getExposedGasInv(direction);
-            if (storage.supportsExtraction()) {
-                Storage<GasVariant> to = GasStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
                     GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();

@@ -22,12 +22,14 @@
 
 package dev.galacticraft.impl;
 
+import dev.galacticraft.api.gas.Gases;
 import dev.galacticraft.impl.network.MachineLibC2SPackets;
 import net.fabricmc.api.ModInitializer;
 
 public class MachineLib implements ModInitializer {
     @Override
     public void onInitialize() {
+        Gases.init();
         MachineLibC2SPackets.register();
     }
 }

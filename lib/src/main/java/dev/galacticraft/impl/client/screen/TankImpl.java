@@ -23,27 +23,21 @@
 package dev.galacticraft.impl.client.screen;
 
 import dev.galacticraft.api.client.screen.Tank;
-import dev.galacticraft.api.gas.Gas;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.transfer.v1.gas.GasStorage;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.util.GenericStorageUtil;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
@@ -54,37 +48,25 @@ import java.util.List;
 /**
  * Somewhat like a {@link net.minecraft.screen.slot.Slot} but for fluids and gases.
  * Resources can be inserted into the tank and extracted from it via the gui.
- *
- * @param <T> The type of resource that this slot holds.
- * @param <V> The resource that this slot holds.
- *
- * @see ResourceType#FLUID
- * @see ResourceType#GAS
  */
-public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
-    public final ExposedStorage<T, V> storage;
+public class TankImpl implements Tank {
+    public final ExposedStorage<Fluid, FluidVariant> storage;
     private final int index;
     public int id = -1;
     private final int x;
     private final int y;
     private final int height;
-    private final @NotNull ResourceType<T, V> type;
 
-    public TankImpl(ExposedStorage<T, V> storage, int index, int x, int y, int height, @NotNull ResourceType<T, V> type) {
+    public TankImpl(ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
         this.storage = storage;
         this.index = index;
         this.x = x;
         this.y = y;
         this.height = height;
-        this.type = type;
-
-        if (this.type != ResourceType.GAS && this.type != ResourceType.FLUID) {
-            throw new UnsupportedOperationException("Invalid tank of resource: " + this.type);
-        }
     }
 
     @Override
-    public V getResource() {
+    public FluidVariant getResource() {
         return this.storage.getResource(this.index);
     }
 
@@ -129,11 +111,7 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
         if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Text> lines = new ArrayList<>(2);
             if (this.getResource().isBlank()) {
-                if (type == ResourceType.GAS) {
-                    client.currentScreen.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.tank.gas.empty").setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
-                } else {
-                    client.currentScreen.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.tank.fluid.empty").setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
-                }
+                client.currentScreen.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.tank.fluid.empty").setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
             MutableText amount;
@@ -145,37 +123,22 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
             }
 
             TranslatableText translatableText;
-            if (this.type == ResourceType.GAS) {
-                translatableText = new TranslatableText("ui.galacticraft.machine.tank.gas");
-            } else {
-                translatableText = new TranslatableText("ui.galacticraft.machine.tank.fluid");
-            }
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
+            translatableText = new TranslatableText("ui.galacticraft.machine.tank.fluid");
+
+            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
             lines.add(new TranslatableText("ui.galacticraft.machine.tank.amount").setStyle(Constant.Text.GRAY_STYLE).append(amount.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
             client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
         }
         matrices.translate(0, 0, -1);
     }
 
-    @Environment(EnvType.CLIENT)
-    private Text getName(@NotNull TransferVariant<?> object) {
-        Object obj = object.getObject();
-        if (obj instanceof Gas) {
-            return new TranslatableText(((Gas) obj).getTranslationKey());
-        } else if (object instanceof FluidVariant variant) {
-            return FluidVariantRendering.getName(variant);
-        } else {
-            return Text.of("Invalid tank entry?!");
-        }
-    }
-
     @Override
     public boolean acceptStack(@NotNull ContainerItemContext context) {
-        Storage<V> storage = context.find(getLookup(this.type));
+        Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
             if (storage.supportsExtraction() && this.storage.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
-                    V storedResource;
+                    FluidVariant storedResource;
                     if (this.getResource().isBlank()) {
                         storedResource = StorageUtil.findStoredResource(storage, this.storage.getFilter(this.index), transaction);
                     } else {
@@ -190,7 +153,7 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
                     }
                 }
             } else if (storage.supportsInsertion() && this.storage.supportsExtraction()) {
-                V storedResource = this.getResource();
+                FluidVariant storedResource = this.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
                         if (GenericStorageUtil.move(storedResource, this.storage.getSlot(this.index), storage, Long.MAX_VALUE, transaction) != 0) {
@@ -205,22 +168,8 @@ public class TankImpl<T, V extends TransferVariant<T>> implements Tank<T, V> {
         return false;
     }
 
-    private static <T, V extends TransferVariant<T>> ItemApiLookup<Storage<V>, ContainerItemContext> getLookup(ResourceType<T, V> type) {
-        if (type == ResourceType.GAS) {
-            return (ItemApiLookup<Storage<V>, ContainerItemContext>) (Object)GasStorage.ITEM;
-        } else if (type == ResourceType.FLUID){
-            return (ItemApiLookup<Storage<V>, ContainerItemContext>) (Object)FluidStorage.ITEM;
-        }
-        throw new AssertionError();
-    }
-
     @Override
-    public @NotNull ResourceType<T, V> getResourceType() {
-        return this.type;
-    }
-
-    @Override
-    public ExposedStorage<T, V> getStorage() {
+    public ExposedStorage<Fluid, FluidVariant> getStorage() {
         return this.storage;
     }
 

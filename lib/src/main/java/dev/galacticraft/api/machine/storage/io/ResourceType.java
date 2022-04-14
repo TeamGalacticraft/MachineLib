@@ -22,8 +22,6 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.fluid.Fluid;
@@ -62,10 +60,6 @@ public final class ResourceType<T, V> {
      * Fluids can be stored/transferred.
      */
     public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText("ui.galacticraft.side_option.fluid").setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
-    /**
-     * Gas can be stored/transferred.
-     */
-    public static final ResourceType<Gas, GasVariant> GAS = new ResourceType<>(5, new TranslatableText("ui.galacticraft.side_option.gas").setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
 
     /**
      * The name of the resource type.
@@ -87,7 +81,7 @@ public final class ResourceType<T, V> {
      */
     @Contract(value = " -> new", pure = true)
     public static ResourceType @NotNull [] types() {
-        return new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID, GAS};
+        return new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
     }
 
     /**
@@ -96,7 +90,7 @@ public final class ResourceType<T, V> {
      */
     @Contract(value = " -> new", pure = true)
     public static ResourceType @NotNull [] normalTypes() {
-        return new ResourceType[] {ENERGY, ITEM, FLUID, GAS};
+        return new ResourceType[] {ENERGY, ITEM, FLUID};
     }
 
     /**
@@ -133,9 +127,8 @@ public final class ResourceType<T, V> {
             case 0 -> ANY;
             case 1 -> NONE;
             case 2 -> ENERGY;
-            case 3 -> FLUID;
-            case 4 -> GAS;
-            case 5 -> ITEM;
+            case 3 -> ITEM;
+            case 4 -> FLUID;
             default -> throw new IllegalStateException("Unexpected id: " + id);
         };
     }

@@ -26,7 +26,8 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.io.*;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtElement;
@@ -35,6 +36,7 @@ import net.minecraft.util.Clearable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Set;
 
@@ -92,6 +94,236 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @return Whether the storage allows insertion into the given slot.
      */
     boolean canExposedInsert(int slot);
+
+    /**
+     * Simulates the extraction of all resources from the given slot.
+     * @param slot The slot to extract from.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot) {
+        return this.simulateExtract(slot, (TransactionContext) null);
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources from the given slot.
+     * @param slot The slot to extract from.
+     * @param amount The amount of resources to extract.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, long amount) {
+        return this.simulateExtract(slot, amount, null);
+    }
+
+    /**
+     * Simulates the extraction of all resources from the given slot if it matches the tag.
+     * @param slot The slot to extract from.
+     * @param tag The tag to match.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag) {
+        return this.simulateExtract(slot, tag, null);
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources from the given slot if it matches the tag.
+     * @param slot The slot to extract from.
+     * @param tag The tag to match.
+     * @param amount The amount of resources to extract.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, long amount) {
+        return this.simulateExtract(slot, tag, amount, null);
+    }
+
+    /**
+     * Simulates the extraction of all resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param resource The type of resource to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull T resource) {
+        return this.simulateExtract(slot, resource, null);
+    }
+
+    /**
+     * Simulates the extraction of all resources of the given type and amount from the given slot.
+     * @param slot The slot to extract from.
+     * @param resource The type of resource to extract.
+     * @param amount The amount of resources to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull T resource, long amount) {
+        return this.simulateExtract(slot, resource, amount, null);
+    }
+
+    /**
+     * Simulates the replacement of the resource in the given slot with the given resource and amount.
+     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
+     * @param slot The slot to replace.
+     * @param variant The variant of the resource to replace with.
+     * @param amount The amount of resources to replace with.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateReplace(int slot, @NotNull V variant, long amount) {
+        return this.simulateReplace(slot, variant, amount, null);
+    }
+
+    /**
+     * Simulates the insertion of the given amount of resources into the given slot.
+     * @param slot The slot to insert into.
+     * @param variant The variant of the resource to insert.
+     * @param amount The amount of resources to insert.
+     * @return The amount of inserted resources.
+     */
+    default long simulateInsert(int slot, @NotNull V variant, long amount) {
+        return this.simulateInsert(slot, variant, amount, null);
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param variant The variant of the resource to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull V variant) {
+        return this.simulateExtract(slot, variant, null);
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param variant The variant of the resource to extract.
+     * @param amount The amount of resources to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull V variant, long amount) {
+        return this.simulateExtract(slot, variant, amount, null);
+    }
+
+    /**
+     * Simulates the extraction of all resources from the given slot.
+     * @param slot The slot to extract from.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources from the given slot.
+     * @param slot The slot to extract from.
+     * @param amount The amount of resources to extract.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, amount, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of all resources from the given slot if it matches the tag.
+     * @param slot The slot to extract from.
+     * @param tag The tag to match.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, tag, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources from the given slot if it matches the tag.
+     * @param slot The slot to extract from.
+     * @param tag The tag to match.
+     * @param amount The amount of resources to extract.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, tag, amount, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of all resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param resource The type of resource to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull T resource, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, resource, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of all resources of the given type and amount from the given slot.
+     * @param slot The slot to extract from.
+     * @param resource The type of resource to extract.
+     * @param amount The amount of resources to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull T resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, resource, amount, transaction);
+        }
+    }
+
+    /**
+     * Simulates the replacement of the resource in the given slot with the given resource and amount.
+     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
+     * @param slot The slot to replace.
+     * @param variant The variant of the resource to replace with.
+     * @param amount The amount of resources to replace with.
+     * @return The extracted resources.
+     */
+    default @NotNull S simulateReplace(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.replace(slot, variant, amount, transaction);
+        }
+    }
+
+    /**
+     * Simulates the insertion of the given amount of resources into the given slot.
+     * @param slot The slot to insert into.
+     * @param variant The variant of the resource to insert.
+     * @param amount The amount of resources to insert.
+     * @return The amount of inserted resources.
+     */
+    default long simulateInsert(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.insert(slot, variant, amount, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param variant The variant of the resource to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull V variant, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, variant, transaction);
+        }
+    }
+
+    /**
+     * Simulates the extraction of the given amount of resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param variant The variant of the resource to extract.
+     * @param amount The amount of resources to extract.
+     * @return The amount of extracted resources.
+     */
+    default long simulateExtract(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(slot, variant, amount, transaction);
+        }
+    }
 
     /**
      * Extracts all resources from the given slot.
@@ -156,6 +388,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
 
     /**
      * Replaces the resource in the given slot with the given resource and amount.
+     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
      * @param slot The slot to replace.
      * @param variant The variant of the resource to replace with.
      * @param amount The amount of resources to replace with.
@@ -208,15 +441,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Extracts the given amount of resources from the given slot.
-     * @param slot The slot to extract from.
-     * @param amount The amount of resources to extract.
-     * @param context The transaction context.
-     * @return The extracted resources.
-     */
-    @NotNull S extract(int slot, long amount, @Nullable TransactionContext context);
-
-    /**
      * Extracts the all resources from the given slot if they match the tag.
      * @param slot The slot to extract from.
      * @param tag The tag to match.
@@ -226,16 +450,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     default @NotNull S extract(int slot, @NotNull Tag<T> tag, @Nullable TransactionContext context) {
         return this.extract(slot, tag, Long.MAX_VALUE, context);
     }
-
-    /**
-     * Extracts the given amount of resources from the given slot if they match the tag.
-     * @param slot The slot to extract from.
-     * @param tag The tag to match.
-     * @param amount The amount of resources to extract.
-     * @param context The transaction context.
-     * @return The extracted resources.
-     */
-    @NotNull S extract(int slot, @NotNull Tag<T> tag, long amount, @Nullable TransactionContext context);
 
     /**
      * Extracts all resources of the given (raw) type from the given slot.
@@ -249,17 +463,19 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Extracts the given amount of resources of the given type from the given slot.
+     * Extracts all resources from the given slot of the given type.
      * @param slot The slot to extract from.
-     * @param resource The type of resource to extract.
-     * @param amount The amount of resources to extract.
+     * @param variant The variant of the resource to extract.
      * @param context The transaction context.
      * @return The amount of extracted resources.
      */
-    long extract(int slot, @NotNull T resource, long amount, @Nullable TransactionContext context);
+    default long extract(int slot, @NotNull V variant, @Nullable TransactionContext context) {
+        return this.extract(slot, variant, Long.MAX_VALUE, context);
+    }
 
     /**
      * Replaces the resources in the given slot with the given resources.
+     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
      * @param slot The slot to replace.
      * @param variant The variant of the resource to replace with.
      * @param amount The amount of resources to replace with.
@@ -279,15 +495,33 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     long insert(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context);
 
     /**
-     * Extracts all resources from the given slot of the given type.
+     * Extracts the given amount of resources from the given slot.
      * @param slot The slot to extract from.
-     * @param variant The variant of the resource to extract.
+     * @param amount The amount of resources to extract.
+     * @param context The transaction context.
+     * @return The extracted resources.
+     */
+    @NotNull S extract(int slot, long amount, @Nullable TransactionContext context);
+
+    /**
+     * Extracts the given amount of resources from the given slot if they match the tag.
+     * @param slot The slot to extract from.
+     * @param tag The tag to match.
+     * @param amount The amount of resources to extract.
+     * @param context The transaction context.
+     * @return The extracted resources.
+     */
+    @NotNull S extract(int slot, @NotNull Tag<T> tag, long amount, @Nullable TransactionContext context);
+
+    /**
+     * Extracts the given amount of resources of the given type from the given slot.
+     * @param slot The slot to extract from.
+     * @param resource The type of resource to extract.
+     * @param amount The amount of resources to extract.
      * @param context The transaction context.
      * @return The amount of extracted resources.
      */
-    default long extract(int slot, @NotNull V variant, @Nullable TransactionContext context) {
-        return this.extract(slot, variant, Long.MAX_VALUE, context);
-    }
+    long extract(int slot, @NotNull T resource, long amount, @Nullable TransactionContext context);
 
     /**
      * Extracts the given amount of resources from the given slot of the given type.
@@ -350,8 +584,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The index of the slot.
      * @return An internal storage representing the given slot.
      */
-    @ApiStatus.Internal
-    SingleVariantStorage<V> getSlot(int slot);
+    SingleSlotStorage<V> getSlot(int slot);
 
     /**
      * Returns whether the player can access this inventory.
@@ -418,6 +651,27 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
         return this.getModCount();
     }
 
+    /**
+     * Sets the items in the given slot without using a transaction and without modifying the {@link #getModCount() mod count}.
+     * @param slot The slot to set.
+     * @param variant The variant to set.
+     * @param amount The amount of items to set.
+     */
+    @TestOnly
+    default void setSlot(int slot, V variant, long amount) {
+        this.setSlot(slot, variant, amount, false);
+    }
+
+    /**
+     * Sets the items in the given slot without using a transaction.
+     * @param slot The slot to set.
+     * @param variant The variant to set.
+     * @param amount The amount of items to set.
+     * @param markDirty Whether to mark the inventory as changed after setting the item.
+     */
+    @TestOnly
+    void setSlot(int slot, V variant, long amount, boolean markDirty);
+
     @ApiStatus.Internal
     default Storage<V> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {
         if (either != null) {
@@ -432,4 +686,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
             return ExposedStorage.of(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
         }
     }
+
+    long getCapacity(int slot);
 }

@@ -26,9 +26,10 @@ import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.client.screen.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.fluid.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,26 +38,19 @@ import org.jetbrains.annotations.NotNull;
  * Somewhat like a {@link net.minecraft.screen.slot.Slot} but for fluids and gases.
  * Resources can be inserted into the tank and extracted from it via the gui.
  *
- * @param <T> The type of resource that this slot holds.
- * @param <V> The resource that this slot holds.
- *
  * @see ResourceType#FLUID
- * @see ResourceType#GAS
  */
-public interface Tank<T, V extends TransferVariant<T>> {
+public interface Tank {
     @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
-    static <T, V extends TransferVariant<T>> @NotNull Tank<T, V> create(ExposedStorage<T, V> storage, int index, int x, int y, int height, @NotNull ResourceType<T, V> type) {
-        if (type != ResourceType.GAS && type != ResourceType.FLUID) {
-            throw new UnsupportedOperationException("Invalid tank of resource: " + type);
-        }
-        return new TankImpl<>(storage, index, x, y, height, type);
+    static @NotNull Tank create(ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
+        return new TankImpl(storage, index, x, y, height);
     }
 
     /**
      * Returns the resource that is currently in this tank.
      * @return The resource that is currently in this tank.
      */
-    V getResource();
+    FluidVariant getResource();
 
     /**
      * Returns the index of this tank in the storage.
@@ -106,9 +100,7 @@ public interface Tank<T, V extends TransferVariant<T>> {
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 
-    @NotNull ResourceType<T, V> getResourceType();
-
-    @ApiStatus.Internal ExposedStorage<T, V> getStorage();
+    @ApiStatus.Internal ExposedStorage<Fluid, FluidVariant> getStorage();
 
     long getAmount();
 

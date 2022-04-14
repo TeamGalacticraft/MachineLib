@@ -31,17 +31,16 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
-import dev.galacticraft.api.transfer.v1.gas.GasStorage;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.util.GenericStorageUtil;
-import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,13 +108,13 @@ public class MachineLibC2SPackets {
         });
     }
 
-    private static <T, V extends TransferVariant<T>> boolean acceptStack(@NotNull Tank<T, V> tank, @NotNull ContainerItemContext context) {
-        Storage<V> storage = context.find(getLookup(tank.getResourceType()));
+    private static boolean acceptStack(@NotNull Tank tank, @NotNull ContainerItemContext context) {
+        Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            ExposedStorage<T, V> eStorage = tank.getStorage();
+            ExposedStorage<Fluid, FluidVariant> eStorage = tank.getStorage();
             if (storage.supportsExtraction() && eStorage.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
-                    V storedResource;
+                    FluidVariant storedResource;
                     if (tank.getResource().isBlank()) {
                         storedResource = StorageUtil.findStoredResource(storage, eStorage.getFilter(tank.getIndex()), transaction);
                     } else {
@@ -130,7 +129,7 @@ public class MachineLibC2SPackets {
                     }
                 }
             } else if (storage.supportsInsertion() && eStorage.supportsExtraction()) {
-                V storedResource = tank.getResource();
+                FluidVariant storedResource = tank.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
                         if (GenericStorageUtil.move(storedResource, eStorage.getSlot(tank.getIndex()), storage, Long.MAX_VALUE, transaction) != 0) {
@@ -143,14 +142,5 @@ public class MachineLibC2SPackets {
             }
         }
         return false;
-    }
-
-    private static <T, V extends TransferVariant<T>> ItemApiLookup<Storage<V>, ContainerItemContext> getLookup(ResourceType<T, V> type) {
-        if (type == ResourceType.GAS) {
-            return (ItemApiLookup<Storage<V>, ContainerItemContext>) (Object) GasStorage.ITEM;
-        } else if (type == ResourceType.GAS){
-            return (ItemApiLookup<Storage<V>, ContainerItemContext>) (Object)FluidStorage.ITEM;
-        }
-        throw new AssertionError();
     }
 }

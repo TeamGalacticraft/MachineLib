@@ -29,8 +29,6 @@ import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
-import dev.galacticraft.api.gas.Gas;
-import dev.galacticraft.api.gas.GasVariant;
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.RedstoneActivation;
 import dev.galacticraft.api.machine.SecuritySettings;
@@ -54,6 +52,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
@@ -64,7 +63,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.texture.MissingSprite;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
@@ -918,31 +916,15 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         color.defaultReturnValue(0xFFFFFFFF);
 
         this.focusedTank = null;
-        for (Tank<?, ?> tank : this.handler.tanks) {
+        for (Tank tank : this.handler.tanks) {
             fill(matrices, this.x + tank.getX(), this.y + tank.getY(), this.x + tank.getX() + tank.getWidth(), this.y + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
             if (tank.getAmount() > 0) {
-                Sprite sprite;
-                boolean fillFromTop = false;
-                int fluidColor = 0xFFFFFF;
-                if (tank.getResourceType() == ResourceType.FLUID) {
-                    FluidVariant resource = (FluidVariant) tank.getResource();
-                    fillFromTop = FluidVariantRendering.fillsFromTop(resource);
-                    sprite = FluidVariantRendering.getSprite(resource);
-                    fluidColor = FluidVariantRendering.getColor(resource);
-                } else if (tank.getResourceType() == ResourceType.GAS) {
-                    fillFromTop = true;
-                    Optional<Fluid> fluid = ((GasVariant) tank.getResource()).getGas().getFluid();
-                    if (fluid.isPresent()) {
-                        FluidVariant of = FluidVariant.of(fluid.get(), tank.getResource().copyNbt());
-                        sprite = FluidVariantRendering.getSprite(of);
-                        fluidColor = FluidVariantRendering.getColor(of);
-                    } else {
-                        sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
-                    }
-                } else {
-                    sprite = client.getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(MissingSprite.getMissingSpriteId());
-                }
+                FluidVariant resource = tank.getResource();
+                boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
+                Sprite sprite = FluidVariantRendering.getSprite(resource);
+                int fluidColor = FluidVariantRendering.getColor(resource);
+
 
                 RenderSystem.setShaderTexture(0, sprite.getAtlas().getId());
                 RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
@@ -968,7 +950,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             }
         }
 
-        for (Tank<?, ?> tank : this.handler.tanks) {
+        for (Tank tank : this.handler.tanks) {
             tank.drawTooltip(matrices, this.client, this.x, this.y, mouseX, mouseY);
         }
 
@@ -1323,19 +1305,6 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             for (SlotType<Fluid, FluidVariant> type : machine.fluidStorage().getTypes()) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.FLUID, l -> new ArrayList<>());
-                if (type.getFlow() == ResourceFlow.BOTH) {
-                    flows.set(0, ResourceFlow.INPUT);
-                    flows.set(1, ResourceFlow.OUTPUT);
-                    flows.set(2, ResourceFlow.BOTH);
-                    break;
-                } else {
-                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
-                    if (flows.size() == 3) break;
-                }
-            }
-
-            for (SlotType<Gas, GasVariant> type : machine.gasStorage().getTypes()) {
-                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.GAS, l -> new ArrayList<>());
                 if (type.getFlow() == ResourceFlow.BOTH) {
                     flows.set(0, ResourceFlow.INPUT);
                     flows.set(1, ResourceFlow.OUTPUT);

@@ -57,6 +57,11 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     private static final SlotType<Fluid, FluidVariant>[] NO_SLOTS = new SlotType[0];
 
     @Override
+    public boolean allowsGases(int slot) {
+        return false;
+    }
+
+    @Override
     public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
     }
 
@@ -221,6 +226,10 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     @Override
     public ExposedStorage<Fluid, FluidVariant> view() {
         return this;
+    }
+
+    @Override
+    public void setSlot(int slot, FluidVariant variant, long amount, boolean markDirty) {
     }
 
     @Override

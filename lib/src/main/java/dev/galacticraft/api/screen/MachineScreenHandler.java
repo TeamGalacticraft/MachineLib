@@ -63,7 +63,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     /**
      * The tanks contained in this screen handler.
      */
-    public List<Tank<?, ?>> tanks = new ArrayList<>();
+    public List<Tank> tanks = new ArrayList<>();
 
     /**
      * Creates a new screen handler for a machine.
@@ -79,11 +79,9 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
 
         this.machine.itemStorage().addSlots(this);
         this.machine.fluidStorage().addTanks(this);
-        this.machine.gasStorage().addTanks(this);
 
         this.syncHandlers.add(this.machine.itemStorage().createSyncHandler());
         this.syncHandlers.add(this.machine.fluidStorage().createSyncHandler());
-        this.syncHandlers.add(this.machine.gasStorage().createSyncHandler());
         this.syncHandlers.add(this.machine.energyStorage().createSyncHandler());
 
         this.addProperty(new StatusProperty(this.machine));
@@ -199,7 +197,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
      * Adds a tank to the screen.
      * @param tank The tank to add.
      */
-    public void addTank(@NotNull Tank<?, ?> tank) {
+    public void addTank(@NotNull Tank tank) {
         tank.setId(this.tanks.size());
         this.tanks.add(tank);
     }

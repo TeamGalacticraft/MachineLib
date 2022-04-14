@@ -29,6 +29,8 @@ import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineFluidStorage;
+import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
+import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -43,6 +45,14 @@ import java.util.List;
  * Fluid storage for machines.
  */
 public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant, FluidStack> {
+    /**
+     * Returns whether the given slot allows gases to be stored.
+     * @param slot The slot to check.
+     * @return Whether the fluid storage allows gases to be stored.
+     * @see net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes#isLighterThanAir(FluidVariant)
+     */
+    boolean allowsGases(int slot);
+
     /**
      * Adds tanks to a screen handler for display.
      * @param handler The screen handler to add tanks to.
@@ -75,6 +85,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
         private final List<SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
         private final List<TankDisplay> displays = new ArrayList<>();
         private final LongList counts = new LongArrayList();
+        private final BooleanList allowsGas = new BooleanArrayList();
 
         public Builder() {}
 
@@ -94,11 +105,24 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
          * @param display The display for the tank.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(SlotType<Fluid, FluidVariant> type, long capacity, TankDisplay display) {
+        public @NotNull Builder addTank(SlotType<Fluid, FluidVariant> type, long capacity, TankDisplay display) {
+            return this.addTank(type, capacity, display, false);
+        }
+
+        /**
+         * Adds a tank to the storage.
+         * @param type The type of tank.
+         * @param capacity The capacity of the tank.
+         * @param display The display for the tank.
+         * @param allowsGases Whether the tank allows gases.
+         * @return The builder.
+         */
+        public @NotNull Builder addTank(SlotType<Fluid, FluidVariant> type, long capacity, TankDisplay display, boolean allowsGases) {
             this.size++;
             this.types.add(type);
             this.displays.add(display);
             this.counts.add(capacity);
+            this.allowsGas.add(allowsGases);
             return this;
         }
 
@@ -109,7 +133,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineFluidStorage build() {
             if (this.size == 0) return empty();
-            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new TankDisplay[0]));
+            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.allowsGas.toBooleanArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }
 }
