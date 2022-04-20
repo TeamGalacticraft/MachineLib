@@ -119,11 +119,11 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     @Override
-    public @NotNull MachineStatus tick() {
+    public @NotNull MachineStatus tick(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state) {
         if (this.inventoryModCount != this.itemStorage().getModCount()) {
-            this.world.getProfiler().push("recipe_test");
+            world.getProfiler().push("recipe_test");
             this.inventoryModCount = this.itemStorage().getModCount();
-            Optional<R> optional = this.findValidRecipe();
+            Optional<R> optional = this.findValidRecipe(world);
             if (optional.isPresent()) {
                 R recipe = optional.get();
                 try (Transaction transaction = Transaction.openOuter()) {
@@ -137,17 +137,17 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
                 this.resetRecipe();
                 return MachineStatuses.INVALID_RECIPE;
             }
-            this.world.getProfiler().pop();
+            world.getProfiler().pop();
         }
         if (this.activeRecipe != null) {
-            this.world.getProfiler().push("working_transaction");
+            world.getProfiler().push("working_transaction");
             try (Transaction transaction = Transaction.openOuter()) {
                 MachineStatus status = this.extractResourcesToWork(transaction);
                 if (status == null) {
                     if (++this.progress >= this.getMaxProgress()) {
-                        this.world.getProfiler().push("crafting");
+                        world.getProfiler().push("crafting");
                         this.craft(this.activeRecipe, transaction);
-                        this.world.getProfiler().pop();
+                        world.getProfiler().pop();
                     }
                     transaction.commit();
                     return this.workingStatus();
@@ -155,7 +155,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
                     return status;
                 }
             } finally {
-                this.world.getProfiler().pop();
+                world.getProfiler().pop();
             }
         } else {
             if (this.getStatus() == MachineStatuses.OUTPUT_FULL) return MachineStatuses.OUTPUT_FULL; //preserve full state
@@ -182,7 +182,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
-    protected void craft(R recipe, @Nullable TransactionContext context) {
+    protected void craft(@NotNull R recipe, @Nullable TransactionContext context) {
         try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
                 if (this.outputStacks(recipe, inner)) {
@@ -214,15 +214,14 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * Will always test for the current recipe first.
      * @return The first valid recipe in the machine's inventory.
      */
-    protected @NotNull Optional<R> findValidRecipe() {
-        assert this.world != null;
+    protected @NotNull Optional<R> findValidRecipe(@NotNull World world) {
         if (this.getActiveRecipe() != null) {
-            Optional<R> match = this.getRecipeType().match(this.getActiveRecipe(), this.world, this.craftingInv());
+            Optional<R> match = this.getRecipeType().match(this.getActiveRecipe(), world, this.craftingInv());
             if (match.isPresent()) {
                 return match;
             }
         }
-        return this.world.getRecipeManager().getFirstMatch(this.getRecipeType(), this.craftingInv(), this.world);
+        return world.getRecipeManager().getFirstMatch(this.getRecipeType(), this.craftingInv(), world);
     }
 
     /**
@@ -297,6 +296,6 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     @Override
     public void setWorld(World world) {
         super.setWorld(world);
-        this.activeRecipe = this.findValidRecipe().orElse(null);
+        this.activeRecipe = this.findValidRecipe(world).orElse(null);
     }
 }

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements SingleSlotStorage<V> {
-    public final ModCount modCount = new ModCount();
+    private final ModCount modCount = new ModCount();
     private final long capacity;
     private V variant;
     private long amount;
@@ -45,6 +45,10 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
 
     public int getModCount() {
         return this.modCount.getModCount();
+    }
+
+    public int getModCountUnsafe() {
+        return this.modCount.getModCountUnsafe();
     }
 
     @TestOnly

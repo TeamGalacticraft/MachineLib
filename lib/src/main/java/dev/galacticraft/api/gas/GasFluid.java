@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public final class GasFluid extends Fluid implements FluidVariantAttributeHandler {
+public final class GasFluid extends Fluid implements FluidVariantAttributeHandler, Gas {
     @ApiStatus.Internal
     public static final List<GasFluid> GAS_FLUIDS = new ArrayList<>(); // used for registering client hooks
 
@@ -218,10 +218,20 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     public Identifier getTexture() {
-        return texture;
+        return this.texture;
     }
 
     public int getTint() {
-        return tint;
+        return this.tint;
+    }
+
+    @Override
+    public @NotNull Text getName() {
+        return this.name;
+    }
+
+    @Override
+    public @NotNull String getSymbol() {
+        return this.symbol;
     }
 }

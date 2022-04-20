@@ -20,26 +20,7 @@
  * SOFTWARE.
  */
 
-plugins {
-    java
-    id("fabric-loom") version "0.11-SNAPSHOT"
-    id("org.cadixdev.licenser") version "0.6.1"
-    id("io.github.juuxel.loom-quiltflower") version("1.7.0")
-}
-
-val minecraft       = rootProject.property("minecraft.version").toString()
-val yarn            = rootProject.property("yarn.build").toString()
-val loader          = rootProject.property("loader.version").toString()
-val fabric          = rootProject.property("fabric.version").toString()
-val energy          = rootProject.property("energy.version").toString()
-
-group = rootProject.property("mod.group").toString()
 version = "0.0.0"
-
-java {
-    targetCompatibility = JavaVersion.VERSION_17
-    sourceCompatibility = JavaVersion.VERSION_17
-}
 
 loom {
     runs {
@@ -73,30 +54,4 @@ loom {
 
 dependencies {
     implementation(project(path = ":lib", configuration = "namedElements"))
-}
-
-tasks.processResources {
-    // Minify json resources
-    // https://stackoverflow.com/questions/41028030/gradle-minimize-json-resources-in-processresources#41029113
-    doLast {
-        fileTree(mapOf("dir" to outputs.files.asPath, "includes" to listOf("**/*.json", "**/*.mcmeta"))).forEach {
-                file: File -> file.writeText(groovy.json.JsonOutput.toJson(groovy.json.JsonSlurper().parse(file)))
-        }
-    }
-}
-
-tasks.withType<JavaCompile> {
-    dependsOn(tasks.checkLicenses)
-    options.encoding = "UTF-8"
-    options.release.set(17)
-}
-
-license {
-    setHeader(rootProject.file("LICENSE_HEADER.txt"))
-    include("**/dev/galacticraft/**/*.java")
-    include("build.gradle.kts")
-    ext {
-        set("year", "2022")
-        set("company", "Team Galacticraft")
-    }
 }

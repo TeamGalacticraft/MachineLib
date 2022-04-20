@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.block.entity;
 
+import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.machine.*;
@@ -29,7 +30,10 @@ import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
+import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.api.transfer.StateCachingStorageProvider;
 import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.storage.io.NullConfiguredStorage;
 import dev.galacticraft.impl.util.GenericStorageUtil;
@@ -45,6 +49,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -313,7 +319,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param pos the position of this machine.
      * @param state the block state of this machine.
      */
-    public final void tick(@NotNull World world, BlockPos pos, BlockState state) {
+    public final void tickBase(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state) {
         assert this.world == world;
         assert this.pos == pos;
 
@@ -326,7 +332,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
                 this.tickDisabled();
             } else {
                 this.world.getProfiler().swap("active");
-                this.setStatus(this.tick());
+                this.setStatus(this.tick(world, pos, state));
             }
         } else {
             this.world.getProfiler().push("client");
@@ -345,7 +351,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     protected void tickClient() {}
 
-    protected abstract @NotNull MachineStatus tick();
+    protected abstract @NotNull MachineStatus tick(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state);
 
     private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
         assert this.world != null;
@@ -356,21 +362,21 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.getIOConfig().get(face).getExposedStorage(this.energyStorage);
     }
 
-    private @NotNull Storage<ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
+    private @NotNull ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
         assert this.world != null;
         return this.getExposedItemStorage(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
-    private @NotNull Storage<ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
+    private @NotNull ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.itemStorage);
     }
 
-    private @NotNull Storage<FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
+    private @NotNull ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
         assert this.world != null;
         return this.getExposedFluidInv(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
-    private @NotNull Storage<FluidVariant> getExposedFluidInv(@NotNull BlockFace face) {
+    private @NotNull ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.fluidStorage);
     }
 
@@ -406,10 +412,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     public void trySpreadEnergy() {
         for (Direction direction : Direction.values()) {
-            EnergyStorage energyStorage = this.getExposedEnergyStorage(direction);
-            if (energyStorage.supportsExtraction()) {
+            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+            if (face.getType() == ResourceType.ENERGY && face.getFlow().canFlowIn(ResourceFlow.OUTPUT)) {
                 try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(energyStorage, EnergyStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite()), Long.MAX_VALUE, transaction);
+                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
                     transaction.commit();
                 }
             }
@@ -449,11 +455,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (this.energyStorage().isFull()) return;
 
         EnergyStorage energyStorage = ContainerItemContext.ofSingleSlot(this.itemStorage().getSlot(slot)).find(EnergyStorage.ITEM);
-        assert energyStorage != null;
-        if (energyStorage.supportsExtraction()) {
-            try (Transaction transaction = Transaction.openOuter()) {
-                EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
-                transaction.commit();
+        if (energyStorage != null) {
+            if (energyStorage.supportsExtraction()) {
+                try (Transaction transaction = Transaction.openOuter()) {
+                    EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
+                    transaction.commit();
+                }
             }
         }
     }
@@ -466,11 +473,45 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     protected void attemptDrainPowerToStack(int slot) {
         if (this.energyStorage().isEmpty()) return;
         EnergyStorage energyStorage = ContainerItemContext.ofSingleSlot(this.itemStorage().getSlot(slot)).find(EnergyStorage.ITEM);
-        assert energyStorage != null;
-        if (energyStorage.supportsInsertion()) {
-            try (Transaction transaction = Transaction.openOuter()) {
-                EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
-                transaction.commit();
+        if (energyStorage != null) {
+            if (energyStorage.supportsInsertion()) {
+                try (Transaction transaction = Transaction.openOuter()) {
+                    EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
+                    transaction.commit();
+                }
+            }
+        }
+    }
+
+    /**
+     * Tries to charge this machine from the item in the given slot in this {@link #itemStorage}.
+     */
+    protected void attemptChargeFromStack(@NotNull StateCachingStorageProvider<EnergyStorage> provider) {
+        if (this.energyStorage().isFull()) return;
+
+        EnergyStorage energyStorage = provider.getStorage();
+        if (energyStorage != null) {
+            if (energyStorage.supportsExtraction()) {
+                try (Transaction transaction = Transaction.openOuter()) {
+                    EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
+                    transaction.commit();
+                }
+            }
+        }
+    }
+
+    /**
+     * Tries to drain some of this machine's power into the item in the given slot in this {@link #itemStorage}.
+     */
+    protected void attemptDrainPowerToStack(@NotNull StateCachingStorageProvider<EnergyStorage> provider) {
+        if (this.energyStorage().isEmpty()) return;
+        EnergyStorage energyStorage = provider.getStorage();
+        if (energyStorage != null) {
+            if (energyStorage.supportsInsertion()) {
+                try (Transaction transaction = Transaction.openOuter()) {
+                    EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
+                    transaction.commit();
+                }
             }
         }
     }

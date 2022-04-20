@@ -35,7 +35,7 @@ public class MachineConfigurationImpl implements MachineConfiguration {
     private MachineStatus status = MachineStatus.INVALID;
     private RedstoneActivation redstone = RedstoneActivation.IGNORE;
     private final MachineIOConfig configuration = MachineIOConfig.create();
-    private final SecuritySettings security = new SecuritySettings();
+    private final SecuritySettings security = new SecuritySettingsImpl();
 
     @Override
     public void setStatus(@NotNull MachineStatus status) {

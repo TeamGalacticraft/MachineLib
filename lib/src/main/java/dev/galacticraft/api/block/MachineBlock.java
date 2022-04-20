@@ -25,6 +25,7 @@ package dev.galacticraft.api.block;
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.RedstoneActivation;
+import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
@@ -105,7 +106,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     public abstract T createBlockEntity(BlockPos pos, BlockState state);
 
     @Override
-    public BlockState getPlacementState(ItemPlacementContext context) {
+    public BlockState getPlacementState(@NotNull ItemPlacementContext context) {
         return this.getDefaultState().with(Properties.HORIZONTAL_FACING, context.getPlayerFacing().getOpposite()).with(ACTIVE, false);
     }
 
@@ -123,7 +124,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     }
 
     @Override
-    public final void appendTooltip(ItemStack stack, BlockView view, List<Text> tooltip, TooltipContext context) {
+    public final void appendTooltip(ItemStack stack, BlockView view, List<Text> tooltip, @NotNull TooltipContext context) {
         Text text = machineDescription(stack, view, context.isAdvanced());
         if (text != null) {
             if (Screen.hasShiftDown()) {
@@ -160,7 +161,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                         text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
                     }
                     tooltip.add(text1);
-                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecuritySettings.SecurityLevel.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
+                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecurityLevel.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
                 }
             }
             tooltip.add(new TranslatableText("ui.galacticraft.machine.redstone.redstone", RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
@@ -173,19 +174,20 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     }
 
     @Override
-    public final ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+    public final ActionResult onUse(BlockState state, @NotNull World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.security();
                 if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
                 if (security.isOwner(player.getGameProfile())) {
-                    security.sendPacket(pos, (ServerPlayerEntity) player);
-                    machine.redstoneInteraction().sendPacket(pos, (ServerPlayerEntity) player);
                     NamedScreenHandlerFactory factory = state.createScreenHandlerFactory(world, pos);
 
                     if (factory != null) {
                         player.openHandledScreen(factory);
+                        security.sendPacket(pos, (ServerPlayerEntity) player);
+                        machine.redstoneInteraction().sendPacket(pos, (ServerPlayerEntity) player);
+                        return ActionResult.CONSUME;
                     }
                 }
             }
@@ -212,7 +214,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     }
 
     @Override
-    public List<ItemStack> getDroppedStacks(BlockState state, LootContext.Builder builder) {
+    public List<ItemStack> getDroppedStacks(BlockState state, LootContext.@NotNull Builder builder) {
         BlockEntity entity = builder.get(LootContextParameters.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
             if (machine.dontDropItems()) return Collections.emptyList();

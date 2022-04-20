@@ -31,7 +31,7 @@ import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.SecuritySettings;
+import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
@@ -404,9 +404,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
                 this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
 
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.PUBLIC || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.TEAM || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecuritySettings.SecurityLevel.PRIVATE || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.PUBLIC || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.TEAM || !machine.security().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.PRIVATE || !machine.security().isOwner(this.handler.player));
                 this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, ICON_LOCK_PARTY_U, ICON_LOCK_PARTY_V, ICON_WIDTH, ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
@@ -633,17 +633,17 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.SecurityLevel.PRIVATE);
+                    this.setAccessibility(SecurityLevel.PRIVATE);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.SecurityLevel.TEAM);
+                    this.setAccessibility(SecurityLevel.TEAM);
                     this.playButtonSound();
                     return true;
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecuritySettings.SecurityLevel.PUBLIC);
+                    this.setAccessibility(SecurityLevel.PUBLIC);
                     this.playButtonSound();
                     return true;
                 }
@@ -665,7 +665,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * Sets the accessibility of the machine and syncs it to the server.
      * @param securityLevel The accessibility to set.
      */
-    protected void setAccessibility(@NotNull SecuritySettings.SecurityLevel securityLevel) {
+    protected void setAccessibility(@NotNull SecurityLevel securityLevel) {
         this.machine.security().setSecurityLevel(securityLevel);
         ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(securityLevel.ordinal())));
     }
@@ -765,13 +765,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (machine.security().isOwner(this.handler.player)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.PRIVATE.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecurityLevel.PRIVATE.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.TEAM.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecurityLevel.TEAM.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecuritySettings.SecurityLevel.PUBLIC.getName(), mX, mY);
+                    this.renderTooltip(matrices, SecurityLevel.PUBLIC.getName(), mX, mY);
                 }
             } else {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)

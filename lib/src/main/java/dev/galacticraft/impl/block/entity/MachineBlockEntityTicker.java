@@ -44,6 +44,6 @@ public class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEnt
 
     @Override
     public void tick(World world, BlockPos pos, BlockState state, T machine) {
-        ((MachineBlockEntity) machine).tick(world, pos, state);
+        ((MachineBlockEntity) machine).tickBase(world, pos, state);
     }
 }
