@@ -79,6 +79,7 @@ import java.util.Objects;
  */
 @SuppressWarnings("UnstableApiUsage")
 public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider {
+    private static final Direction[] DIRECTIONS = Direction.values();
     /**
      * The configuration for this machine.
      */
@@ -411,7 +412,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     public void trySpreadEnergy() {
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DIRECTIONS) {
             ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
             if (face.getType() == ResourceType.ENERGY && face.getFlow().canFlowIn(ResourceFlow.OUTPUT)) {
                 try (Transaction transaction = Transaction.openOuter()) {
@@ -423,7 +424,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     public void trySpreadFluids() {
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DIRECTIONS) {
             Storage<FluidVariant> storage = this.getExposedFluidInv(direction);
             if (storage.supportsExtraction()) {
                 Storage<FluidVariant> to = FluidStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
@@ -436,7 +437,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     public void trySpreadItems() {
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(direction);
             if (storage.supportsExtraction()) {
                 Storage<ItemVariant> to = ItemStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
