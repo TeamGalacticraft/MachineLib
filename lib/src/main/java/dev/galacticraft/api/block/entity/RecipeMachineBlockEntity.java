@@ -93,7 +93,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param context The current transaction.
      * @return Whether the recipe was successfully output.
      */
-    protected abstract boolean outputStacks(R recipe, TransactionContext context);
+    protected abstract boolean outputStacks(@NotNull R recipe, @NotNull TransactionContext context);
 
     /**
      * Extracts the recipe's input from the machine's inventory.
@@ -101,7 +101,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param context The current transaction.
      * @return Whether the recipe was successfully extracted.
      */
-    protected abstract boolean extractCraftingMaterials(R recipe, TransactionContext context);
+    protected abstract boolean extractCraftingMaterials(@NotNull R recipe, @NotNull TransactionContext context);
 
     /**
      * Returns the machine status to use when the machine is working.
@@ -124,7 +124,9 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
         if (this.inventoryModCount != this.itemStorage().getModCount()) {
             world.getProfiler().push("recipe_test");
             this.inventoryModCount = this.itemStorage().getModCount();
+            world.getProfiler().push("find_recipe");
             Optional<R> optional = this.findValidRecipe(world);
+            world.getProfiler().pop();
             if (optional.isPresent()) {
                 R recipe = optional.get();
                 try (Transaction transaction = Transaction.openOuter()) {
@@ -170,7 +172,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param recipe The recipe to set.
      *               If {@code null}, the recipe will be reset.
      */
-    private void updateRecipe(R recipe) {
+    private void updateRecipe(@Nullable R recipe) {
         if (this.getActiveRecipe() != recipe || recipe == null) {
             this.setActiveRecipe(recipe);
             this.setMaxProgress(this.getProcessTime(recipe));
@@ -184,12 +186,16 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param context The current transaction.
      */
     protected void craft(@NotNull R recipe, @Nullable TransactionContext context) {
+        world.getProfiler().push("extract_materials");
         try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
+                world.getProfiler().swap("output_stacks");
                 if (this.outputStacks(recipe, inner)) {
                     inner.commit();
                 }
             }
+        } finally {
+            world.getProfiler().pop();
         }
     }
 
@@ -281,14 +287,14 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     @Override
-    public void writeNbt(NbtCompound nbt) {
+    public void writeNbt(@NotNull NbtCompound nbt) {
         super.writeNbt(nbt);
         nbt.putInt(Constant.Nbt.PROGRESS, this.getProgress());
         nbt.putInt(Constant.Nbt.MAX_PROGRESS, this.getMaxProgress());
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
+    public void readNbt(@NotNull NbtCompound nbt) {
         super.readNbt(nbt);
         this.progress = nbt.getInt(Constant.Nbt.PROGRESS);
         this.maxProgress = nbt.getInt(Constant.Nbt.MAX_PROGRESS);
