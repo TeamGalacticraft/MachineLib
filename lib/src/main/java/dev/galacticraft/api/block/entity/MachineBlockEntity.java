@@ -327,17 +327,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         this.setCachedState(state);
         if (!this.world.isClient()) {
             this.world.getProfiler().push("constant");
-            this.tickConstant();
+            ServerWorld serverWorld = (ServerWorld) world;
+            this.tickConstant(serverWorld, pos, state);
             if (this.disabled()) {
                 this.world.getProfiler().swap("disabled");
-                this.tickDisabled();
+                this.tickDisabled(serverWorld, pos, state);
             } else {
                 this.world.getProfiler().swap("active");
-                this.setStatus(this.tick(world, pos, state));
+                this.setStatus(this.tick(serverWorld, pos, state));
             }
         } else {
             this.world.getProfiler().push("client");
-            this.tickClient();
+            this.tickClient(world, pos, state);
         }
         this.world.getProfiler().pop();
     }
@@ -346,13 +347,13 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Called every tick, even if the machine is not active/powered.
      * Use this to tick fuel consumption or transfer resources, for example.
      */
-    protected void tickConstant() {}
+    protected void tickConstant(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
-    protected void tickDisabled() {}
+    protected void tickDisabled(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
-    protected void tickClient() {}
+    protected void tickClient(@NotNull /*Client*/World world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
-    protected abstract @NotNull MachineStatus tick(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state);
 
     private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
         assert this.world != null;

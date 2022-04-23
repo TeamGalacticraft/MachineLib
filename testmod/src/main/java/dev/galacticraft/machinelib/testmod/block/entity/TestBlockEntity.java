@@ -30,6 +30,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,14 +40,14 @@ public class TestBlockEntity extends MachineBlockEntity {
         super(TestMod.TEST_BE_TYPE, pos, state);
     }
 
-    @Override
-    protected @NotNull MachineStatus tick() {
-        return MachineStatus.INVALID;
-    }
-
     @Nullable
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
         return SimpleMachineScreenHandler.create(syncId, player, this, TestMod.TEST_SH_TYPE);
+    }
+
+    @Override
+    protected @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {
+        return MachineStatus.INVALID;
     }
 }
