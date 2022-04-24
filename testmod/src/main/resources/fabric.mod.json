@@ -25,6 +25,9 @@
     "main": [
       "dev.galacticraft.machinelib.testmod.TestMod"
     ],
+    "client": [
+      "dev.galacticraft.machinelib.testmod.TestModClient"
+    ],
     "fabric-gametest": [
       "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageImplTest",
       "dev.galacticraft.machinelib.gametest.storage.fluid.FluidStorageImplTest"

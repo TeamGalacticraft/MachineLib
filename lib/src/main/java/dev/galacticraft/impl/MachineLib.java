@@ -23,6 +23,7 @@
 package dev.galacticraft.impl;
 
 import dev.galacticraft.api.gas.Gases;
+import dev.galacticraft.api.machine.MachineStatuses;
 import dev.galacticraft.impl.network.MachineLibC2SPackets;
 import net.fabricmc.api.ModInitializer;
 
@@ -31,5 +32,6 @@ public class MachineLib implements ModInitializer {
     public void onInitialize() {
         Gases.init();
         MachineLibC2SPackets.register();
+        MachineStatuses.init();
     }
 }

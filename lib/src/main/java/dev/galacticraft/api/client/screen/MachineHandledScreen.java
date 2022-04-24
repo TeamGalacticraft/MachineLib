@@ -97,6 +97,7 @@ import java.util.*;
 @Environment(EnvType.CLIENT)
 public abstract class MachineHandledScreen<M extends MachineBlockEntity, H extends MachineScreenHandler<M>> extends HandledScreen<H> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
+    private static final ItemStack GUNPOWDER = new ItemStack(Items.GUNPOWDER);
     private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "unlit_torch")));
     private static final ItemStack REDSTONE_TORCH = new ItemStack(Items.REDSTONE_TORCH);
     private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "standard_wrench")));
@@ -345,7 +346,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.LOW);
                 this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.HIGH);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
-                this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, REDSTONE);
+                this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
                 this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
                 this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
@@ -873,7 +874,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
             DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, this.y + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
             float scale = (float) ((double) this.machine.energyStorage().getAmount() / (double) this.machine.energyStorage().getCapacity());
-            DrawableUtil.drawProgressTexture(matrices, this.x, (int) (this.y + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, (this.y + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.x + this.capacitorX, this.y + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Text> lines = new ArrayList<>();
@@ -1293,9 +1294,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             for (SlotType<Item, ItemVariant> type : machine.itemStorage().getTypes()) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ITEM, l -> new ArrayList<>());
                 if (type.getFlow() == ResourceFlow.BOTH) {
-                    flows.set(0, ResourceFlow.INPUT);
-                    flows.set(1, ResourceFlow.OUTPUT);
-                    flows.set(2, ResourceFlow.BOTH);
+                    map.put(ResourceType.ITEM, ResourceFlow.ALL_FLOWS);
                     break;
                 } else {
                     if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
@@ -1306,9 +1305,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             for (SlotType<Fluid, FluidVariant> type : machine.fluidStorage().getTypes()) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.FLUID, l -> new ArrayList<>());
                 if (type.getFlow() == ResourceFlow.BOTH) {
-                    flows.set(0, ResourceFlow.INPUT);
-                    flows.set(1, ResourceFlow.OUTPUT);
-                    flows.set(2, ResourceFlow.BOTH);
+                    map.put(ResourceType.FLUID, ResourceFlow.ALL_FLOWS);
                     break;
                 } else {
                     if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
@@ -1319,14 +1316,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             if (machine.getEnergyItemExtractionRate() > 0) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>());
                 if (machine.getEnergyItemInsertionRate() > 0) {
-                    flows.set(0, ResourceFlow.INPUT);
-                    flows.set(1, ResourceFlow.OUTPUT);
-                    flows.set(2, ResourceFlow.BOTH);
+                    map.put(ResourceType.ENERGY, ResourceFlow.ALL_FLOWS);
                 } else {
-                    flows.set(0, ResourceFlow.OUTPUT);
+                    flows.add(0, ResourceFlow.OUTPUT);
                 }
             } else if (machine.getEnergyItemInsertionRate() > 0) {
-                map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).set(0, ResourceFlow.INPUT);
+                map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).add(0, ResourceFlow.INPUT);
             }
 
             ResourceType outType = null;
@@ -1377,7 +1372,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                     break;
                 }
             }
-            assert outType != null;
+            if (outType == null) {
+                outType = ResourceType.NONE;
+                outFlow = ResourceFlow.BOTH;
+            }
             assert outFlow != null;
             sideOption.setOption(outType, outFlow);
             sideOption.setMatching(null);
@@ -1470,6 +1468,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             buf.writeInt(i);
             ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
         }); //MID
+
 
         static final SideConfigurationAction[] VALUES = SideConfigurationAction.values();
         private final IOConfigUpdater updater;

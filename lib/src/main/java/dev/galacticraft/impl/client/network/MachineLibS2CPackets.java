@@ -22,14 +22,23 @@
 
 package dev.galacticraft.impl.client.network;
 
+import com.mojang.authlib.GameProfile;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.RedstoneActivation;
+import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+
+import java.util.Objects;
 
 @Environment(EnvType.CLIENT)
 public class MachineLibS2CPackets {
@@ -41,6 +50,37 @@ public class MachineLibS2CPackets {
                     if (machineHandler.syncId == packet.readByte()) {
                         machineHandler.receiveState(packet);
                     }
+                }
+            });
+        });
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+            BlockPos pos = buf.readBlockPos();
+            SecurityLevel securityLevel = SecurityLevel.values()[buf.readByte()];
+            GameProfile profile = NbtHelper.toGameProfile(Objects.requireNonNull(buf.readNbt()));
+
+            client.execute(() -> {
+                assert client.world != null;
+                BlockEntity entity = client.world.getBlockEntity(pos);
+                if (entity instanceof MachineBlockEntity machine) {
+                    assert profile != null;
+                    assert securityLevel != null;
+                    machine.getConfiguration().getSecurity().setOwner(profile);
+                    machine.getConfiguration().getSecurity().setSecurityLevel(securityLevel);
+
+                }
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+            BlockPos pos = buf.readBlockPos();
+            RedstoneActivation redstone = RedstoneActivation.values()[buf.readByte()];
+
+            client.execute(() -> {
+                assert client.world != null;
+                BlockEntity entity = client.world.getBlockEntity(pos);
+                if (entity instanceof MachineBlockEntity) {
+                    assert redstone != null;
+                    ((MachineBlockEntity) entity).getConfiguration().setRedstoneActivation(redstone);
                 }
             });
         });

@@ -26,6 +26,8 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.screen.Tank;
+import dev.galacticraft.api.machine.RedstoneActivation;
+import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
@@ -93,6 +95,30 @@ public class MachineLibC2SPackets {
                     }
                 });
             }
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
+            RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
+            server.execute(() -> {
+                if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                    MachineBlockEntity machine = sHandler.machine;
+                    if (machine.security().hasAccess(player)) {
+                        machine.getConfiguration().setRedstoneActivation(redstoneActivation);
+                    }
+                }
+            });
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
+            SecurityLevel securityLevel = SecurityLevel.values()[buf.readByte()];
+            server.execute(() -> {
+                if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                    MachineBlockEntity machine = sHandler.machine;
+                    if (machine.security().isOwner(player)) {
+                        machine.getConfiguration().getSecurity().setSecurityLevel(securityLevel);
+                    }
+                }
+            });
         });
 
         ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "tank_modify"), (server, player, handler, buf, responseSender) -> {

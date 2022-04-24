@@ -99,7 +99,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         super.appendProperties(builder);
-        builder.add(ACTIVE);
+        builder.add(Properties.HORIZONTAL_FACING, ACTIVE);
     }
 
     @Override
@@ -248,5 +248,5 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
      * @param advanced Whether advanced tooltips are enabled.
      * @return This machine's description.
      */
-    public abstract Text machineDescription(ItemStack stack, BlockView view, boolean advanced);
+    public abstract @Nullable Text machineDescription(ItemStack stack, BlockView view, boolean advanced);
 }

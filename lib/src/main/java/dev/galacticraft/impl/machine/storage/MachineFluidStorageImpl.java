@@ -247,11 +247,13 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
+        StoragePreconditions.notNegative(amount);
+        if (variant.isBlank()) amount = 0;
+        else if (amount == 0) variant = FluidVariant.blank();
         try (Transaction transaction = Transaction.openNested(context)) {
             ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
             FluidStack currentStack = invSlot.copyStack();
-            invSlot.setStack(variant, amount, context);
+            invSlot.setStack(variant, amount, transaction);
             this.modCount.increment(transaction);
             transaction.commit();
             return currentStack;

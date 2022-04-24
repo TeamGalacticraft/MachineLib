@@ -57,7 +57,7 @@ public class DrawableUtil {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
         drawProgressTexture(matrices, x, y, 0, Constant.TextureCoordinate.OXYGEN_BACKGROUND_X, Constant.TextureCoordinate.OXYGEN_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
-        drawProgressTexture(matrices, x, (int) (y + Constant.TextureCoordinate.OVERLAY_HEIGHT - (Constant.TextureCoordinate.OVERLAY_HEIGHT * scale)), 0, Constant.TextureCoordinate.OXYGEN_X, Constant.TextureCoordinate.OXYGEN_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+        drawProgressTexture(matrices, x, (y + Constant.TextureCoordinate.OVERLAY_HEIGHT - (Constant.TextureCoordinate.OVERLAY_HEIGHT * scale)), 0, Constant.TextureCoordinate.OXYGEN_X, Constant.TextureCoordinate.OXYGEN_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
     }
 
     public static boolean isWithin(double mouseX, double mouseY, int x, int y, int width, int height) {

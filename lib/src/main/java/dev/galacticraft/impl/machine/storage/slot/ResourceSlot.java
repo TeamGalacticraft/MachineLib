@@ -36,8 +36,8 @@ import org.jetbrains.annotations.TestOnly;
 public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements SingleSlotStorage<V> {
     private final ModCount modCount = new ModCount();
     private final long capacity;
-    private V variant;
-    private long amount;
+    private V variant = this.getBlankVariant();
+    private long amount = 0;
 
     public ResourceSlot(long capacity) {
         this.capacity = capacity;

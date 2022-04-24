@@ -20,16 +20,23 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib;
+package dev.galacticraft.machinelib.testmod.client.screen;
 
+import dev.galacticraft.api.client.screen.MachineHandledScreen;
+import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.testmod.TestMod;
-import dev.galacticraft.machinelib.testmod.client.screen.TestScreen;
-import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
-public class TestModClient implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        HandledScreens.register(TestMod.TEST_SH_TYPE, TestScreen::new);
+public class SimpleMachineScreen extends MachineHandledScreen<SimpleMachineBlockEntity, SimpleMachineScreenHandler<SimpleMachineBlockEntity>> {
+    private static final Identifier TEXTURE = TestMod.id("tex.png");
+
+    public SimpleMachineScreen(@NotNull SimpleMachineScreenHandler<SimpleMachineBlockEntity> handler, @NotNull PlayerInventory inv, @NotNull Text title) {
+        super(handler, inv, title, TEXTURE);
+        this.capacitorX = 8;
+        this.capacitorY = 8;
     }
 }

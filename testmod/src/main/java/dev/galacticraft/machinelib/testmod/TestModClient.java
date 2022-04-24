@@ -20,29 +20,15 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod.block;
+package dev.galacticraft.machinelib.testmod;
 
-import dev.galacticraft.api.block.MachineBlock;
-import dev.galacticraft.machinelib.testmod.block.entity.TestBlockEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
+import dev.galacticraft.machinelib.testmod.client.screen.SimpleMachineScreen;
+import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 
-public class TestBlock extends MachineBlock<TestBlockEntity> {
-    public TestBlock(Settings settings) {
-        super(settings);
-    }
-
+public class TestModClient implements ClientModInitializer {
     @Override
-    public TestBlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new TestBlockEntity(pos, state);
-    }
-
-    @Override
-    public Text machineDescription(ItemStack stack, BlockView view, boolean advanced) {
-        return LiteralText.EMPTY;
+    public void onInitializeClient() {
+        HandledScreens.register(TestMod.SIMPLE_MACHINE_SH_TYPE, SimpleMachineScreen::new);
     }
 }

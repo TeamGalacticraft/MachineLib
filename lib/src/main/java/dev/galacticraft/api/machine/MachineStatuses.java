@@ -56,4 +56,7 @@ public final class MachineStatuses {
      * The machine is not running.
      */
     public static final MachineStatus IDLE = MachineStatus.createAndRegister(new Identifier(Constant.MOD_ID, "idle"), new TranslatableText("machine_status.machinelib.idle").setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.MISSING_RESOURCE);
+
+    public static void init() {
+    }
 }

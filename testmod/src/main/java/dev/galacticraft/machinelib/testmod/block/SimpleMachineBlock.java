@@ -20,34 +20,40 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod.block.entity;
+package dev.galacticraft.machinelib.testmod.block;
 
-import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.machine.MachineStatus;
-import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
-import dev.galacticraft.machinelib.testmod.TestMod;
+import dev.galacticraft.api.block.MachineBlock;
+import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class TestBlockEntity extends MachineBlockEntity {
-    public TestBlockEntity(@NotNull BlockPos pos, BlockState state) {
-        super(TestMod.TEST_BE_TYPE, pos, state);
-    }
-
-    @Nullable
-    @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-        return SimpleMachineScreenHandler.create(syncId, player, this, TestMod.TEST_SH_TYPE);
+public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
+    public SimpleMachineBlock(Settings settings) {
+        super(settings);
     }
 
     @Override
-    protected @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        return MachineStatus.INVALID;
+    public SimpleMachineBlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new SimpleMachineBlockEntity(pos, state);
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.onPlaced(world, pos, state, placer, itemStack);
+        if (placer != null) {
+            placer.addVelocity(0, 1, 0);
+        }
+    }
+
+    @Override
+    public Text machineDescription(ItemStack stack, BlockView view, boolean advanced) {
+        return LiteralText.EMPTY;
     }
 }

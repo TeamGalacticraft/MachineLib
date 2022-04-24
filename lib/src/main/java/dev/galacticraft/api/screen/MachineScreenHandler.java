@@ -149,8 +149,8 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     }
 
     @Override
-    public void syncState() {
-        super.syncState();
+    public void sendContentUpdates() {
+        super.sendContentUpdates();
         this.syncStorages();
     }
 

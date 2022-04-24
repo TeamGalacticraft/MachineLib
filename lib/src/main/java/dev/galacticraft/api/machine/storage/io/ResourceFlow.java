@@ -22,10 +22,13 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
+import com.google.common.collect.ImmutableList;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+
+import java.util.List;
 
 /**
  * A resource flow is a way to describe how a resource can be transferred between two storages.
@@ -44,11 +47,12 @@ public enum ResourceFlow {
      */
     BOTH(new TranslatableText("ui.galacticraft.side_option.io").setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
 
+    public static final List<ResourceFlow> ALL_FLOWS = ImmutableList.copyOf(ResourceFlow.values());
+
     /**
      * The name of the flow direction.
      */
     private final Text name;
-
 
     /**
      * Creates a new resource flow.

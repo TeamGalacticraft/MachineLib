@@ -252,11 +252,13 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public @NotNull ItemStack replace(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
+        StoragePreconditions.notNegative(amount);
+        if (variant.isBlank()) amount = 0;
+        else if (amount == 0) variant = ItemVariant.blank();
         try (Transaction transaction = Transaction.openNested(context)) {
             ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
             ItemStack currentStack = invSlot.copyStack();
-            invSlot.setStack(variant, amount, context);
+            invSlot.setStack(variant, amount, transaction);
             this.modCount.increment(transaction);
             transaction.commit();
             return currentStack;
