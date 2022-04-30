@@ -26,45 +26,5 @@ import dev.galacticraft.api.machine.MachineStatus;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
-public class MachineStatusImpl implements MachineStatus {
-    private final @NotNull Text name;
-    private final @NotNull Type type;
-
-    public MachineStatusImpl(@NotNull Text name, @NotNull Type type) {
-        this.name = name;
-        this.type = type;
-    }
-
-    @Override
-    public @NotNull Text getName() {
-        return this.name;
-    }
-
-    @Override
-    public @NotNull MachineStatus.Type getType() {
-        return this.type;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MachineStatusImpl that = (MachineStatusImpl) o;
-        return name.equals(that.name) && type == that.type;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, type);
-    }
-
-    @Override
-    public String toString() {
-        return "MachineStatusImpl{" +
-                "name=" + name +
-                ", type=" + type +
-                '}';
-    }
+public record MachineStatusImpl(@NotNull Text name, @NotNull MachineStatus.Type type) implements MachineStatus {
 }

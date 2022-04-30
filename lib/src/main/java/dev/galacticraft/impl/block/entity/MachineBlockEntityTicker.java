@@ -28,6 +28,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Default implementation of a {@link BlockEntityTicker} for {@link MachineBlockEntity}s for convenience.
@@ -38,7 +39,7 @@ public class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEnt
 
     private MachineBlockEntityTicker() {}
 
-    public static <T extends BlockEntity> MachineBlockEntityTicker<T> getInstance() {
+    public static <T extends BlockEntity> @NotNull MachineBlockEntityTicker<T> getInstance() {
         return (MachineBlockEntityTicker<T>) INSTANCE;
     }
 

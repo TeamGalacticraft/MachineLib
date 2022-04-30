@@ -22,8 +22,8 @@
 
 package dev.galacticraft.impl.client.resource;
 
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
-import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;

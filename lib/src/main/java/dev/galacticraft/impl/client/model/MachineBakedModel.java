@@ -22,6 +22,7 @@
 
 package dev.galacticraft.impl.client.model;
 
+import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
@@ -30,8 +31,8 @@ import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.MachineConfiguration;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.util.CachingSpriteAtlas;
-import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
@@ -109,15 +110,18 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final Map<Block, MachineModelRegistry.SpriteProvider> SPRITE_PROVIDERS = new IdentityHashMap<>();
     @ApiStatus.Internal
     public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
-    public static final List<Identifier> TEXTURE_DEPENDENCIES = new LinkedList<>();
+    public static final Set<Identifier> TEXTURE_DEPENDENCIES = new HashSet<>();
     private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
 
     protected MachineBakedModel() {}
 
-    public static void register(Block block, MachineModelRegistry.SpriteProvider provider) {
+    public static void register(@NotNull Block block, @NotNull MachineModelRegistry.SpriteProvider provider) {
+        Preconditions.checkNotNull(block);
+        Preconditions.checkNotNull(provider);
+
         SPRITE_PROVIDERS.put(block, provider);
         Identifier id = Registry.BLOCK.getId(block);
-        IDENTIFIERS.putIfAbsent(id.getNamespace(), new HashSet<>());
+        IDENTIFIERS.computeIfAbsent(id.getNamespace(), s -> new HashSet<>());
         IDENTIFIERS.get(id.getNamespace()).add(id.getPath());
     }
 
@@ -193,7 +197,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return ModelOverrideList.EMPTY;
     }
 
-    public static boolean transform(MachineBlockEntity machine, BlockState state, MutableQuadView quad) {
+    public static boolean transform(@NotNull MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.get(Properties.HORIZONTAL_FACING), quad.nominalFace());
         ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
         quad.spriteBake(0,
@@ -207,7 +211,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return true;
     }
 
-    public static boolean transformItem(ItemStack stack, MutableQuadView quad) {
+    public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
         NbtCompound tag = stack.getNbt();
         if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, NbtElement.COMPOUND_TYPE)) {
             CONFIGURATION.readNbt(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG));
@@ -273,8 +277,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull
-        Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
+        public @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
             if (face == BlockFace.FRONT) return atlas.apply(sprite);
             if (face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
@@ -288,8 +291,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull
-        Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
+        public @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
             return atlas.apply(sprite);
         }
     }

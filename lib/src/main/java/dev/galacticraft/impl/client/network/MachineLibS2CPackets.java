@@ -24,10 +24,10 @@ package dev.galacticraft.impl.client.network;
 
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.screen.MachineScreenHandler;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -55,7 +55,7 @@ public class MachineLibS2CPackets {
         });
         ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
-            SecurityLevel securityLevel = SecurityLevel.values()[buf.readByte()];
+            AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             GameProfile profile = NbtHelper.toGameProfile(Objects.requireNonNull(buf.readNbt()));
 
             client.execute(() -> {
@@ -63,9 +63,9 @@ public class MachineLibS2CPackets {
                 BlockEntity entity = client.world.getBlockEntity(pos);
                 if (entity instanceof MachineBlockEntity machine) {
                     assert profile != null;
-                    assert securityLevel != null;
-                    machine.getConfiguration().getSecurity().setOwner(profile);
-                    machine.getConfiguration().getSecurity().setSecurityLevel(securityLevel);
+                    assert accessLevel != null;
+                    machine.getSecurity().setOwner(profile);
+                    machine.getSecurity().setAccessLevel(accessLevel);
 
                 }
             });
@@ -80,7 +80,7 @@ public class MachineLibS2CPackets {
                 BlockEntity entity = client.world.getBlockEntity(pos);
                 if (entity instanceof MachineBlockEntity) {
                     assert redstone != null;
-                    ((MachineBlockEntity) entity).getConfiguration().setRedstoneActivation(redstone);
+                    ((MachineBlockEntity) entity).setRedstone(redstone);
                 }
             });
         });

@@ -29,6 +29,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -36,13 +37,13 @@ import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
-    private final ResourceStorage<T, V, ?> storage;
-    private final SlotType<T, V> type;
+    private final @NotNull ResourceStorage<T, V, ?> storage;
+    private final @NotNull SlotType<T, V> type;
     private final boolean insertion;
     private final boolean extraction;
     private final boolean[] slots;
 
-    public ExposedSlots(ResourceStorage<T, V, ?> storage, SlotType<T, V> type, boolean allowInsertion, boolean allowExtraction) {
+    public ExposedSlots(@NotNull ResourceStorage<T, V, ?> storage, @NotNull SlotType<T, V> type, boolean allowInsertion, boolean allowExtraction) {
         this.storage = storage;
         this.type = type;
 
@@ -121,7 +122,7 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     }
 
     @Override
-    public V getResource(int slot) {
+    public @NotNull V getResource(int slot) {
         return this.storage.getVariant(slot);
     }
 
@@ -136,12 +137,12 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     }
 
     @Override
-    public Storage<V> getSlot(int slot) {
+    public @NotNull Storage<V> getSlot(int slot) {
         return this.slots[slot] ? ExposedStorage.ofSlot(this.storage, slot, this.extraction, this.insertion) : ExposedStorage.ofSlot(this.storage, slot, false, false);
     }
 
     @Override
-    public Predicate<V> getFilter(int slot) {
+    public @NotNull Predicate<V> getFilter(int slot) {
         return v -> this.storage.canAccept(slot, v);
     }
 

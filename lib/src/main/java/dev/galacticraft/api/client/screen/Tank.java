@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.client.screen;
 
+import com.google.common.base.Preconditions;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.client.screen.TankImpl;
@@ -41,8 +42,9 @@ import org.jetbrains.annotations.NotNull;
  * @see ResourceType#FLUID
  */
 public interface Tank {
-    @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
-    static @NotNull Tank create(ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
+    @Contract(value = "_, _, _, _, _ -> new", pure = true)
+    static @NotNull Tank create(@NotNull ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
+        Preconditions.checkNotNull(storage);
         return new TankImpl(storage, index, x, y, height);
     }
 
@@ -50,7 +52,7 @@ public interface Tank {
      * Returns the resource that is currently in this tank.
      * @return The resource that is currently in this tank.
      */
-    FluidVariant getResource();
+    @NotNull FluidVariant getResource();
 
     /**
      * Returns the index of this tank in the storage.
@@ -59,7 +61,7 @@ public interface Tank {
     int getIndex();
 
     /**
-     * Retunrs the x-position of this tank.
+     * Returns the x-position of this tank.
      * @return The x-position of this tank.
      */
     int getX();

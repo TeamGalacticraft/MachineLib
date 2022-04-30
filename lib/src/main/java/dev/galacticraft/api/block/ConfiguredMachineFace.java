@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.block;
 
+import com.google.common.base.Preconditions;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
@@ -48,6 +49,9 @@ public interface ConfiguredMachineFace {
      */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull ConfiguredMachineFace of(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(flow);
+
         return new ConfiguredMachineFaceImpl(type, flow);
     }
 
@@ -77,13 +81,13 @@ public interface ConfiguredMachineFace {
      * Returns the type of resource that this face is configured to accept.
      * @return The type of resource that this face is configured to accept.
      */
-    ResourceType<?, ?> getType();
+    @NotNull ResourceType<?, ?> getType();
 
     /**
      * Returns the flow direction of this face.
      * @return The flow direction of this face.
      */
-    ResourceFlow getFlow();
+    @NotNull ResourceFlow getFlow();
 
     /**
      * Returns the filter of this face.
@@ -99,7 +103,7 @@ public interface ConfiguredMachineFace {
      * @param <V> The type of resource.
      * @return The exposed storage of this face.
      */
-    <T, V extends TransferVariant<T>> ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage);
+    <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage);
 
     /**
      * Returns the exposed energy storage of this face.
@@ -116,13 +120,13 @@ public interface ConfiguredMachineFace {
      * @param <V> The type of resource.
      * @return The matching slots of this face in the provided storage.
      */
-    <T, V extends TransferVariant<T>> int[] getMatching(ConfiguredStorage<T, V> storage);
+    <T, V extends TransferVariant<T>> int @NotNull[] getMatching(@Nullable ConfiguredStorage<T, V> storage);
 
     /**
      * Write the configuration to a new nbt compound.
      * @return The nbt compound that was written to.
      */
-    NbtCompound writeNbt();
+    @NotNull NbtCompound writeNbt();
 
     /**
      * Read the configuration from the given nbt compound.

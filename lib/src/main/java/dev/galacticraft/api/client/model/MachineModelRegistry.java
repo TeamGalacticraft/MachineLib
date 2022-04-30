@@ -22,12 +22,13 @@
 
 package dev.galacticraft.api.client.model;
 
+import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
-import dev.galacticraft.impl.machine.Constant;
 import net.minecraft.block.Block;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.item.ItemStack;
@@ -51,7 +52,10 @@ public interface MachineModelRegistry {
      * @param block The block to register the provider for.
      * @param provider The provider to register.
      */
-    static void register(Block block, SpriteProvider provider) {
+    static void register(@NotNull Block block, @NotNull SpriteProvider provider) {
+        Preconditions.checkNotNull(block);
+        Preconditions.checkNotNull(provider);
+
         MachineBakedModel.register(block, provider);
     }
 
@@ -60,7 +64,7 @@ public interface MachineModelRegistry {
      * @param block The block to get the provider for.
      * @return The registered provider, or null if none is registered.
      */
-    static @Nullable SpriteProvider getSpriteProvider(Block block) {
+    static @Nullable SpriteProvider getSpriteProvider(@NotNull Block block) {
         return MachineBakedModel.SPRITE_PROVIDERS.get(block);
     }
 
@@ -70,7 +74,7 @@ public interface MachineModelRegistry {
      * @param defaultProvider The default provider to return if none is registered.
      * @return The registered provider, or the default provider if none is registered.
      */
-    static SpriteProvider getSpriteProviderOrElseGet(Block block, SpriteProvider defaultProvider) {
+    static @Nullable SpriteProvider getSpriteProviderOrElseGet(@NotNull Block block, @Nullable SpriteProvider defaultProvider) {
         return MachineBakedModel.SPRITE_PROVIDERS.getOrDefault(block, defaultProvider);
     }
 

@@ -24,8 +24,8 @@ package dev.galacticraft.impl.client.screen;
 
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
-import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.util.GenericStorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -66,7 +66,7 @@ public class TankImpl implements Tank {
     }
 
     @Override
-    public FluidVariant getResource() {
+    public @NotNull FluidVariant getResource() {
         return this.storage.getResource(this.index);
     }
 
@@ -110,23 +110,21 @@ public class TankImpl implements Tank {
         matrices.translate(0, 0, 1);
         if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Text> lines = new ArrayList<>(2);
+            assert client.currentScreen != null;
             if (this.getResource().isBlank()) {
-                client.currentScreen.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.tank.fluid.empty").setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
+                client.currentScreen.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
-            MutableText amount;
-            long amnt = this.getAmount();
-            if (Screen.hasShiftDown() || amnt / 81.0 < 10000) {
-                amount = new LiteralText(DrawableUtil.roundForDisplay(amnt / 81.0, 0) + "mB");
-            } else {
-                amount = new LiteralText(DrawableUtil.roundForDisplay(amnt / 81000.0, 2) + "B");
-            }
+            long amount = this.getAmount();
+            MutableText text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
+                    new LiteralText(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
+                    : new LiteralText(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
 
             TranslatableText translatableText;
-            translatableText = new TranslatableText("ui.galacticraft.machine.tank.fluid");
+            translatableText = new TranslatableText(Constant.TranslationKey.TANK_CONTENTS);
 
             lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
-            lines.add(new TranslatableText("ui.galacticraft.machine.tank.amount").setStyle(Constant.Text.GRAY_STYLE).append(amount.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
+            lines.add(new TranslatableText(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
             client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
         }
         matrices.translate(0, 0, -1);

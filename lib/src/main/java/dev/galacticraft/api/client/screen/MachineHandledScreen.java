@@ -29,15 +29,16 @@ import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
+import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.SecurityLevel;
+import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
-import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -67,6 +68,7 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -103,73 +105,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new Identifier("galacticraft", "standard_wrench")));
     private static final ItemStack ALUMINUM_WIRE = new ItemStack(getOptionalItem(new Identifier("galacticraft", "aluminum_wire")));
 
-    /**
-     * The width of a configuration panel.
-     */
-    public static final int PANEL_WIDTH = 100;
-    /**
-     * The height of a configuration panel.
-     */
-    public static final int PANEL_HEIGHT = 93;
-    /**
-     * The width of a configuration tab.
-     */
-    public static final int TAB_WIDTH = 22;
-    /**
-     * The height of a configuration tab.
-     */
-    public static final int TAB_HEIGHT = 22;
-
     private static final int SPACING = 4;
 
-    private static final int BUTTON_U = 0;
-    private static final int BUTTON_V = 208;
-    private static final int BUTTON_HOVERED_V = 224;
-    private static final int BUTTON_PRESSED_V = 240;
-    private static final int BUTTON_WIDTH = 16;
-    private static final int BUTTON_HEIGHT = 16;
+    private static final int PANEL_ICON_X = 3;
+    private static final int PANEL_ICON_Y = 3;
 
-    private static final int ICON_WIDTH = 16;
-    private static final int ICON_HEIGHT = 16;
-
-    private static final int ICON_LOCK_PRIVATE_U = 221;
-    private static final int ICON_LOCK_PRIVATE_V = 47;
-
-    private static final int ICON_LOCK_PARTY_U = 204;
-    private static final int ICON_LOCK_PARTY_V = 64;
-
-    private static final int ICON_LOCK_PUBLIC_U = 204;
-    private static final int ICON_LOCK_PUBLIC_V = 47;
-
-    private static final int TAB_REDSTONE_U = 203;
-    private static final int TAB_REDSTONE_V = 0;
-
-    private static final int TAB_CONFIG_U = 203;
-    private static final int TAB_CONFIG_V = 23;
-
-    private static final int TAB_STATS_U = 226;
-    private static final int TAB_STATS_V = 0;
-
-    private static final int TAB_SECURITY_U = 226;
-    private static final int TAB_SECURITY_V = 23;
-
-    private static final int PANEL_REDSTONE_U = 0;
-    private static final int PANEL_REDSTONE_V = 0;
-
-    private static final int PANEL_CONFIG_U = 0;
-    private static final int PANEL_CONFIG_V = 93;
-
-    private static final int PANEL_STATS_U = 101;
-    private static final int PANEL_STATS_V = 0;
-
-    private static final int PANEL_SECURITY_U = 101;
-    private static final int PANEL_SECURITY_V = 93;
-
-    public static final int PANEL_ICON_X = 3;
-    public static final int PANEL_ICON_Y = 3;
-
-    public static final int PANEL_TITLE_X = 19;
-    public static final int PANEL_TITLE_Y = 7;
+    private static final int PANEL_TITLE_X = 19;
+    private static final int PANEL_TITLE_Y = 7;
 
     private static final int REDSTONE_IGNORE_X = 18;
     private static final int REDSTONE_IGNORE_Y = 30;
@@ -210,15 +152,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private static final int OWNER_FACE_X = 6;
     private static final int OWNER_FACE_Y = 20;
 
-    private static final int OWNER_FACE_WIDTH = 32;
-    private static final int OWNER_FACE_HEIGHT = 32;
-    private static final int PANEL_UPPER_HEIGHT = 20;
-
     private static final int REDSTONE_STATE_TEXT_X = 11;
     private static final int REDSTONE_STATE_TEXT_Y = 53;
 
     private static final int REDSTONE_STATUS_TEXT_X = 11;
-    private static final int REDSTONE_STATUS_TEXT_Y = 57; //add fontheight
+    private static final int REDSTONE_STATUS_TEXT_Y = 57; //add font height
 
     private static final int SECURITY_STATE_TEXT_X = 11;
     private static final int SECURITY_STATE_TEXT_Y = 53;
@@ -257,7 +195,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private @NotNull Identifier ownerSkin = new Identifier("textures/entity/steve.png");
 
     /**
-     * The sprite provider for the machne block. Used to render the machine on the IO configuration panel.
+     * The sprite provider for the machine block. Used to render the machine on the IO configuration panel.
      */
     private final MachineModelRegistry.SpriteProvider spriteProvider;
 
@@ -297,7 +235,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
         this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.machine.getCachedState() == null ? world.getBlockState(pos).getBlock() : this.machine.getCachedState().getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
 
-        MinecraftClient.getInstance().getSkinProvider().loadSkin(this.machine.security().getOwner(), (type, identifier, tex) -> {
+        MinecraftClient.getInstance().getSkinProvider().loadSkin(this.machine.getSecurity().getOwner(), (type, identifier, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && identifier != null) {
                 MachineHandledScreen.this.ownerSkin = identifier;
             }
@@ -332,7 +270,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
             for (Tab tab : Tab.values()) { // 0, 1, 2, 3
                 if (secondary) matrices.translate(0, SPACING, 0);
-                this.drawTexture(matrices, this.x + (tab.isLeft() ? tab.isOpen() ? -PANEL_WIDTH : -22 : this.backgroundWidth), this.y + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? PANEL_HEIGHT : TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH, tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT);
+                this.drawTexture(matrices, this.x + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.backgroundWidth), this.y + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
                 if (secondary) matrices.translate(0, -SPACING, 0);
                 secondary = !secondary;
             }
@@ -341,31 +279,31 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (Tab.REDSTONE.isOpen()) {
                 matrices.push();
-                matrices.translate(-PANEL_WIDTH, SPACING, 0);
-                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.IGNORE);
-                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.LOW);
-                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.redstoneInteraction() == RedstoneActivation.HIGH);
+                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
+                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.IGNORE);
+                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.LOW);
+                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.HIGH);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
                 this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
                 this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
                 this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.redstone")
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION)
                         .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.redstone.state",
-                        machine.redstoneInteraction().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.redstone.status",
-                        !machine.disabled() ? new TranslatableText("ui.galacticraft.machine.redstone.status.enabled").setStyle(Constant.Text.GREEN_STYLE)
-                                : new TranslatableText("ui.galacticraft.machine.redstone.status.disabled").setStyle(Constant.Text.DARK_RED_STYLE))
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_STATE,
+                        machine.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_STATUS,
+                        !machine.isDisabled(this.world) ? new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
+                                : new TranslatableText(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                         .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.textRenderer.fontHeight, 0xFFFFFFFF);
 
                 matrices.pop();
             }
             if (Tab.CONFIGURATION.isOpen()) {
                 matrices.push();
-                matrices.translate(-PANEL_WIDTH, TAB_HEIGHT + SPACING + SPACING, 0);
+                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.configuration")
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.CONFIGURATION)
                         .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
 
                 RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
@@ -382,8 +320,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 matrices.translate(this.backgroundWidth, SPACING, 0);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
                 RenderSystem.setShaderTexture(0, this.ownerSkin);
-                drawTexture(matrices, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_WIDTH, OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.stats")
+                drawTexture(matrices, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.STATISTICS)
                         .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
                 List<OrderedText> text = this.textRenderer.wrapLines(new TranslatableText((machine.getCachedState() != null ? machine.getCachedState()
                         : this.machine.getCachedState()).getBlock().getTranslationKey()), 64);
@@ -401,21 +339,21 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (Tab.SECURITY.isOpen()) {
                 matrices.push();
-                matrices.translate(this.backgroundWidth, TAB_HEIGHT + SPACING + SPACING, 0);
+                matrices.translate(this.backgroundWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
                 RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-                this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
+                this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.PUBLIC || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.TEAM || !machine.security().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.security().getSecurityLevel() == SecurityLevel.PRIVATE || !machine.security().isOwner(this.handler.player));
-                this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
-                this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, ICON_LOCK_PARTY_U, ICON_LOCK_PARTY_V, ICON_WIDTH, ICON_HEIGHT);
-                this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
+                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.TEAM || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+                this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+                this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security")
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.SECURITY)
                         .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.state",
-                        machine.security().getSecurityLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.ACCESS_LEVEL,
+                        machine.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
 //                assert machine.getSecurity().getOwner() != null;
 //                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
 //                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
@@ -445,7 +383,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * @param face the face to draw
      */
     private void drawMachineFace(@NotNull MatrixStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
-        ConfiguredMachineFace machineFace = machine.getConfiguration().getIOConfiguration().get(face);
+        ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
         drawSprite(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
@@ -493,13 +431,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         assert this.client != null;
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
         if (pressed) {
-            this.drawTexture(matrices, x, y, BUTTON_U, BUTTON_PRESSED_V, BUTTON_WIDTH, BUTTON_HEIGHT);
+            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
             return;
         }
-        if (DrawableUtil.isWithin(mouseX, mouseY, x, y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-            this.drawTexture(matrices, x, y, BUTTON_U, BUTTON_HOVERED_V, BUTTON_WIDTH, BUTTON_HEIGHT);
+        if (DrawableUtil.isWithin(mouseX, mouseY, x, y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         } else {
-            this.drawTexture(matrices, x, y, BUTTON_U, BUTTON_V, BUTTON_WIDTH, BUTTON_HEIGHT);
+            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         }
     }
 
@@ -520,36 +458,36 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.REDSTONE.isOpen()) {
-            mouseX += PANEL_WIDTH;
+            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.REDSTONE.click();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.IGNORE);
                 this.playButtonSound();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.LOW);
                 this.playButtonSound();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.HIGH);
                 this.playButtonSound();
                 return true;
             }
             if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_HEIGHT)) {
                     return true;
                 }
             }
         } else {
-            mouseX += TAB_WIDTH;
+            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.REDSTONE.click();
                 return true;
             }
@@ -557,9 +495,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX += PANEL_WIDTH;
-            mouseY -= TAB_HEIGHT + SPACING + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
+            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.CONFIGURATION.click();
                 return true;
             }
@@ -596,13 +534,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 }
             }
         } else {
-            mouseX += TAB_WIDTH;
+            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
             if (Tab.REDSTONE.isOpen()) {
-                mouseY -= PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.CONFIGURATION.click();
                 return true;
             }
@@ -612,12 +550,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX -= this.backgroundWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.STATS.click();
                 return true;
             }
         } else {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.STATS.click();
                 return true;
             }
@@ -626,36 +564,36 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseY = mY - this.y;
         mouseX -= this.backgroundWidth;
         if (Tab.SECURITY.isOpen()) {
-            mouseY -= TAB_HEIGHT + SPACING + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
+            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.SECURITY.click();
                 return true;
             }
 
-            if (machine.security().isOwner(this.handler.player)) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityLevel.PRIVATE);
+            if (machine.getSecurity().isOwner(this.handler.player)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.setAccessibility(AccessLevel.PRIVATE);
                     this.playButtonSound();
                     return true;
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityLevel.TEAM);
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.setAccessibility(AccessLevel.TEAM);
                     this.playButtonSound();
                     return true;
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.setAccessibility(SecurityLevel.PUBLIC);
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.setAccessibility(AccessLevel.PUBLIC);
                     this.playButtonSound();
                     return true;
                 }
             }
         } else {
             if (Tab.STATS.isOpen()) {
-                mouseY -= PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.SECURITY.click();
             }
         }
@@ -664,11 +602,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     /**
      * Sets the accessibility of the machine and syncs it to the server.
-     * @param securityLevel The accessibility to set.
+     * @param accessLevel The accessibility to set.
      */
-    protected void setAccessibility(@NotNull SecurityLevel securityLevel) {
-        this.machine.security().setSecurityLevel(securityLevel);
-        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(securityLevel.ordinal())));
+    protected void setAccessibility(@NotNull AccessLevel accessLevel) {
+        this.machine.getSecurity().setAccessLevel(accessLevel);
+        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
     }
 
     /**
@@ -692,29 +630,29 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.REDSTONE.isOpen()) {
-            mouseX += PANEL_WIDTH;
+            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.IGNORE.getName(), mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.LOW.getName(), mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.HIGH.getName(), mX, mY);
             }
         } else {
-            mouseX += TAB_WIDTH;
+            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.redstone").setStyle(Constant.Text.RED_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION).setStyle(Constant.Text.RED_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX += PANEL_WIDTH;
-            mouseY -= TAB_HEIGHT + SPACING + SPACING;
+            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
                 this.renderFaceTooltip(matrices, BlockFace.TOP, mX, mY);
             }
@@ -734,14 +672,14 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.renderFaceTooltip(matrices, BlockFace.BOTTOM, mX, mY);
             }
         } else {
-            mouseX += TAB_WIDTH;
+            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
             if (Tab.REDSTONE.isOpen()) {
-                mouseY -= PANEL_HEIGHT + SPACING;
+                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING;
             } else {
-                mouseY -= TAB_HEIGHT + SPACING;
+                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.configuration").setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
@@ -749,47 +687,47 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX -= this.backgroundWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_WIDTH, OWNER_FACE_HEIGHT)) {
-                assert machine.security().getOwner() != null;
-                this.renderTooltip(matrices, new LiteralText(machine.security().getOwner().getName()), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
+                assert machine.getSecurity().getOwner() != null;
+                this.renderTooltip(matrices, new LiteralText(machine.getSecurity().getOwner().getName()), mX, mY);
             }
         } else {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.stats").setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.SECURITY.isOpen()) {
             mouseX -= this.backgroundWidth;
-            mouseY -= TAB_HEIGHT + SPACING + SPACING;
+            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
 
-            if (machine.security().isOwner(this.handler.player)) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityLevel.PRIVATE.getName(), mX, mY);
+            if (machine.getSecurity().isOwner(this.handler.player)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.renderTooltip(matrices, AccessLevel.PRIVATE.getName(), mX, mY);
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityLevel.TEAM.getName(), mX, mY);
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.renderTooltip(matrices, AccessLevel.TEAM.getName(), mX, mY);
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, SecurityLevel.PUBLIC.getName(), mX, mY);
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.renderTooltip(matrices, AccessLevel.PUBLIC.getName(), mX, mY);
                 }
             } else {
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.security.access_denied"), mX, mY);
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
+                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
+                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
         } else {
             mouseX -= this.backgroundWidth;
             if (Tab.STATS.isOpen()) {
-                mouseY -= PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText("ui.galacticraft.machine.security").setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.SECURITY).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
             }
         }
     }
@@ -803,16 +741,16 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     protected void renderFaceTooltip(MatrixStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
-        ConfiguredMachineFace configuredFace = this.machine.getConfiguration().getIOConfiguration().get(face);
+        ConfiguredMachineFace configuredFace = this.machine.getIOConfig().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
         if (configuredFace.getMatching() != null) {
             if (configuredFace.getMatching().left().isPresent()) {
-                TOOLTIP_ARRAY.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText(Constant.TranslationKey.MATCHES, new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
             } else {
                 assert configuredFace.getMatching().right().isPresent();
-                TOOLTIP_ARRAY.add(new TranslatableText("ui.galacticraft.machine.configuration.matches", configuredFace.getMatching().right().get().getName()).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText(Constant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(Constant.Text.GRAY_STYLE));
             }
         }
         this.renderTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -823,7 +761,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @Override
     public final void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         assert this.client != null;
-        if (this.machine == null || !this.machine.security().hasAccess(handler.player)) {
+        if (this.machine == null || !this.machine.getSecurity().hasAccess(handler.player)) {
             this.close();
             return;
         }
@@ -880,12 +818,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 List<Text> lines = new ArrayList<>();
                 MachineStatus status = this.machine.getStatus();
                 if (status != MachineStatus.INVALID) {
-                    lines.add(new TranslatableText("ui.galacticraft.machine.status").setStyle(Constant.Text.GRAY_STYLE).append(status.getName()));
+                    lines.add(new TranslatableText(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.name()));
                 }
-                lines.add(new TranslatableText("ui.galacticraft.machine.current_energy", DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-                lines.add(new TranslatableText("ui.galacticraft.machine.max_energy", DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                lines.add(new TranslatableText(Constant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+                lines.add(new TranslatableText(Constant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
                 this.appendEnergyTooltip(lines);
 
+                assert this.client != null;
                 assert this.client.currentScreen != null;
                 matrices.translate(0.0D, 0.0D, 1.0D);
                 this.client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
@@ -926,7 +865,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 Sprite sprite = FluidVariantRendering.getSprite(resource);
                 int fluidColor = FluidVariantRendering.getColor(resource);
 
-
+                if (sprite == null) {
+                    sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
+                    fluidColor = -1;
+                    if (sprite == null) throw new IllegalStateException("Water sprite is null");
+                }
                 RenderSystem.setShaderTexture(0, sprite.getAtlas().getId());
                 RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
                 double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
@@ -982,8 +925,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     private @NotNull Int2IntArrayMap getTankColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.x - PANEL_WIDTH;
-            mouseY -= this.y + TAB_HEIGHT + SPACING;
+            mouseX -= this.x - Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidStorage()));
@@ -1023,8 +966,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     protected Int2IntArrayMap getItemColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.x - PANEL_WIDTH;
-            mouseY -= this.y + TAB_HEIGHT + SPACING;
+            mouseX -= this.x - Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
@@ -1077,8 +1020,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     private void handleSlotHighlight(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= PANEL_WIDTH + this.x;
-            mouseY -= this.y + TAB_HEIGHT + SPACING;
+            mouseX -= Constant.TextureCoordinate.PANEL_WIDTH + this.x;
+            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
                 groupStack(matrices, list);
@@ -1191,7 +1134,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     public boolean hasAccess() {
         if (this.machine != null) {
-            return this.machine.security().hasAccess(this.handler.player);
+            return this.machine.getSecurity().hasAccess(this.handler.player);
         }
         return false;
     }
@@ -1238,10 +1181,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * The four different types of configuration panel.
      */
     public enum Tab {
-        REDSTONE(TAB_REDSTONE_U, TAB_REDSTONE_V, PANEL_REDSTONE_U, PANEL_REDSTONE_V, true),
-        CONFIGURATION(TAB_CONFIG_U, TAB_CONFIG_V, PANEL_CONFIG_U, PANEL_CONFIG_V, true),
-        STATS(TAB_STATS_U, TAB_STATS_V, PANEL_STATS_U, PANEL_STATS_V, false),
-        SECURITY(TAB_SECURITY_U, TAB_SECURITY_V, PANEL_SECURITY_U, PANEL_SECURITY_V, false);
+        REDSTONE(Constant.TextureCoordinate.TAB_REDSTONE_U, Constant.TextureCoordinate.TAB_REDSTONE_V, Constant.TextureCoordinate.PANEL_REDSTONE_U, Constant.TextureCoordinate.PANEL_REDSTONE_V, true),
+        CONFIGURATION(Constant.TextureCoordinate.TAB_CONFIG_U, Constant.TextureCoordinate.TAB_CONFIG_V, Constant.TextureCoordinate.PANEL_CONFIG_U, Constant.TextureCoordinate.PANEL_CONFIG_V, true),
+        STATS(Constant.TextureCoordinate.TAB_STATS_U, Constant.TextureCoordinate.TAB_STATS_V, Constant.TextureCoordinate.PANEL_STATS_U, Constant.TextureCoordinate.PANEL_STATS_V, false),
+        SECURITY(Constant.TextureCoordinate.TAB_SECURITY_U, Constant.TextureCoordinate.TAB_SECURITY_V, Constant.TextureCoordinate.PANEL_SECURITY_U, Constant.TextureCoordinate.PANEL_SECURITY_V, false);
 
         private final int tabU;
         private final int tabV;
@@ -1324,12 +1267,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).add(0, ResourceFlow.INPUT);
             }
 
-            ResourceType outType = null;
+            ResourceType<?, ?> outType = null;
             ResourceFlow outFlow = null;
 
-            ResourceType[] normalTypes = ResourceType.normalTypes();
+            ResourceType<?, ?>[] normalTypes = ResourceType.normalTypes();
             for (int i = 0; i < normalTypes.length; i++) {
-                ResourceType type = normalTypes[i];
+                ResourceType<?, ?> type = normalTypes[i];
                 if (type == sideOption.getType()) {
                     List<ResourceFlow> resourceFlows = map.get(type);
                     if (resourceFlows != null) {
@@ -1395,7 +1338,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 return;
             }
 
-            SlotType<?, ?>[] slotTypes = machine.getStorage(sideOption.getType()).getTypes();
+            ConfiguredStorage<?, ?> storage = machine.getStorage(sideOption.getType());
+            SlotType<?, ?>[] slotTypes = storage != null ? storage.getTypes() : new SlotType[0];
+
             slotTypes = Arrays.copyOf(slotTypes, slotTypes.length);
             int s = 0;
             for (int i = 0; i < slotTypes.length; i++) {

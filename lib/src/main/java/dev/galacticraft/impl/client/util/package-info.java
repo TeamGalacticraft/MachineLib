@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2021-2022 Team Galacticraft
  *
@@ -20,28 +21,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.io;
+@ApiStatus.Internal
+package dev.galacticraft.impl.client.util;
 
-import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
-import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.api.screen.StorageSyncHandler;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
-public final class NullConfiguredStorage implements ConfiguredStorage {
-    public static final ConfiguredStorage INSTANCE = new NullConfiguredStorage();
-    private static final SlotType[] EMPTY = new SlotType[0];
-
-    private NullConfiguredStorage() {}
-    @Override
-    public SlotType @NotNull [] getTypes() {
-        return EMPTY;
-    }
-
-    @Override
-    public @NotNull StorageSyncHandler createSyncHandler() {
-        return StorageSyncHandler.DEFAULT;
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

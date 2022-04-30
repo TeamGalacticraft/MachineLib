@@ -22,7 +22,6 @@
 
 package dev.galacticraft.impl.machine.storage.empty;
 
-import com.google.common.base.Predicates;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
@@ -33,7 +32,7 @@ import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
-import dev.galacticraft.impl.util.EmptyIterator;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -86,7 +85,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public FluidVariant getResource(int slot) {
+    public @NotNull FluidVariant getResource(int slot) {
         return FluidVariant.blank();
     }
 
@@ -176,13 +175,13 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public SingleVariantStorage<FluidVariant> getSlot(int slot) {
+    public @NotNull SingleVariantStorage<FluidVariant> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
     @Override
-    public Predicate<FluidVariant> getFilter(int slot) {
-        return Predicates.alwaysFalse();
+    public @NotNull Predicate<FluidVariant> getFilter(int slot) {
+        return v -> false;
     }
 
     @Override
@@ -269,6 +268,6 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
 
     @Override
     public Iterator<StorageView<FluidVariant>> iterator(TransactionContext transaction) {
-        return EmptyIterator.getInstance();
+        return ObjectIterators.emptyIterator();
     }
 }

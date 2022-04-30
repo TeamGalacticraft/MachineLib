@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
@@ -85,5 +85,6 @@ public interface SlotType<T, V extends TransferVariant<T>> {
      */
     boolean willAccept(@NotNull V variant);
 
-    @ApiStatus.Internal RegistryEntry.Reference<SlotType<?, ?>> getReference();
+    @ApiStatus.Internal
+    @NotNull RegistryEntry.Reference<SlotType<?, ?>> getReference();
 }

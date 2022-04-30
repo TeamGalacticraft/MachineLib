@@ -22,47 +22,62 @@
 
 package dev.galacticraft.api.machine;
 
+import dev.galacticraft.impl.Constant;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.StringIdentifiable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the level of protection a machine has from other players.
  */
-public enum SecurityLevel implements StringIdentifiable {
+public enum AccessLevel implements StringIdentifiable {
     /**
      * All players can use this machine.
      */
-    PUBLIC(new TranslatableText("ui.galacticraft.machine.security.accessibility.public")),
+    PUBLIC(new TranslatableText(Constant.TranslationKey.PUBLIC_ACCESS)),
     /**
      * Only team members can use this machine.
      */
-    TEAM(new TranslatableText("ui.galacticraft.machine.security.accessibility.team")),
+    TEAM(new TranslatableText(Constant.TranslationKey.TEAM_ACCESS)),
     /**
      * Only the owner can use this machine.
      */
-    PRIVATE(new TranslatableText("ui.galacticraft.machine.security.accessibility.private"));
+    PRIVATE(new TranslatableText(Constant.TranslationKey.PRIVATE_ACCESS));
 
     /**
-     * The name of the security level.
+     * The name of the access level.
      */
-    private final Text name;
+    private final @NotNull Text name;
 
-    SecurityLevel(TranslatableText name) {
+    AccessLevel(@NotNull Text name) {
         this.name = name;
     }
 
-    @Override
-    public String asString() {
-        return this.toString();
+    public static AccessLevel fromString(String string) {
+        return switch (string) {
+            case "public" -> PUBLIC;
+            case "team" -> TEAM;
+            case "private" -> PRIVATE;
+            default -> throw new IllegalArgumentException("Invalid access level: " + string);
+        };
     }
 
     /**
-     * Returns the name of the security level.
+     * Returns the name of the access level.
      *
-     * @return The name of the security level.
+     * @return The name of the access level.
      */
-    public Text getName() {
+    public @NotNull Text getName() {
         return this.name;
+    }
+
+    @Override
+    public @NotNull String asString() {
+        return switch (this) {
+            case PUBLIC -> "public";
+            case TEAM -> "team";
+            case PRIVATE -> "private";
+        };
     }
 }

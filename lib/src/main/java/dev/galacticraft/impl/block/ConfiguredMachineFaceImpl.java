@@ -27,7 +27,7 @@ import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
@@ -78,18 +78,18 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
 
     @Override
     public void setMatching(@Nullable Either<Integer, SlotType<?, ?>> matching) {
-        assert matching.right().isEmpty() || this.type.willAcceptResource(matching.right().get().getType());
+        assert matching == null || matching.right().isEmpty() || this.type.willAcceptResource(matching.right().get().getType());
         this.matching = matching;
         this.storage = null;
     }
 
     @Override
-    public ResourceType<?, ?> getType() {
+    public @NotNull ResourceType<?, ?> getType() {
         return type;
     }
 
     @Override
-    public ResourceFlow getFlow() {
+    public @NotNull ResourceFlow getFlow() {
         return flow;
     }
 
@@ -99,7 +99,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public <T, V extends TransferVariant<T>> ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
+    public <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
         if (this.getType().willAcceptResource(storage.getResource())) {
             if (this.storage == null) this.storage = storage.getExposedStorage(this.matching, this.flow);
             return (ExposedStorage<T, V>) this.storage;
@@ -117,13 +117,15 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public <T, V extends TransferVariant<T>> int[] getMatching(ConfiguredStorage<T, V> storage) {
+    public <T, V extends TransferVariant<T>> int @NotNull [] getMatching(@Nullable ConfiguredStorage<T, V> storage) {
+        if (storage == null) return new int[0];
         if (matching != null) {
             if (matching.left().isPresent()) {
                 return new int[]{matching.left().get()};
             } else {
                 IntList types = new IntArrayList();
                 SlotType<T, V>[] slots = storage.getTypes();
+                //noinspection OptionalGetWithoutIsPresent - we know that right is present because left is not present
                 SlotType<?, ?> type = matching.right().get();
                 for (int i = 0; i < slots.length; i++) {
                     if (slots[i].equals(type)) {
@@ -148,7 +150,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public NbtCompound writeNbt() {
+    public @NotNull NbtCompound writeNbt() {
         NbtCompound nbt = new NbtCompound();
         nbt.putByte(Constant.Nbt.FLOW, (byte) this.flow.ordinal());
         nbt.putByte(Constant.Nbt.RESOURCE, this.type.getOrdinal());

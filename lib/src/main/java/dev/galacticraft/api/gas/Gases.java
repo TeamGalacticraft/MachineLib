@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.gas;
 
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
@@ -37,7 +37,7 @@ public final class Gases {
      * Hydrogen gas.
      */
     public static final Fluid HYDROGEN = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.hydrogen"),
+            new TranslatableText(Constant.TranslationKey.HYDROGEN),
             new Identifier(Constant.MOD_ID, "gas/hydrogen"), "H2"
     );
     public static final Identifier NITROGEN_ID = new Identifier(Constant.MOD_ID, "nitrogen");
@@ -45,7 +45,7 @@ public final class Gases {
      * Nitrogen gas.
      */
     public static final Fluid NITROGEN = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.nitrogen"),
+            new TranslatableText(Constant.TranslationKey.NITROGEN),
             new Identifier(Constant.MOD_ID, "gas/nitrogen"), "N2"
     );
     public static final Identifier OXYGEN_ID = new Identifier(Constant.MOD_ID, "oxygen");
@@ -53,7 +53,7 @@ public final class Gases {
      * Oxygen gas.
      */
     public static final Fluid OXYGEN = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.oxygen"),
+            new TranslatableText(Constant.TranslationKey.OXYGEN),
             new Identifier(Constant.MOD_ID, "gas/oxygen"), "O2"
     );
     public static final Identifier CARBON_DIOXIDE_ID = new Identifier(Constant.MOD_ID, "carbon_dioxide");
@@ -61,7 +61,7 @@ public final class Gases {
      * Carbon dioxide.
      */
     public static final Fluid CARBON_DIOXIDE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.carbon_dioxide"),
+            new TranslatableText(Constant.TranslationKey.CARBON_DIOXIDE),
             new Identifier(Constant.MOD_ID, "gas/carbon_dioxide"), "CO2"
     );
     public static final Identifier WATER_VAPOR_ID = new Identifier(Constant.MOD_ID, "water_vapor");
@@ -69,7 +69,7 @@ public final class Gases {
      * Water vapor.
      */
     public static final Fluid WATER_VAPOR = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.water_vapor"),
+            new TranslatableText(Constant.TranslationKey.WATER_VAPOR),
             new Identifier(Constant.MOD_ID, "gas/water_vapor"), "H2O"
     );
     public static final Identifier METHANE_ID = new Identifier(Constant.MOD_ID, "methane");
@@ -77,7 +77,7 @@ public final class Gases {
      * Methane.
      */
     public static final Fluid METHANE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.methane"),
+            new TranslatableText(Constant.TranslationKey.METHANE),
             new Identifier(Constant.MOD_ID, "gas/methane"), "CH4"
     );
     public static final Identifier HELIUM_ID = new Identifier(Constant.MOD_ID, "helium");
@@ -85,7 +85,7 @@ public final class Gases {
      * Helium.
      */
     public static final Fluid HELIUM = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.helium"),
+            new TranslatableText(Constant.TranslationKey.HELIUM),
             new Identifier(Constant.MOD_ID, "gas/helium"), "He"
     );
     public static final Identifier ARGON_ID = new Identifier(Constant.MOD_ID, "argon");
@@ -93,7 +93,7 @@ public final class Gases {
      * Argon.
      */
     public static final Fluid ARGON = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.argon"),
+            new TranslatableText(Constant.TranslationKey.ARGON),
             new Identifier(Constant.MOD_ID, "gas/argon"), "Ar"
     );
     public static final Identifier NEON_ID = new Identifier(Constant.MOD_ID, "neon");
@@ -101,7 +101,7 @@ public final class Gases {
      * Neon.
      */
     public static final Fluid NEON = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.neon"),
+            new TranslatableText(Constant.TranslationKey.NEON),
             new Identifier(Constant.MOD_ID, "gas/neon"), "Ne"
     );
     public static final Identifier KRYPTON_ID = new Identifier(Constant.MOD_ID, "krypton");
@@ -109,7 +109,7 @@ public final class Gases {
      * Krypton.
      */
     public static final Fluid KRYPTON = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.krypton"),
+            new TranslatableText(Constant.TranslationKey.KRYPTON),
             new Identifier(Constant.MOD_ID, "gas/krypton"), "Kr"
     );
     public static final Identifier NITROUS_OXIDE_ID = new Identifier(Constant.MOD_ID, "nitrous_oxide");
@@ -117,7 +117,7 @@ public final class Gases {
      * Nitrous oxide.
      */
     public static final Fluid NITROUS_OXIDE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.nitrous_oxide"),
+            new TranslatableText(Constant.TranslationKey.NITROUS_OXIDE),
             new Identifier(Constant.MOD_ID, "gas/nitrous_oxide"), "N2O"
     );
     public static final Identifier CARBON_MONOXIDE_ID = new Identifier(Constant.MOD_ID, "carbon_monoxide");
@@ -125,7 +125,7 @@ public final class Gases {
      * Carbon monoxide.
      */
     public static final Fluid CARBON_MONOXIDE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.carbon_monoxide"),
+            new TranslatableText(Constant.TranslationKey.CARBON_MONOXIDE),
             new Identifier(Constant.MOD_ID, "gas/carbon_monoxide"), "CO"
     );
     public static final Identifier XENON_ID = new Identifier(Constant.MOD_ID, "xenon");
@@ -133,7 +133,7 @@ public final class Gases {
      * Xenon.
      */
     public static final Fluid XENON = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.xenon"),
+            new TranslatableText(Constant.TranslationKey.XENON),
             new Identifier(Constant.MOD_ID, "gas/xenon"), "Xe"
     );
     public static final Identifier OZONE_ID = new Identifier(Constant.MOD_ID, "ozone");
@@ -141,7 +141,7 @@ public final class Gases {
      * Ozone.
      */
     public static final Fluid OZONE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.ozone"),
+            new TranslatableText(Constant.TranslationKey.OZONE),
             new Identifier(Constant.MOD_ID, "gas/ozone"), "O3"
     );
     public static final Identifier NITROUS_DIOXIDE_ID = new Identifier(Constant.MOD_ID, "nitrous_dioxide");
@@ -149,7 +149,7 @@ public final class Gases {
      * Nitrous dioxide.
      */
     public static final Fluid NITROUS_DIOXIDE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.nitrous_dioxide"),
+            new TranslatableText(Constant.TranslationKey.NITROUS_DIOXIDE),
             new Identifier(Constant.MOD_ID, "gas/nitrous_dioxide"), "NO2"
     );
     public static final Identifier IODINE_ID = new Identifier(Constant.MOD_ID, "iodine");
@@ -157,7 +157,7 @@ public final class Gases {
      * Iodine.
      */
     public static final Fluid IODINE = GasFluid.create(
-            new TranslatableText("ui.machinelib.gases.iodine"),
+            new TranslatableText(Constant.TranslationKey.IODINE),
             new Identifier(Constant.MOD_ID, "gas/iodine"), "I2"
     );
 

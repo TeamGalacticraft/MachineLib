@@ -24,7 +24,7 @@ package dev.galacticraft.api.block.entity;
 
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.MachineStatuses;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.block.BlockState;
@@ -110,7 +110,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     protected abstract @NotNull MachineStatus workingStatus();
 
     /**
-     * Extracts the neccecary resources to run this machine.
+     * Extracts the necessary resources to run this machine.
      * This can be energy, fuel, or any other resource.
      * @param context The current transaction.
      * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
@@ -149,7 +149,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
                 if (status == null) {
                     if (++this.progress >= this.getMaxProgress()) {
                         world.getProfiler().push("crafting");
-                        this.craft(this.activeRecipe, transaction);
+                        this.craft(world, this.activeRecipe, transaction);
                         world.getProfiler().pop();
                     }
                     transaction.commit();
@@ -173,7 +173,9 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      *               If {@code null}, the recipe will be reset.
      */
     private void updateRecipe(@Nullable R recipe) {
-        if (this.getActiveRecipe() != recipe || recipe == null) {
+        if (recipe == null) {
+            this.resetRecipe();
+        } else if (this.getActiveRecipe() != recipe) {
             this.setActiveRecipe(recipe);
             this.setMaxProgress(this.getProcessTime(recipe));
             this.setProgress(0);
@@ -185,7 +187,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
-    protected void craft(@NotNull R recipe, @Nullable TransactionContext context) {
+    protected void craft(@NotNull World world, @NotNull R recipe, @Nullable TransactionContext context) {
         world.getProfiler().push("extract_materials");
         try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {

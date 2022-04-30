@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.machine.storage;
 
+import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.SlotType;
@@ -31,6 +32,7 @@ import dev.galacticraft.impl.machine.storage.empty.EmptyMachineItemStorage;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -46,13 +48,13 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * @param handler The screen handler to add slots to.
      * @param <M> The type of machine.
      */
-    <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler);
+    <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler);
 
     /**
      * Player-exposed inventory for screen handlers.
      * @return The player-exposed inventory.
      */
-    Inventory playerInventory();
+    @NotNull Inventory playerInventory();
 
     /**
      * Creates a sub-inventory of the given size starting at {@code 0}.
@@ -61,7 +63,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * @param size The size of the sub-inventory.
      * @return The sub-inventory.
      */
-    default Inventory subInv(int size) {
+    default @NotNull Inventory subInv(int size) {
         return this.subInv(0, size);
     }
 
@@ -70,16 +72,16 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * Read only.
      *
      * @param start The index to start at.
-     * @param size The size of the sub-inventory.
+     * @param size  The size of the sub-inventory.
      * @return The sub-inventory.
      */
-    Inventory subInv(int start, int size);
+    @NotNull Inventory subInv(int start, int size);
 
     /**
      * Returns the default empty storage.
      * @return The default empty storage.
      */
-    static MachineItemStorage empty() {
+    static @NotNull MachineItemStorage empty() {
         return EmptyMachineItemStorage.INSTANCE;
     }
 
@@ -97,8 +99,8 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      */
     class Builder {
         private int size = 0;
-        private final List<SlotType<Item, ItemVariant>> types = new ArrayList<>();
-        private final List<ItemSlotDisplay> displays = new ArrayList<>();
+        private final List<@NotNull SlotType<Item, ItemVariant>> types = new ArrayList<>();
+        private final List<@NotNull ItemSlotDisplay> displays = new ArrayList<>();
         private final LongList counts = new LongArrayList();
 
         public Builder() {}
@@ -114,7 +116,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
          * @param display The display for the slot.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, @NotNull ItemSlotDisplay display) {
+        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, @NotNull ItemSlotDisplay display) {
             return this.addSlot(type, 64, display);
         }
 
@@ -125,8 +127,12 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
          * @param display The display for the slot.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(SlotType<Item, ItemVariant> type, int maxCount, @NotNull ItemSlotDisplay display) {
+        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, int maxCount, @NotNull ItemSlotDisplay display) {
+            Preconditions.checkNotNull(type);
+            Preconditions.checkNotNull(display);
+            StoragePreconditions.notNegative(maxCount);
             maxCount = Math.min(maxCount, 64);
+
             this.size++;
             this.types.add(type);
             this.displays.add(display);

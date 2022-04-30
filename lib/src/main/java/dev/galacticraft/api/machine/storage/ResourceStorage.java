@@ -584,7 +584,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The index of the slot.
      * @return An internal storage representing the given slot.
      */
-    SingleSlotStorage<V> getSlot(int slot);
+    @NotNull SingleSlotStorage<V> getSlot(int slot);
 
     /**
      * Returns whether the player can access this inventory.
@@ -629,7 +629,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     @NotNull NbtElement writeNbt();
 
     /**
-     * Deserializes an storage from nbt.
+     * Deserializes a storage from nbt.
      * @param nbt The nbt to deserialize.
      */
     void readNbt(@NotNull NbtElement nbt);

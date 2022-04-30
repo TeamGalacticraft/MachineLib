@@ -24,7 +24,7 @@ package dev.galacticraft.api.screen;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.client.screen.Tank;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.screen.property.StatusProperty;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -63,7 +63,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     /**
      * The tanks contained in this screen handler.
      */
-    public List<Tank> tanks = new ArrayList<>();
+    public final List<Tank> tanks = new ArrayList<>();
 
     /**
      * Creates a new screen handler for a machine.
@@ -145,7 +145,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
 
     @Override
     public boolean canUse(PlayerEntity player) {
-        return this.machine.security().hasAccess(player);
+        return this.machine.getSecurity().hasAccess(player);
     }
 
     @Override

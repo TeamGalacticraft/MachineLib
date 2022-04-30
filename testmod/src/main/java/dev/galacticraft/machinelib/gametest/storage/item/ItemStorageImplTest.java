@@ -27,7 +27,7 @@ import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;

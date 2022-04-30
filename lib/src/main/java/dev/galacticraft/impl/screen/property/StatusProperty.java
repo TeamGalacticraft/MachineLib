@@ -40,6 +40,6 @@ public class StatusProperty extends Property {
 
     @Override
     public void set(int value) {
-        this.machine.setStatus(MachineStatus.REGISTRY.getOrThrow(value));
+        this.machine.setStatus(null, MachineStatus.REGISTRY.getOrThrow(value));
     }
 }

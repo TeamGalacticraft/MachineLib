@@ -32,8 +32,8 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.compat.ReadOnlySubInv;
-import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.ItemSlot;
 import dev.galacticraft.impl.machine.storage.slot.ResourceSlot;
@@ -130,7 +130,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
+    public @NotNull ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
         return this.inventory[slot];
     }
 
@@ -229,7 +229,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public @NotNull long extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
+    public long extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
         return this.extract(slot, ItemVariant.of(item), amount, context);
     }
@@ -361,19 +361,19 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler) {
+    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler) {
         for (int i = 0; i < this.displays.length; i++) {
             handler.addSlot(new VanillaWrappedItemSlot(this, i, this.displays[i]));
         }
     }
 
     @Override
-    public Inventory playerInventory() {
+    public @NotNull Inventory playerInventory() {
         return this.playerInventory;
     }
 
     @Override
-    public Inventory subInv(int start, int size) {
+    public @NotNull Inventory subInv(int start, int size) {
         return new ReadOnlySubInv(this, start, size);
     }
 

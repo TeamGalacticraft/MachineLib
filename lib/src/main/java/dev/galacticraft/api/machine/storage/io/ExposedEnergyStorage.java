@@ -23,6 +23,7 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
@@ -31,7 +32,7 @@ import team.reborn.energy.api.EnergyStorage;
  * @param insertion Whether this {@link EnergyStorage} can accept energy
  * @param extraction Whether this {@link EnergyStorage} can extract energy
  */
-public record ExposedEnergyStorage(EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
+public record ExposedEnergyStorage(@NotNull EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
     @Override
     public boolean supportsInsertion() {
         return this.insertion;

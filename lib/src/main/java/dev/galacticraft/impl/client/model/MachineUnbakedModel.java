@@ -25,8 +25,8 @@ package dev.galacticraft.impl.client.model;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.util.SpriteUtil;
-import dev.galacticraft.impl.machine.Constant;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.ModelBakeSettings;
 import net.minecraft.client.render.model.ModelLoader;
@@ -56,7 +56,7 @@ public class MachineUnbakedModel implements UnbakedModel {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(Function<Identifier, UnbakedModel> unbakedModelGetter, Set<Pair<String, String>> unresolvedTextureReferences) {
-        ImmutableList.Builder<SpriteIdentifier> builder = ImmutableList.builderWithExpectedSize(17); // might as well save a few allocations
+        ImmutableList.Builder<SpriteIdentifier> builder = ImmutableList.builderWithExpectedSize(17);
         builder.add(SpriteUtil.identifier(MachineModelRegistry.MACHINE));
         builder.add(SpriteUtil.identifier(MachineModelRegistry.MACHINE_SIDE));
 

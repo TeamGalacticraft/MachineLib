@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
+import com.google.common.base.Preconditions;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.impl.machine.storage.io.ExposedInventory;
 import dev.galacticraft.impl.machine.storage.io.ExposedSlot;
@@ -45,7 +46,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @param slot The slot to get the resource from.
      * @return The resource in the slot.
      */
-    V getResource(int slot);
+    @NotNull V getResource(int slot);
 
     /**
      * Returns the amount of resources in the given slot.
@@ -66,14 +67,14 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @param slot The slot to expose.
      * @return The exposed storage.
      */
-    Storage<V> getSlot(int slot);
+    @NotNull Storage<V> getSlot(int slot);
 
     /**
      * Returns the filter for the given slot.
      * @param slot The slot to get the filter for.
      * @return The filter for the slot.
      */
-    Predicate<V> getFilter(int slot);
+    @NotNull Predicate<V> getFilter(int slot);
 
     /**
      * Creates a new storage that restricts insertion or extraction.
@@ -85,7 +86,8 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @return The exposed storage.
      */
     @Contract("_, _, _ -> new")
-    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> of(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> of(@NotNull ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+        Preconditions.checkNotNull(storage);
         return new ExposedInventory<>(storage, insert, extract);
     }
 
@@ -101,7 +103,8 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @return The exposed storage.
      */
     @Contract("_, _, _ -> new")
-    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofPlayer(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofPlayer(@NotNull ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+        Preconditions.checkNotNull(storage);
         return new PlayerExposedInventory<>(storage, insert, extract);
     }
 
@@ -116,7 +119,9 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @return The exposed storage.
      */
     @Contract("_, _, _, _ -> new")
-    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofType(ResourceStorage<T, V, ?> storage, SlotType<T, V> type, boolean insert, boolean extract) {
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofType(@NotNull ResourceStorage<T, V, ?> storage, @NotNull SlotType<T, V> type, boolean insert, boolean extract) {
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(type);
         return new ExposedSlots<>(storage, type, insert, extract);
     }
 
@@ -131,7 +136,8 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
      * @return The exposed storage.
      */
     @Contract("_, _, _, _ -> new")
-    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofSlot(ResourceStorage<T, V, ?> storage, int slot, boolean insert, boolean extract) {
+    static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> ofSlot(@NotNull ResourceStorage<T, V, ?> storage, int slot, boolean insert, boolean extract) {
+        Preconditions.checkNotNull(storage);
         return new ExposedSlot<>(storage, slot, insert, extract);
     }
 }

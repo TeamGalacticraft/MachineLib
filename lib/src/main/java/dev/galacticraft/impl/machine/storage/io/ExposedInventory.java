@@ -36,11 +36,11 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ExposedInventory<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
-    private final ResourceStorage<T, V, ?> storage;
+    private final @NotNull ResourceStorage<T, V, ?> storage;
     private final boolean insertion;
     private final boolean extraction;
 
-    public ExposedInventory(ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
+    public ExposedInventory(@NotNull ResourceStorage<T, V, ?> storage, boolean insert, boolean extract) {
         this.storage = storage;
         boolean insertion = false;
         boolean extraction = false;
@@ -107,7 +107,7 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
     }
 
     @Override
-    public V getResource(int slot) {
+    public @NotNull V getResource(int slot) {
         return this.storage.getVariant(slot);
     }
 
@@ -122,12 +122,12 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
     }
 
     @Override
-    public Storage<V> getSlot(int slot) {
+    public @NotNull Storage<V> getSlot(int slot) {
         return ExposedStorage.ofSlot(this.storage, slot, this.extraction, this.insertion);
     }
 
     @Override
-    public Predicate<V> getFilter(int slot) {
+    public @NotNull Predicate<V> getFilter(int slot) {
         return v -> this.storage.canAccept(slot, v);
     }
 

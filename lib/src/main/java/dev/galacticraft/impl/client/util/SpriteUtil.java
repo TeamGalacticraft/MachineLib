@@ -22,27 +22,31 @@
 
 package dev.galacticraft.impl.client.util;
 
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SpriteUtil {
-    static SpriteIdentifier identifier(String path) {
+    @Contract("_ -> new")
+    static @NotNull SpriteIdentifier identifier(String path) {
         return identifier(new Identifier(Constant.MOD_ID, path));
     }
 
-    static SpriteIdentifier identifier(Identifier id) {
+    @Contract(value = "_ -> new", pure = true)
+    static @NotNull SpriteIdentifier identifier(Identifier id) {
         return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, id);
     }
 
-    static Iterator<SpriteIdentifier> identifiers(List<Identifier> textureDependencies) {
+    static @NotNull Iterator<SpriteIdentifier> identifiers(@NotNull Collection<Identifier> textureDependencies) {
         return textureDependencies.stream().map(SpriteUtil::identifier).iterator();
     }
 }

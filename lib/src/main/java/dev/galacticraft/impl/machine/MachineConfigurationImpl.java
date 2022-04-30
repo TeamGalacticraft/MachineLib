@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.machine;
 
 import dev.galacticraft.api.machine.*;
+import dev.galacticraft.impl.Constant;
 import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 

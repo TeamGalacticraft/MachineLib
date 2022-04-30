@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine;
 
 import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.machine.MachineStatusImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.text.Text;
@@ -48,7 +48,7 @@ public interface MachineStatus {
     /**
      * Default machine status.
      */
-    MachineStatus INVALID = createAndRegister(new Identifier(Constant.MOD_ID, "invalid"), new TranslatableText("ui.machinelib.machine_status.invalid"), Type.OTHER);
+    MachineStatus INVALID = createAndRegister(new Identifier(Constant.MOD_ID, "invalid"), new TranslatableText(Constant.TranslationKey.STATUS_INVALID), Type.OTHER);
 
     /**
      * Creates a new machine status and registers it in the registry.
@@ -57,7 +57,7 @@ public interface MachineStatus {
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */
-    static MachineStatus createAndRegister(@NotNull Identifier id, @NotNull Text name, @NotNull MachineStatus.Type type) {
+    static @NotNull MachineStatus createAndRegister(@NotNull Identifier id, @NotNull Text name, @NotNull MachineStatus.Type type) {
         return Registry.register(REGISTRY, id, create(name, type));
     }
 
@@ -76,13 +76,13 @@ public interface MachineStatus {
      * Returns the name of the machine status.
      * @return The name of the machine status.
      */
-    @NotNull Text getName();
+    @NotNull Text name();
 
     /**
      * Returns the type of the machine status.
      * @return The type of the machine status.
      */
-    @NotNull MachineStatus.Type getType();
+    @NotNull MachineStatus.Type type();
 
     /**
      * Represents the types of machine statuses.

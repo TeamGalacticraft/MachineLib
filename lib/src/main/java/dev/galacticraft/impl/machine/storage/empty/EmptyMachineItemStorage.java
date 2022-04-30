@@ -22,7 +22,6 @@
 
 package dev.galacticraft.impl.machine.storage.empty;
 
-import com.google.common.base.Predicates;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
@@ -32,7 +31,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
-import dev.galacticraft.impl.util.EmptyIterator;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -81,7 +80,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public ItemVariant getResource(int slot) {
+    public @NotNull ItemVariant getResource(int slot) {
         return ItemVariant.blank();
     }
 
@@ -171,13 +170,13 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public SingleVariantStorage<ItemVariant> getSlot(int slot) {
+    public @NotNull SingleVariantStorage<ItemVariant> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
     @Override
-    public Predicate<ItemVariant> getFilter(int slot) {
-        return Predicates.alwaysFalse();
+    public @NotNull Predicate<ItemVariant> getFilter(int slot) {
+        return v -> false;
     }
 
     @Override
@@ -264,22 +263,22 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
 
     @Override
     public Iterator<StorageView<ItemVariant>> iterator(TransactionContext transaction) {
-        return EmptyIterator.getInstance();
+        return ObjectIterators.emptyIterator();
     }
 
     @Override
-    public <M extends MachineBlockEntity> void addSlots(MachineScreenHandler<M> handler) {
+    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler) {
     }
 
     @Contract(pure = true)
     @Override
-    public Inventory playerInventory() {
+    public @NotNull Inventory playerInventory() {
         return EMPTY_INVENTORY;
     }
 
     @Contract(pure = true)
     @Override
-    public Inventory subInv(int start, int size) {
+    public @NotNull Inventory subInv(int start, int size) {
         if (start > 0 || size > 0) throw new IndexOutOfBoundsException("Index out of bounds");
         return EMPTY_INVENTORY;
     }

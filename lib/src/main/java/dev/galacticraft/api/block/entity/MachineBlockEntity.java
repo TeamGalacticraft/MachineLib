@@ -34,8 +34,7 @@ import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.transfer.StateCachingStorageProvider;
-import dev.galacticraft.impl.machine.Constant;
-import dev.galacticraft.impl.machine.storage.io.NullConfiguredStorage;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.util.GenericStorageUtil;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -63,6 +62,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
@@ -77,24 +77,12 @@ import java.util.Objects;
  * @see dev.galacticraft.api.screen.MachineScreenHandler
  * @see dev.galacticraft.api.client.screen.MachineHandledScreen
  */
-@SuppressWarnings("UnstableApiUsage")
 public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider {
     private static final Direction[] DIRECTIONS = Direction.values();
     /**
      * The configuration for this machine.
      */
     private final MachineConfiguration configuration = MachineConfiguration.create();
-
-    /**
-     * Whether the machine will not drop items when broken.
-     */
-    @ApiStatus.Internal
-    private boolean noDrop = false;
-    /**
-     * Whether the machine has been initialized and synced to the client.
-     */
-    @ApiStatus.Internal
-    private boolean loaded = false;
 
     /**
      * The energy storage for this machine.
@@ -115,6 +103,22 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();
 
     /**
+     * Whether the machine will not drop items when broken.
+     */
+    @ApiStatus.Internal
+    private boolean disableDrops = false;
+    /**
+     * Whether the machine has been initialized and synced to the client.
+     */
+    @ApiStatus.Internal
+    private boolean loaded = false;
+    /**
+     * Whether the machine has been initialized and synced to the client.
+     */
+    @ApiStatus.Internal
+    private final Text name;
+
+    /**
      * Creates a new machine block entity.
      * @param type The type of block entity.
      * @param pos The position of this machine.
@@ -122,6 +126,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state) {
         super(type, pos, state);
+        this.name = state.getBlock().getName().setStyle(Constant.Text.DARK_GRAY_STYLE);
     }
 
     /**
@@ -184,8 +189,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Contract(pure = true)
-    protected boolean isActive() {
-        return this.getStatus().getType().isActive();
+    protected boolean isStatusActive() {
+        return this.getStatus().type().isActive();
     }
 
     /**
@@ -224,12 +229,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Sets the status of this machine.
      * @param status the status to set.
      */
-    public void setStatus(@NotNull MachineStatus status) {
-        if (this.isActive() != status.getType().isActive()) {
-            if (!this.world.isClient()) {
-                BlockState with = this.getCachedState().with(MachineBlock.ACTIVE, status.getType().isActive());
-                this.setCachedState(with);
-                this.world.setBlockState(this.pos, with);
+    public void setStatus(@Nullable ServerWorld world, @NotNull MachineStatus status) {
+        if (this.isStatusActive() != status.type().isActive()) {
+            if (world != null) {
+                world.setBlockState(this.pos, this.getCachedState().with(MachineBlock.ACTIVE, status.type().isActive()));
             }
         }
         this.configuration.setStatus(status);
@@ -266,7 +269,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns the security settings of this machine.
      * @return the security settings of this machine.
      */
-    public final @NotNull SecuritySettings security() {
+    public final @NotNull SecuritySettings getSecurity() {
         return this.configuration.getSecurity();
     }
 
@@ -274,7 +277,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns the redstone configuration of this machine.
      * @return the redstone configuration of this machine.
      */
-    public final @NotNull RedstoneActivation redstoneInteraction() {
+    public final @NotNull RedstoneActivation getRedstoneActivation() {
         return this.configuration.getRedstoneActivation();
     }
 
@@ -290,26 +293,26 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns whether this machine will drop items when broken.
      * @return whether this machine will drop items when broken.
      */
-    public boolean dontDropItems() {
-        return this.noDrop;
+    public boolean areDropsDisabled() {
+        return this.disableDrops;
     }
 
     @Override
-    public ConfiguredStorage<?, ?> getStorage(@NotNull ResourceType<?, ?> type) {
+    public @Nullable ConfiguredStorage<?, ?> getStorage(@NotNull ResourceType<?, ?> type) {
         if (type == ResourceType.ENERGY) return this.energyStorage();
         if (type == ResourceType.ITEM) return this.itemStorage();
         if (type == ResourceType.FLUID) return this.fluidStorage();
-        return NullConfiguredStorage.INSTANCE;
+        return null;
     }
 
     /**
      * Returns whether the current machine is enabled.
      * @return whether the current machine is enabled.
      */
-    public boolean disabled() {
-        return switch (this.redstoneInteraction()) {
-            case LOW -> this.getWorld().isReceivingRedstonePower(this.pos);
-            case HIGH -> !this.getWorld().isReceivingRedstonePower(this.pos);
+    public boolean isDisabled(@NotNull World world) {
+        return switch (this.getRedstoneActivation()) {
+            case LOW -> world.isReceivingRedstonePower(this.pos);
+            case HIGH -> !world.isReceivingRedstonePower(this.pos);
             case IGNORE -> false;
         };
     }
@@ -321,26 +324,23 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param state the block state of this machine.
      */
     public final void tickBase(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        assert this.world == world;
-        assert this.pos == pos;
-
         this.setCachedState(state);
-        if (!this.world.isClient()) {
-            this.world.getProfiler().push("constant");
+        if (!world.isClient()) {
+            world.getProfiler().push("constant");
             ServerWorld serverWorld = (ServerWorld) world;
             this.tickConstant(serverWorld, pos, state);
-            if (this.disabled()) {
-                this.world.getProfiler().swap("disabled");
+            if (this.isDisabled(world)) {
+                world.getProfiler().swap("disabled");
                 this.tickDisabled(serverWorld, pos, state);
             } else {
-                this.world.getProfiler().swap("active");
-                this.setStatus(this.tick(serverWorld, pos, state));
+                world.getProfiler().swap("active");
+                this.setStatus(serverWorld, this.tick(serverWorld, pos, state));
             }
         } else {
-            this.world.getProfiler().push("client");
+            world.getProfiler().push("client");
             this.tickClient(world, pos, state);
         }
-        this.world.getProfiler().pop();
+        world.getProfiler().pop();
     }
 
     /**
@@ -389,7 +389,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
         nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
         this.configuration.writeNbt(nbt);
-        nbt.putBoolean(Constant.Nbt.NO_DROP, this.noDrop);
+        nbt.putBoolean(Constant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
     @Override
@@ -399,7 +399,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ITEM_STORAGE)));
         if (nbt.contains(Constant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.FLUID_STORAGE)));
         this.configuration.readNbt(nbt);
-        this.noDrop = nbt.getBoolean(Constant.Nbt.NO_DROP);
+        this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
         assert this.world != null;
         if (!this.world.isClient) {
             if (this.loaded) {
@@ -412,23 +412,23 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
-    public void trySpreadEnergy() {
+    public void trySpreadEnergy(@NotNull World world) {
         for (Direction direction : DIRECTIONS) {
-            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
             if (face.getType() == ResourceType.ENERGY && face.getFlow().canFlowIn(ResourceFlow.OUTPUT)) {
                 try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
+                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
                     transaction.commit();
                 }
             }
         }
     }
 
-    public void trySpreadFluids() {
+    public void trySpreadFluids(@NotNull World world) {
         for (Direction direction : DIRECTIONS) {
             Storage<FluidVariant> storage = this.getExposedFluidInv(direction);
             if (storage.supportsExtraction()) {
-                Storage<FluidVariant> to = FluidStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
+                Storage<FluidVariant> to = FluidStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
                     GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();
@@ -437,11 +437,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
-    public void trySpreadItems() {
+    public void trySpreadItems(@NotNull World world) {
         for (Direction direction : DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(direction);
             if (storage.supportsExtraction()) {
-                Storage<ItemVariant> to = ItemStorage.SIDED.find(this.world, this.pos.offset(direction), direction.getOpposite());
+                Storage<ItemVariant> to = ItemStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
                     GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();
@@ -518,11 +518,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
-    public boolean isFaceLocked(BlockFace face) {
+    public boolean isFaceLocked(@NotNull BlockFace face) {
         return false;
     }
 
     public void sync() {
+        assert this.world != null;
         assert !this.world.isClient();
         ((ServerWorld) this.world).getChunkManager().markForUpdate(getPos());
         this.world.updateNeighborsAlways(this.pos, this.getCachedState().getBlock());
@@ -535,10 +536,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     @Override
     public Text getDisplayName() {
-        return this.getCachedState().getBlock().getName().copy().setStyle(Constant.Text.DARK_GRAY_STYLE);
-    }
-
-    public MachineConfiguration getConfiguration() {
-        return this.configuration;
+        return this.name;
     }
 }

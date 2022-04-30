@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.block.util;
 
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.Direction;
@@ -37,27 +37,27 @@ public enum BlockFace {
     /**
      * The face of a block that is facing forwards.
      */
-    FRONT(new TranslatableText("ui.galacticraft.machine.configuration.front"), true),
+    FRONT(new TranslatableText(Constant.TranslationKey.FRONT), true),
     /**
      * The face of a block that is facing to the right, when facing in the direction the block is facing.
      */
-    RIGHT(new TranslatableText("ui.galacticraft.machine.configuration.right"), true),
+    RIGHT(new TranslatableText(Constant.TranslationKey.RIGHT), true),
     /**
      * The face of a block that is facing backwards.
      */
-    BACK(new TranslatableText("ui.galacticraft.machine.configuration.back"), true),
+    BACK(new TranslatableText(Constant.TranslationKey.BACK), true),
     /**
      * The face of a block that is facing to the left, when facing in the direction the block is facing.
      */
-    LEFT(new TranslatableText("ui.galacticraft.machine.configuration.left"), true),
+    LEFT(new TranslatableText(Constant.TranslationKey.LEFT), true),
     /**
      * The top face of a block.
      */
-    TOP(new TranslatableText("ui.galacticraft.machine.configuration.top"), false),
+    TOP(new TranslatableText(Constant.TranslationKey.TOP), false),
     /**
      * The bottom face of a block.
      */
-    BOTTOM(new TranslatableText("ui.galacticraft.machine.configuration.bottom"), false);
+    BOTTOM(new TranslatableText(Constant.TranslationKey.BOTTOM), false);
 
     private final Text name;
     private final boolean horizontal;

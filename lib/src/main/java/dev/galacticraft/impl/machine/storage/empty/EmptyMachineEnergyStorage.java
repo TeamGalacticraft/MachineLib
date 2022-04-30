@@ -45,7 +45,7 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public void setEnergy(long amount, TransactionContext context) {
+    public void setEnergy(long amount, @NotNull TransactionContext context) {
     }
 
     @Override

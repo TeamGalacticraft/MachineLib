@@ -24,12 +24,12 @@ package dev.galacticraft.api.block;
 
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.SecurityLevel;
 import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
-import dev.galacticraft.impl.machine.Constant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
@@ -83,7 +83,7 @@ import java.util.List;
  */
 public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWithEntity {
     /**
-     * This property represents whether or not the machine is active.
+     * This property represents whether the machine is active.
      * It is used for world rendering purposes.
      */
     public static final BooleanProperty ACTIVE = Constant.Property.ACTIVE;
@@ -114,7 +114,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.onPlaced(world, pos, state, placer, itemStack);
         if (!world.isClient && placer instanceof PlayerEntity player) {
-            ((MachineBlockEntity) world.getBlockEntity(pos)).security().setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
+            ((MachineBlockEntity) world.getBlockEntity(pos)).getSecurity().setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
         }
     }
 
@@ -144,27 +144,31 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                 }
                 tooltip.add(new LiteralText(builder.toString()).setStyle(text.getStyle()));
             } else {
-                tooltip.add(new TranslatableText("tooltip.galacticraft.press_shift").setStyle(Constant.Text.DARK_GRAY_STYLE));
+                tooltip.add(new TranslatableText(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE));
             }
         }
 
         if (stack != null && stack.getNbt() != null && stack.getNbt().contains(Constant.Nbt.BLOCK_ENTITY_TAG)) {
             NbtCompound nbt = stack.getNbt().getCompound(Constant.Nbt.BLOCK_ENTITY_TAG);
             tooltip.add(LiteralText.EMPTY);
-            if (nbt.contains(Constant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText("ui.galacticraft.machine.current_energy", new LiteralText(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+            if (nbt.contains(Constant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText(Constant.TranslationKey.CURRENT_ENERGY, new LiteralText(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
             if (nbt.contains(Constant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
                 NbtCompound security = nbt.getCompound(Constant.Nbt.SECURITY);
                 if (security.contains(Constant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
                     GameProfile profile = NbtHelper.toGameProfile(security.getCompound(Constant.Nbt.OWNER));
-                    MutableText text1 = new TranslatableText("ui.galacticraft.machine.security.owner", new LiteralText(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
-                    if (Screen.hasControlDown()) {
-                        text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
+                    if (profile != null) {
+                        MutableText text1 = new TranslatableText(Constant.TranslationKey.OWNER, new LiteralText(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
+                        if (Screen.hasControlDown()) {
+                            text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
+                        }
+                        tooltip.add(text1);
+                    } else {
+                        tooltip.add(new TranslatableText(Constant.TranslationKey.OWNER, new TranslatableText(Constant.TranslationKey.UNKNOWN).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
                     }
-                    tooltip.add(text1);
-                    tooltip.add(new TranslatableText("ui.galacticraft.machine.security.accessibility", SecurityLevel.valueOf(security.getString(Constant.Nbt.ACCESSIBILITY)).getName()).setStyle(Constant.Text.GREEN_STYLE));
+                    tooltip.add(new TranslatableText(Constant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(Constant.Nbt.ACCESS_LEVEL)).getName()).setStyle(Constant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(new TranslatableText("ui.galacticraft.machine.redstone.redstone", RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
+            tooltip.add(new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
         }
     }
 
@@ -178,7 +182,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         if (!world.isClient) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
-                SecuritySettings security = machine.security();
+                SecuritySettings security = machine.getSecurity();
                 if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
                 if (security.isOwner(player.getGameProfile())) {
                     NamedScreenHandlerFactory factory = state.createScreenHandlerFactory(world, pos);
@@ -186,7 +190,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                     if (factory != null) {
                         player.openHandledScreen(factory);
                         security.sendPacket(pos, (ServerPlayerEntity) player);
-                        machine.redstoneInteraction().sendPacket(pos, (ServerPlayerEntity) player);
+                        machine.getRedstoneActivation().sendPacket(pos, (ServerPlayerEntity) player);
                         return ActionResult.CONSUME;
                     }
                 }
@@ -217,7 +221,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     public List<ItemStack> getDroppedStacks(BlockState state, LootContext.@NotNull Builder builder) {
         BlockEntity entity = builder.get(LootContextParameters.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
-            if (machine.dontDropItems()) return Collections.emptyList();
+            if (machine.areDropsDisabled()) return Collections.emptyList();
         }
         return super.getDroppedStacks(state, builder);
     }
@@ -242,7 +246,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     }
 
     /**
-     * Returns this machine's description for the tooltip when LSHIFT is pressed.
+     * Returns this machine's description for the tooltip when left shift is pressed.
      * @param stack The item stack (the contained item is this block).
      * @param view The world.
      * @param advanced Whether advanced tooltips are enabled.

@@ -49,7 +49,7 @@ public interface MachineIOConfig {
      * @param face the block face to pull the option from
      * @return a {@link ConfiguredMachineFace} assigned to the given face.
      */
-    ConfiguredMachineFace get(@NotNull BlockFace face);
+    @NotNull ConfiguredMachineFace get(@NotNull BlockFace face);
 
     /**
      * Serializes the {@link MachineIOConfig} to NBT.

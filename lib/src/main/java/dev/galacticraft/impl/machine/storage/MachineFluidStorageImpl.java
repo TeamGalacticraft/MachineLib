@@ -33,8 +33,8 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.fluid.FluidStack;
-import dev.galacticraft.impl.machine.Constant;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
 import dev.galacticraft.impl.machine.storage.slot.ResourceSlot;
@@ -61,7 +61,7 @@ import java.util.Set;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
-    private boolean[] allowsGas;
+    private final boolean[] allowsGas;
     private final TankDisplay[] displays;
     private final @NotNull FluidSlot[] inventory;
     private final @NotNull SlotType<Fluid, FluidVariant>[] types;
@@ -126,7 +126,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public ResourceSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
+    public @NotNull ResourceSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
         return this.inventory[slot];
     }
 

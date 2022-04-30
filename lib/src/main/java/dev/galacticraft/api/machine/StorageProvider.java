@@ -24,6 +24,8 @@ package dev.galacticraft.api.machine;
 
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Exposes storages for use in the transfer system.
@@ -34,5 +36,5 @@ public interface StorageProvider {
      * @param type The type of resource to get a storage for.
      * @return The storage for the given resource type.
      */
-    ConfiguredStorage<?, ?> getStorage(ResourceType<?, ?> type);
+    @Nullable ConfiguredStorage<?, ?> getStorage(@NotNull ResourceType<?, ?> type);
 }

@@ -32,12 +32,12 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public class MachineIOConfigImpl implements MachineIOConfig {
-    private final ConfiguredMachineFace front = ConfiguredMachineFace.create();
-    private final ConfiguredMachineFace back = ConfiguredMachineFace.create();
-    private final ConfiguredMachineFace left = ConfiguredMachineFace.create();
-    private final ConfiguredMachineFace right = ConfiguredMachineFace.create();
-    private final ConfiguredMachineFace top = ConfiguredMachineFace.create();
-    private final ConfiguredMachineFace bottom = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace front = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace back = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace left = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace right = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace top = ConfiguredMachineFace.create();
+    private final @NotNull ConfiguredMachineFace bottom = ConfiguredMachineFace.create();
 
     @Override
     public @NotNull NbtCompound writeNbt() {
@@ -62,7 +62,7 @@ public class MachineIOConfigImpl implements MachineIOConfig {
     }
 
     @Override
-    public ConfiguredMachineFace get(@NotNull BlockFace face) {
+    public @NotNull ConfiguredMachineFace get(@NotNull BlockFace face) {
         return switch (face) {
             case FRONT -> this.front;
             case TOP -> this.top;

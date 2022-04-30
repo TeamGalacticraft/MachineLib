@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.gas;
 
+import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2IntFunction;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributeHandler;
@@ -102,6 +103,14 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
 
     @Contract("_, _, _, _, _, _, _, _ -> new")
     public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(texture);
+        Preconditions.checkNotNull(symbol);
+        Preconditions.checkNotNull(luminance);
+        Preconditions.checkNotNull(viscosity);
+        Preconditions.checkNotNull(fillSound);
+        Preconditions.checkNotNull(emptySound);
+
         return new GasFluid(name, texture, symbol, tint, luminance, viscosity, fillSound, emptySound);
     }
 
@@ -213,11 +222,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
         return true;
     }
 
-    public String getSymbolForDisplay() {
-        return this.symbol;
-    }
-
-    public Identifier getTexture() {
+    public @NotNull Identifier getTexture() {
         return this.texture;
     }
 

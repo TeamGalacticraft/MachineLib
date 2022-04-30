@@ -42,6 +42,7 @@ public interface SecuritySettings {
     static @NotNull SecuritySettings create() {
         return new SecuritySettingsImpl();
     }
+
     /**
      * Returns whether the player is the owner of the linked machine.
      * @param player The player to check.
@@ -56,7 +57,7 @@ public interface SecuritySettings {
      * @return Whether the game profile is the owner of the linked machine.
      */
     @Contract(pure = true)
-    boolean isOwner(GameProfile profile);
+    boolean isOwner(@Nullable GameProfile profile);
 
     /**
      * Whether the player is allowed to access the linked machine.
@@ -64,29 +65,29 @@ public interface SecuritySettings {
      * @return Whether the player is allowed to access the linked machine.
      */
     @Contract(pure = true)
-    boolean hasAccess(PlayerEntity player);
+    boolean hasAccess(@Nullable PlayerEntity player);
 
     /**
-     * Returns the security level of the linked machine.
-     * @return The security level of the linked machine.
+     * Returns the access level of the linked machine.
+     * @return The access level of the linked machine.
      */
-    @NotNull SecurityLevel getSecurityLevel();
+    @NotNull AccessLevel getAccessLevel();
 
     /**
-     * Sets the security level of the linked machine.
-     * @param securityLevel The security level to set.
+     * Sets the access level of the linked machine.
+     * @param accessLevel The access level to set.
      */
-    void setSecurityLevel(@NotNull SecurityLevel securityLevel);
+    void setAccessLevel(@NotNull AccessLevel accessLevel);
 
     /**
      * Returns the game profile of the owner of the linked machine.
-     * @return
+     * @return The game profile of the owner of the linked machine.
      */
     @Nullable GameProfile getOwner();
 
     /**
      * Sets the player who owns the linked machine.
-     * @param owner The playrt to set.
+     * @param owner The player to set.
      */
     void setOwner(@NotNull PlayerEntity owner);
 

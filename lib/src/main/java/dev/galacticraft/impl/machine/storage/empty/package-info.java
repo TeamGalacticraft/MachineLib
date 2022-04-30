@@ -20,27 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.util;
+@ApiStatus.Internal
+package dev.galacticraft.impl.machine.storage.empty;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-public final class EmptyIterator implements Iterator {
-    private static final EmptyIterator INSTANCE = new EmptyIterator();
-
-    private EmptyIterator() {}
-
-    public static <T> Iterator<T> getInstance() {
-        return EmptyIterator.INSTANCE;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return false;
-    }
-
-    @Override
-    public Object next() {
-        throw new NoSuchElementException("No more elements");
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

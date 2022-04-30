@@ -22,22 +22,19 @@
 
 package dev.galacticraft.api.machine;
 
-import dev.galacticraft.impl.machine.Constant;
+import dev.galacticraft.impl.Constant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * Represents the behavior of a machine when it is activated by redstone.
@@ -47,25 +44,25 @@ public enum RedstoneActivation implements StringIdentifiable {
     /**
      * Ignores redstone entirely (always running).
      */
-    IGNORE(new TranslatableText("ui.galacticraft.redstone.ignore"), Constant.Text.GRAY_STYLE),
+    IGNORE(new TranslatableText(Constant.TranslationKey.IGNORE_REDSTONE).setStyle(Constant.Text.GRAY_STYLE)),
 
     /**
      * When powered with redstone, the machine turns off.
      */
-    LOW(new TranslatableText("ui.galacticraft.redstone.low"), Constant.Text.DARK_RED_STYLE),
+    LOW(new TranslatableText(Constant.TranslationKey.LOW_REDSTONE).setStyle(Constant.Text.DARK_RED_STYLE)),
 
     /**
      * When powered with redstone, the machine turns on.
      */
-    HIGH(new TranslatableText("ui.galacticraft.redstone.high"), Constant.Text.RED_STYLE);
+    HIGH(new TranslatableText(Constant.TranslationKey.HIGH_REDSTONE).setStyle(Constant.Text.RED_STYLE));
 
     /**
      * The name of the redstone activation state.
      */
-    private final Text name;
+    private final @NotNull Text name;
 
-    RedstoneActivation(@NotNull TranslatableText name, @NotNull Style style) {
-        this.name = name.setStyle(style);
+    RedstoneActivation(@NotNull Text name) {
+        this.name = name;
     }
 
     /**
@@ -73,8 +70,12 @@ public enum RedstoneActivation implements StringIdentifiable {
      * @param string The string identifier.
      * @return The redstone activation state.
      */
-    public static RedstoneActivation fromString(@NotNull String string) {
-        return RedstoneActivation.valueOf(string.toUpperCase(Locale.ROOT));
+    public static @NotNull RedstoneActivation fromString(@NotNull String string) {
+        return switch (string) {
+            case "low" -> LOW;
+            case "high" -> HIGH;
+            default -> IGNORE;
+        };
     }
 
     /**
@@ -82,7 +83,7 @@ public enum RedstoneActivation implements StringIdentifiable {
      * @param pos The position of the machine.
      * @param player The player to send the packet to.
      */
-    public void sendPacket(BlockPos pos, ServerPlayerEntity player) {
+    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayerEntity player) {
         PacketByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
         buf.writeByte(this.ordinal());
@@ -93,20 +94,24 @@ public enum RedstoneActivation implements StringIdentifiable {
      * Returns the name of the redstone activation state.
      * @return The name of the redstone activation state.
      */
-    public Text getName() {
+    public @NotNull Text getName() {
         return this.name;
     }
 
     @Override
     public @NotNull String asString() {
-        return this.name().toLowerCase(Locale.ROOT);
+        return switch (this) {
+            case IGNORE -> "ignore";
+            case LOW -> "low";
+            case HIGH -> "high";
+        };
     }
 
     /**
      * Serializes the redstone activation state to NBT.
      * @return The NBT element.
      */
-    public NbtElement writeNbt() {
+    public @NotNull NbtElement writeNbt() {
         return NbtString.of(this.asString());
     }
 

@@ -41,9 +41,9 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     private final long maxInput;
     private final long maxOutput;
     private final ModCount modCount = new ModCount();
+    private final ExposedEnergyStorage view = new ExposedEnergyStorage(this, false, false);
 
     public long amount = 0;
-    private ExposedEnergyStorage view = new ExposedEnergyStorage(this, false, false);
 
     public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput) {
         this.capacity = capacity;
@@ -143,7 +143,7 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     }
 
     @Override
-    public void setEnergy(long amount, TransactionContext context) {
+    public void setEnergy(long amount, @NotNull TransactionContext context) {
         this.updateSnapshots(context);
         this.modCount.increment(context);
         this.amount = amount;

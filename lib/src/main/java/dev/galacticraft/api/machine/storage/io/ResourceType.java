@@ -22,6 +22,7 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
+import dev.galacticraft.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.fluid.Fluid;
@@ -39,27 +40,28 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> The inner type of resource.
  * @param <V> The resource variant type.
  */
+@SuppressWarnings("unused")
 public final class ResourceType<T, V> {
     /**
      * No resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, new TranslatableText("ui.galacticraft.side_option.none").setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
+    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, new TranslatableText(Constant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
     /**
      * All resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, new TranslatableText("ui.galacticraft.side_option.any").setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
+    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, new TranslatableText(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
     /**
      * Energy can be stored/transferred.
      */
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText("ui.galacticraft.side_option.energy").setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
+    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText(Constant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
     /**
      * Items can be stored/transferred.
      */
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, new TranslatableText("ui.galacticraft.side_option.item").setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, new TranslatableText(Constant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
     /**
      * Fluids can be stored/transferred.
      */
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText("ui.galacticraft.side_option.fluid").setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
+    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText(Constant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
 
     /**
      * The name of the resource type.
@@ -80,7 +82,7 @@ public final class ResourceType<T, V> {
      * @return An array of all resource types.
      */
     @Contract(value = " -> new", pure = true)
-    public static ResourceType @NotNull [] types() {
+    public static ResourceType<?, ?> @NotNull [] types() {
         return new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
     }
 
@@ -89,13 +91,13 @@ public final class ResourceType<T, V> {
      * @return An array of all resource types except {@link #NONE} and {@link #ANY}.
      */
     @Contract(value = " -> new", pure = true)
-    public static ResourceType @NotNull [] normalTypes() {
+    public static ResourceType<?, ?> @NotNull [] normalTypes() {
         return new ResourceType[] {ENERGY, ITEM, FLUID};
     }
 
     /**
      * Returns the name of the resource type.
-     * @return
+     * @return The name of the resource type.
      */
     public @NotNull Text getName() {
         return this.name;

@@ -27,6 +27,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineEnergyStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.Contract;
@@ -38,11 +39,11 @@ import team.reborn.energy.api.EnergyStorage;
  * A simple energy storage implementation that allows for the restriction of input and output of energy.
  */
 public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
-    SlotType[] NO_SLOTS = new SlotType[0];
+    SlotType<?, ?>[] NO_SLOTS = new SlotType[0];
 
     @Contract("_, _, _ -> new")
     static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
-        if (energyCapacity < 0) throw new IllegalArgumentException("Energy capacity cannot be negative");
+        StoragePreconditions.notNegative(energyCapacity);
         if (energyCapacity == 0) return EmptyMachineEnergyStorage.INSTANCE;
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
     }
@@ -103,7 +104,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     void readNbt(@NotNull NbtElement nbt);
 
     @Override
-    default @NotNull SlotType @NotNull [] getTypes() {
+    default @NotNull SlotType<?, ?> @NotNull [] getTypes() {
         return NO_SLOTS;
     }
 }

@@ -23,10 +23,12 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import com.google.common.collect.ImmutableList;
+import dev.galacticraft.impl.Constant;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -37,28 +39,28 @@ public enum ResourceFlow {
     /**
      * Resources can flow into the machine.
      */
-    INPUT(new TranslatableText("ui.galacticraft.side_option.in").setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
+    INPUT(new TranslatableText(Constant.TranslationKey.IN).setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
     /**
      * Resources can flow out of the machine.
      */
-    OUTPUT(new TranslatableText("ui.galacticraft.side_option.out").setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
+    OUTPUT(new TranslatableText(Constant.TranslationKey.OUT).setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
     /**
      * Resources can flow into and out of the machine.
      */
-    BOTH(new TranslatableText("ui.galacticraft.side_option.io").setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
+    BOTH(new TranslatableText(Constant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
 
     public static final List<ResourceFlow> ALL_FLOWS = ImmutableList.copyOf(ResourceFlow.values());
 
     /**
      * The name of the flow direction.
      */
-    private final Text name;
+    private final @NotNull Text name;
 
     /**
      * Creates a new resource flow.
      * @param name The name of the flow direction.
      */
-    ResourceFlow(Text name) {
+    ResourceFlow(@NotNull Text name) {
         this.name = name;
     }
 
@@ -66,7 +68,7 @@ public enum ResourceFlow {
      * Returns the name of the flow direction.
      * @return The name of the flow direction.
      */
-    public Text getName() {
+    public @NotNull Text getName() {
         return this.name;
     }
 

@@ -23,8 +23,9 @@
 package dev.galacticraft.impl.machine;
 
 import com.mojang.authlib.GameProfile;
-import dev.galacticraft.api.machine.SecurityLevel;
+import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.SecuritySettings;
+import dev.galacticraft.impl.Constant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -52,9 +53,9 @@ public class SecuritySettingsImpl implements SecuritySettings {
      */
     private @Nullable Identifier team = null;
     /**
-     * The security level of the linked machine.
+     * The access level of the linked machine.
      */
-    private @NotNull SecurityLevel securityLevel = SecurityLevel.PUBLIC;
+    private @NotNull AccessLevel accessLevel = AccessLevel.PUBLIC;
 
     /**
      * Returns whether the player is the owner of the linked machine.
@@ -87,38 +88,37 @@ public class SecuritySettingsImpl implements SecuritySettings {
     @Override
     @Contract(pure = true)
     public boolean hasAccess(PlayerEntity player) {
-        if (this.securityLevel == SecurityLevel.PUBLIC) {
+        if (this.accessLevel == AccessLevel.PUBLIC) {
             return true;
-        } else if (this.securityLevel == SecurityLevel.TEAM) {
-            if (this.isOwner(player)) return true;
-            return false; //todo: teams
-        } else if (this.securityLevel == SecurityLevel.PRIVATE) {
+        } else if (this.accessLevel == AccessLevel.TEAM) {
+            return this.isOwner(player); //todo: teams
+        } else if (this.accessLevel == AccessLevel.PRIVATE) {
             return this.isOwner(player);
         }
         return false;
     }
 
     /**
-     * Returns the security level of the linked machine.
-     * @return The security level of the linked machine.
+     * Returns the access level of the linked machine.
+     * @return The access level of the linked machine.
      */
     @Override
-    public @NotNull SecurityLevel getSecurityLevel() {
-        return this.securityLevel;
+    public @NotNull AccessLevel getAccessLevel() {
+        return this.accessLevel;
     }
 
     /**
-     * Sets the security level of the linked machine.
-     * @param securityLevel The security level to set.
+     * Sets the access level of the linked machine.
+     * @param accessLevel The access level to set.
      */
     @Override
-    public void setSecurityLevel(@NotNull SecurityLevel securityLevel) {
-        this.securityLevel = securityLevel;
+    public void setAccessLevel(@NotNull AccessLevel accessLevel) {
+        this.accessLevel = accessLevel;
     }
 
     /**
      * Returns the game profile of the owner of the linked machine.
-     * @return
+     * @return The game profile of the owner of the linked machine.
      */
     @Override
     public @Nullable GameProfile getOwner() {
@@ -127,7 +127,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Sets the player who owns the linked machine.
-     * @param owner The playrt to set.
+     * @param owner The player to set.
      */
     @Override
     public void setOwner(@NotNull PlayerEntity owner) { //todo: teams
@@ -165,7 +165,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
         if (this.getOwner() != null) {
             nbt.put(Constant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
         }
-        nbt.putString(Constant.Nbt.ACCESSIBILITY, this.securityLevel.name());
+        nbt.putString(Constant.Nbt.ACCESS_LEVEL, this.accessLevel.asString());
         if (this.getTeam() != null) {
             nbt.putString(Constant.Nbt.TEAM, this.getTeam().toString());
         }
@@ -186,7 +186,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
             this.team = new Identifier(nbt.getString(Constant.Nbt.TEAM));
         }
 
-        this.securityLevel = SecurityLevel.valueOf(nbt.getString(Constant.Nbt.ACCESSIBILITY));
+        this.accessLevel = AccessLevel.fromString(nbt.getString(Constant.Nbt.ACCESS_LEVEL));
     }
 
     /**
@@ -199,7 +199,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
         assert this.owner != null;
         PacketByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
-        buf.writeByte(this.securityLevel.ordinal());
+        buf.writeByte(this.accessLevel.ordinal());
         buf.writeNbt(NbtHelper.writeGameProfile(new NbtCompound(), this.owner));
         ServerPlayNetworking.send(player, new Identifier(Constant.MOD_ID, "security_update"), buf);
     }
