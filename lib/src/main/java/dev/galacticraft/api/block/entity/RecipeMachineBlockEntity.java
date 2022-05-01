@@ -44,6 +44,10 @@ import java.util.Optional;
 
 /**
  * A machine block entity that processes recipes.
+ *
+ * @param <C> The type of inventory the recipe type uses.
+ *           This is usually {@link Inventory} but can be any inventory type.
+ * @param <R> The type of recipe the machine uses.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Recipe<C>> extends MachineBlockEntity {
@@ -83,12 +87,14 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     /**
      * The crafting inventory of the machine.
      * Used to determine the machine's active recipe. Will not be modified.
+     *
      * @return The crafting inventory of the machine.
      */
     protected abstract @NotNull C craftingInv();
 
     /**
      * Inserts the recipe's output into the machine's inventory.
+     *
      * @param recipe The recipe to output.
      * @param context The current transaction.
      * @return Whether the recipe was successfully output.
@@ -97,6 +103,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
 
     /**
      * Extracts the recipe's input from the machine's inventory.
+     *
      * @param recipe The recipe to extract.
      * @param context The current transaction.
      * @return Whether the recipe was successfully extracted.
@@ -105,13 +112,16 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
 
     /**
      * Returns the machine status to use when the machine is working.
+     * A machine is working if it has an active recipe and the recipe's progress is less than the maximum progress.
+     *
      * @return The machine status to use when the machine is working.
      */
     protected abstract @NotNull MachineStatus workingStatus();
 
     /**
      * Extracts the necessary resources to run this machine.
-     * This can be energy, fuel, or any other resource.
+     * This can be energy, fuel, or any other resource (or nothing!).
+     *
      * @param context The current transaction.
      * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
      */
@@ -169,6 +179,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     /**
      * Sets the current recipe to the given recipe.
      * If the recipe is different from the current recipe, the progress is reset.
+     *
      * @param recipe The recipe to set.
      *               If {@code null}, the recipe will be reset.
      */
@@ -184,6 +195,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
 
     /**
      * Crafts the given recipe.
+     *
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
@@ -221,6 +233,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     /**
      * Finds the first valid recipe in the machine's inventory.
      * Will always test for the current recipe first.
+     *
      * @return The first valid recipe in the machine's inventory.
      */
     protected @NotNull Optional<R> findValidRecipe(@NotNull World world) {

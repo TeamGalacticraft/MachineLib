@@ -13,6 +13,9 @@ java {
 }
 
 tasks.javadoc {
+    options.apply {
+        title = "MachineLib ${project.version} API"
+    }
     exclude("**/impl/**")
 }
 
