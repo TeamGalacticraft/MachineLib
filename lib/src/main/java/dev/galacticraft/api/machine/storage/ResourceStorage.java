@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Set;
+import java.util.Collection;
 
 public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends ConfiguredStorage<T, V>, Storage<V>, Clearable {
     /**
@@ -604,23 +604,35 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     /**
      * Returns the number of the given resource in this inventory.
      * @param resource The resource to check.
+     *                 Note: This is not a variant. Items with different NBT will also be included.
+     * @return The number of the given resource in this inventory.
+     * @deprecated Use {@link #count(V)} instead.
+     */
+    @Deprecated
+    long count(@NotNull T resource);
+
+    /**
+     * Returns the number of the given resource in this inventory.
+     * @param resource The resource to check.
      * @return The number of the given resource in this inventory.
      */
-    long count(@NotNull T resource);
+    long count(@NotNull V resource);
 
     /**
      * Returns whether any of the given resources are present in this inventory.
      * @param resources The resources to check.
      * @return Whether any of the given resources are present in this inventory.
      */
-    boolean containsAny(@NotNull Set<T> resources);
+    boolean containsAny(@NotNull Collection<T> resources);
 
     /**
      * Returns whether any of the given resources of the tag are present in this inventory.
      * @param tag The resources to check.
      * @return Whether any of the given resources of the tag  are present in this inventory.
      */
-    boolean containsAny(@NotNull Tag<T> tag);
+    default boolean containsAny(@NotNull Tag<T> tag) {
+        return this.containsAny(tag.values());
+    }
 
     /**
      * Serializes this storage to nbt.

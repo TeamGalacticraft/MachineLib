@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.util;
+package dev.galacticraft.api.transfer;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public class GenericStorageUtil {
-    public static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+public interface GenericStorageUtil {
+    static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null) return 0;
         StoragePreconditions.notNegative(maxAmount);
 
@@ -55,7 +55,7 @@ public class GenericStorageUtil {
         return 0;
     }
 
-    public static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
+    static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
         if (from == null || to == null) return;
         StoragePreconditions.notNegative(maxPerTransaction);
         LongList list = new LongArrayList();

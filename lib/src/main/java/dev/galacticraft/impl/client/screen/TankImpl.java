@@ -24,9 +24,9 @@ package dev.galacticraft.impl.client.screen;
 
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.impl.Constant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
-import dev.galacticraft.impl.util.GenericStorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;

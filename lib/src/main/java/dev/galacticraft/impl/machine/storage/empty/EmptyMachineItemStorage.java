@@ -49,8 +49,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorage<Item, ItemVariant> {
@@ -195,12 +195,12 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public boolean containsAny(@NotNull Set<Item> resources) {
-        return false;
+    public long count(@NotNull ItemVariant resource) {
+        return 0;
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Item> tag) {
+    public boolean containsAny(@NotNull Collection<Item> resources) {
         return false;
     }
 

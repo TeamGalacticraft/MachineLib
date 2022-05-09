@@ -56,10 +56,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 //todo: more integer sanity checks?
 public class MachineItemStorageImpl implements MachineItemStorage {
@@ -331,29 +330,28 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     public long count(@NotNull Item item) {
         long count = 0;
         for (ItemSlot itemSlot : this.inventory) {
-            ItemStack stack = itemSlot.copyStack();
-            if (stack.getItem() == item) {
-                count += stack.getCount();
+            if (itemSlot.getResource().getItem() == item) {
+                count += itemSlot.getAmount();
             }
         }
         return count;
     }
 
     @Override
-    public boolean containsAny(@NotNull Set<Item> items) {
+    public long count(@NotNull ItemVariant item) {
+        long count = 0;
         for (ItemSlot itemSlot : this.inventory) {
-            if (items.contains(itemSlot.copyStack().getItem())) {
-                return true;
+            if (itemSlot.getResource().equals(item)) {
+                count += itemSlot.getAmount();
             }
         }
-        return false;
+        return count;
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Item> tag) {
-        List<Item> values = tag.values();
+    public boolean containsAny(@NotNull Collection<Item> items) {
         for (ItemSlot itemSlot : this.inventory) {
-            if (values.contains(itemSlot.copyStack().getItem())) {
+            if (items.contains(itemSlot.getResource().getItem())) {
                 return true;
             }
         }

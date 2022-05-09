@@ -34,12 +34,12 @@ public final class FluidSlot extends ResourceSlot<Fluid, FluidVariant, FluidStac
     }
 
     @Override
-    protected FluidVariant getBlankVariant() {
+    protected @NotNull FluidVariant getBlankVariant() {
         return FluidVariant.blank();
     }
 
     @Override
-    protected long getVariantCapacity(FluidVariant variant) {
+    protected long getVariantCapacity(@NotNull FluidVariant variant) {
         return Long.MAX_VALUE;
     }
 

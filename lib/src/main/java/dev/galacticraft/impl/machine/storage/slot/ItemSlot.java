@@ -34,12 +34,12 @@ public final class ItemSlot extends ResourceSlot<Item, ItemVariant, ItemStack> {
     }
 
     @Override
-    protected ItemVariant getBlankVariant() {
+    protected @NotNull ItemVariant getBlankVariant() {
         return ItemVariant.blank();
     }
 
     @Override
-    protected long getVariantCapacity(ItemVariant variant) {
+    protected long getVariantCapacity(@NotNull ItemVariant variant) {
         return variant.getItem().getMaxCount();
     }
 

@@ -88,7 +88,11 @@ subprojects {
         inputs.property("version", project.version)
 
         filesMatching("fabric.mod.json") {
-            expand("version" to project.version, "modid" to modId)
+            expand(
+                "version" to project.version,
+                "modid" to modId,
+                "mod_name" to modName
+            )
         }
 
         // Minify json resources

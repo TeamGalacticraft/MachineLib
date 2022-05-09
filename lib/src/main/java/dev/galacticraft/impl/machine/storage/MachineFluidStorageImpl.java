@@ -54,10 +54,9 @@ import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
@@ -327,29 +326,28 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     public long count(@NotNull Fluid fluid) {
         long count = 0;
         for (FluidSlot fluidSlot : this.inventory) {
-            FluidStack stack = fluidSlot.copyStack();
-            if (stack.getFluid() == fluid) {
-                count += stack.getAmount();
+            if (fluidSlot.getResource().getFluid() == fluid) {
+                count += fluidSlot.getAmount();
             }
         }
         return count;
     }
 
     @Override
-    public boolean containsAny(@NotNull Set<Fluid> fluids) {
+    public long count(@NotNull FluidVariant fluid) {
+        long count = 0;
         for (FluidSlot fluidSlot : this.inventory) {
-            if (fluids.contains(fluidSlot.copyStack().getFluid())) {
-                return true;
+            if (fluidSlot.getResource().equals(fluid)) {
+                count += fluidSlot.getAmount();
             }
         }
-        return false;
+        return count;
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Fluid> tag) {
-        List<Fluid> values = tag.values();
+    public boolean containsAny(@NotNull Collection<Fluid> fluids) {
         for (FluidSlot fluidSlot : this.inventory) {
-            if (values.contains(fluidSlot.copyStack().getFluid())) {
+            if (fluids.contains(fluidSlot.getResource().getFluid())) {
                 return true;
             }
         }

@@ -41,6 +41,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.text.TextColor;
 import net.minecraft.text.TranslatableText;
@@ -67,6 +68,7 @@ public class TestMod implements ModInitializer {
     public static final Item INFINITE_BATTERY = new Item(new Item.Settings().group(ItemGroup.MISC));
     public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE_BE_TYPE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, SIMPLE_MACHINE_BLOCK).build();
     public static final ScreenHandlerType<SimpleMachineScreenHandler<SimpleMachineBlockEntity>> SIMPLE_MACHINE_SH_TYPE = new ExtendedScreenHandlerType<>(SimpleMachineScreenHandler.createFactory(() -> TestMod.SIMPLE_MACHINE_SH_TYPE));
+    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromFormatting(Formatting.RED), new TranslatableText("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND && (v.getNbt() == null || !v.getNbt().getBoolean("blocked")), ResourceFlow.BOTH, ResourceType.ITEM);
 
     @Override
     public void onInitialize() {

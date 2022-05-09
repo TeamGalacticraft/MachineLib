@@ -29,8 +29,9 @@
       "dev.galacticraft.machinelib.testmod.TestModClient"
     ],
     "fabric-gametest": [
-      "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageImplTest",
-      "dev.galacticraft.machinelib.gametest.storage.fluid.FluidStorageImplTest"
+      "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.item.SingleSlotItemStorageExtractionTest",
+      "dev.galacticraft.machinelib.gametest.storage.item.SingleSlotItemStorageInsertionTest"
     ]
   },
   "depends": {

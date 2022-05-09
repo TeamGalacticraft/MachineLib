@@ -96,9 +96,9 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         }
     }
 
-    protected abstract V getBlankVariant();
+    protected abstract @NotNull V getBlankVariant();
 
-    protected abstract long getVariantCapacity(V variant);
+    protected abstract long getVariantCapacity(@NotNull V variant);
 
     @Contract(pure = true)
     protected abstract @NotNull S getEmptyStack();
@@ -163,7 +163,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
     }
 
     @Override
-    public V getResource() {
+    public @NotNull V getResource() {
         return this.variant;
     }
 

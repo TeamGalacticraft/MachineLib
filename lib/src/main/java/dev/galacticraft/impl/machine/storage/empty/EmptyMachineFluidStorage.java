@@ -46,8 +46,8 @@ import net.minecraft.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStorage<Fluid, FluidVariant> {
@@ -200,12 +200,12 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public boolean containsAny(@NotNull Set<Fluid> resources) {
-        return false;
+    public long count(@NotNull FluidVariant resource) {
+        return 0;
     }
 
     @Override
-    public boolean containsAny(@NotNull Tag<Fluid> tag) {
+    public boolean containsAny(@NotNull Collection<Fluid> resources) {
         return false;
     }
 
