@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.machine;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtElement;
@@ -44,17 +44,17 @@ public enum RedstoneActivation implements StringIdentifiable {
     /**
      * Ignores redstone entirely (always running).
      */
-    IGNORE(new TranslatableText(Constant.TranslationKey.IGNORE_REDSTONE).setStyle(Constant.Text.GRAY_STYLE)),
+    IGNORE(new TranslatableText(MLConstant.TranslationKey.IGNORE_REDSTONE).setStyle(MLConstant.Text.GRAY_STYLE)),
 
     /**
      * When powered with redstone, the machine turns off.
      */
-    LOW(new TranslatableText(Constant.TranslationKey.LOW_REDSTONE).setStyle(Constant.Text.DARK_RED_STYLE)),
+    LOW(new TranslatableText(MLConstant.TranslationKey.LOW_REDSTONE).setStyle(MLConstant.Text.DARK_RED_STYLE)),
 
     /**
      * When powered with redstone, the machine turns on.
      */
-    HIGH(new TranslatableText(Constant.TranslationKey.HIGH_REDSTONE).setStyle(Constant.Text.RED_STYLE));
+    HIGH(new TranslatableText(MLConstant.TranslationKey.HIGH_REDSTONE).setStyle(MLConstant.Text.RED_STYLE));
 
     /**
      * The name of the redstone activation state.
@@ -87,7 +87,7 @@ public enum RedstoneActivation implements StringIdentifiable {
         PacketByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
         buf.writeByte(this.ordinal());
-        ServerPlayNetworking.send(player, new Identifier(Constant.MOD_ID, "redstone_update"), buf);
+        ServerPlayNetworking.send(player, new Identifier(MLConstant.MOD_ID, "redstone_update"), buf);
     }
 
     /**

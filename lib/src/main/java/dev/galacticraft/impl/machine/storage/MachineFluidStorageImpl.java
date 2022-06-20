@@ -33,7 +33,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.FluidSlot;
@@ -359,7 +359,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         NbtList list = new NbtList();
         for (FluidSlot fluidSlot : this.inventory) {
             NbtCompound compound = fluidSlot.getResource().toNbt();
-            compound.putLong(Constant.Nbt.AMOUNT, fluidSlot.getAmount());
+            compound.putLong(MLConstant.Nbt.AMOUNT, fluidSlot.getAmount());
             list.add(compound);
         }
         return list;
@@ -371,7 +371,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             NbtList list = ((NbtList) nbt);
             for (int i = 0; i < list.size(); i++) {
                 NbtCompound compound = list.getCompound(i);
-                this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
+                this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(MLConstant.Nbt.AMOUNT), true);
             }
         }
     }

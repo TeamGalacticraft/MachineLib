@@ -22,7 +22,7 @@
 
 package dev.galacticraft.impl.client.util;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
@@ -38,7 +38,7 @@ import java.util.Iterator;
 public interface SpriteUtil {
     @Contract("_ -> new")
     static @NotNull SpriteIdentifier identifier(String path) {
-        return identifier(new Identifier(Constant.MOD_ID, path));
+        return identifier(new Identifier(MLConstant.MOD_ID, path));
     }
 
     @Contract(value = "_ -> new", pure = true)

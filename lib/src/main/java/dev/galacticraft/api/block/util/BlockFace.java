@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.block.util;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.Direction;
@@ -37,33 +37,33 @@ public enum BlockFace {
     /**
      * The face of a block that is facing forwards.
      */
-    FRONT(new TranslatableText(Constant.TranslationKey.FRONT), true),
+    FRONT(new TranslatableText(MLConstant.TranslationKey.FRONT), true),
     /**
      * The face of a block that is facing to the right, when facing in the direction the block is facing.
      */
-    RIGHT(new TranslatableText(Constant.TranslationKey.RIGHT), true),
+    RIGHT(new TranslatableText(MLConstant.TranslationKey.RIGHT), true),
     /**
      * The face of a block that is facing backwards.
      */
-    BACK(new TranslatableText(Constant.TranslationKey.BACK), true),
+    BACK(new TranslatableText(MLConstant.TranslationKey.BACK), true),
     /**
      * The face of a block that is facing to the left, when facing in the direction the block is facing.
      */
-    LEFT(new TranslatableText(Constant.TranslationKey.LEFT), true),
+    LEFT(new TranslatableText(MLConstant.TranslationKey.LEFT), true),
     /**
      * The top face of a block.
      */
-    TOP(new TranslatableText(Constant.TranslationKey.TOP), false),
+    TOP(new TranslatableText(MLConstant.TranslationKey.TOP), false),
     /**
      * The bottom face of a block.
      */
-    BOTTOM(new TranslatableText(Constant.TranslationKey.BOTTOM), false);
+    BOTTOM(new TranslatableText(MLConstant.TranslationKey.BOTTOM), false);
 
     private final Text name;
     private final boolean horizontal;
 
     BlockFace(@NotNull TranslatableText name, boolean horizontal) {
-        this.name = name.setStyle(Constant.Text.GOLD_STYLE);
+        this.name = name.setStyle(MLConstant.Text.GOLD_STYLE);
         this.horizontal = horizontal;
     }
 

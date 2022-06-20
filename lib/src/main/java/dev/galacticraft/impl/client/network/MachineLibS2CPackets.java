@@ -27,7 +27,7 @@ import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
 import dev.galacticraft.api.screen.MachineScreenHandler;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -43,7 +43,7 @@ import java.util.Objects;
 @Environment(EnvType.CLIENT)
 public class MachineLibS2CPackets {
     public static void register() {
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "storage_sync"), (client, handler, buf, responseSender) -> {
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "storage_sync"), (client, handler, buf, responseSender) -> {
             PacketByteBuf packet = PacketByteBufs.copy(buf);
             client.execute(() -> {
                 if (client.player.currentScreenHandler instanceof MachineScreenHandler<?> machineHandler) {
@@ -53,7 +53,7 @@ public class MachineLibS2CPackets {
                 }
             });
         });
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             GameProfile profile = NbtHelper.toGameProfile(Objects.requireNonNull(buf.readNbt()));
@@ -71,7 +71,7 @@ public class MachineLibS2CPackets {
             });
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
             RedstoneActivation redstone = RedstoneActivation.values()[buf.readByte()];
 

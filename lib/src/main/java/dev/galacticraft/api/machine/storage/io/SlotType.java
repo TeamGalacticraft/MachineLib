@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
@@ -46,7 +46,7 @@ import java.util.function.Predicate;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotType<T, V extends TransferVariant<T>> {
-    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new Identifier(Constant.MOD_ID, "none").toString(), RegistryKey.ofRegistry(new Identifier(Constant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new Identifier(MLConstant.MOD_ID, "none").toString(), RegistryKey.ofRegistry(new Identifier(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
 
     static <T, V extends TransferVariant<T>> SlotType<T, V> create(Identifier id, @NotNull TextColor color, @NotNull TranslatableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         if (color.getRgb() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");

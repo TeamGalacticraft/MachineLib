@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import com.google.common.collect.ImmutableList;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -39,15 +39,15 @@ public enum ResourceFlow {
     /**
      * Resources can flow into the machine.
      */
-    INPUT(new TranslatableText(Constant.TranslationKey.IN).setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
+    INPUT(new TranslatableText(MLConstant.TranslationKey.IN).setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
     /**
      * Resources can flow out of the machine.
      */
-    OUTPUT(new TranslatableText(Constant.TranslationKey.OUT).setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
+    OUTPUT(new TranslatableText(MLConstant.TranslationKey.OUT).setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
     /**
      * Resources can flow into and out of the machine.
      */
-    BOTH(new TranslatableText(Constant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
+    BOTH(new TranslatableText(MLConstant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
 
     public static final List<ResourceFlow> ALL_FLOWS = ImmutableList.copyOf(ResourceFlow.values());
 

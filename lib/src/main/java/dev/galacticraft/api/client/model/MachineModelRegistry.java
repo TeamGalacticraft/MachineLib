@@ -27,7 +27,7 @@ import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
 import net.minecraft.block.Block;
 import net.minecraft.client.texture.Sprite;
@@ -44,8 +44,8 @@ import java.util.function.Function;
  * Use {@link #register(Block, SpriteProvider)} to register a sprite provider for a block.
  */
 public interface MachineModelRegistry {
-    Identifier MACHINE = new Identifier(Constant.MOD_ID, "block/machine");
-    Identifier MACHINE_SIDE = new Identifier(Constant.MOD_ID, "block/machine_side");
+    Identifier MACHINE = new Identifier(MLConstant.MOD_ID, "block/machine");
+    Identifier MACHINE_SIDE = new Identifier(MLConstant.MOD_ID, "block/machine_side");
 
     /**
      * Registers a sprite provider for a block.

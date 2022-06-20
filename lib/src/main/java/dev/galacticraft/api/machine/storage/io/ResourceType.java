@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.fluid.Fluid;
@@ -45,23 +45,23 @@ public final class ResourceType<T, V> {
     /**
      * No resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, new TranslatableText(Constant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
+    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, new TranslatableText(MLConstant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
     /**
      * All resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, new TranslatableText(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
+    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, new TranslatableText(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
     /**
      * Energy can be stored/transferred.
      */
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText(Constant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
+    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, new TranslatableText(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
     /**
      * Items can be stored/transferred.
      */
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, new TranslatableText(Constant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, new TranslatableText(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
     /**
      * Fluids can be stored/transferred.
      */
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText(Constant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
+    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, new TranslatableText(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
 
     /**
      * The name of the resource type.

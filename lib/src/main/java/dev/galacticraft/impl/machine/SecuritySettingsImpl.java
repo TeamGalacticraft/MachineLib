@@ -25,7 +25,7 @@ package dev.galacticraft.impl.machine;
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.SecuritySettings;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -163,11 +163,11 @@ public class SecuritySettingsImpl implements SecuritySettings {
     public @NotNull NbtCompound toNbt() {
         NbtCompound nbt = new NbtCompound();
         if (this.getOwner() != null) {
-            nbt.put(Constant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
+            nbt.put(MLConstant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
         }
-        nbt.putString(Constant.Nbt.ACCESS_LEVEL, this.accessLevel.asString());
+        nbt.putString(MLConstant.Nbt.ACCESS_LEVEL, this.accessLevel.asString());
         if (this.getTeam() != null) {
-            nbt.putString(Constant.Nbt.TEAM, this.getTeam().toString());
+            nbt.putString(MLConstant.Nbt.TEAM, this.getTeam().toString());
         }
         return nbt;
     }
@@ -178,15 +178,15 @@ public class SecuritySettingsImpl implements SecuritySettings {
      */
     @Override
     public void fromNbt(@NotNull NbtCompound nbt) {
-        if (nbt.contains(Constant.Nbt.OWNER)) {
-            this.owner = NbtHelper.toGameProfile(nbt.getCompound(Constant.Nbt.OWNER));
+        if (nbt.contains(MLConstant.Nbt.OWNER)) {
+            this.owner = NbtHelper.toGameProfile(nbt.getCompound(MLConstant.Nbt.OWNER));
         }
 
-        if (nbt.contains(Constant.Nbt.TEAM)) {
-            this.team = new Identifier(nbt.getString(Constant.Nbt.TEAM));
+        if (nbt.contains(MLConstant.Nbt.TEAM)) {
+            this.team = new Identifier(nbt.getString(MLConstant.Nbt.TEAM));
         }
 
-        this.accessLevel = AccessLevel.fromString(nbt.getString(Constant.Nbt.ACCESS_LEVEL));
+        this.accessLevel = AccessLevel.fromString(nbt.getString(MLConstant.Nbt.ACCESS_LEVEL));
     }
 
     /**
@@ -201,6 +201,6 @@ public class SecuritySettingsImpl implements SecuritySettings {
         buf.writeBlockPos(pos);
         buf.writeByte(this.accessLevel.ordinal());
         buf.writeNbt(NbtHelper.writeGameProfile(new NbtCompound(), this.owner));
-        ServerPlayNetworking.send(player, new Identifier(Constant.MOD_ID, "security_update"), buf);
+        ServerPlayNetworking.send(player, new Identifier(MLConstant.MOD_ID, "security_update"), buf);
     }
 }

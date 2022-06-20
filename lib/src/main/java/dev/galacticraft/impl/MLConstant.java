@@ -31,7 +31,7 @@ import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public interface Constant {
+public interface MLConstant {
     String MOD_ID = "machinelib";
 
     interface Text {
@@ -84,8 +84,8 @@ public interface Constant {
     }
 
     interface ScreenTexture {
-        Identifier MACHINE_CONFIG_PANELS = new Identifier(Constant.MOD_ID, "textures/gui/machine_panels.png");
-        Identifier OVERLAY_BARS = new Identifier(Constant.MOD_ID, "textures/gui/overlay_bars.png");
+        Identifier MACHINE_CONFIG_PANELS = new Identifier(MLConstant.MOD_ID, "textures/gui/machine_panels.png");
+        Identifier OVERLAY_BARS = new Identifier(MLConstant.MOD_ID, "textures/gui/overlay_bars.png");
     }
 
     interface TextureCoordinate {

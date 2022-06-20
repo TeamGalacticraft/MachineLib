@@ -64,7 +64,7 @@ public class MachineLibClient implements ClientModInitializer {
             FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
                 @Override
                 public void appendTooltip(FluidVariant fluidVariant, List<Text> tooltip, TooltipContext tooltipContext) {
-                    tooltip.add(new TranslatableText(Constant.TranslationKey.GAS_MARKER));
+                    tooltip.add(new TranslatableText(MLConstant.TranslationKey.GAS_MARKER));
                     if (tooltipContext.isAdvanced()) tooltip.add(Text.of(gasFluid.getSymbol()));
                 }
             });

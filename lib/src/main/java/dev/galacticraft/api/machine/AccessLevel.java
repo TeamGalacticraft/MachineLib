@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.machine;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.StringIdentifiable;
@@ -35,15 +35,15 @@ public enum AccessLevel implements StringIdentifiable {
     /**
      * All players can use this machine.
      */
-    PUBLIC(new TranslatableText(Constant.TranslationKey.PUBLIC_ACCESS)),
+    PUBLIC(new TranslatableText(MLConstant.TranslationKey.PUBLIC_ACCESS)),
     /**
      * Only team members can use this machine.
      */
-    TEAM(new TranslatableText(Constant.TranslationKey.TEAM_ACCESS)),
+    TEAM(new TranslatableText(MLConstant.TranslationKey.TEAM_ACCESS)),
     /**
      * Only the owner can use this machine.
      */
-    PRIVATE(new TranslatableText(Constant.TranslationKey.PRIVATE_ACCESS));
+    PRIVATE(new TranslatableText(MLConstant.TranslationKey.PRIVATE_ACCESS));
 
     /**
      * The name of the access level.

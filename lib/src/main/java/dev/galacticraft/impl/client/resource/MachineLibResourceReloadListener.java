@@ -22,7 +22,7 @@
 
 package dev.galacticraft.impl.client.resource;
 
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class MachineLibResourceReloadListener implements SimpleSynchronousResourceReloadListener {
-    private static final Identifier ID = new Identifier(Constant.MOD_ID, "reload_listener");
+    private static final Identifier ID = new Identifier(MLConstant.MOD_ID, "reload_listener");
 
     @Override
     public Identifier getFabricId() {

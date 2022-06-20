@@ -28,7 +28,7 @@ import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
 import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.block.Block;
@@ -86,7 +86,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
      * This property represents whether the machine is active.
      * It is used for world rendering purposes.
      */
-    public static final BooleanProperty ACTIVE = Constant.Property.ACTIVE;
+    public static final BooleanProperty ACTIVE = MLConstant.Property.ACTIVE;
 
     /**
      * Creates a new machine block.
@@ -144,31 +144,31 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                 }
                 tooltip.add(new LiteralText(builder.toString()).setStyle(text.getStyle()));
             } else {
-                tooltip.add(new TranslatableText(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE));
+                tooltip.add(new TranslatableText(MLConstant.TranslationKey.PRESS_SHIFT).setStyle(MLConstant.Text.DARK_GRAY_STYLE));
             }
         }
 
-        if (stack != null && stack.getNbt() != null && stack.getNbt().contains(Constant.Nbt.BLOCK_ENTITY_TAG)) {
-            NbtCompound nbt = stack.getNbt().getCompound(Constant.Nbt.BLOCK_ENTITY_TAG);
+        if (stack != null && stack.getNbt() != null && stack.getNbt().contains(MLConstant.Nbt.BLOCK_ENTITY_TAG)) {
+            NbtCompound nbt = stack.getNbt().getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG);
             tooltip.add(LiteralText.EMPTY);
-            if (nbt.contains(Constant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText(Constant.TranslationKey.CURRENT_ENERGY, new LiteralText(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-            if (nbt.contains(Constant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
-                NbtCompound security = nbt.getCompound(Constant.Nbt.SECURITY);
-                if (security.contains(Constant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
-                    GameProfile profile = NbtHelper.toGameProfile(security.getCompound(Constant.Nbt.OWNER));
+            if (nbt.contains(MLConstant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText(MLConstant.TranslationKey.CURRENT_ENERGY, new LiteralText(String.valueOf(nbt.getInt(MLConstant.Nbt.ENERGY))).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
+            if (nbt.contains(MLConstant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
+                NbtCompound security = nbt.getCompound(MLConstant.Nbt.SECURITY);
+                if (security.contains(MLConstant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
+                    GameProfile profile = NbtHelper.toGameProfile(security.getCompound(MLConstant.Nbt.OWNER));
                     if (profile != null) {
-                        MutableText text1 = new TranslatableText(Constant.TranslationKey.OWNER, new LiteralText(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
+                        MutableText text1 = new TranslatableText(MLConstant.TranslationKey.OWNER, new LiteralText(profile.getName()).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE);
                         if (Screen.hasControlDown()) {
-                            text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
+                            text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(MLConstant.Text.AQUA_STYLE));
                         }
                         tooltip.add(text1);
                     } else {
-                        tooltip.add(new TranslatableText(Constant.TranslationKey.OWNER, new TranslatableText(Constant.TranslationKey.UNKNOWN).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
+                        tooltip.add(new TranslatableText(MLConstant.TranslationKey.OWNER, new TranslatableText(MLConstant.TranslationKey.UNKNOWN).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
                     }
-                    tooltip.add(new TranslatableText(Constant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(Constant.Nbt.ACCESS_LEVEL)).getName()).setStyle(Constant.Text.GREEN_STYLE));
+                    tooltip.add(new TranslatableText(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
+            tooltip.add(new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
         }
     }
 
@@ -232,7 +232,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         NbtCompound nbt = (stack.getNbt() != null ? stack.getNbt() : new NbtCompound());
         BlockEntity blockEntity = view.getBlockEntity(pos);
         if (blockEntity != null) { // todo: limit to IO config
-            nbt.put(Constant.Nbt.BLOCK_ENTITY_TAG, blockEntity.createNbt());
+            nbt.put(MLConstant.Nbt.BLOCK_ENTITY_TAG, blockEntity.createNbt());
         }
 
         stack.setNbt(nbt);

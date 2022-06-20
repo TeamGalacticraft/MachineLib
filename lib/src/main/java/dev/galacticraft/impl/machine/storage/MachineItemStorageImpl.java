@@ -32,7 +32,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.compat.ReadOnlySubInv;
 import dev.galacticraft.impl.machine.ModCount;
 import dev.galacticraft.impl.machine.storage.slot.ItemSlot;
@@ -380,7 +380,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         NbtList list = new NbtList();
         for (ItemSlot itemSlot : this.inventory) {
             NbtCompound compound = itemSlot.getResource().toNbt();
-            compound.putLong(Constant.Nbt.AMOUNT, itemSlot.getAmount());
+            compound.putLong(MLConstant.Nbt.AMOUNT, itemSlot.getAmount());
             list.add(compound);
         }
         return list;
@@ -392,7 +392,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
             NbtList list = ((NbtList) nbt);
             for (int i = 0; i < list.size(); i++) {
                 NbtCompound compound = list.getCompound(i);
-                this.getSlot(i).setStackUnsafe(ItemVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
+                this.getSlot(i).setStackUnsafe(ItemVariant.fromNbt(compound), compound.getLong(MLConstant.Nbt.AMOUNT), true);
             }
         }
     }

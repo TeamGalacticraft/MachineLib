@@ -34,7 +34,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MachineLibC2SPackets {
     public static void register() {
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "side_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "side_config"), (server, player, handler, buf, responseSender) -> {
             BlockFace face = BlockFace.values()[buf.readByte()];
             if (buf.readBoolean()) { //match
                 if (buf.readBoolean()) { // int or slot type
@@ -97,7 +97,7 @@ public class MachineLibC2SPackets {
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
@@ -109,7 +109,7 @@ public class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
@@ -121,7 +121,7 @@ public class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(Constant.MOD_ID, "tank_modify"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "tank_modify"), (server, player, handler, buf, responseSender) -> {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {

@@ -31,7 +31,7 @@ import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.MachineConfiguration;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.util.CachingSpriteAtlas;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -73,25 +73,25 @@ import java.util.function.Supplier;
 public class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final MachineBakedModel INSTANCE = new MachineBakedModel();
 
-    public static final Identifier MACHINE_ENERGY_IN = new Identifier(Constant.MOD_ID, "block/machine_power_input");
-    public static final Identifier MACHINE_ENERGY_OUT = new Identifier(Constant.MOD_ID, "block/machine_power_output");
-    public static final Identifier MACHINE_ENERGY_IO = new Identifier(Constant.MOD_ID, "block/machine_power_io");
+    public static final Identifier MACHINE_ENERGY_IN = new Identifier(MLConstant.MOD_ID, "block/machine_power_input");
+    public static final Identifier MACHINE_ENERGY_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_power_output");
+    public static final Identifier MACHINE_ENERGY_IO = new Identifier(MLConstant.MOD_ID, "block/machine_power_io");
 
-    public static final Identifier MACHINE_FLUID_IN = new Identifier(Constant.MOD_ID, "block/machine_fluid_input");
-    public static final Identifier MACHINE_FLUID_OUT = new Identifier(Constant.MOD_ID, "block/machine_fluid_output");
-    public static final Identifier MACHINE_FLUID_IO = new Identifier(Constant.MOD_ID, "block/machine_fluid_io");
+    public static final Identifier MACHINE_FLUID_IN = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_input");
+    public static final Identifier MACHINE_FLUID_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_output");
+    public static final Identifier MACHINE_FLUID_IO = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_io");
 
-    public static final Identifier MACHINE_ITEM_IN = new Identifier(Constant.MOD_ID, "block/machine_item_input");
-    public static final Identifier MACHINE_ITEM_OUT = new Identifier(Constant.MOD_ID, "block/machine_item_output");
-    public static final Identifier MACHINE_ITEM_IO = new Identifier(Constant.MOD_ID, "block/machine_item_io");
+    public static final Identifier MACHINE_ITEM_IN = new Identifier(MLConstant.MOD_ID, "block/machine_item_input");
+    public static final Identifier MACHINE_ITEM_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_item_output");
+    public static final Identifier MACHINE_ITEM_IO = new Identifier(MLConstant.MOD_ID, "block/machine_item_io");
 
-    public static final Identifier MACHINE_GAS_IN = new Identifier(Constant.MOD_ID, "block/machine_gas_input");
-    public static final Identifier MACHINE_GAS_OUT = new Identifier(Constant.MOD_ID, "block/machine_gas_output");
-    public static final Identifier MACHINE_GAS_IO = new Identifier(Constant.MOD_ID, "block/machine_gas_io");
+    public static final Identifier MACHINE_GAS_IN = new Identifier(MLConstant.MOD_ID, "block/machine_gas_input");
+    public static final Identifier MACHINE_GAS_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_gas_output");
+    public static final Identifier MACHINE_GAS_IO = new Identifier(MLConstant.MOD_ID, "block/machine_gas_io");
 
-    public static final Identifier MACHINE_ANY_IN = new Identifier(Constant.MOD_ID, "block/machine_any_input");
-    public static final Identifier MACHINE_ANY_OUT = new Identifier(Constant.MOD_ID, "block/machine_any_output");
-    public static final Identifier MACHINE_ANY_IO = new Identifier(Constant.MOD_ID, "block/machine_any_io");
+    public static final Identifier MACHINE_ANY_IN = new Identifier(MLConstant.MOD_ID, "block/machine_any_input");
+    public static final Identifier MACHINE_ANY_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_any_output");
+    public static final Identifier MACHINE_ANY_IO = new Identifier(MLConstant.MOD_ID, "block/machine_any_io");
 
     private static final ModelTransformation ITEM_TRANSFORMATION = new ModelTransformation(
             new Transformation(new Vec3f(75, 45, 0), new Vec3f(0, 0.25f, 0), new Vec3f(0.375f, 0.375f, 0.375f)),
@@ -213,8 +213,8 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
         NbtCompound tag = stack.getNbt();
-        if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, NbtElement.COMPOUND_TYPE)) {
-            CONFIGURATION.readNbt(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG));
+        if (tag != null && tag.contains(MLConstant.Nbt.BLOCK_ENTITY_TAG, NbtElement.COMPOUND_TYPE)) {
+            CONFIGURATION.readNbt(tag.getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG));
             ConfiguredMachineFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),

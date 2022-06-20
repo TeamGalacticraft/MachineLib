@@ -25,7 +25,7 @@ package dev.galacticraft.impl.machine.storage.io;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -44,7 +44,7 @@ import java.util.function.Predicate;
  */
 public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T, V> {
     static {
-        Registry.register(REGISTRY, new Identifier(Constant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), new TranslatableText(Constant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
+        Registry.register(REGISTRY, new Identifier(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), new TranslatableText(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
     }
 
     private final @NotNull RegistryEntry.Reference<SlotType<?, ?>> reference = REGISTRY.createEntry(this);

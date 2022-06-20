@@ -24,7 +24,7 @@ package dev.galacticraft.api.screen;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.client.screen.Tank;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.screen.property.StatusProperty;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -177,7 +177,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
                     handler.sync(buf);
                 }
             }
-            ServerPlayNetworking.send(((ServerPlayerEntity) this.player), new Identifier(Constant.MOD_ID, "storage_sync"), buf);
+            ServerPlayNetworking.send(((ServerPlayerEntity) this.player), new Identifier(MLConstant.MOD_ID, "storage_sync"), buf);
         }
     }
 

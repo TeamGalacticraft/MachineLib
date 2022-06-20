@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine;
 
 import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.machine.MachineStatusImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.text.Text;
@@ -44,11 +44,11 @@ public interface MachineStatus {
      * Registry for machine statuses.
      * All machine statuses should be registered in this registry to be used.
      */
-    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", RegistryKey.<MachineStatus>ofRegistry(new Identifier(Constant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", RegistryKey.<MachineStatus>ofRegistry(new Identifier(MLConstant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
     /**
      * Default machine status.
      */
-    MachineStatus INVALID = createAndRegister(new Identifier(Constant.MOD_ID, "invalid"), new TranslatableText(Constant.TranslationKey.STATUS_INVALID), Type.OTHER);
+    MachineStatus INVALID = createAndRegister(new Identifier(MLConstant.MOD_ID, "invalid"), new TranslatableText(MLConstant.TranslationKey.STATUS_INVALID), Type.OTHER);
 
     /**
      * Creates a new machine status and registers it in the registry.

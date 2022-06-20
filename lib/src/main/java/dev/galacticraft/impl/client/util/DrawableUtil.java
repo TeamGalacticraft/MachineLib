@@ -23,7 +23,7 @@
 package dev.galacticraft.impl.client.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
@@ -55,9 +55,9 @@ public class DrawableUtil {
     public static void drawOxygenBuffer(MatrixStack matrices, int x, int y, float scale) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
-        drawProgressTexture(matrices, x, y, 0, Constant.TextureCoordinate.OXYGEN_BACKGROUND_X, Constant.TextureCoordinate.OXYGEN_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
-        drawProgressTexture(matrices, x, (y + Constant.TextureCoordinate.OVERLAY_HEIGHT - (Constant.TextureCoordinate.OVERLAY_HEIGHT * scale)), 0, Constant.TextureCoordinate.OXYGEN_X, Constant.TextureCoordinate.OXYGEN_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+        RenderSystem.setShaderTexture(0, MLConstant.ScreenTexture.OVERLAY_BARS);
+        drawProgressTexture(matrices, x, y, 0, MLConstant.TextureCoordinate.OXYGEN_BACKGROUND_X, MLConstant.TextureCoordinate.OXYGEN_BACKGROUND_Y, MLConstant.TextureCoordinate.OVERLAY_WIDTH, MLConstant.TextureCoordinate.OVERLAY_HEIGHT, MLConstant.TextureCoordinate.OVERLAY_TEX_WIDTH, MLConstant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+        drawProgressTexture(matrices, x, (y + MLConstant.TextureCoordinate.OVERLAY_HEIGHT - (MLConstant.TextureCoordinate.OVERLAY_HEIGHT * scale)), 0, MLConstant.TextureCoordinate.OXYGEN_X, MLConstant.TextureCoordinate.OXYGEN_Y, MLConstant.TextureCoordinate.OVERLAY_WIDTH, MLConstant.TextureCoordinate.OVERLAY_HEIGHT * scale, MLConstant.TextureCoordinate.OVERLAY_TEX_WIDTH, MLConstant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
     }
 
     public static boolean isWithin(double mouseX, double mouseY, int x, int y, int width, int height) {

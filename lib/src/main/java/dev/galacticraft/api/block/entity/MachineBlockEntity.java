@@ -35,7 +35,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.api.transfer.StateCachingStorageProvider;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -140,7 +140,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state) {
         super(type, pos, state);
-        this.name = state.getBlock().getName().setStyle(Constant.Text.DARK_GRAY_STYLE);
+        this.name = state.getBlock().getName().setStyle(MLConstant.Text.DARK_GRAY_STYLE);
     }
 
     /**
@@ -488,11 +488,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
-        nbt.put(Constant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
-        nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
-        nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
+        nbt.put(MLConstant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
+        nbt.put(MLConstant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
+        nbt.put(MLConstant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
         this.configuration.writeNbt(nbt);
-        nbt.putBoolean(Constant.Nbt.DISABLE_DROPS, this.disableDrops);
+        nbt.putBoolean(MLConstant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
     /**
@@ -502,11 +502,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        if (nbt.contains(Constant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ENERGY_STORAGE)));
-        if (nbt.contains(Constant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ITEM_STORAGE)));
-        if (nbt.contains(Constant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.FLUID_STORAGE)));
+        if (nbt.contains(MLConstant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ENERGY_STORAGE)));
+        if (nbt.contains(MLConstant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ITEM_STORAGE)));
+        if (nbt.contains(MLConstant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.FLUID_STORAGE)));
         this.configuration.readNbt(nbt);
-        this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
+        this.disableDrops = nbt.getBoolean(MLConstant.Nbt.DISABLE_DROPS);
         assert this.world != null;
         if (this.world.isClient){
             MinecraftClient.getInstance().worldRenderer.scheduleBlockRender(this.pos.getX(), this.pos.getY(), this.pos.getZ());

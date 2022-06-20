@@ -24,7 +24,7 @@ package dev.galacticraft.api.block.entity;
 
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.MachineStatuses;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.block.BlockState;
@@ -304,15 +304,15 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     @Override
     public void writeNbt(@NotNull NbtCompound nbt) {
         super.writeNbt(nbt);
-        nbt.putInt(Constant.Nbt.PROGRESS, this.getProgress());
-        nbt.putInt(Constant.Nbt.MAX_PROGRESS, this.getMaxProgress());
+        nbt.putInt(MLConstant.Nbt.PROGRESS, this.getProgress());
+        nbt.putInt(MLConstant.Nbt.MAX_PROGRESS, this.getMaxProgress());
     }
 
     @Override
     public void readNbt(@NotNull NbtCompound nbt) {
         super.readNbt(nbt);
-        this.progress = nbt.getInt(Constant.Nbt.PROGRESS);
-        this.maxProgress = nbt.getInt(Constant.Nbt.MAX_PROGRESS);
+        this.progress = nbt.getInt(MLConstant.Nbt.PROGRESS);
+        this.maxProgress = nbt.getInt(MLConstant.Nbt.MAX_PROGRESS);
     }
 
     @Override

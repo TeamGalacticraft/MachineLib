@@ -25,7 +25,7 @@ package dev.galacticraft.impl.client.screen;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -112,7 +112,7 @@ public class TankImpl implements Tank {
             List<Text> lines = new ArrayList<>(2);
             assert client.currentScreen != null;
             if (this.getResource().isBlank()) {
-                client.currentScreen.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
+                client.currentScreen.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.TANK_EMPTY).setStyle(MLConstant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
             long amount = this.getAmount();
@@ -121,10 +121,10 @@ public class TankImpl implements Tank {
                     : new LiteralText(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
 
             TranslatableText translatableText;
-            translatableText = new TranslatableText(Constant.TranslationKey.TANK_CONTENTS);
+            translatableText = new TranslatableText(MLConstant.TranslationKey.TANK_CONTENTS);
 
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
-            lines.add(new TranslatableText(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
+            lines.add(translatableText.setStyle(MLConstant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(MLConstant.Text.BLUE_STYLE));
+            lines.add(new TranslatableText(MLConstant.TranslationKey.TANK_AMOUNT).setStyle(MLConstant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
             client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
         }
         matrices.translate(0, 0, -1);

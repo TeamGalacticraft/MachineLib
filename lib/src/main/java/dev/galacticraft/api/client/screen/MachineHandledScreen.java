@@ -37,7 +37,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
-import dev.galacticraft.impl.Constant;
+import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import io.netty.buffer.ByteBufAllocator;
@@ -267,10 +267,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         if (this.machine != null) {
             final MachineBlockEntity machine = this.machine;
             boolean secondary = false;
-            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
+            RenderSystem.setShaderTexture(0, MLConstant.ScreenTexture.MACHINE_CONFIG_PANELS);
             for (Tab tab : Tab.values()) { // 0, 1, 2, 3
                 if (secondary) matrices.translate(0, SPACING, 0);
-                this.drawTexture(matrices, this.x + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.backgroundWidth), this.y + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
+                this.drawTexture(matrices, this.x + (tab.isLeft() ? tab.isOpen() ? -MLConstant.TextureCoordinate.PANEL_WIDTH : -22 : this.backgroundWidth), this.y + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? MLConstant.TextureCoordinate.PANEL_HEIGHT : MLConstant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? MLConstant.TextureCoordinate.PANEL_WIDTH : MLConstant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? MLConstant.TextureCoordinate.PANEL_HEIGHT : MLConstant.TextureCoordinate.TAB_HEIGHT);
                 if (secondary) matrices.translate(0, -SPACING, 0);
                 secondary = !secondary;
             }
@@ -279,32 +279,32 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (Tab.REDSTONE.isOpen()) {
                 matrices.push();
-                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
-                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.IGNORE);
-                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.LOW);
-                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.HIGH);
+                matrices.translate(-MLConstant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
+                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + MLConstant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.IGNORE);
+                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + MLConstant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.LOW);
+                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + MLConstant.TextureCoordinate.PANEL_WIDTH - this.x, mouseY - SPACING - this.y, delta, machine.getRedstoneActivation() == RedstoneActivation.HIGH);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
                 this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
                 this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
                 this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_STATE,
-                        machine.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_STATUS,
-                        !machine.isDisabled(this.world) ? new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
-                                : new TranslatableText(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
-                        .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.textRenderer.fontHeight, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION)
+                        .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_STATE,
+                        machine.getRedstoneActivation().getName()).setStyle(MLConstant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_STATUS,
+                        !machine.isDisabled(this.world) ? new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVE).setStyle(MLConstant.Text.GREEN_STYLE)
+                                : new TranslatableText(MLConstant.TranslationKey.REDSTONE_DISABLED).setStyle(MLConstant.Text.DARK_RED_STYLE))
+                        .setStyle(MLConstant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.textRenderer.fontHeight, 0xFFFFFFFF);
 
                 matrices.pop();
             }
             if (Tab.CONFIGURATION.isOpen()) {
                 matrices.push();
-                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+                matrices.translate(-MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.CONFIGURATION)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.CONFIGURATION)
+                        .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
 
                 RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
                 this.drawMachineFace(matrices, TOP_FACE_X, TOP_FACE_Y, machine, BlockFace.TOP);
@@ -320,9 +320,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 matrices.translate(this.backgroundWidth, SPACING, 0);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
                 RenderSystem.setShaderTexture(0, this.ownerSkin);
-                drawTexture(matrices, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.STATISTICS)
-                        .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+                drawTexture(matrices, OWNER_FACE_X, OWNER_FACE_Y, MLConstant.TextureCoordinate.OWNER_FACE_WIDTH, MLConstant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.STATISTICS)
+                        .setStyle(MLConstant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
                 List<OrderedText> text = this.textRenderer.wrapLines(new TranslatableText((machine.getCachedState() != null ? machine.getCachedState()
                         : this.machine.getCachedState()).getBlock().getTranslationKey()), 64);
                 int offsetY = 0;
@@ -339,21 +339,21 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             if (Tab.SECURITY.isOpen()) {
                 matrices.push();
-                matrices.translate(this.backgroundWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
-                RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-                this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+                matrices.translate(this.backgroundWidth, MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+                RenderSystem.setShaderTexture(0, MLConstant.ScreenTexture.MACHINE_CONFIG_PANELS);
+                this.drawTexture(matrices, PANEL_ICON_X, PANEL_ICON_Y, MLConstant.TextureCoordinate.ICON_LOCK_PRIVATE_U, MLConstant.TextureCoordinate.ICON_LOCK_PRIVATE_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
 
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !machine.getSecurity().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.TEAM || !machine.getSecurity().isOwner(this.handler.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !machine.getSecurity().isOwner(this.handler.player));
-                this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-                this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-                this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.backgroundWidth - this.x, mouseY - (MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.backgroundWidth - this.x, mouseY - (MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.TEAM || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.backgroundWidth - this.x, mouseY - (MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.y, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !machine.getSecurity().isOwner(this.handler.player));
+                this.drawTexture(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, MLConstant.TextureCoordinate.ICON_LOCK_PRIVATE_U, MLConstant.TextureCoordinate.ICON_LOCK_PRIVATE_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
+                this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, MLConstant.TextureCoordinate.ICON_LOCK_PARTY_U, MLConstant.TextureCoordinate.ICON_LOCK_PARTY_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
+                this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, MLConstant.TextureCoordinate.ICON_LOCK_PUBLIC_U, MLConstant.TextureCoordinate.ICON_LOCK_PUBLIC_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.SECURITY)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(Constant.TranslationKey.ACCESS_LEVEL,
-                        machine.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.SECURITY)
+                        .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.ACCESS_LEVEL,
+                        machine.getSecurity().getAccessLevel().getName()).setStyle(MLConstant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
 //                assert machine.getSecurity().getOwner() != null;
 //                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
 //                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
@@ -429,15 +429,15 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     public void drawButton(MatrixStack matrices, int x, int y, double mouseX, double mouseY, float delta, boolean pressed) {
         assert this.client != null;
-        RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
+        RenderSystem.setShaderTexture(0, MLConstant.ScreenTexture.MACHINE_CONFIG_PANELS);
         if (pressed) {
-            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            this.drawTexture(matrices, x, y, MLConstant.TextureCoordinate.BUTTON_U, MLConstant.TextureCoordinate.BUTTON_PRESSED_V, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT);
             return;
         }
-        if (DrawableUtil.isWithin(mouseX, mouseY, x, y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+        if (DrawableUtil.isWithin(mouseX, mouseY, x, y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
+            this.drawTexture(matrices, x, y, MLConstant.TextureCoordinate.BUTTON_U, MLConstant.TextureCoordinate.BUTTON_HOVERED_V, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT);
         } else {
-            this.drawTexture(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            this.drawTexture(matrices, x, y, MLConstant.TextureCoordinate.BUTTON_U, MLConstant.TextureCoordinate.BUTTON_V, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT);
         }
     }
 
@@ -458,36 +458,36 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.REDSTONE.isOpen()) {
-            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.REDSTONE.click();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.IGNORE);
                 this.playButtonSound();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.LOW);
                 this.playButtonSound();
                 return true;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.setRedstone(RedstoneActivation.HIGH);
                 this.playButtonSound();
                 return true;
             }
             if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.PANEL_HEIGHT)) {
                     return true;
                 }
             }
         } else {
-            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.REDSTONE.click();
                 return true;
             }
@@ -495,9 +495,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
+            mouseX += MLConstant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.CONFIGURATION.click();
                 return true;
             }
@@ -534,13 +534,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 }
             }
         } else {
-            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.TAB_WIDTH;
             if (Tab.REDSTONE.isOpen()) {
-                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.CONFIGURATION.click();
                 return true;
             }
@@ -550,12 +550,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX -= this.backgroundWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.STATS.click();
                 return true;
             }
         } else {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.STATS.click();
                 return true;
             }
@@ -564,24 +564,24 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseY = mY - this.y;
         mouseX -= this.backgroundWidth;
         if (Tab.SECURITY.isOpen()) {
-            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
+            mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.PANEL_UPPER_HEIGHT)) {
                 Tab.SECURITY.click();
                 return true;
             }
 
             if (machine.getSecurity().isOwner(this.handler.player)) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.setAccessibility(AccessLevel.PRIVATE);
                     this.playButtonSound();
                     return true;
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.setAccessibility(AccessLevel.TEAM);
                     this.playButtonSound();
                     return true;
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.setAccessibility(AccessLevel.PUBLIC);
                     this.playButtonSound();
                     return true;
@@ -589,11 +589,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             }
         } else {
             if (Tab.STATS.isOpen()) {
-                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
                 Tab.SECURITY.click();
             }
         }
@@ -606,7 +606,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     protected void setAccessibility(@NotNull AccessLevel accessLevel) {
         this.machine.getSecurity().setAccessLevel(accessLevel);
-        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
+        ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "security_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
     }
 
     /**
@@ -615,7 +615,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     protected void setRedstone(@NotNull RedstoneActivation redstone) {
         this.machine.setRedstone(redstone);
-        ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "redstone_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
+        ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "redstone_config"), new PacketByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
     }
 
     /**
@@ -630,29 +630,29 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.REDSTONE.isOpen()) {
-            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.IGNORE.getName(), mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.LOW.getName(), mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                 this.renderTooltip(matrices, RedstoneActivation.HIGH.getName(), mX, mY);
             }
         } else {
-            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.REDSTONE_ACTIVATION).setStyle(Constant.Text.RED_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION).setStyle(MLConstant.Text.RED_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            mouseX += MLConstant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
                 this.renderFaceTooltip(matrices, BlockFace.TOP, mX, mY);
             }
@@ -672,14 +672,14 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.renderFaceTooltip(matrices, BlockFace.BOTTOM, mX, mY);
             }
         } else {
-            mouseX += Constant.TextureCoordinate.TAB_WIDTH;
+            mouseX += MLConstant.TextureCoordinate.TAB_WIDTH;
             if (Tab.REDSTONE.isOpen()) {
-                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.PANEL_HEIGHT + SPACING;
             } else {
-                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.CONFIGURATION).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
@@ -687,47 +687,47 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         mouseX -= this.backgroundWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, MLConstant.TextureCoordinate.OWNER_FACE_WIDTH, MLConstant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
                 assert machine.getSecurity().getOwner() != null;
                 this.renderTooltip(matrices, new LiteralText(machine.getSecurity().getOwner().getName()), mX, mY);
             }
         } else {
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.STATISTICS).setStyle(MLConstant.Text.YELLOW_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
         mouseY = mY - this.y;
         if (Tab.SECURITY.isOpen()) {
             mouseX -= this.backgroundWidth;
-            mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+            mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
 
             if (machine.getSecurity().isOwner(this.handler.player)) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.renderTooltip(matrices, AccessLevel.PRIVATE.getName(), mX, mY);
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.renderTooltip(matrices, AccessLevel.TEAM.getName(), mX, mY);
                 }
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.renderTooltip(matrices, AccessLevel.PUBLIC.getName(), mX, mY);
                 }
             } else {
-                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
+                if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)
+                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)
+                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
+                    this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
         } else {
             mouseX -= this.backgroundWidth;
             if (Tab.STATS.isOpen()) {
-                mouseY -= Constant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.PANEL_HEIGHT + SPACING + SPACING;
             } else {
-                mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
+                mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(Constant.TranslationKey.SECURITY).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+            if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
+                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.SECURITY).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
             }
         }
     }
@@ -747,10 +747,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
         if (configuredFace.getMatching() != null) {
             if (configuredFace.getMatching().left().isPresent()) {
-                TOOLTIP_ARRAY.add(new TranslatableText(Constant.TranslationKey.MATCHES, new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText(MLConstant.TranslationKey.MATCHES, new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(MLConstant.Text.AQUA_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
             } else {
                 assert configuredFace.getMatching().right().isPresent();
-                TOOLTIP_ARRAY.add(new TranslatableText(Constant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(new TranslatableText(MLConstant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(MLConstant.Text.GRAY_STYLE));
             }
         }
         this.renderTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -809,19 +809,19 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         if (this.machine.energyStorage().getCapacity() > 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
-            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, this.y + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            RenderSystem.setShaderTexture(0, MLConstant.ScreenTexture.OVERLAY_BARS);
+            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, this.y + this.capacitorY, 0.01f, MLConstant.TextureCoordinate.ENERGY_BACKGROUND_X, MLConstant.TextureCoordinate.ENERGY_BACKGROUND_Y, MLConstant.TextureCoordinate.OVERLAY_WIDTH, MLConstant.TextureCoordinate.OVERLAY_HEIGHT, MLConstant.TextureCoordinate.OVERLAY_TEX_WIDTH, MLConstant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
             float scale = (float) ((double) this.machine.energyStorage().getAmount() / (double) this.machine.energyStorage().getCapacity());
-            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, (this.y + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            DrawableUtil.drawProgressTexture(matrices, this.x + this.capacitorX, (this.y + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, MLConstant.TextureCoordinate.ENERGY_X, MLConstant.TextureCoordinate.ENERGY_Y, MLConstant.TextureCoordinate.OVERLAY_WIDTH, MLConstant.TextureCoordinate.OVERLAY_HEIGHT * scale, MLConstant.TextureCoordinate.OVERLAY_TEX_WIDTH, MLConstant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.x + this.capacitorX, this.y + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Text> lines = new ArrayList<>();
                 MachineStatus status = this.machine.getStatus();
                 if (status != MachineStatus.INVALID) {
-                    lines.add(new TranslatableText(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.name()));
+                    lines.add(new TranslatableText(MLConstant.TranslationKey.STATUS).setStyle(MLConstant.Text.GRAY_STYLE).append(status.name()));
                 }
-                lines.add(new TranslatableText(Constant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-                lines.add(new TranslatableText(Constant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                lines.add(new TranslatableText(MLConstant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
+                lines.add(new TranslatableText(MLConstant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.RED_STYLE));
                 this.appendEnergyTooltip(lines);
 
                 assert this.client != null;
@@ -925,8 +925,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     private @NotNull Int2IntArrayMap getTankColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.x - Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+            mouseX -= this.x - MLConstant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= this.y + MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidStorage()));
@@ -966,8 +966,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     protected Int2IntArrayMap getItemColor(int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.x - Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+            mouseX -= this.x - MLConstant.TextureCoordinate.PANEL_WIDTH;
+            mouseY -= this.y + MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
@@ -1020,8 +1020,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     @ApiStatus.Internal
     private void handleSlotHighlight(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= Constant.TextureCoordinate.PANEL_WIDTH + this.x;
-            mouseY -= this.y + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+            mouseX -= MLConstant.TextureCoordinate.PANEL_WIDTH + this.x;
+            mouseY -= this.y + MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
                 groupStack(matrices, list);
@@ -1111,7 +1111,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 if (tankMod) {
                     PacketByteBuf packetByteBuf = PacketByteBufs.create().writeVarInt(this.handler.syncId);
                     packetByteBuf.writeInt(this.focusedTank.getId());
-                    ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "tank_modify"), packetByteBuf);
+                    ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "tank_modify"), packetByteBuf);
                 }
             }
             return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
@@ -1181,10 +1181,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * The four different types of configuration panel.
      */
     public enum Tab {
-        REDSTONE(Constant.TextureCoordinate.TAB_REDSTONE_U, Constant.TextureCoordinate.TAB_REDSTONE_V, Constant.TextureCoordinate.PANEL_REDSTONE_U, Constant.TextureCoordinate.PANEL_REDSTONE_V, true),
-        CONFIGURATION(Constant.TextureCoordinate.TAB_CONFIG_U, Constant.TextureCoordinate.TAB_CONFIG_V, Constant.TextureCoordinate.PANEL_CONFIG_U, Constant.TextureCoordinate.PANEL_CONFIG_V, true),
-        STATS(Constant.TextureCoordinate.TAB_STATS_U, Constant.TextureCoordinate.TAB_STATS_V, Constant.TextureCoordinate.PANEL_STATS_U, Constant.TextureCoordinate.PANEL_STATS_V, false),
-        SECURITY(Constant.TextureCoordinate.TAB_SECURITY_U, Constant.TextureCoordinate.TAB_SECURITY_V, Constant.TextureCoordinate.PANEL_SECURITY_U, Constant.TextureCoordinate.PANEL_SECURITY_V, false);
+        REDSTONE(MLConstant.TextureCoordinate.TAB_REDSTONE_U, MLConstant.TextureCoordinate.TAB_REDSTONE_V, MLConstant.TextureCoordinate.PANEL_REDSTONE_U, MLConstant.TextureCoordinate.PANEL_REDSTONE_V, true),
+        CONFIGURATION(MLConstant.TextureCoordinate.TAB_CONFIG_U, MLConstant.TextureCoordinate.TAB_CONFIG_V, MLConstant.TextureCoordinate.PANEL_CONFIG_U, MLConstant.TextureCoordinate.PANEL_CONFIG_V, true),
+        STATS(MLConstant.TextureCoordinate.TAB_STATS_U, MLConstant.TextureCoordinate.TAB_STATS_V, MLConstant.TextureCoordinate.PANEL_STATS_U, MLConstant.TextureCoordinate.PANEL_STATS_V, false),
+        SECURITY(MLConstant.TextureCoordinate.TAB_SECURITY_U, MLConstant.TextureCoordinate.TAB_SECURITY_V, MLConstant.TextureCoordinate.PANEL_SECURITY_U, MLConstant.TextureCoordinate.PANEL_SECURITY_V, false);
 
         private final int tabU;
         private final int tabV;
@@ -1324,7 +1324,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             sideOption.setMatching(null);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeByte(face.ordinal()).writeBoolean(false).writeByte(sideOption.getType().getOrdinal()).writeByte(sideOption.getFlow().ordinal());
-            ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
+            ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "side_config"), buf);
 
         }), //LEFT
         CHANGE_MATCH((player, machine, face, back, reset) -> {
@@ -1334,7 +1334,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 sideOption.setMatching(null);
                 PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
                 buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(-1);
-                ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
+                ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "side_config"), buf);
                 return;
             }
 
@@ -1376,7 +1376,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             sideOption.setMatching(Either.right(slotTypes[i]));
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(SlotType.REGISTRY.getRawId(slotTypes[i]));
-            ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
+            ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "side_config"), buf);
         }), //RIGHT
         CHANGE_MATCH_SLOT((player, machine, face, back, reset) -> {
             ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
@@ -1385,7 +1385,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 sideOption.setMatching(null);
                 PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
                 buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(true).writeInt(-1);
-                ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
+                ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "side_config"), buf);
                 return;
             }
             int i = 0;
@@ -1411,7 +1411,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             buf.writeByte(face.ordinal());
             buf.writeBoolean(true).writeBoolean(true);
             buf.writeInt(i);
-            ClientPlayNetworking.send(new Identifier(Constant.MOD_ID, "side_config"), buf);
+            ClientPlayNetworking.send(new Identifier(MLConstant.MOD_ID, "side_config"), buf);
         }); //MID
 
 
