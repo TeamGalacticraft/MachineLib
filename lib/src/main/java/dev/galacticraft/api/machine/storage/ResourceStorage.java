@@ -31,7 +31,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.Clearable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +120,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param tag The tag to match.
      * @return The extracted resources.
      */
-    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag) {
+    default @NotNull S simulateExtract(int slot, @NotNull TagKey<T> tag) {
         return this.simulateExtract(slot, tag, null);
     }
 
@@ -131,7 +131,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param amount The amount of resources to extract.
      * @return The extracted resources.
      */
-    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, long amount) {
+    default @NotNull S simulateExtract(int slot, @NotNull TagKey<T> tag, long amount) {
         return this.simulateExtract(slot, tag, amount, null);
     }
 
@@ -229,7 +229,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param tag The tag to match.
      * @return The extracted resources.
      */
-    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, @Nullable TransactionContext context) {
+    default @NotNull S simulateExtract(int slot, @NotNull TagKey<T> tag, @Nullable TransactionContext context) {
         try (Transaction transaction = Transaction.openNested(context)) {
             return this.extract(slot, tag, transaction);
         }
@@ -242,7 +242,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param amount The amount of resources to extract.
      * @return The extracted resources.
      */
-    default @NotNull S simulateExtract(int slot, @NotNull Tag<T> tag, long amount, @Nullable TransactionContext context) {
+    default @NotNull S simulateExtract(int slot, @NotNull TagKey<T> tag, long amount, @Nullable TransactionContext context) {
         try (Transaction transaction = Transaction.openNested(context)) {
             return this.extract(slot, tag, amount, transaction);
         }
@@ -350,7 +350,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param tag The tag to match.
      * @return The extracted resources.
      */
-    default @NotNull S extract(int slot, @NotNull Tag<T> tag) {
+    default @NotNull S extract(int slot, @NotNull TagKey<T> tag) {
         return this.extract(slot, tag, null);
     }
 
@@ -361,7 +361,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param amount The amount of resources to extract.
      * @return The extracted resources.
      */
-    default @NotNull S extract(int slot, @NotNull Tag<T> tag, long amount) {
+    default @NotNull S extract(int slot, @NotNull TagKey<T> tag, long amount) {
         return this.extract(slot, tag, amount, null);
     }
 
@@ -447,7 +447,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The extracted resources.
      */
-    default @NotNull S extract(int slot, @NotNull Tag<T> tag, @Nullable TransactionContext context) {
+    default @NotNull S extract(int slot, @NotNull TagKey<T> tag, @Nullable TransactionContext context) {
         return this.extract(slot, tag, Long.MAX_VALUE, context);
     }
 
@@ -511,7 +511,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The extracted resources.
      */
-    @NotNull S extract(int slot, @NotNull Tag<T> tag, long amount, @Nullable TransactionContext context);
+    @NotNull S extract(int slot, @NotNull TagKey<T> tag, long amount, @Nullable TransactionContext context);
 
     /**
      * Extracts the given amount of resources of the given type from the given slot.
@@ -624,15 +624,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @return Whether any of the given resources are present in this inventory.
      */
     boolean containsAny(@NotNull Collection<T> resources);
-
-    /**
-     * Returns whether any of the given resources of the tag are present in this inventory.
-     * @param tag The resources to check.
-     * @return Whether any of the given resources of the tag  are present in this inventory.
-     */
-    default boolean containsAny(@NotNull Tag<T> tag) {
-        return this.containsAny(tag.values());
-    }
 
     /**
      * Serializes this storage to nbt.

@@ -42,7 +42,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.nbt.NbtByte;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +120,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull FluidStack extract(int slot, @NotNull Tag<Fluid> tag, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack extract(int slot, @NotNull TagKey<Fluid> tag, long amount, @Nullable TransactionContext context) {
         return FluidStack.EMPTY;
     }
 
@@ -267,7 +267,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public Iterator<StorageView<FluidVariant>> iterator(TransactionContext transaction) {
+    public Iterator<StorageView<FluidVariant>> iterator() {
         return ObjectIterators.emptyIterator();
     }
 }

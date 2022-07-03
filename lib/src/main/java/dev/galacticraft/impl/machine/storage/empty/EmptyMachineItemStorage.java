@@ -44,7 +44,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtByte;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +115,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, @NotNull Tag<Item> tag, long amount, @Nullable TransactionContext context) {
+    public @NotNull ItemStack extract(int slot, @NotNull TagKey<Item> tag, long amount, @Nullable TransactionContext context) {
         return ItemStack.EMPTY;
     }
 
@@ -262,7 +262,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public Iterator<StorageView<ItemVariant>> iterator(TransactionContext transaction) {
+    public Iterator<StorageView<ItemVariant>> iterator() {
         return ObjectIterators.emptyIterator();
     }
 

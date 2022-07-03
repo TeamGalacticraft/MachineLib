@@ -29,7 +29,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Matrix4f;
@@ -88,8 +87,7 @@ public class DrawableUtil {
         bufferBuilder.vertex(matrices, x1, y1, z).texture(u1, v1).next();
         bufferBuilder.vertex(matrices, x1, y0, z).texture(u1, v0).next();
         bufferBuilder.vertex(matrices, x0, y0, z).texture(u0, v0).next();
-        bufferBuilder.end();
-        BufferRenderer.draw(bufferBuilder);
+        BufferRenderer.drawWithoutShader(bufferBuilder.end());
     }
 
     public static void drawTextureColor(MatrixStack matrices, int x, int y, int z, float u, float v, int width, int height, int textureHeight, int textureWidth, int red, int green, int blue, int alpha) {
@@ -107,8 +105,7 @@ public class DrawableUtil {
         bufferBuilder.vertex(matrices, (float)x1, (float)y1, (float)z).color(red, green, blue, alpha).texture(u1, v1).next();
         bufferBuilder.vertex(matrices, (float)x1, (float)y0, (float)z).color(red, green, blue, alpha).texture(u1, v0).next();
         bufferBuilder.vertex(matrices, (float)x0, (float)y0, (float)z).color(red, green, blue, alpha).texture(u0, v0).next();
-        bufferBuilder.end();
-        BufferRenderer.draw(bufferBuilder);
+        BufferRenderer.drawWithoutShader(bufferBuilder.end());
     }
 
     public static String roundForDisplay(double d, int places) {
@@ -124,11 +121,11 @@ public class DrawableUtil {
     @Contract(pure = true, value = "_ -> new")
     public static @NotNull MutableText getEnergyDisplay(long amount) {
         if (amount > 1_000_000L) {
-            return new LiteralText(roundForDisplay(amount / 1_000_000.0, 3) + " MgJ");
+            return Text.literal(roundForDisplay(amount / 1_000_000.0, 3) + " MgJ");
         } else if (amount > 1_000L) {
-            return new LiteralText(roundForDisplay(amount / 1_000.0, 3) + " kgJ");
+            return Text.literal(roundForDisplay(amount / 1_000.0, 3) + " kgJ");
         } else {
-            return new LiteralText(amount + " gJ");
+            return Text.literal(amount + " gJ");
         }
     }
 }

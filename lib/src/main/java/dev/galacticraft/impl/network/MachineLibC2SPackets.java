@@ -142,7 +142,7 @@ public class MachineLibC2SPackets {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (tank.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, eStorage.getFilter(tank.getIndex()), transaction);
+                        storedResource = StorageUtil.findStoredResource(storage, eStorage.getFilter(tank.getIndex()));
                     } else {
                         storedResource = tank.getResource();
                     }

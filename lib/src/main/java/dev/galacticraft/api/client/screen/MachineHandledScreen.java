@@ -76,10 +76,8 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
@@ -288,13 +286,13 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
                 this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION)
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION)
                         .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_STATE,
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.REDSTONE_STATE,
                         machine.getRedstoneActivation().getName()).setStyle(MLConstant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_STATUS,
-                        !machine.isDisabled(this.world) ? new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVE).setStyle(MLConstant.Text.GREEN_STYLE)
-                                : new TranslatableText(MLConstant.TranslationKey.REDSTONE_DISABLED).setStyle(MLConstant.Text.DARK_RED_STYLE))
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.REDSTONE_STATUS,
+                        !machine.isDisabled(this.world) ? Text.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVE).setStyle(MLConstant.Text.GREEN_STYLE)
+                                : Text.translatable(MLConstant.TranslationKey.REDSTONE_DISABLED).setStyle(MLConstant.Text.DARK_RED_STYLE))
                         .setStyle(MLConstant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.textRenderer.fontHeight, 0xFFFFFFFF);
 
                 matrices.pop();
@@ -303,7 +301,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 matrices.push();
                 matrices.translate(-MLConstant.TextureCoordinate.PANEL_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.CONFIGURATION)
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.CONFIGURATION)
                         .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
 
                 RenderSystem.setShaderTexture(0, PlayerScreenHandler.BLOCK_ATLAS_TEXTURE);
@@ -321,18 +319,18 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
                 RenderSystem.setShaderTexture(0, this.ownerSkin);
                 drawTexture(matrices, OWNER_FACE_X, OWNER_FACE_Y, MLConstant.TextureCoordinate.OWNER_FACE_WIDTH, MLConstant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.STATISTICS)
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.STATISTICS)
                         .setStyle(MLConstant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                List<OrderedText> text = this.textRenderer.wrapLines(new TranslatableText((machine.getCachedState() != null ? machine.getCachedState()
+                List<OrderedText> text = this.textRenderer.wrapLines(Text.translatable((machine.getCachedState() != null ? machine.getCachedState()
                         : this.machine.getCachedState()).getBlock().getTranslationKey()), 64);
                 int offsetY = 0;
                 for (OrderedText orderedText : text) {
                     this.textRenderer.draw(matrices, orderedText, 40, 22 + offsetY, 0xFFFFFFFF);
                     offsetY += this.textRenderer.fontHeight + 2;
                 }
-//                this.textRenderer.draw(matrices, new TranslatableText("ui.galacticraft.machine.stats.gjt", "N/A")
+//                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.gjt", "N/A")
 //                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
-                //                this.textRenderer.draw(matrices, new TranslatableText("ui.galacticraft.machine.stats.todo", "N/A")
+                //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.todo", "N/A")
 //                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
                 matrices.pop();
             }
@@ -350,12 +348,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.drawTexture(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, MLConstant.TextureCoordinate.ICON_LOCK_PARTY_U, MLConstant.TextureCoordinate.ICON_LOCK_PARTY_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
                 this.drawTexture(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, MLConstant.TextureCoordinate.ICON_LOCK_PUBLIC_U, MLConstant.TextureCoordinate.ICON_LOCK_PUBLIC_V, MLConstant.TextureCoordinate.ICON_WIDTH, MLConstant.TextureCoordinate.ICON_HEIGHT);
 
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.SECURITY)
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.SECURITY)
                         .setStyle(MLConstant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.textRenderer.drawWithShadow(matrices, new TranslatableText(MLConstant.TranslationKey.ACCESS_LEVEL,
+                this.textRenderer.drawWithShadow(matrices, Text.translatable(MLConstant.TranslationKey.ACCESS_LEVEL,
                         machine.getSecurity().getAccessLevel().getName()).setStyle(MLConstant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
 //                assert machine.getSecurity().getOwner() != null;
-//                this.textRenderer.drawWithShadow(matrices, new TranslatableText("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
+//                this.textRenderer.drawWithShadow(matrices, Text.translatable("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
 //                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
 
                 matrices.pop();
@@ -645,7 +643,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             mouseX += MLConstant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION).setStyle(MLConstant.Text.RED_STYLE), mX, mY);
+                this.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION).setStyle(MLConstant.Text.RED_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
@@ -679,7 +677,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.CONFIGURATION).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
+                this.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.CONFIGURATION).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
@@ -689,11 +687,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         if (Tab.STATS.isOpen()) {
             if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, MLConstant.TextureCoordinate.OWNER_FACE_WIDTH, MLConstant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
                 assert machine.getSecurity().getOwner() != null;
-                this.renderTooltip(matrices, new LiteralText(machine.getSecurity().getOwner().getName()), mX, mY);
+                this.renderTooltip(matrices, Text.literal(machine.getSecurity().getOwner().getName()), mX, mY);
             }
         } else {
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.STATISTICS).setStyle(MLConstant.Text.YELLOW_STYLE), mX, mY);
+                this.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.STATISTICS).setStyle(MLConstant.Text.YELLOW_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.x;
@@ -716,7 +714,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)
                     || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)
                     || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, MLConstant.TextureCoordinate.BUTTON_WIDTH, MLConstant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.ACCESS_DENIED), mX, mY);
+                    this.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
         } else {
@@ -727,7 +725,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 mouseY -= MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, MLConstant.TextureCoordinate.TAB_WIDTH, MLConstant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.SECURITY).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
+                this.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.SECURITY).setStyle(MLConstant.Text.BLUE_STYLE), mX, mY);
             }
         }
     }
@@ -747,10 +745,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         }
         if (configuredFace.getMatching() != null) {
             if (configuredFace.getMatching().left().isPresent()) {
-                TOOLTIP_ARRAY.add(new TranslatableText(MLConstant.TranslationKey.MATCHES, new LiteralText(String.valueOf(configuredFace.getMatching().left().get())).setStyle(MLConstant.Text.AQUA_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(Text.translatable(MLConstant.TranslationKey.MATCHES, Text.literal(String.valueOf(configuredFace.getMatching().left().get())).setStyle(MLConstant.Text.AQUA_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
             } else {
                 assert configuredFace.getMatching().right().isPresent();
-                TOOLTIP_ARRAY.add(new TranslatableText(MLConstant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(MLConstant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(Text.translatable(MLConstant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(MLConstant.Text.GRAY_STYLE));
             }
         }
         this.renderTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -818,10 +816,10 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 List<Text> lines = new ArrayList<>();
                 MachineStatus status = this.machine.getStatus();
                 if (status != MachineStatus.INVALID) {
-                    lines.add(new TranslatableText(MLConstant.TranslationKey.STATUS).setStyle(MLConstant.Text.GRAY_STYLE).append(status.name()));
+                    lines.add(Text.translatable(MLConstant.TranslationKey.STATUS).setStyle(MLConstant.Text.GRAY_STYLE).append(status.name()));
                 }
-                lines.add(new TranslatableText(MLConstant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
-                lines.add(new TranslatableText(MLConstant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.RED_STYLE));
+                lines.add(Text.translatable(MLConstant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
+                lines.add(Text.translatable(MLConstant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.RED_STYLE));
                 this.appendEnergyTooltip(lines);
 
                 assert this.client != null;

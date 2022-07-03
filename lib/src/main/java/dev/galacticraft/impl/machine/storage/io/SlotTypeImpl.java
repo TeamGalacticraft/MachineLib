@@ -27,10 +27,10 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryEntry;
@@ -44,20 +44,20 @@ import java.util.function.Predicate;
  */
 public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T, V> {
     static {
-        Registry.register(REGISTRY, new Identifier(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), new TranslatableText(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
+        Registry.register(REGISTRY, new Identifier(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), Text.translatable(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
     }
 
     private final @NotNull RegistryEntry.Reference<SlotType<?, ?>> reference = REGISTRY.createEntry(this);
     private final @NotNull TextColor color;
-    private final @NotNull TranslatableText name;
+    private final @NotNull Text name;
     private final @NotNull Predicate<V> filter;
     private final @NotNull ResourceFlow flow;
     private final @NotNull ResourceType<T, V> type;
 
-    public SlotTypeImpl(@NotNull TextColor color, @NotNull TranslatableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+    public SlotTypeImpl(@NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         this.color = color;
         this.filter = filter;
-        this.name = (TranslatableText) name.setStyle(Style.EMPTY.withColor(color));
+        this.name = name.setStyle(Style.EMPTY.withColor(color));
         this.flow = flow;
         this.type = type;
     }

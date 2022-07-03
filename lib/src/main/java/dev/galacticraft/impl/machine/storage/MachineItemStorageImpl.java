@@ -51,7 +51,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,8 +204,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public Iterator<StorageView<ItemVariant>> iterator(@NotNull TransactionContext context) {
-        return new CombinedIterator(context);
+    public Iterator<StorageView<ItemVariant>> iterator() {
+        return new CombinedIterator();
     }
 
     @Override
@@ -216,11 +216,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, @NotNull Tag<Item> tag, long amount, @Nullable TransactionContext context) {
+    public @NotNull ItemStack extract(int slot, @NotNull TagKey<Item> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
         ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
-        if (tag.values().contains(invSlot.getResource().getItem())) {
+        if (invSlot.getResource().getItem().getRegistryEntry().isIn(tag)) {
             return this.extractVariant(invSlot, amount, context);
         } else {
             return ItemStack.EMPTY;
@@ -476,30 +476,22 @@ public class MachineItemStorageImpl implements MachineItemStorage {
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-    private class CombinedIterator implements Iterator<StorageView<ItemVariant>>, Transaction.CloseCallback {
-        private boolean open = true;
-        private final TransactionContext context;
+    private class CombinedIterator implements Iterator<StorageView<ItemVariant>> {
         private final Iterator<ItemSlot> partIterator = Iterators.forArray(MachineItemStorageImpl.this.inventory);
         // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
         private Iterator<StorageView<ItemVariant>> currentPartIterator = null;
 
-        private CombinedIterator(TransactionContext context) {
-            this.context = context;
+        private CombinedIterator() {
             advanceCurrentPartIterator();
-            context.addCloseCallback(this);
         }
 
         @Override
         public boolean hasNext() {
-            return open && currentPartIterator != null && currentPartIterator.hasNext();
+            return currentPartIterator != null && currentPartIterator.hasNext();
         }
 
         @Override
         public StorageView<ItemVariant> next() {
-            if (!open) {
-                throw new NoSuchElementException("The transaction for this iterator was closed.");
-            }
-
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -516,18 +508,12 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
         private void advanceCurrentPartIterator() {
             while (partIterator.hasNext()) {
-                this.currentPartIterator = partIterator.next().iterator(context);
+                this.currentPartIterator = partIterator.next().iterator();
 
                 if (this.currentPartIterator.hasNext()) {
                     break;
                 }
             }
-        }
-
-        @Override
-        public void onClose(TransactionContext context, Transaction.Result result) {
-            // As soon as the transaction is closed, this iterator is not valid anymore.
-            open = false;
         }
     }
 }

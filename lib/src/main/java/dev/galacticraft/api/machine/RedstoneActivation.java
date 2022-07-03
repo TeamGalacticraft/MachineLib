@@ -30,7 +30,6 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
@@ -44,17 +43,17 @@ public enum RedstoneActivation implements StringIdentifiable {
     /**
      * Ignores redstone entirely (always running).
      */
-    IGNORE(new TranslatableText(MLConstant.TranslationKey.IGNORE_REDSTONE).setStyle(MLConstant.Text.GRAY_STYLE)),
+    IGNORE(Text.translatable(MLConstant.TranslationKey.IGNORE_REDSTONE).setStyle(MLConstant.Text.GRAY_STYLE)),
 
     /**
      * When powered with redstone, the machine turns off.
      */
-    LOW(new TranslatableText(MLConstant.TranslationKey.LOW_REDSTONE).setStyle(MLConstant.Text.DARK_RED_STYLE)),
+    LOW(Text.translatable(MLConstant.TranslationKey.LOW_REDSTONE).setStyle(MLConstant.Text.DARK_RED_STYLE)),
 
     /**
      * When powered with redstone, the machine turns on.
      */
-    HIGH(new TranslatableText(MLConstant.TranslationKey.HIGH_REDSTONE).setStyle(MLConstant.Text.RED_STYLE));
+    HIGH(Text.translatable(MLConstant.TranslationKey.HIGH_REDSTONE).setStyle(MLConstant.Text.RED_STYLE));
 
     /**
      * The name of the redstone activation state.

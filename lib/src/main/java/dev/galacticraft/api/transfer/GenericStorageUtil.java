@@ -60,7 +60,7 @@ public interface GenericStorageUtil {
         StoragePreconditions.notNegative(maxPerTransaction);
         LongList list = new LongArrayList();
         try (Transaction indexingTransaction = Transaction.openNested(context)) {
-            Iterator<? extends StorageView<T>> it = from.iterator(indexingTransaction);
+            Iterator<? extends StorageView<T>> it = from.iterator();
             while (it.hasNext()) {
                 StorageView<T> storageView = it.next();
                 list.add(to.insert(storageView.getResource(), storageView.extract(storageView.getResource(), maxPerTransaction, indexingTransaction), indexingTransaction));
@@ -69,7 +69,7 @@ public interface GenericStorageUtil {
 
         int i = 0;
         try (Transaction extractingTransaction = Transaction.openNested(context)) {
-            Iterator<? extends StorageView<T>> it = from.iterator(extractingTransaction);
+            Iterator<? extends StorageView<T>> it = from.iterator();
             while (it.hasNext()) {
                 StorageView<T> storageView = it.next();
                 list.add(to.insert(storageView.getResource(), storageView.extract(storageView.getResource(), list.getLong(i++), extractingTransaction), extractingTransaction));

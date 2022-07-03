@@ -43,8 +43,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -61,14 +61,14 @@ public class TestMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static final String SIMPLE_MACHINE = "simple_machine";
-    public static final MachineStatus WORKING = MachineStatus.createAndRegister(id("charge_slot"), new TranslatableText("machinelib.testmod.working"), MachineStatus.Type.WORKING);
-    public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromFormatting(Formatting.YELLOW), new TranslatableText("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
+    public static final MachineStatus WORKING = MachineStatus.createAndRegister(id("charge_slot"), Text.translatable("machinelib.testmod.working"), MachineStatus.Type.WORKING);
+    public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromFormatting(Formatting.YELLOW), Text.translatable("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
     public static final Block SIMPLE_MACHINE_BLOCK = new SimpleMachineBlock(FabricBlockSettings.of(Material.METAL));
     public static final Item SIMPLE_MACHINE_ITEM = new BlockItem(SIMPLE_MACHINE_BLOCK, new Item.Settings().group(ItemGroup.BUILDING_BLOCKS));
     public static final Item INFINITE_BATTERY = new Item(new Item.Settings().group(ItemGroup.MISC));
     public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE_BE_TYPE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, SIMPLE_MACHINE_BLOCK).build();
     public static final ScreenHandlerType<SimpleMachineScreenHandler<SimpleMachineBlockEntity>> SIMPLE_MACHINE_SH_TYPE = new ExtendedScreenHandlerType<>(SimpleMachineScreenHandler.createFactory(() -> TestMod.SIMPLE_MACHINE_SH_TYPE));
-    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromFormatting(Formatting.RED), new TranslatableText("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND && (v.getNbt() == null || !v.getNbt().getBoolean("blocked")), ResourceFlow.BOTH, ResourceType.ITEM);
+    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromFormatting(Formatting.RED), Text.translatable("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND && (v.getNbt() == null || !v.getNbt().getBoolean("blocked")), ResourceFlow.BOTH, ResourceType.ITEM);
 
     @Override
     public void onInitialize() {

@@ -50,7 +50,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,8 +200,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public Iterator<StorageView<FluidVariant>> iterator(@NotNull TransactionContext context) {
-        return new CombinedIterator(context);
+    public Iterator<StorageView<FluidVariant>> iterator() {
+        return new CombinedIterator();
     }
 
     @Override
@@ -211,11 +211,11 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public @NotNull FluidStack extract(int slot, @NotNull Tag<Fluid> tag, long amount, @Nullable TransactionContext context) {
+    public @NotNull FluidStack extract(int slot, @NotNull TagKey<Fluid> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
         ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
-        if (tag.values().contains(invSlot.getResource().getFluid())) {
+        if (invSlot.getResource().getFluid().getRegistryEntry().isIn(tag)) {
             return this.extractVariant(invSlot, amount, context);
         } else {
             return FluidStack.EMPTY;
@@ -465,30 +465,22 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-    private class CombinedIterator implements Iterator<StorageView<FluidVariant>>, Transaction.CloseCallback {
-        private boolean open = true;
-        private final TransactionContext context;
+    private class CombinedIterator implements Iterator<StorageView<FluidVariant>> {
         private final Iterator<FluidSlot> partIterator = Iterators.forArray(MachineFluidStorageImpl.this.inventory);
         // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
         private Iterator<StorageView<FluidVariant>> currentPartIterator = null;
 
-        private CombinedIterator(TransactionContext context) {
-            this.context = context;
+        private CombinedIterator() {
             advanceCurrentPartIterator();
-            context.addCloseCallback(this);
         }
 
         @Override
         public boolean hasNext() {
-            return open && currentPartIterator != null && currentPartIterator.hasNext();
+            return currentPartIterator != null && currentPartIterator.hasNext();
         }
 
         @Override
         public StorageView<FluidVariant> next() {
-            if (!open) {
-                throw new NoSuchElementException("The transaction for this iterator was closed.");
-            }
-
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -505,18 +497,12 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
         private void advanceCurrentPartIterator() {
             while (partIterator.hasNext()) {
-                this.currentPartIterator = partIterator.next().iterator(context);
+                this.currentPartIterator = partIterator.next().iterator();
 
                 if (this.currentPartIterator.hasNext()) {
                     break;
                 }
             }
-        }
-
-        @Override
-        public void onClose(TransactionContext context, Transaction.Result result) {
-            // As soon as the transaction is closed, this iterator is not valid anymore.
-            open = false;
         }
     }
 }

@@ -96,8 +96,8 @@ public class PlayerExposedInventory<T, V extends TransferVariant<T>> implements 
     }
 
     @Override
-    public Iterator<? extends StorageView<V>> iterator(TransactionContext transaction) {
-        return new LimitedIterator(this.storage.iterator(transaction));
+    public Iterator<StorageView<V>> iterator() {
+        return new LimitedIterator(this.storage.iterator());
     }
 
     @Override

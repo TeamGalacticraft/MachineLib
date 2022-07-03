@@ -238,9 +238,8 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      */
     protected @NotNull Optional<R> findValidRecipe(@NotNull World world) {
         if (this.getActiveRecipe() != null) {
-            Optional<R> match = this.getRecipeType().match(this.getActiveRecipe(), world, this.craftingInv());
-            if (match.isPresent()) {
-                return match;
+            if (this.getActiveRecipe().matches(this.craftingInv(), world)) {
+                return Optional.of(this.getActiveRecipe());
             }
         }
         return world.getRecipeManager().getFirstMatch(this.getRecipeType(), this.craftingInv(), world);

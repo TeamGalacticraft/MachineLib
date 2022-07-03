@@ -58,10 +58,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.Properties;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -128,7 +127,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
         Text text = machineDescription(stack, view, context.isAdvanced());
         if (text != null) {
             if (Screen.hasShiftDown()) {
-                char[] line = text instanceof TranslatableText ? I18n.translate(((TranslatableText) text).getKey()).toCharArray() : text.getString().toCharArray();
+                char[] line = text.getContent() instanceof TranslatableTextContent content ? I18n.translate(content.getKey()).toCharArray() : text.getString().toCharArray();
                 int len = 0;
                 final int maxLength = 175;
                 StringBuilder builder = new StringBuilder();
@@ -136,39 +135,39 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                     len += MinecraftClient.getInstance().textRenderer.getWidth(String.valueOf(c));
                     if (c == ' ' && len >= maxLength) {
                         len = 0;
-                        tooltip.add(new LiteralText(builder.toString()).setStyle(text.getStyle()));
+                        tooltip.add(Text.literal(builder.toString()).setStyle(text.getStyle()));
                         builder = new StringBuilder();
                         continue;
                     }
                     builder.append(c);
                 }
-                tooltip.add(new LiteralText(builder.toString()).setStyle(text.getStyle()));
+                tooltip.add(Text.literal(builder.toString()).setStyle(text.getStyle()));
             } else {
-                tooltip.add(new TranslatableText(MLConstant.TranslationKey.PRESS_SHIFT).setStyle(MLConstant.Text.DARK_GRAY_STYLE));
+                tooltip.add(Text.translatable(MLConstant.TranslationKey.PRESS_SHIFT).setStyle(MLConstant.Text.DARK_GRAY_STYLE));
             }
         }
 
         if (stack != null && stack.getNbt() != null && stack.getNbt().contains(MLConstant.Nbt.BLOCK_ENTITY_TAG)) {
             NbtCompound nbt = stack.getNbt().getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG);
-            tooltip.add(LiteralText.EMPTY);
-            if (nbt.contains(MLConstant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(new TranslatableText(MLConstant.TranslationKey.CURRENT_ENERGY, new LiteralText(String.valueOf(nbt.getInt(MLConstant.Nbt.ENERGY))).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
+            tooltip.add(Text.empty());
+            if (nbt.contains(MLConstant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(Text.translatable(MLConstant.TranslationKey.CURRENT_ENERGY, Text.literal(String.valueOf(nbt.getInt(MLConstant.Nbt.ENERGY))).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
             if (nbt.contains(MLConstant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
                 NbtCompound security = nbt.getCompound(MLConstant.Nbt.SECURITY);
                 if (security.contains(MLConstant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
                     GameProfile profile = NbtHelper.toGameProfile(security.getCompound(MLConstant.Nbt.OWNER));
                     if (profile != null) {
-                        MutableText text1 = new TranslatableText(MLConstant.TranslationKey.OWNER, new LiteralText(profile.getName()).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE);
+                        MutableText text1 = Text.translatable(MLConstant.TranslationKey.OWNER, Text.literal(profile.getName()).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE);
                         if (Screen.hasControlDown()) {
-                            text1.append(new LiteralText(" (" + profile.getId().toString() + ")").setStyle(MLConstant.Text.AQUA_STYLE));
+                            text1.append(Text.literal(" (" + profile.getId().toString() + ")").setStyle(MLConstant.Text.AQUA_STYLE));
                         }
                         tooltip.add(text1);
                     } else {
-                        tooltip.add(new TranslatableText(MLConstant.TranslationKey.OWNER, new TranslatableText(MLConstant.TranslationKey.UNKNOWN).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
+                        tooltip.add(Text.translatable(MLConstant.TranslationKey.OWNER, Text.translatable(MLConstant.TranslationKey.UNKNOWN).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
                     }
-                    tooltip.add(new TranslatableText(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
+                    tooltip.add(Text.translatable(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(new TranslatableText(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
+            tooltip.add(Text.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
         }
     }
 
@@ -208,7 +207,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
             MachineItemStorage inv = machine.itemStorage();
             List<ItemEntity> entities = new ArrayList<>();
             try (Transaction transaction = Transaction.openOuter()) {
-                inv.iterator(transaction).forEachRemaining(view -> entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction))))));
+                inv.iterator().forEachRemaining(view -> entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction))))));
                 transaction.commit();
             }
             for (ItemEntity itemEntity : entities) {

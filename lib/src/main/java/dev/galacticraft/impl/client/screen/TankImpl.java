@@ -112,19 +112,19 @@ public class TankImpl implements Tank {
             List<Text> lines = new ArrayList<>(2);
             assert client.currentScreen != null;
             if (this.getResource().isBlank()) {
-                client.currentScreen.renderTooltip(matrices, new TranslatableText(MLConstant.TranslationKey.TANK_EMPTY).setStyle(MLConstant.Text.GRAY_STYLE), mouseX, mouseY);
+                client.currentScreen.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.TANK_EMPTY).setStyle(MLConstant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
             long amount = this.getAmount();
             MutableText text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                    new LiteralText(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
-                    : new LiteralText(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
+                    Text.literal(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
+                    : Text.literal(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
 
-            TranslatableText translatableText;
-            translatableText = new TranslatableText(MLConstant.TranslationKey.TANK_CONTENTS);
+            MutableText translatableText;
+            translatableText = Text.translatable(MLConstant.TranslationKey.TANK_CONTENTS);
 
             lines.add(translatableText.setStyle(MLConstant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(MLConstant.Text.BLUE_STYLE));
-            lines.add(new TranslatableText(MLConstant.TranslationKey.TANK_AMOUNT).setStyle(MLConstant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
+            lines.add(Text.translatable(MLConstant.TranslationKey.TANK_AMOUNT).setStyle(MLConstant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
             client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
         }
         matrices.translate(0, 0, -1);
@@ -138,7 +138,7 @@ public class TankImpl implements Tank {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (this.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, this.storage.getFilter(this.index), transaction);
+                        storedResource = StorageUtil.findStoredResource(storage, this.storage.getFilter(this.index));
                     } else {
                         storedResource = this.getResource();
                     }

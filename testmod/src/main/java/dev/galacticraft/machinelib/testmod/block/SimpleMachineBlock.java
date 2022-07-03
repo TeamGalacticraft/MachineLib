@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
@@ -54,6 +53,6 @@ public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
 
     @Override
     public Text machineDescription(ItemStack stack, BlockView view, boolean advanced) {
-        return LiteralText.EMPTY;
+        return Text.empty();
     }
 }

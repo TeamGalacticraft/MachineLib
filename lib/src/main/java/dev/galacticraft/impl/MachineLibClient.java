@@ -38,7 +38,6 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +63,7 @@ public class MachineLibClient implements ClientModInitializer {
             FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
                 @Override
                 public void appendTooltip(FluidVariant fluidVariant, List<Text> tooltip, TooltipContext tooltipContext) {
-                    tooltip.add(new TranslatableText(MLConstant.TranslationKey.GAS_MARKER));
+                    tooltip.add(Text.translatable(MLConstant.TranslationKey.GAS_MARKER));
                     if (tooltipContext.isAdvanced()) tooltip.add(Text.of(gasFluid.getSymbol()));
                 }
             });

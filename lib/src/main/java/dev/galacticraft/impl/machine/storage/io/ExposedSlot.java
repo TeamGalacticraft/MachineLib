@@ -99,8 +99,8 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
     }
 
     @Override
-    public Iterator<? extends StorageView<V>> iterator(TransactionContext transaction) {
-        return new ExtractionLimitingIterator(this.storage.iterator(transaction));
+    public Iterator<StorageView<V>> iterator() {
+        return new ExtractionLimitingIterator(this.storage.iterator());
     }
 
     @Override

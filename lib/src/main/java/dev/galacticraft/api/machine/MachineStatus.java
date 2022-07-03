@@ -27,7 +27,6 @@ import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.machine.MachineStatusImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
@@ -48,7 +47,7 @@ public interface MachineStatus {
     /**
      * Default machine status.
      */
-    MachineStatus INVALID = createAndRegister(new Identifier(MLConstant.MOD_ID, "invalid"), new TranslatableText(MLConstant.TranslationKey.STATUS_INVALID), Type.OTHER);
+    MachineStatus INVALID = createAndRegister(new Identifier(MLConstant.MOD_ID, "invalid"), Text.translatable(MLConstant.TranslationKey.STATUS_INVALID), Type.OTHER);
 
     /**
      * Creates a new machine status and registers it in the registry.

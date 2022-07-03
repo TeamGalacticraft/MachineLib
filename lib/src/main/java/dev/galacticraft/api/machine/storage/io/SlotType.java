@@ -28,9 +28,9 @@ import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 public interface SlotType<T, V extends TransferVariant<T>> {
     Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new Identifier(MLConstant.MOD_ID, "none").toString(), RegistryKey.ofRegistry(new Identifier(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
 
-    static <T, V extends TransferVariant<T>> SlotType<T, V> create(Identifier id, @NotNull TextColor color, @NotNull TranslatableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+    static <T, V extends TransferVariant<T>> SlotType<T, V> create(Identifier id, @NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         if (color.getRgb() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
         if (type.isSpecial()) throw new IllegalArgumentException("Resource type cannot be special!");
         return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, flow, type));

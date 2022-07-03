@@ -97,8 +97,8 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
     }
 
     @Override
-    public Iterator<? extends StorageView<V>> iterator(TransactionContext transaction) {
-        return new LimitedIterator(this.storage.iterator(transaction));
+    public Iterator<StorageView<V>> iterator() {
+        return new LimitedIterator(this.storage.iterator());
     }
 
     @Override
