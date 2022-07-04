@@ -24,7 +24,7 @@ package dev.galacticraft.impl.machine.storage.slot;
 
 import dev.galacticraft.impl.fluid.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

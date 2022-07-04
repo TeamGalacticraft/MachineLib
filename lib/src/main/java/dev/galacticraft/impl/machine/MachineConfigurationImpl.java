@@ -24,10 +24,10 @@ package dev.galacticraft.impl.machine;
 
 import dev.galacticraft.api.machine.*;
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -69,7 +69,7 @@ public class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public @NotNull NbtCompound writeNbt(@NotNull NbtCompound nbt) {
+    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt) {
         nbt.put(MLConstant.Nbt.SECURITY, this.getSecurity().toNbt());
         nbt.put(MLConstant.Nbt.CONFIGURATION, this.getIOConfiguration().writeNbt());
         nbt.put(MLConstant.Nbt.REDSTONE_ACTIVATION, this.getRedstoneActivation().writeNbt());
@@ -77,7 +77,7 @@ public class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
+    public void readNbt(@NotNull CompoundTag nbt) {
         this.getSecurity().fromNbt(nbt.getCompound(MLConstant.Nbt.SECURITY));
         this.getIOConfiguration().readNbt(nbt.getCompound(MLConstant.Nbt.CONFIGURATION));
         this.setRedstoneActivation(RedstoneActivation.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.REDSTONE_ACTIVATION))));

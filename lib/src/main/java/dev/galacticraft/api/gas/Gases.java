@@ -23,142 +23,142 @@
 package dev.galacticraft.api.gas;
 
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
 
 /**
  * Defines some common gases for convenience.
  */
 public final class Gases {
-    public static final Identifier HYDROGEN_ID = new Identifier(MLConstant.MOD_ID, "hydrogen");
+    public static final ResourceLocation HYDROGEN_ID = new ResourceLocation(MLConstant.MOD_ID, "hydrogen");
     /**
      * Hydrogen gas.
      */
     public static final Fluid HYDROGEN = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.HYDROGEN),
-            new Identifier(MLConstant.MOD_ID, "gas/hydrogen"), "H2"
+            Component.translatable(MLConstant.TranslationKey.HYDROGEN),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/hydrogen"), "H2"
     );
-    public static final Identifier NITROGEN_ID = new Identifier(MLConstant.MOD_ID, "nitrogen");
+    public static final ResourceLocation NITROGEN_ID = new ResourceLocation(MLConstant.MOD_ID, "nitrogen");
     /**
      * Nitrogen gas.
      */
     public static final Fluid NITROGEN = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.NITROGEN),
-            new Identifier(MLConstant.MOD_ID, "gas/nitrogen"), "N2"
+            Component.translatable(MLConstant.TranslationKey.NITROGEN),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/nitrogen"), "N2"
     );
-    public static final Identifier OXYGEN_ID = new Identifier(MLConstant.MOD_ID, "oxygen");
+    public static final ResourceLocation OXYGEN_ID = new ResourceLocation(MLConstant.MOD_ID, "oxygen");
     /**
      * Oxygen gas.
      */
     public static final Fluid OXYGEN = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.OXYGEN),
-            new Identifier(MLConstant.MOD_ID, "gas/oxygen"), "O2"
+            Component.translatable(MLConstant.TranslationKey.OXYGEN),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/oxygen"), "O2"
     );
-    public static final Identifier CARBON_DIOXIDE_ID = new Identifier(MLConstant.MOD_ID, "carbon_dioxide");
+    public static final ResourceLocation CARBON_DIOXIDE_ID = new ResourceLocation(MLConstant.MOD_ID, "carbon_dioxide");
     /**
      * Carbon dioxide.
      */
     public static final Fluid CARBON_DIOXIDE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.CARBON_DIOXIDE),
-            new Identifier(MLConstant.MOD_ID, "gas/carbon_dioxide"), "CO2"
+            Component.translatable(MLConstant.TranslationKey.CARBON_DIOXIDE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/carbon_dioxide"), "CO2"
     );
-    public static final Identifier WATER_VAPOR_ID = new Identifier(MLConstant.MOD_ID, "water_vapor");
+    public static final ResourceLocation WATER_VAPOR_ID = new ResourceLocation(MLConstant.MOD_ID, "water_vapor");
     /**
      * Water vapor.
      */
     public static final Fluid WATER_VAPOR = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.WATER_VAPOR),
-            new Identifier(MLConstant.MOD_ID, "gas/water_vapor"), "H2O"
+            Component.translatable(MLConstant.TranslationKey.WATER_VAPOR),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/water_vapor"), "H2O"
     );
-    public static final Identifier METHANE_ID = new Identifier(MLConstant.MOD_ID, "methane");
+    public static final ResourceLocation METHANE_ID = new ResourceLocation(MLConstant.MOD_ID, "methane");
     /**
      * Methane.
      */
     public static final Fluid METHANE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.METHANE),
-            new Identifier(MLConstant.MOD_ID, "gas/methane"), "CH4"
+            Component.translatable(MLConstant.TranslationKey.METHANE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/methane"), "CH4"
     );
-    public static final Identifier HELIUM_ID = new Identifier(MLConstant.MOD_ID, "helium");
+    public static final ResourceLocation HELIUM_ID = new ResourceLocation(MLConstant.MOD_ID, "helium");
     /**
      * Helium.
      */
     public static final Fluid HELIUM = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.HELIUM),
-            new Identifier(MLConstant.MOD_ID, "gas/helium"), "He"
+            Component.translatable(MLConstant.TranslationKey.HELIUM),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/helium"), "He"
     );
-    public static final Identifier ARGON_ID = new Identifier(MLConstant.MOD_ID, "argon");
+    public static final ResourceLocation ARGON_ID = new ResourceLocation(MLConstant.MOD_ID, "argon");
     /**
      * Argon.
      */
     public static final Fluid ARGON = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.ARGON),
-            new Identifier(MLConstant.MOD_ID, "gas/argon"), "Ar"
+            Component.translatable(MLConstant.TranslationKey.ARGON),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/argon"), "Ar"
     );
-    public static final Identifier NEON_ID = new Identifier(MLConstant.MOD_ID, "neon");
+    public static final ResourceLocation NEON_ID = new ResourceLocation(MLConstant.MOD_ID, "neon");
     /**
      * Neon.
      */
     public static final Fluid NEON = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.NEON),
-            new Identifier(MLConstant.MOD_ID, "gas/neon"), "Ne"
+            Component.translatable(MLConstant.TranslationKey.NEON),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/neon"), "Ne"
     );
-    public static final Identifier KRYPTON_ID = new Identifier(MLConstant.MOD_ID, "krypton");
+    public static final ResourceLocation KRYPTON_ID = new ResourceLocation(MLConstant.MOD_ID, "krypton");
     /**
      * Krypton.
      */
     public static final Fluid KRYPTON = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.KRYPTON),
-            new Identifier(MLConstant.MOD_ID, "gas/krypton"), "Kr"
+            Component.translatable(MLConstant.TranslationKey.KRYPTON),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/krypton"), "Kr"
     );
-    public static final Identifier NITROUS_OXIDE_ID = new Identifier(MLConstant.MOD_ID, "nitrous_oxide");
+    public static final ResourceLocation NITROUS_OXIDE_ID = new ResourceLocation(MLConstant.MOD_ID, "nitrous_oxide");
     /**
      * Nitrous oxide.
      */
     public static final Fluid NITROUS_OXIDE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.NITROUS_OXIDE),
-            new Identifier(MLConstant.MOD_ID, "gas/nitrous_oxide"), "N2O"
+            Component.translatable(MLConstant.TranslationKey.NITROUS_OXIDE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/nitrous_oxide"), "N2O"
     );
-    public static final Identifier CARBON_MONOXIDE_ID = new Identifier(MLConstant.MOD_ID, "carbon_monoxide");
+    public static final ResourceLocation CARBON_MONOXIDE_ID = new ResourceLocation(MLConstant.MOD_ID, "carbon_monoxide");
     /**
      * Carbon monoxide.
      */
     public static final Fluid CARBON_MONOXIDE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.CARBON_MONOXIDE),
-            new Identifier(MLConstant.MOD_ID, "gas/carbon_monoxide"), "CO"
+            Component.translatable(MLConstant.TranslationKey.CARBON_MONOXIDE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/carbon_monoxide"), "CO"
     );
-    public static final Identifier XENON_ID = new Identifier(MLConstant.MOD_ID, "xenon");
+    public static final ResourceLocation XENON_ID = new ResourceLocation(MLConstant.MOD_ID, "xenon");
     /**
      * Xenon.
      */
     public static final Fluid XENON = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.XENON),
-            new Identifier(MLConstant.MOD_ID, "gas/xenon"), "Xe"
+            Component.translatable(MLConstant.TranslationKey.XENON),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/xenon"), "Xe"
     );
-    public static final Identifier OZONE_ID = new Identifier(MLConstant.MOD_ID, "ozone");
+    public static final ResourceLocation OZONE_ID = new ResourceLocation(MLConstant.MOD_ID, "ozone");
     /**
      * Ozone.
      */
     public static final Fluid OZONE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.OZONE),
-            new Identifier(MLConstant.MOD_ID, "gas/ozone"), "O3"
+            Component.translatable(MLConstant.TranslationKey.OZONE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/ozone"), "O3"
     );
-    public static final Identifier NITROUS_DIOXIDE_ID = new Identifier(MLConstant.MOD_ID, "nitrous_dioxide");
+    public static final ResourceLocation NITROUS_DIOXIDE_ID = new ResourceLocation(MLConstant.MOD_ID, "nitrous_dioxide");
     /**
      * Nitrous dioxide.
      */
     public static final Fluid NITROUS_DIOXIDE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.NITROUS_DIOXIDE),
-            new Identifier(MLConstant.MOD_ID, "gas/nitrous_dioxide"), "NO2"
+            Component.translatable(MLConstant.TranslationKey.NITROUS_DIOXIDE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/nitrous_dioxide"), "NO2"
     );
-    public static final Identifier IODINE_ID = new Identifier(MLConstant.MOD_ID, "iodine");
+    public static final ResourceLocation IODINE_ID = new ResourceLocation(MLConstant.MOD_ID, "iodine");
     /**
      * Iodine.
      */
     public static final Fluid IODINE = GasFluid.create(
-            Text.translatable(MLConstant.TranslationKey.IODINE),
-            new Identifier(MLConstant.MOD_ID, "gas/iodine"), "I2"
+            Component.translatable(MLConstant.TranslationKey.IODINE),
+            new ResourceLocation(MLConstant.MOD_ID, "gas/iodine"), "I2"
     );
 
     public static void init() {}

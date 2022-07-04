@@ -31,8 +31,8 @@ import dev.galacticraft.impl.MLConstant;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
@@ -150,8 +150,8 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public @NotNull NbtCompound writeNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public @NotNull CompoundTag writeNbt() {
+        CompoundTag nbt = new CompoundTag();
         nbt.putByte(MLConstant.Nbt.FLOW, (byte) this.flow.ordinal());
         nbt.putByte(MLConstant.Nbt.RESOURCE, this.type.getOrdinal());
         nbt.putBoolean(MLConstant.Nbt.MATCH, this.matching != null);
@@ -160,21 +160,21 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
             if (this.matching.left().isPresent()) {
                 nbt.putInt(MLConstant.Nbt.VALUE, this.matching.left().get());
             } else {
-                nbt.putString(MLConstant.Nbt.VALUE, this.matching.right().orElseThrow(RuntimeException::new).getReference().registryKey().getValue().toString());
+                nbt.putString(MLConstant.Nbt.VALUE, this.matching.right().orElseThrow(RuntimeException::new).getReference().key().location().toString());
             }
         }
         return nbt;
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
+    public void readNbt(@NotNull CompoundTag nbt) {
         this.type = ResourceType.getFromOrdinal(nbt.getByte(MLConstant.Nbt.RESOURCE));
         this.flow = ResourceFlow.values()[nbt.getByte(MLConstant.Nbt.FLOW)];
         if (nbt.getBoolean(MLConstant.Nbt.MATCH)) {
             if (nbt.getBoolean(MLConstant.Nbt.IS_SLOT_ID)) {
                 this.matching = Either.left(nbt.getInt(MLConstant.Nbt.VALUE));
             } else {
-                this.matching = Either.right(SlotType.REGISTRY.get(new Identifier(nbt.getString(MLConstant.Nbt.VALUE))));
+                this.matching = Either.right(SlotType.REGISTRY.get(new ResourceLocation(nbt.getString(MLConstant.Nbt.VALUE))));
             }
         } else {
             this.matching = null;

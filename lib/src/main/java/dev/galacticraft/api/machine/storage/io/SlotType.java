@@ -28,14 +28,14 @@ import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryEntry;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,10 +46,10 @@ import java.util.function.Predicate;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotType<T, V extends TransferVariant<T>> {
-    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new Identifier(MLConstant.MOD_ID, "none").toString(), RegistryKey.ofRegistry(new Identifier(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new ResourceLocation(MLConstant.MOD_ID, "none").toString(), ResourceKey.createRegistryKey(new ResourceLocation(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
 
-    static <T, V extends TransferVariant<T>> SlotType<T, V> create(Identifier id, @NotNull TextColor color, @NotNull MutableText name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
-        if (color.getRgb() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
+    static <T, V extends TransferVariant<T>> SlotType<T, V> create(ResourceLocation id, @NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+        if (color.getValue() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
         if (type.isSpecial()) throw new IllegalArgumentException("Resource type cannot be special!");
         return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, flow, type));
     }
@@ -64,7 +64,7 @@ public interface SlotType<T, V extends TransferVariant<T>> {
      * Returns the name of the slot type.
      * @return The name of the slot type.
      */
-    @NotNull Text getName();
+    @NotNull Component getName();
 
     /**
      * Returns the resource type of the slot type.
@@ -86,5 +86,5 @@ public interface SlotType<T, V extends TransferVariant<T>> {
     boolean willAccept(@NotNull V variant);
 
     @ApiStatus.Internal
-    @NotNull RegistryEntry.Reference<SlotType<?, ?>> getReference();
+    @NotNull Holder.Reference<SlotType<?, ?>> getReference();
 }

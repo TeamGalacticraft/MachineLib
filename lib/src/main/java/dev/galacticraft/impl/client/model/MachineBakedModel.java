@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.client.model;
 
 import com.google.common.base.Preconditions;
+import com.mojang.math.Vector3f;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
@@ -38,26 +39,25 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.render.model.json.Transformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3f;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransform;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,35 +74,35 @@ import java.util.function.Supplier;
 public class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final MachineBakedModel INSTANCE = new MachineBakedModel();
 
-    public static final Identifier MACHINE_ENERGY_IN = new Identifier(MLConstant.MOD_ID, "block/machine_power_input");
-    public static final Identifier MACHINE_ENERGY_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_power_output");
-    public static final Identifier MACHINE_ENERGY_IO = new Identifier(MLConstant.MOD_ID, "block/machine_power_io");
+    public static final ResourceLocation MACHINE_ENERGY_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_input");
+    public static final ResourceLocation MACHINE_ENERGY_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_output");
+    public static final ResourceLocation MACHINE_ENERGY_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_io");
 
-    public static final Identifier MACHINE_FLUID_IN = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_input");
-    public static final Identifier MACHINE_FLUID_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_output");
-    public static final Identifier MACHINE_FLUID_IO = new Identifier(MLConstant.MOD_ID, "block/machine_fluid_io");
+    public static final ResourceLocation MACHINE_FLUID_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_input");
+    public static final ResourceLocation MACHINE_FLUID_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_output");
+    public static final ResourceLocation MACHINE_FLUID_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_io");
 
-    public static final Identifier MACHINE_ITEM_IN = new Identifier(MLConstant.MOD_ID, "block/machine_item_input");
-    public static final Identifier MACHINE_ITEM_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_item_output");
-    public static final Identifier MACHINE_ITEM_IO = new Identifier(MLConstant.MOD_ID, "block/machine_item_io");
+    public static final ResourceLocation MACHINE_ITEM_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_input");
+    public static final ResourceLocation MACHINE_ITEM_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_output");
+    public static final ResourceLocation MACHINE_ITEM_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_io");
 
-    public static final Identifier MACHINE_GAS_IN = new Identifier(MLConstant.MOD_ID, "block/machine_gas_input");
-    public static final Identifier MACHINE_GAS_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_gas_output");
-    public static final Identifier MACHINE_GAS_IO = new Identifier(MLConstant.MOD_ID, "block/machine_gas_io");
+    public static final ResourceLocation MACHINE_GAS_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_input");
+    public static final ResourceLocation MACHINE_GAS_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_output");
+    public static final ResourceLocation MACHINE_GAS_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_io");
 
-    public static final Identifier MACHINE_ANY_IN = new Identifier(MLConstant.MOD_ID, "block/machine_any_input");
-    public static final Identifier MACHINE_ANY_OUT = new Identifier(MLConstant.MOD_ID, "block/machine_any_output");
-    public static final Identifier MACHINE_ANY_IO = new Identifier(MLConstant.MOD_ID, "block/machine_any_io");
+    public static final ResourceLocation MACHINE_ANY_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_input");
+    public static final ResourceLocation MACHINE_ANY_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_output");
+    public static final ResourceLocation MACHINE_ANY_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_io");
 
-    private static final ModelTransformation ITEM_TRANSFORMATION = new ModelTransformation(
-            new Transformation(new Vec3f(75, 45, 0), new Vec3f(0, 0.25f, 0), new Vec3f(0.375f, 0.375f, 0.375f)),
-            new Transformation(new Vec3f(75, 45, 0), new Vec3f(0, 0.25f, 0), new Vec3f(0.375f, 0.375f, 0.375f)),
-            new Transformation(new Vec3f(0, 225, 0), new Vec3f(0, 0, 0), new Vec3f(0.40f, 0.40f, 0.40f)),
-            new Transformation(new Vec3f(0, 45, 0), new Vec3f(0, 0, 0), new Vec3f(0.40f, 0.40f, 0.40f)),
-            Transformation.IDENTITY,
-            new Transformation(new Vec3f(30, 225, 0), new Vec3f(0, 0, 0), new Vec3f(0.625f, 0.625f, 0.625f)),
-            new Transformation(new Vec3f(0, 0, 0), new Vec3f(0, 0.2f, 0), new Vec3f(0.25f, 0.25f, 0.25f)),
-            new Transformation(new Vec3f(0, 0, 0), new Vec3f(0, 0, 0), new Vec3f(0.5f, 0.5f, 0.5f))
+    private static final ItemTransforms ITEM_TRANSFORMATION = new ItemTransforms(
+            new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
+            new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
+            new ItemTransform(new Vector3f(0, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.40f, 0.40f, 0.40f)),
+            new ItemTransform(new Vector3f(0, 45, 0), new Vector3f(0, 0, 0), new Vector3f(0.40f, 0.40f, 0.40f)),
+            ItemTransform.NO_TRANSFORM,
+            new ItemTransform(new Vector3f(30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625f, 0.625f, 0.625f)),
+            new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0.2f, 0), new Vector3f(0.25f, 0.25f, 0.25f)),
+            new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new Vector3f(0.5f, 0.5f, 0.5f))
     );
 
     @ApiStatus.Internal
@@ -111,7 +111,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final Map<Block, MachineModelRegistry.SpriteProvider> SPRITE_PROVIDERS = new IdentityHashMap<>();
     @ApiStatus.Internal
     public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
-    public static final Set<Identifier> TEXTURE_DEPENDENCIES = new HashSet<>();
+    public static final Set<ResourceLocation> TEXTURE_DEPENDENCIES = new HashSet<>();
     private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
 
     protected MachineBakedModel() {}
@@ -121,13 +121,13 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         Preconditions.checkNotNull(provider);
 
         SPRITE_PROVIDERS.put(block, provider);
-        Identifier id = Registry.BLOCK.getId(block);
+        ResourceLocation id = Registry.BLOCK.getKey(block);
         IDENTIFIERS.computeIfAbsent(id.getNamespace(), s -> new HashSet<>());
         IDENTIFIERS.get(id.getNamespace()).add(id.getPath());
     }
 
     @ApiStatus.Internal
-    public static void setSpriteAtlas(Function<Identifier, Sprite> function) {
+    public static void setSpriteAtlas(Function<ResourceLocation, TextureAtlasSprite> function) {
         CACHING_SPRITE_ATLAS.setAtlas(function);
     }
 
@@ -137,7 +137,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
         MachineBlockEntity machine = ((MachineBlockEntity) blockView.getBlockEntity(pos));
         assert machine != null;
         context.pushTransform(quad -> transform(machine, state, quad));
@@ -148,7 +148,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     @Override
-    public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
         assert stack.getItem() instanceof BlockItem;
         assert ((BlockItem) stack.getItem()).getBlock() instanceof MachineBlock;
         context.pushTransform(quad -> transformItem(stack, quad));
@@ -159,7 +159,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
         return Collections.emptyList();
     }
 
@@ -169,37 +169,37 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     @Override
-    public boolean hasDepth() {
+    public boolean isGui3d() {
         return false;
     }
 
     @Override
-    public boolean isSideLit() {
+    public boolean usesBlockLight() {
         return true;
     }
 
     @Override
-    public boolean isBuiltin() {
+    public boolean isCustomRenderer() {
         return false;
     }
 
     @Override
-    public Sprite getParticleSprite() {
+    public TextureAtlasSprite getParticleIcon() {
         return CACHING_SPRITE_ATLAS.apply(MachineModelRegistry.MACHINE);
     }
 
     @Override
-    public ModelTransformation getTransformation() {
+    public ItemTransforms getTransforms() {
         return ITEM_TRANSFORMATION;
     }
 
     @Override
-    public ModelOverrideList getOverrides() {
-        return ModelOverrideList.EMPTY;
+    public ItemOverrides getOverrides() {
+        return ItemOverrides.EMPTY;
     }
 
     public static boolean transform(@NotNull MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
-        BlockFace face = BlockFace.toFace(state.get(Properties.HORIZONTAL_FACING), quad.nominalFace());
+        BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
         ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
         quad.spriteBake(0,
                 getSprite(face,
@@ -213,8 +213,8 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
-        NbtCompound tag = stack.getNbt();
-        if (tag != null && tag.contains(MLConstant.Nbt.BLOCK_ENTITY_TAG, NbtElement.COMPOUND_TYPE)) {
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(MLConstant.Nbt.BLOCK_ENTITY_TAG, Tag.TAG_COMPOUND)) {
             CONFIGURATION.readNbt(tag.getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG));
             ConfiguredMachineFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
@@ -232,7 +232,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return true;
     }
 
-    public static Sprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    public static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         switch (flow) {
             case INPUT -> {
                 if (type == ResourceType.ENERGY) {
@@ -271,42 +271,42 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return provider.getSpritesForState(machine, stack, face, CACHING_SPRITE_ATLAS);
     }
 
-    public record FrontFaceSpriteProvider(Identifier sprite) implements MachineModelRegistry.SpriteProvider {
-        public FrontFaceSpriteProvider(Identifier sprite) {
+    public record FrontFaceSpriteProvider(ResourceLocation sprite) implements MachineModelRegistry.SpriteProvider {
+        public FrontFaceSpriteProvider(ResourceLocation sprite) {
             this.sprite = sprite;
             TEXTURE_DEPENDENCIES.add(sprite);
         }
 
         @Override
-        public @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             if (face == BlockFace.FRONT) return atlas.apply(sprite);
             if (face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
         }
     }
 
-    public record SingleSpriteProvider(Identifier sprite) implements MachineModelRegistry.SpriteProvider {
-        public SingleSpriteProvider(Identifier sprite) {
+    public record SingleSpriteProvider(ResourceLocation sprite) implements MachineModelRegistry.SpriteProvider {
+        public SingleSpriteProvider(ResourceLocation sprite) {
             this.sprite = sprite;
             TEXTURE_DEPENDENCIES.add(sprite);
         }
 
         @Override
-        public @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             return atlas.apply(sprite);
         }
     }
 
     public static class ZAxisSpriteProvider implements MachineModelRegistry.SpriteProvider {
-        private final Identifier front;
-        private final Identifier back;
+        private final ResourceLocation front;
+        private final ResourceLocation back;
         private final boolean sided;
 
-        public ZAxisSpriteProvider(Identifier sprite, boolean sided) {
+        public ZAxisSpriteProvider(ResourceLocation sprite, boolean sided) {
             this(sprite, sprite, sided);
         }
 
-        public ZAxisSpriteProvider(Identifier front, Identifier back, boolean sided) {
+        public ZAxisSpriteProvider(ResourceLocation front, ResourceLocation back, boolean sided) {
             this.front = front;
             this.back = back;
             this.sided = sided;
@@ -315,7 +315,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             if (face == BlockFace.FRONT) return atlas.apply(this.front);
             if (face == BlockFace.BACK) return atlas.apply(this.back);
             if (this.sided && face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);

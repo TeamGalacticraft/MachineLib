@@ -23,9 +23,9 @@
 package dev.galacticraft.api.block.util;
 
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,32 +37,32 @@ public enum BlockFace {
     /**
      * The face of a block that is facing forwards.
      */
-    FRONT(Text.translatable(MLConstant.TranslationKey.FRONT), true),
+    FRONT(Component.translatable(MLConstant.TranslationKey.FRONT), true),
     /**
      * The face of a block that is facing to the right, when facing in the direction the block is facing.
      */
-    RIGHT(Text.translatable(MLConstant.TranslationKey.RIGHT), true),
+    RIGHT(Component.translatable(MLConstant.TranslationKey.RIGHT), true),
     /**
      * The face of a block that is facing backwards.
      */
-    BACK(Text.translatable(MLConstant.TranslationKey.BACK), true),
+    BACK(Component.translatable(MLConstant.TranslationKey.BACK), true),
     /**
      * The face of a block that is facing to the left, when facing in the direction the block is facing.
      */
-    LEFT(Text.translatable(MLConstant.TranslationKey.LEFT), true),
+    LEFT(Component.translatable(MLConstant.TranslationKey.LEFT), true),
     /**
      * The top face of a block.
      */
-    TOP(Text.translatable(MLConstant.TranslationKey.TOP), false),
+    TOP(Component.translatable(MLConstant.TranslationKey.TOP), false),
     /**
      * The bottom face of a block.
      */
-    BOTTOM(Text.translatable(MLConstant.TranslationKey.BOTTOM), false);
+    BOTTOM(Component.translatable(MLConstant.TranslationKey.BOTTOM), false);
 
-    private final MutableText name;
+    private final MutableComponent name;
     private final boolean horizontal;
 
-    BlockFace(@NotNull MutableText name, boolean horizontal) {
+    BlockFace(@NotNull MutableComponent name, boolean horizontal) {
         this.name = name.setStyle(MLConstant.Text.GOLD_STYLE);
         this.horizontal = horizontal;
     }
@@ -71,7 +71,7 @@ public enum BlockFace {
      * The name of this face.
      * @return The name of this face.
      */
-    public Text getName() {
+    public Component getName() {
         return name;
     }
 

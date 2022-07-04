@@ -23,11 +23,11 @@
 package dev.galacticraft.impl.block.entity;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,7 +44,7 @@ public class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEnt
     }
 
     @Override
-    public void tick(World world, BlockPos pos, BlockState state, T machine) {
+    public void tick(Level world, BlockPos pos, BlockState state, T machine) {
         ((MachineBlockEntity) machine).tickBase(world, pos, state);
     }
 }

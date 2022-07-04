@@ -38,11 +38,11 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.nbt.NbtByte;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.TagKey;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +185,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public boolean canAccess(@NotNull PlayerEntity player) {
+    public boolean canAccess(@NotNull Player player) {
         return false;
     }
 
@@ -210,16 +210,16 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull NbtElement writeNbt() {
-        return NbtByte.ZERO;
+    public @NotNull Tag writeNbt() {
+        return ByteTag.ZERO;
     }
 
     @Override
-    public void readNbt(@NotNull NbtElement nbt) {
+    public void readNbt(@NotNull Tag nbt) {
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
     }
 
     @Override

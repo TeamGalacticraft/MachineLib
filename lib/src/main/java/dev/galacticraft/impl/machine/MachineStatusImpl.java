@@ -23,8 +23,8 @@
 package dev.galacticraft.impl.machine;
 
 import dev.galacticraft.api.machine.MachineStatus;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
-public record MachineStatusImpl(@NotNull Text name, @NotNull MachineStatus.Type type) implements MachineStatus {
+public record MachineStatusImpl(@NotNull Component name, @NotNull MachineStatus.Type type) implements MachineStatus {
 }

@@ -26,10 +26,10 @@ import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ import java.util.Optional;
 
 public class VanillaWrappedItemSlot extends Slot {
     private final @NotNull MachineItemStorageImpl storage;
-    private final @Nullable Pair<Identifier, Identifier> icon;
+    private final @Nullable Pair<ResourceLocation, ResourceLocation> icon;
 
     public VanillaWrappedItemSlot(@NotNull MachineItemStorageImpl storage, int index, @NotNull ItemSlotDisplay display) {
         super(storage.playerInventory(), index, display.x(), display.y());
@@ -47,84 +47,84 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Nullable
     @Override
-    public Pair<Identifier, Identifier> getBackgroundSprite() {
+    public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
         return this.icon;
     }
 
     @Override
-    public boolean canInsert(ItemStack stack) {
-        return this.storage.canAccept(this.getIndex(), ItemVariant.of(stack));
+    public boolean mayPlace(ItemStack stack) {
+        return this.storage.canAccept(this.getContainerSlot(), ItemVariant.of(stack));
     }
 
     @Override
-    public ItemStack getStack() {
-        return this.storage.getStack(this.getIndex());
+    public ItemStack getItem() {
+        return this.storage.getStack(this.getContainerSlot());
     }
 
     @Override
-    public boolean hasStack() {
-        return this.storage.getVariant(this.getIndex()).isBlank();
+    public boolean hasItem() {
+        return this.storage.getVariant(this.getContainerSlot()).isBlank();
     }
 
     @Override
-    public void setStack(ItemStack stack) {
-        this.storage.replace(this.getIndex(), ItemVariant.of(stack), stack.getCount(), null);
+    public void set(ItemStack stack) {
+        this.storage.replace(this.getContainerSlot(), ItemVariant.of(stack), stack.getCount(), null);
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
         this.storage.incrementModCountUnsafe();
     }
 
     @Override
-    public int getMaxItemCount() {
-        return Math.toIntExact(this.storage.getSlot(this.getIndex()).getCapacity());
+    public int getMaxStackSize() {
+        return Math.toIntExact(this.storage.getSlot(this.getContainerSlot()).getCapacity());
     }
 
     @Override
-    public int getMaxItemCount(ItemStack stack) {
-        return Math.toIntExact(this.storage.getSlot(this.getIndex()).getCapacity(ItemVariant.of(stack)));
+    public int getMaxStackSize(ItemStack stack) {
+        return Math.toIntExact(this.storage.getSlot(this.getContainerSlot()).getCapacity(ItemVariant.of(stack)));
     }
 
     @Override
-    public ItemStack takeStack(int amount) {
-        return this.storage.extract(this.getIndex(), amount, null);
+    public ItemStack remove(int amount) {
+        return this.storage.extract(this.getContainerSlot(), amount, null);
     }
 
     @Override
-    public boolean canTakeItems(PlayerEntity playerEntity) {
+    public boolean mayPickup(Player playerEntity) {
         return this.storage.canAccess(playerEntity);
     }
 
     @Override
-    public boolean isEnabled() {
+    public boolean isActive() {
         return true;
     }
 
     @Override
-    public ItemStack insertStack(ItemStack stack) {
-        return this.insertStack(stack, stack.getCount());
+    public ItemStack safeInsert(ItemStack stack) {
+        return this.safeInsert(stack, stack.getCount());
     }
 
     @Override //return failed
-    public ItemStack insertStack(ItemStack stack, int count) {
-        long inserted = this.storage.insert(this.getIndex(), ItemVariant.of(stack), count, null);
+    public ItemStack safeInsert(ItemStack stack, int count) {
+        long inserted = this.storage.insert(this.getContainerSlot(), ItemVariant.of(stack), count, null);
         stack.setCount(Math.toIntExact(count - inserted));
         return stack;
     }
 
     @Override
-    public boolean canTakePartial(PlayerEntity player) {
-        return super.canTakePartial(player);
+    public boolean allowModification(Player player) {
+        return super.allowModification(player);
     }
 
     @Override
-    public Optional<ItemStack> tryTakeStackRange(int min, int max, PlayerEntity player) {
-        return super.tryTakeStackRange(min, max, player);
+    public Optional<ItemStack> tryRemove(int min, int max, Player player) {
+        return super.tryRemove(min, max, player);
     }
 
     @Override
-    public ItemStack takeStackRange(int min, int max, PlayerEntity player) {
-        return super.takeStackRange(min, max, player);
+    public ItemStack safeTake(int min, int max, Player player) {
+        return super.safeTake(min, max, player);
     }
 }

@@ -29,10 +29,10 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.TagKey;
-import net.minecraft.util.Clearable;
+import net.minecraft.nbt.Tag;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -591,7 +591,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param player The player to check.
      * @return Whether the player can access this inventory.
      */
-    boolean canAccess(@NotNull PlayerEntity player);
+    boolean canAccess(@NotNull Player player);
 
     /**
      * Returns whether the given slot can contain the given resource.
@@ -629,19 +629,19 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * Serializes this storage to nbt.
      * @return The serialized nbt.
      */
-    @NotNull NbtElement writeNbt();
+    @NotNull Tag writeNbt();
 
     /**
      * Deserializes a storage from nbt.
      * @param nbt The nbt to deserialize.
      */
-    void readNbt(@NotNull NbtElement nbt);
+    void readNbt(@NotNull Tag nbt);
 
     /**
      * Clears the inventory.
      */
     @Override
-    void clear();
+    void clearContent();
 
     /**
      * Returns a read-only view of this storage.

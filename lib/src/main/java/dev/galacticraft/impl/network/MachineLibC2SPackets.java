@@ -42,19 +42,19 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 
 public class MachineLibC2SPackets {
     public static void register() {
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "side_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "side_config"), (server, player, handler, buf, responseSender) -> {
             BlockFace face = BlockFace.values()[buf.readByte()];
             if (buf.readBoolean()) { //match
                 if (buf.readBoolean()) { // int or slot type
                     int i = buf.readInt();
                     server.execute(() -> {
-                        if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                        if (player.containerMenu instanceof MachineScreenHandler sHandler) {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.getSecurity().hasAccess(player)) {
                                 if (i == -1) {
@@ -68,14 +68,14 @@ public class MachineLibC2SPackets {
                 } else {
                     int i = buf.readInt();
                     server.execute(() -> {
-                        if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                        if (player.containerMenu instanceof MachineScreenHandler sHandler) {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.getSecurity().hasAccess(player)) {
                                 if (i == -1) {
                                     machine.getIOConfig().get(face).setMatching(null);
                                     return;
                                 }
-                                SlotType<?, ?> type = SlotType.REGISTRY.get(i);
+                                SlotType<?, ?> type = SlotType.REGISTRY.byId(i);
                                 machine.getIOConfig().get(face).setMatching(Either.right(type));
                             }
                         }
@@ -85,22 +85,22 @@ public class MachineLibC2SPackets {
                 byte i = buf.readByte();
                 byte j = buf.readByte();
                 server.execute(() -> {
-                    if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                    if (player.containerMenu instanceof MachineScreenHandler sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             machine.getIOConfig().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
                             machine.getIOConfig().get(face).setMatching(null);
-                            player.world.updateNeighborsAlways(machine.getPos(), machine.getCachedState().getBlock());
+                            player.level.updateNeighborsAt(machine.getBlockPos(), machine.getBlockState().getBlock());
                         }
                     }
                 });
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().hasAccess(player)) {
                         machine.setRedstone(redstoneActivation);
@@ -109,10 +109,10 @@ public class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
+                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().isOwner(player)) {
                         machine.getSecurity().setAccessLevel(accessLevel);
@@ -121,13 +121,13 @@ public class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "tank_modify"), (server, player, handler, buf, responseSender) -> {
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "tank_modify"), (server, player, handler, buf, responseSender) -> {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {
-                if (player.currentScreenHandler instanceof MachineScreenHandler sHandler) {
-                    if (sHandler.syncId == syncId) {
-                        acceptStack((Tank)sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.currentScreenHandler));
+                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                    if (sHandler.containerId == syncId) {
+                        acceptStack((Tank)sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
                     }
                 }
             });

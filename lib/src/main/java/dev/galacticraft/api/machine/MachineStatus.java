@@ -26,11 +26,11 @@ import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.machine.MachineStatusImpl;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DefaultedRegistry;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +43,11 @@ public interface MachineStatus {
      * Registry for machine statuses.
      * All machine statuses should be registered in this registry to be used.
      */
-    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", RegistryKey.<MachineStatus>ofRegistry(new Identifier(MLConstant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(new ResourceLocation(MLConstant.MOD_ID, "machine_status")), Lifecycle.stable(), null)).buildAndRegister();
     /**
      * Default machine status.
      */
-    MachineStatus INVALID = createAndRegister(new Identifier(MLConstant.MOD_ID, "invalid"), Text.translatable(MLConstant.TranslationKey.STATUS_INVALID), Type.OTHER);
+    MachineStatus INVALID = createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "invalid"), Component.translatable(MLConstant.TranslationKey.STATUS_INVALID), Type.OTHER);
 
     /**
      * Creates a new machine status and registers it in the registry.
@@ -56,7 +56,7 @@ public interface MachineStatus {
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */
-    static @NotNull MachineStatus createAndRegister(@NotNull Identifier id, @NotNull Text name, @NotNull MachineStatus.Type type) {
+    static @NotNull MachineStatus createAndRegister(@NotNull ResourceLocation id, @NotNull Component name, @NotNull MachineStatus.Type type) {
         return Registry.register(REGISTRY, id, create(name, type));
     }
 
@@ -67,7 +67,7 @@ public interface MachineStatus {
      * @return The newly created machine status.
      */
     @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull MachineStatus create(@NotNull Text name, @NotNull MachineStatus.Type type) {
+    static @NotNull MachineStatus create(@NotNull Component name, @NotNull MachineStatus.Type type) {
         return new MachineStatusImpl(name, type);
     }
 
@@ -75,7 +75,7 @@ public interface MachineStatus {
      * Returns the name of the machine status.
      * @return The name of the machine status.
      */
-    @NotNull Text name();
+    @NotNull Component name();
 
     /**
      * Returns the type of the machine status.

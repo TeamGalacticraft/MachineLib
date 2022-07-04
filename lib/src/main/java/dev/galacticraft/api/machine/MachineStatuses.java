@@ -23,10 +23,10 @@
 package dev.galacticraft.api.machine;
 
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Default builtin machine statuses.
@@ -39,27 +39,27 @@ public final class MachineStatuses {
     /**
      * The machine does not have enough energy to run.
      */
-    public static final MachineStatus NOT_ENOUGH_ENERGY = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "not_enough_energy"), Text.translatable(MLConstant.TranslationKey.STATUS_NOT_ENOUGH_ENERGY).setStyle(Style.EMPTY.withColor(Formatting.RED)), MachineStatus.Type.MISSING_ENERGY);
+    public static final MachineStatus NOT_ENOUGH_ENERGY = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "not_enough_energy"), Component.translatable(MLConstant.TranslationKey.STATUS_NOT_ENOUGH_ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.MISSING_ENERGY);
     /**
      * The machine does not have the proper recipe inputs.
      */
-    public static final MachineStatus INVALID_RECIPE = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "invalid_recipe"), Text.translatable(MLConstant.TranslationKey.STATUS_INVALID_RECIPE).setStyle(Style.EMPTY.withColor(Formatting.RED)), MachineStatus.Type.MISSING_ITEMS);
+    public static final MachineStatus INVALID_RECIPE = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "invalid_recipe"), Component.translatable(MLConstant.TranslationKey.STATUS_INVALID_RECIPE).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.MISSING_ITEMS);
     /**
      * The output slot is full.
      */
-    public static final MachineStatus OUTPUT_FULL = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "output_full"), Text.translatable(MLConstant.TranslationKey.STATUS_OUTPUT_FULL).setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    public static final MachineStatus OUTPUT_FULL = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "output_full"), Component.translatable(MLConstant.TranslationKey.STATUS_OUTPUT_FULL).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
     /**
      * The energy storage is full.
      */
-    public static final MachineStatus CAPACITOR_FULL = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "capacitor_full"), Text.translatable(MLConstant.TranslationKey.STATUS_CAPACITOR_FULL).setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    public static final MachineStatus CAPACITOR_FULL = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "capacitor_full"), Component.translatable(MLConstant.TranslationKey.STATUS_CAPACITOR_FULL).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
     /**
      * The machine is not running.
      */
-    public static final MachineStatus IDLE = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "idle"), Text.translatable(MLConstant.TranslationKey.STATUS_IDLE).setStyle(Style.EMPTY.withColor(Formatting.GOLD)), MachineStatus.Type.MISSING_RESOURCE);
+    public static final MachineStatus IDLE = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "idle"), Component.translatable(MLConstant.TranslationKey.STATUS_IDLE).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.MISSING_RESOURCE);
     /**
      * The machine is running.
      */
-    public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(new Identifier(MLConstant.MOD_ID, "active"), Text.translatable(MLConstant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(Formatting.GREEN)), MachineStatus.Type.WORKING);
+    public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(new ResourceLocation(MLConstant.MOD_ID, "active"), Component.translatable(MLConstant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)), MachineStatus.Type.WORKING);
 
     public static void init() {
     }

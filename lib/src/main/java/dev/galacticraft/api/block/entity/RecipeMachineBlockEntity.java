@@ -27,15 +27,15 @@ import dev.galacticraft.api.machine.MachineStatuses;
 import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +46,11 @@ import java.util.Optional;
  * A machine block entity that processes recipes.
  *
  * @param <C> The type of inventory the recipe type uses.
- *           This is usually {@link Inventory} but can be any inventory type.
+ *           This is usually {@link Container} but can be any inventory type.
  * @param <R> The type of recipe the machine uses.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Recipe<C>> extends MachineBlockEntity {
+public abstract class RecipeMachineBlockEntity<C extends Container, R extends Recipe<C>> extends MachineBlockEntity {
     /**
      * The recipe type that this machine processes.
      */
@@ -130,7 +130,7 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     @Override
-    public @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
         if (this.inventoryModCount != this.itemStorage().getModCount()) {
             world.getProfiler().push("recipe_test");
             this.inventoryModCount = this.itemStorage().getModCount();
@@ -199,11 +199,11 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
-    protected void craft(@NotNull World world, @NotNull R recipe, @Nullable TransactionContext context) {
+    protected void craft(@NotNull Level world, @NotNull R recipe, @Nullable TransactionContext context) {
         world.getProfiler().push("extract_materials");
         try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
-                world.getProfiler().swap("output_stacks");
+                world.getProfiler().popPush("output_stacks");
                 if (this.outputStacks(recipe, inner)) {
                     inner.commit();
                 }
@@ -236,13 +236,13 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
      *
      * @return The first valid recipe in the machine's inventory.
      */
-    protected @NotNull Optional<R> findValidRecipe(@NotNull World world) {
+    protected @NotNull Optional<R> findValidRecipe(@NotNull Level world) {
         if (this.getActiveRecipe() != null) {
             if (this.getActiveRecipe().matches(this.craftingInv(), world)) {
                 return Optional.of(this.getActiveRecipe());
             }
         }
-        return world.getRecipeManager().getFirstMatch(this.getRecipeType(), this.craftingInv(), world);
+        return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world);
     }
 
     /**
@@ -301,22 +301,22 @@ public abstract class RecipeMachineBlockEntity<C extends Inventory, R extends Re
     }
 
     @Override
-    public void writeNbt(@NotNull NbtCompound nbt) {
-        super.writeNbt(nbt);
+    public void saveAdditional(@NotNull CompoundTag nbt) {
+        super.saveAdditional(nbt);
         nbt.putInt(MLConstant.Nbt.PROGRESS, this.getProgress());
         nbt.putInt(MLConstant.Nbt.MAX_PROGRESS, this.getMaxProgress());
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void load(@NotNull CompoundTag nbt) {
+        super.load(nbt);
         this.progress = nbt.getInt(MLConstant.Nbt.PROGRESS);
         this.maxProgress = nbt.getInt(MLConstant.Nbt.MAX_PROGRESS);
     }
 
     @Override
-    public void setWorld(World world) {
-        super.setWorld(world);
+    public void setLevel(Level world) {
+        super.setLevel(world);
         this.activeRecipe = this.findValidRecipe(world).orElse(null);
     }
 }

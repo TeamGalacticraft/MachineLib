@@ -30,13 +30,13 @@ import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,19 +60,19 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     }
 
     @Override
-    protected void tickConstant(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
         super.tickConstant(world, pos, state);
         this.attemptChargeFromStack(0);
     }
 
     @Nullable
     @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+    public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
         return SimpleMachineScreenHandler.create(syncId, player, this, TestMod.SIMPLE_MACHINE_SH_TYPE);
     }
 
     @Override
-    protected @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
         if (ticks > 0) {
             ticks--;
             world.getProfiler().push("transaction");
@@ -80,7 +80,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
                 if (this.energyStorage().extract(100, transaction) == 100) {
                     transaction.commit();
                     if (ticks == 0) {
-                        world.createExplosion(null, pos.getX(), pos.getY(), pos.getZ(), 1.0F, false, Explosion.DestructionType.BREAK);
+                        world.explode(null, pos.getX(), pos.getY(), pos.getZ(), 1.0F, false, Explosion.BlockInteraction.BREAK);
                     }
                     return TestMod.WORKING;
                 } else {

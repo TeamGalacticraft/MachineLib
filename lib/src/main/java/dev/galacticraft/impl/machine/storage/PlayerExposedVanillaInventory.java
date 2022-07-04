@@ -23,16 +23,16 @@
 package dev.galacticraft.impl.machine.storage;
 
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Set;
 
-public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) implements Inventory {
+public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) implements Container {
     @Override
-    public int size() {
+    public int getContainerSize() {
         return this.storage.size();
     }
 
@@ -42,12 +42,12 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
     }
 
     @Override
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         return this.storage.getStack(slot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount) {
+    public ItemStack removeItem(int slot, int amount) {
         if (this.storage.canExposedExtract(slot) || this.storage.canExposedInsert(slot)) {
             return this.storage.extract(slot, amount, null);
         }
@@ -55,7 +55,7 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
     }
 
     @Override
-    public ItemStack removeStack(int slot) {
+    public ItemStack removeItemNoUpdate(int slot) {
         if (this.storage.canExposedExtract(slot) || this.storage.canExposedInsert(slot)) {
             return this.storage.extract(slot, Long.MAX_VALUE, null);
         }
@@ -63,52 +63,52 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         if (this.storage.canExposedExtract(slot)) {
             this.storage.replace(slot, ItemVariant.of(stack), stack.getCount(), null);
         }
     }
 
     @Override
-    public int getMaxCountPerStack() {
+    public int getMaxStackSize() {
         return 64;
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
         this.storage.incrementModCountUnsafe();
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return this.storage.canAccess(player);
     }
 
     @Override
-    public void onOpen(PlayerEntity player) {
+    public void startOpen(Player player) {
     }
 
     @Override
-    public void onClose(PlayerEntity player) {
+    public void stopOpen(Player player) {
     }
 
     @Override
-    public boolean isValid(int slot, ItemStack stack) {
+    public boolean canPlaceItem(int slot, ItemStack stack) {
         return this.storage.canAccept(slot, ItemVariant.of(stack));
     }
 
     @Override
-    public int count(Item item) {
+    public int countItem(Item item) {
         return Math.toIntExact(this.storage.count(item));
     }
 
     @Override
-    public boolean containsAny(Set<Item> items) {
+    public boolean hasAnyOf(Set<Item> items) {
         return this.storage.containsAny(items);
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
 //        this.storage.clear();
     }
 }

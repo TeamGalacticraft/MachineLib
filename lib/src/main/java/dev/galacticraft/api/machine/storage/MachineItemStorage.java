@@ -33,9 +33,9 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +54,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * Player-exposed inventory for screen handlers.
      * @return The player-exposed inventory.
      */
-    @NotNull Inventory playerInventory();
+    @NotNull Container playerInventory();
 
     /**
      * Creates a sub-inventory of the given size starting at {@code 0}.
@@ -63,7 +63,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * @param size The size of the sub-inventory.
      * @return The sub-inventory.
      */
-    default @NotNull Inventory subInv(int size) {
+    default @NotNull Container subInv(int size) {
         return this.subInv(0, size);
     }
 
@@ -75,7 +75,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * @param size  The size of the sub-inventory.
      * @return The sub-inventory.
      */
-    @NotNull Inventory subInv(int start, int size);
+    @NotNull Container subInv(int start, int size);
 
     /**
      * Returns the default empty storage.

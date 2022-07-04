@@ -23,30 +23,30 @@
 package dev.galacticraft.impl.client.util;
 
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SpriteUtil {
     @Contract("_ -> new")
-    static @NotNull SpriteIdentifier identifier(String path) {
-        return identifier(new Identifier(MLConstant.MOD_ID, path));
+    static @NotNull Material identifier(String path) {
+        return identifier(new ResourceLocation(MLConstant.MOD_ID, path));
     }
 
     @Contract(value = "_ -> new", pure = true)
-    static @NotNull SpriteIdentifier identifier(Identifier id) {
-        return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, id);
+    static @NotNull Material identifier(ResourceLocation id) {
+        return new Material(InventoryMenu.BLOCK_ATLAS, id);
     }
 
-    static @NotNull Iterator<SpriteIdentifier> identifiers(@NotNull Collection<Identifier> textureDependencies) {
+    static @NotNull Iterator<Material> identifiers(@NotNull Collection<ResourceLocation> textureDependencies) {
         return textureDependencies.stream().map(SpriteUtil::identifier).iterator();
     }
 }

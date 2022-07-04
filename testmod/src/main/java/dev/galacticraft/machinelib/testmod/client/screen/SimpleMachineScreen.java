@@ -26,15 +26,15 @@ import dev.galacticraft.api.client.screen.MachineHandledScreen;
 import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleMachineScreen extends MachineHandledScreen<SimpleMachineBlockEntity, SimpleMachineScreenHandler<SimpleMachineBlockEntity>> {
-    private static final Identifier TEXTURE = TestMod.id("tex.png");
+    private static final ResourceLocation TEXTURE = TestMod.id("tex.png");
 
-    public SimpleMachineScreen(@NotNull SimpleMachineScreenHandler<SimpleMachineBlockEntity> handler, @NotNull PlayerInventory inv, @NotNull Text title) {
+    public SimpleMachineScreen(@NotNull SimpleMachineScreenHandler<SimpleMachineBlockEntity> handler, @NotNull Inventory inv, @NotNull Component title) {
         super(handler, inv, title, TEXTURE);
         this.capacitorX = 8;
         this.capacitorY = 8;

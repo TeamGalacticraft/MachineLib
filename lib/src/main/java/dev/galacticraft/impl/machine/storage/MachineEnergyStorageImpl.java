@@ -30,9 +30,9 @@ import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtLong;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
@@ -62,13 +62,13 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
             }
 
             @Override
-            public void sync(PacketByteBuf buf) {
+            public void sync(FriendlyByteBuf buf) {
                 this.modCount = MachineEnergyStorageImpl.this.modCount.getModCount();
                 buf.writeLong(MachineEnergyStorageImpl.this.amount);
             }
 
             @Override
-            public void read(PacketByteBuf buf) {
+            public void read(FriendlyByteBuf buf) {
                 MachineEnergyStorageImpl.this.amount = buf.readLong();
             }
         };
@@ -167,14 +167,14 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     }
 
     @Override
-    public @NotNull NbtElement writeNbt() {
-        return NbtLong.of(this.amount);
+    public @NotNull Tag writeNbt() {
+        return LongTag.valueOf(this.amount);
     }
 
     @Override
-    public void readNbt(@NotNull NbtElement nbt) {
-        if (nbt.getType() == NbtElement.LONG_TYPE) {
-            this.amount = ((NbtLong)nbt).longValue();
+    public void readNbt(@NotNull Tag nbt) {
+        if (nbt.getId() == Tag.TAG_LONG) {
+            this.amount = ((LongTag)nbt).getAsLong();
         }
     }
 }

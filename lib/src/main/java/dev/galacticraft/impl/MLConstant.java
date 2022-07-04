@@ -22,12 +22,12 @@
 
 package dev.galacticraft.impl;
 
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -35,24 +35,24 @@ public interface MLConstant {
     String MOD_ID = "machinelib";
 
     interface Text {
-        Style DARK_GRAY_STYLE = Style.EMPTY.withColor(Formatting.DARK_GRAY);
-        Style GOLD_STYLE = Style.EMPTY.withColor(Formatting.GOLD);
-        Style GREEN_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
-        Style RED_STYLE = Style.EMPTY.withColor(Formatting.RED);
-        Style BLUE_STYLE = Style.EMPTY.withColor(Formatting.BLUE);
-        Style AQUA_STYLE = Style.EMPTY.withColor(Formatting.AQUA);
-        Style GRAY_STYLE = Style.EMPTY.withColor(Formatting.GRAY);
-        Style DARK_RED_STYLE = Style.EMPTY.withColor(Formatting.DARK_RED);
-        Style LIGHT_PURPLE_STYLE = Style.EMPTY.withColor(Formatting.LIGHT_PURPLE);
-        Style YELLOW_STYLE = Style.EMPTY.withColor(Formatting.YELLOW);
-        Style WHITE_STYLE = Style.EMPTY.withColor(Formatting.WHITE);
+        Style DARK_GRAY_STYLE = Style.EMPTY.withColor(ChatFormatting.DARK_GRAY);
+        Style GOLD_STYLE = Style.EMPTY.withColor(ChatFormatting.GOLD);
+        Style GREEN_STYLE = Style.EMPTY.withColor(ChatFormatting.GREEN);
+        Style RED_STYLE = Style.EMPTY.withColor(ChatFormatting.RED);
+        Style BLUE_STYLE = Style.EMPTY.withColor(ChatFormatting.BLUE);
+        Style AQUA_STYLE = Style.EMPTY.withColor(ChatFormatting.AQUA);
+        Style GRAY_STYLE = Style.EMPTY.withColor(ChatFormatting.GRAY);
+        Style DARK_RED_STYLE = Style.EMPTY.withColor(ChatFormatting.DARK_RED);
+        Style LIGHT_PURPLE_STYLE = Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE);
+        Style YELLOW_STYLE = Style.EMPTY.withColor(ChatFormatting.YELLOW);
+        Style WHITE_STYLE = Style.EMPTY.withColor(ChatFormatting.WHITE);
 
         static Style getStorageLevelColor(double scale) {
             return Style.EMPTY.withColor(TextColor.fromRgb(((int)(255 * scale) << 16) + (((int)(255 * ( 1.0 - scale))) << 8)));
         }
 
         static Style getRainbow(int ticks) {
-            return Style.EMPTY.withColor(TextColor.fromRgb(MathHelper.hsvToRgb(ticks / 1000.0f, 1, 1)));
+            return Style.EMPTY.withColor(TextColor.fromRgb(Mth.hsvToRgb(ticks / 1000.0f, 1, 1)));
         }
     }
 
@@ -80,12 +80,12 @@ public interface MLConstant {
     }
 
     interface Property {
-        BooleanProperty ACTIVE = BooleanProperty.of("active");
+        BooleanProperty ACTIVE = BooleanProperty.create("active");
     }
 
     interface ScreenTexture {
-        Identifier MACHINE_CONFIG_PANELS = new Identifier(MLConstant.MOD_ID, "textures/gui/machine_panels.png");
-        Identifier OVERLAY_BARS = new Identifier(MLConstant.MOD_ID, "textures/gui/overlay_bars.png");
+        ResourceLocation MACHINE_CONFIG_PANELS = new ResourceLocation(MLConstant.MOD_ID, "textures/gui/machine_panels.png");
+        ResourceLocation OVERLAY_BARS = new ResourceLocation(MLConstant.MOD_ID, "textures/gui/overlay_bars.png");
     }
 
     interface TextureCoordinate {

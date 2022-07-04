@@ -24,11 +24,11 @@ package dev.galacticraft.api.screen;
 
 import dev.galacticraft.api.block.entity.RecipeMachineBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.screen.Property;
-import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +37,8 @@ import java.util.function.Supplier;
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public class RecipeMachineScreenHandler<C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> extends MachineScreenHandler<T> {
-    public final Property progress = new Property() {
+public class RecipeMachineScreenHandler<C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> extends MachineScreenHandler<T> {
+    public final DataSlot progress = new DataSlot() {
         @Override
         public int get() {
             return RecipeMachineScreenHandler.this.machine.getProgress();
@@ -50,7 +50,7 @@ public class RecipeMachineScreenHandler<C extends Inventory, R extends Recipe<C>
         }
     };
 
-    public final Property maxProgress = new Property() {
+    public final DataSlot maxProgress = new DataSlot() {
         @Override
         public int get() {
             return RecipeMachineScreenHandler.this.machine.getMaxProgress();
@@ -62,37 +62,37 @@ public class RecipeMachineScreenHandler<C extends Inventory, R extends Recipe<C>
         }
     };
 
-    protected RecipeMachineScreenHandler(int syncId, PlayerEntity player, T machine, ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>> type, int invX, int invY) {
+    protected RecipeMachineScreenHandler(int syncId, Player player, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> type, int invX, int invY) {
         super(syncId, player, machine, type);
-        this.addProperty(this.progress);
-        this.addProperty(this.maxProgress);
+        this.addDataSlot(this.progress);
+        this.addDataSlot(this.maxProgress);
         this.addPlayerInventorySlots(invX, invY);
     }
 
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType) {
         return createFactory(handlerType, 8, 84);
     }
 
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invY) {
         return createFactory(handlerType, 8, invY);
     }
 
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invX, int invY) {
-        return (syncId, inventory, buf) -> create(syncId, inventory.player, (T)inventory.player.world.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invX, int invY) {
+        return (syncId, inventory, buf) -> create(syncId, inventory.player, (T)inventory.player.level.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
     }
 
     @Contract("_, _, _, _ -> new")
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType) {
         return create(syncId, playerEntity, machine, handlerType, 8, 84);
     }
 
     @Contract("_, _, _, _, _ -> new")
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invY) {
         return create(syncId, playerEntity, machine, handlerType, 8, invY);
     }
 
     @Contract("_, _, _, _, _, _ -> new")
-    public static <C extends Inventory, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invX, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invX, int invY) {
         return new RecipeMachineScreenHandler<>(syncId, playerEntity, machine, handlerType, invX, invY);
     }
 }

@@ -36,7 +36,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

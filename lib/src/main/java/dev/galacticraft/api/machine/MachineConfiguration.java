@@ -23,7 +23,7 @@
 package dev.galacticraft.api.machine;
 
 import dev.galacticraft.impl.machine.MachineConfigurationImpl;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,11 +83,11 @@ public interface MachineConfiguration {
      * @param nbt The NBT compound to serialize to.
      * @return The NBT compound.
      */
-    @NotNull NbtCompound writeNbt(@NotNull NbtCompound nbt);
+    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt);
 
     /**
      * Deserializes the machine configuration from NBT.
      * @param nbt The NBT compound to deserialize from.
      */
-    void readNbt(@NotNull NbtCompound nbt);
+    void readNbt(@NotNull CompoundTag nbt);
 }

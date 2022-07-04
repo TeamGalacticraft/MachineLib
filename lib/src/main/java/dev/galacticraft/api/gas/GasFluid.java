@@ -27,23 +27,23 @@ import it.unimi.dsi.fastutil.objects.Object2IntFunction;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributeHandler;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +57,9 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     @ApiStatus.Internal
     public static final List<GasFluid> GAS_FLUIDS = new ArrayList<>(); // used for registering client hooks
 
-    private final @NotNull Text name;
+    private final @NotNull Component name;
     private final @NotNull String symbol;
-    private final @NotNull Identifier texture;
+    private final @NotNull ResourceLocation texture;
     private final int tint;
     private final @NotNull Object2IntFunction<FluidVariant> luminance;
     private final @NotNull Object2IntFunction<FluidVariant> viscosity;
@@ -67,42 +67,42 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     private final @NotNull Optional<SoundEvent> emptySound;
 
     @Contract("_, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol) {
         return create(name, texture, symbol, v -> 0);
     }
 
     @Contract("_, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance) {
         return create(name, texture, symbol, luminance, v -> 50);
     }
 
     @Contract("_, _, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity) {
         return create(name, texture, symbol, luminance, viscosity, Optional.empty(), Optional.empty());
     }
 
     @Contract("_, _, _, _, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
         return create(name, texture, symbol, 0xFFFFFFFF, luminance, viscosity, fillSound, emptySound);
     }
     
     @Contract("_, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint) {
         return create(name, texture, symbol, tint, v -> 0);
     }
 
     @Contract("_, _, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance) {
         return create(name, texture, symbol, tint, luminance, v -> 50);
     }
 
     @Contract("_, _, _, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity) {
         return create(name, texture, symbol, tint, luminance, viscosity, Optional.empty(), Optional.empty());
     }
 
     @Contract("_, _, _, _, _, _, _, _ -> new")
-    public static @NotNull GasFluid create(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
+    public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(texture);
         Preconditions.checkNotNull(symbol);
@@ -114,7 +114,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
         return new GasFluid(name, texture, symbol, tint, luminance, viscosity, fillSound, emptySound);
     }
 
-    private GasFluid(@NotNull Text name, @NotNull Identifier texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
+    private GasFluid(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
         this.name = name;
         this.symbol = symbol.replaceAll("0", "₀")
                 .replaceAll("1", "₁")
@@ -138,62 +138,62 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    public Item getBucketItem() {
+    public Item getBucket() {
         return Items.AIR;
     }
 
     @Override
-    protected boolean canBeReplacedWith(FluidState state, BlockView world, BlockPos pos, Fluid fluid, Direction direction) {
+    protected boolean canBeReplacedWith(FluidState state, BlockGetter world, BlockPos pos, Fluid fluid, Direction direction) {
         return true;
     }
 
     @Override
-    protected Vec3d getVelocity(BlockView world, BlockPos pos, FluidState state) {
-        return Vec3d.ZERO;
+    protected Vec3 getFlow(BlockGetter world, BlockPos pos, FluidState state) {
+        return Vec3.ZERO;
     }
 
     @Override
-    public int getTickRate(WorldView world) {
+    public int getTickDelay(LevelReader world) {
         return 0;
     }
 
     @Override
-    protected float getBlastResistance() {
+    protected float getExplosionResistance() {
         return 0;
     }
 
     @Override
-    public float getHeight(FluidState state, BlockView world, BlockPos pos) {
+    public float getHeight(FluidState state, BlockGetter world, BlockPos pos) {
         return 0.0F;
     }
 
     @Override
-    public float getHeight(FluidState state) {
+    public float getOwnHeight(FluidState state) {
         return 0.0F;
     }
 
     @Override
-    protected BlockState toBlockState(FluidState state) {
-        return Blocks.AIR.getDefaultState();
+    protected BlockState createLegacyBlock(FluidState state) {
+        return Blocks.AIR.defaultBlockState();
     }
 
     @Override
-    public boolean isStill(FluidState state) {
+    public boolean isSource(FluidState state) {
         return true;
     }
 
     @Override
-    public int getLevel(FluidState state) {
+    public int getAmount(FluidState state) {
         return 0;
     }
 
     @Override
-    public VoxelShape getShape(FluidState state, BlockView world, BlockPos pos) {
-        return VoxelShapes.empty();
+    public VoxelShape getShape(FluidState state, BlockGetter world, BlockPos pos) {
+        return Shapes.empty();
     }
 
     @Override
-    public Text getName(FluidVariant fluidVariant) {
+    public Component getName(FluidVariant fluidVariant) {
         return this.name;
     }
 
@@ -213,7 +213,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    public int getViscosity(FluidVariant variant, @Nullable World world) {
+    public int getViscosity(FluidVariant variant, @Nullable Level world) {
         return this.viscosity.getInt(variant);
     }
 
@@ -222,7 +222,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
         return true;
     }
 
-    public @NotNull Identifier getTexture() {
+    public @NotNull ResourceLocation getTexture() {
         return this.texture;
     }
 
@@ -231,7 +231,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    public @NotNull Text getName() {
+    public @NotNull Component getName() {
         return this.name;
     }
 

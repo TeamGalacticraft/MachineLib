@@ -22,11 +22,11 @@
 
 package dev.galacticraft.api.gas;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 public interface Gas {
-    @NotNull Text getName();
+    @NotNull Component getName();
 
     @NotNull String getSymbol();
 }

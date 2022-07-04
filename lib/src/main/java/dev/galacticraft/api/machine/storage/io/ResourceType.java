@@ -25,11 +25,11 @@ package dev.galacticraft.api.machine.storage.io;
 import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,34 +44,34 @@ public final class ResourceType<T, V> {
     /**
      * No resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, Text.translatable(MLConstant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(Formatting.DARK_GRAY)));
+    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, Component.translatable(MLConstant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
     /**
      * All resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, Text.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(Formatting.AQUA)));
+    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, Component.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
     /**
      * Energy can be stored/transferred.
      */
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, Text.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)));
+    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, Component.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)));
     /**
      * Items can be stored/transferred.
      */
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, Text.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(Formatting.GOLD)));
+    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, Component.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
     /**
      * Fluids can be stored/transferred.
      */
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, Text.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(Formatting.GREEN)));
+    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
 
     /**
      * The name of the resource type.
      */
-    private final @NotNull Text name;
+    private final @NotNull Component name;
     /**
      * The ID of the resource type.
      */
     private final byte ordinal;
 
-    private ResourceType(int ordinal, @NotNull Text name) {
+    private ResourceType(int ordinal, @NotNull Component name) {
         this.ordinal = (byte)ordinal;
         this.name = name;
     }
@@ -98,7 +98,7 @@ public final class ResourceType<T, V> {
      * Returns the name of the resource type.
      * @return The name of the resource type.
      */
-    public @NotNull Text getName() {
+    public @NotNull Component getName() {
         return this.name;
     }
 

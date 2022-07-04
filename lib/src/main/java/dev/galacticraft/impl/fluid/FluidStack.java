@@ -23,9 +23,9 @@
 package dev.galacticraft.impl.fluid;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 public class FluidStack {
     public static final FluidStack EMPTY = new FluidStack(Fluids.EMPTY, null, 0);
     private final @NotNull Fluid fluid;
-    private @Nullable NbtCompound nbt;
+    private @Nullable CompoundTag nbt;
     private long amount;
     private boolean empty;
 
-    public FluidStack(@NotNull Fluid fluid, @Nullable NbtCompound nbt, long amount) {
+    public FluidStack(@NotNull Fluid fluid, @Nullable CompoundTag nbt, long amount) {
         this.fluid = fluid;
         this.nbt = nbt;
         this.amount = amount;
@@ -65,14 +65,14 @@ public class FluidStack {
     }
 
     @Contract(pure = true)
-    public @Nullable NbtCompound getNbt() {
+    public @Nullable CompoundTag getNbt() {
         return this.nbt;
     }
 
     @Contract()
-    public @NotNull NbtCompound getOrCreateNbt() {
+    public @NotNull CompoundTag getOrCreateNbt() {
         if (this.nbt == null) {
-            this.nbt = new NbtCompound();
+            this.nbt = new CompoundTag();
         }
         return this.nbt;
     }

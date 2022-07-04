@@ -24,9 +24,9 @@ package dev.galacticraft.impl.screen.property;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.MachineStatus;
-import net.minecraft.screen.Property;
+import net.minecraft.world.inventory.DataSlot;
 
-public class StatusProperty extends Property {
+public class StatusProperty extends DataSlot {
     private final MachineBlockEntity machine;
 
     public StatusProperty(MachineBlockEntity machine) {
@@ -35,11 +35,11 @@ public class StatusProperty extends Property {
 
     @Override
     public int get() {
-        return MachineStatus.REGISTRY.getRawId(this.machine.getStatus());
+        return MachineStatus.REGISTRY.getId(this.machine.getStatus());
     }
 
     @Override
     public void set(int value) {
-        this.machine.setStatus(null, MachineStatus.REGISTRY.getOrThrow(value));
+        this.machine.setStatus(null, MachineStatus.REGISTRY.byIdOrThrow(value));
     }
 }

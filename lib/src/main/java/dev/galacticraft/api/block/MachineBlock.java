@@ -31,42 +31,42 @@ import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.block.entity.MachineBlockEntityTicker;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.loot.context.LootContextParameters;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableTextContent;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +80,7 @@ import java.util.List;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  * @see MachineBlockEntity
  */
-public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWithEntity {
+public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEntityBlock {
     /**
      * This property represents whether the machine is active.
      * It is used for world rendering purposes.
@@ -91,117 +91,117 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
      * Creates a new machine block.
      * @param settings The settings for the block.
      */
-    protected MachineBlock(Settings settings) {
+    protected MachineBlock(Properties settings) {
         super(settings);
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        super.appendProperties(builder);
-        builder.add(Properties.HORIZONTAL_FACING, ACTIVE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(BlockStateProperties.HORIZONTAL_FACING, ACTIVE);
     }
 
     @Override
-    public abstract T createBlockEntity(BlockPos pos, BlockState state);
+    public abstract T newBlockEntity(BlockPos pos, BlockState state);
 
     @Override
-    public BlockState getPlacementState(@NotNull ItemPlacementContext context) {
-        return this.getDefaultState().with(Properties.HORIZONTAL_FACING, context.getPlayerFacing().getOpposite()).with(ACTIVE, false);
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite()).setValue(ACTIVE, false);
     }
 
     @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.onPlaced(world, pos, state, placer, itemStack);
-        if (!world.isClient && placer instanceof PlayerEntity player) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.setPlacedBy(world, pos, state, placer, itemStack);
+        if (!world.isClientSide && placer instanceof Player player) {
             ((MachineBlockEntity) world.getBlockEntity(pos)).getSecurity().setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
         }
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    public final void appendTooltip(ItemStack stack, BlockView view, List<Text> tooltip, @NotNull TooltipContext context) {
-        Text text = machineDescription(stack, view, context.isAdvanced());
+    public final void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
+        Component text = machineDescription(stack, view, context.isAdvanced());
         if (text != null) {
             if (Screen.hasShiftDown()) {
-                char[] line = text.getContent() instanceof TranslatableTextContent content ? I18n.translate(content.getKey()).toCharArray() : text.getString().toCharArray();
+                char[] line = text.getContents() instanceof TranslatableContents content ? I18n.get(content.getKey()).toCharArray() : text.getString().toCharArray();
                 int len = 0;
                 final int maxLength = 175;
                 StringBuilder builder = new StringBuilder();
                 for (char c : line) {
-                    len += MinecraftClient.getInstance().textRenderer.getWidth(String.valueOf(c));
+                    len += Minecraft.getInstance().font.width(String.valueOf(c));
                     if (c == ' ' && len >= maxLength) {
                         len = 0;
-                        tooltip.add(Text.literal(builder.toString()).setStyle(text.getStyle()));
+                        tooltip.add(Component.literal(builder.toString()).setStyle(text.getStyle()));
                         builder = new StringBuilder();
                         continue;
                     }
                     builder.append(c);
                 }
-                tooltip.add(Text.literal(builder.toString()).setStyle(text.getStyle()));
+                tooltip.add(Component.literal(builder.toString()).setStyle(text.getStyle()));
             } else {
-                tooltip.add(Text.translatable(MLConstant.TranslationKey.PRESS_SHIFT).setStyle(MLConstant.Text.DARK_GRAY_STYLE));
+                tooltip.add(Component.translatable(MLConstant.TranslationKey.PRESS_SHIFT).setStyle(MLConstant.Text.DARK_GRAY_STYLE));
             }
         }
 
-        if (stack != null && stack.getNbt() != null && stack.getNbt().contains(MLConstant.Nbt.BLOCK_ENTITY_TAG)) {
-            NbtCompound nbt = stack.getNbt().getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG);
-            tooltip.add(Text.empty());
-            if (nbt.contains(MLConstant.Nbt.ENERGY, NbtElement.INT_TYPE)) tooltip.add(Text.translatable(MLConstant.TranslationKey.CURRENT_ENERGY, Text.literal(String.valueOf(nbt.getInt(MLConstant.Nbt.ENERGY))).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
-            if (nbt.contains(MLConstant.Nbt.SECURITY, NbtElement.COMPOUND_TYPE)) {
-                NbtCompound security = nbt.getCompound(MLConstant.Nbt.SECURITY);
-                if (security.contains(MLConstant.Nbt.OWNER, NbtElement.COMPOUND_TYPE)) {
-                    GameProfile profile = NbtHelper.toGameProfile(security.getCompound(MLConstant.Nbt.OWNER));
+        if (stack != null && stack.getTag() != null && stack.getTag().contains(MLConstant.Nbt.BLOCK_ENTITY_TAG)) {
+            CompoundTag nbt = stack.getTag().getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG);
+            tooltip.add(Component.empty());
+            if (nbt.contains(MLConstant.Nbt.ENERGY, Tag.TAG_INT)) tooltip.add(Component.translatable(MLConstant.TranslationKey.CURRENT_ENERGY, Component.literal(String.valueOf(nbt.getInt(MLConstant.Nbt.ENERGY))).setStyle(MLConstant.Text.BLUE_STYLE)).setStyle(MLConstant.Text.GOLD_STYLE));
+            if (nbt.contains(MLConstant.Nbt.SECURITY, Tag.TAG_COMPOUND)) {
+                CompoundTag security = nbt.getCompound(MLConstant.Nbt.SECURITY);
+                if (security.contains(MLConstant.Nbt.OWNER, Tag.TAG_COMPOUND)) {
+                    GameProfile profile = NbtUtils.readGameProfile(security.getCompound(MLConstant.Nbt.OWNER));
                     if (profile != null) {
-                        MutableText text1 = Text.translatable(MLConstant.TranslationKey.OWNER, Text.literal(profile.getName()).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE);
+                        MutableComponent text1 = Component.translatable(MLConstant.TranslationKey.OWNER, Component.literal(profile.getName()).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE);
                         if (Screen.hasControlDown()) {
-                            text1.append(Text.literal(" (" + profile.getId().toString() + ")").setStyle(MLConstant.Text.AQUA_STYLE));
+                            text1.append(Component.literal(" (" + profile.getId().toString() + ")").setStyle(MLConstant.Text.AQUA_STYLE));
                         }
                         tooltip.add(text1);
                     } else {
-                        tooltip.add(Text.translatable(MLConstant.TranslationKey.OWNER, Text.translatable(MLConstant.TranslationKey.UNKNOWN).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
+                        tooltip.add(Component.translatable(MLConstant.TranslationKey.OWNER, Component.translatable(MLConstant.TranslationKey.UNKNOWN).setStyle(MLConstant.Text.LIGHT_PURPLE_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
                     }
-                    tooltip.add(Text.translatable(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
+                    tooltip.add(Component.translatable(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(Text.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
+            tooltip.add(Component.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
         }
     }
 
     @Override
-    public PistonBehavior getPistonBehavior(BlockState state) {
-        return PistonBehavior.BLOCK;
+    public PushReaction getPistonPushReaction(BlockState state) {
+        return PushReaction.BLOCK;
     }
 
     @Override
-    public final ActionResult onUse(BlockState state, @NotNull World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient) {
+    public final InteractionResult use(BlockState state, @NotNull Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!world.isClientSide) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getSecurity();
                 if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
                 if (security.isOwner(player.getGameProfile())) {
-                    NamedScreenHandlerFactory factory = state.createScreenHandlerFactory(world, pos);
+                    MenuProvider factory = state.getMenuProvider(world, pos);
 
                     if (factory != null) {
-                        player.openHandledScreen(factory);
-                        security.sendPacket(pos, (ServerPlayerEntity) player);
-                        machine.getRedstoneActivation().sendPacket(pos, (ServerPlayerEntity) player);
-                        return ActionResult.CONSUME;
+                        player.openMenu(factory);
+                        security.sendPacket(pos, (ServerPlayer) player);
+                        machine.getRedstoneActivation().sendPacket(pos, (ServerPlayer) player);
+                        return InteractionResult.CONSUME;
                     }
                 }
             }
         }
 
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBreak(world, pos, state, player);
+    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+        super.playerWillDestroy(world, pos, state, player);
         BlockEntity entity = world.getBlockEntity(pos);
         if (entity instanceof MachineBlockEntity machine) {
             MachineItemStorage inv = machine.itemStorage();
@@ -211,36 +211,36 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
                 transaction.commit();
             }
             for (ItemEntity itemEntity : entities) {
-                world.spawnEntity(itemEntity);
+                world.addFreshEntity(itemEntity);
             }
         }
     }
 
     @Override
-    public List<ItemStack> getDroppedStacks(BlockState state, LootContext.@NotNull Builder builder) {
-        BlockEntity entity = builder.get(LootContextParameters.BLOCK_ENTITY);
+    public List<ItemStack> getDrops(BlockState state, LootContext.@NotNull Builder builder) {
+        BlockEntity entity = builder.getParameter(LootContextParams.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
             if (machine.areDropsDisabled()) return Collections.emptyList();
         }
-        return super.getDroppedStacks(state, builder);
+        return super.getDrops(state, builder);
     }
 
     @Override
-    public ItemStack getPickStack(BlockView view, BlockPos pos, BlockState state) {
-        ItemStack stack = super.getPickStack(view, pos, state);
-        NbtCompound nbt = (stack.getNbt() != null ? stack.getNbt() : new NbtCompound());
+    public ItemStack getCloneItemStack(BlockGetter view, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(view, pos, state);
+        CompoundTag nbt = (stack.getTag() != null ? stack.getTag() : new CompoundTag());
         BlockEntity blockEntity = view.getBlockEntity(pos);
         if (blockEntity != null) { // todo: limit to IO config
-            nbt.put(MLConstant.Nbt.BLOCK_ENTITY_TAG, blockEntity.createNbt());
+            nbt.put(MLConstant.Nbt.BLOCK_ENTITY_TAG, blockEntity.saveWithoutMetadata());
         }
 
-        stack.setNbt(nbt);
+        stack.setTag(nbt);
         return stack;
     }
 
     @NotNull
     @Override
-    public <B extends BlockEntity> BlockEntityTicker<B> getTicker(World world, BlockState state, BlockEntityType<B> type) {
+    public <B extends BlockEntity> BlockEntityTicker<B> getTicker(Level world, BlockState state, BlockEntityType<B> type) {
         return MachineBlockEntityTicker.getInstance();
     }
 
@@ -251,5 +251,5 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
      * @param advanced Whether advanced tooltips are enabled.
      * @return This machine's description.
      */
-    public abstract @Nullable Text machineDescription(ItemStack stack, BlockView view, boolean advanced);
+    public abstract @Nullable Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced);
 }

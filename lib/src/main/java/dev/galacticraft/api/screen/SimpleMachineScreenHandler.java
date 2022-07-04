@@ -24,8 +24,8 @@ package dev.galacticraft.api.screen;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,38 +35,38 @@ import java.util.function.Supplier;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public class SimpleMachineScreenHandler<T extends MachineBlockEntity> extends MachineScreenHandler<T> {
-    protected SimpleMachineScreenHandler(int syncId, PlayerEntity player, T machine, ScreenHandlerType<? extends MachineScreenHandler<T>> type, int invX, int invY) {
+    protected SimpleMachineScreenHandler(int syncId, Player player, T machine, MenuType<? extends MachineScreenHandler<T>> type, int invX, int invY) {
         super(syncId, player, machine, type);
         this.addPlayerInventorySlots(invX, invY);
     }
 
     @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<ScreenHandlerType<? extends MachineScreenHandler<T>>> handlerType) {
+    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<MenuType<? extends MachineScreenHandler<T>>> handlerType) {
         return createFactory(handlerType, 8, 84);
     }
 
     @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<ScreenHandlerType<? extends MachineScreenHandler<T>>> handlerType, int invY) {
+    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<MenuType<? extends MachineScreenHandler<T>>> handlerType, int invY) {
         return createFactory(handlerType, 8, invY);
     }
 
     @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<ScreenHandlerType<? extends MachineScreenHandler<T>>> handlerType, int invX, int invY) {
-        return (syncId, inventory, buf) -> create(syncId, inventory.player, (T)inventory.player.world.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
+    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineScreenHandler<T>> createFactory(Supplier<MenuType<? extends MachineScreenHandler<T>>> handlerType, int invX, int invY) {
+        return (syncId, inventory, buf) -> create(syncId, inventory.player, (T)inventory.player.level.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
     }
 
     @Contract("_, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends MachineScreenHandler<T>> handlerType) {
+    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineScreenHandler<T>> handlerType) {
         return new SimpleMachineScreenHandler<>(syncId, playerEntity, machine, handlerType, 8, 84);
     }
 
     @Contract("_, _, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends MachineScreenHandler<T>> handlerType, int invY) {
+    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineScreenHandler<T>> handlerType, int invY) {
         return new SimpleMachineScreenHandler<>(syncId, playerEntity, machine, handlerType, 8, invY);
     }
 
     @Contract("_, _, _, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, PlayerEntity playerEntity, T machine, ScreenHandlerType<? extends MachineScreenHandler<T>> handlerType, int invX, int invY) {
+    public static <T extends MachineBlockEntity> @NotNull SimpleMachineScreenHandler<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineScreenHandler<T>> handlerType, int invX, int invY) {
         return new SimpleMachineScreenHandler<>(syncId, playerEntity, machine, handlerType, invX, invY);
     }
 }

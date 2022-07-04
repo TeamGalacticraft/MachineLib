@@ -23,8 +23,8 @@
 package dev.galacticraft.impl.machine.storage.slot;
 
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public final class ItemSlot extends ResourceSlot<Item, ItemVariant, ItemStack> {
 
     @Override
     protected long getVariantCapacity(@NotNull ItemVariant variant) {
-        return variant.getItem().getMaxCount();
+        return variant.getItem().getMaxStackSize();
     }
 
     @Contract(pure = true)

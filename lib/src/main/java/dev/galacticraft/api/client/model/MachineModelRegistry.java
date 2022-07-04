@@ -29,23 +29,23 @@ import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
-import net.minecraft.block.Block;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 
 /**
  * A registry for {@link MachineBakedModel} sprite providers.
  * Use {@link #register(Block, SpriteProvider)} to register a sprite provider for a block.
  */
 public interface MachineModelRegistry {
-    Identifier MACHINE = new Identifier(MLConstant.MOD_ID, "block/machine");
-    Identifier MACHINE_SIDE = new Identifier(MLConstant.MOD_ID, "block/machine_side");
+    ResourceLocation MACHINE = new ResourceLocation(MLConstant.MOD_ID, "block/machine");
+    ResourceLocation MACHINE_SIDE = new ResourceLocation(MLConstant.MOD_ID, "block/machine_side");
 
     /**
      * Registers a sprite provider for a block.
@@ -91,7 +91,7 @@ public interface MachineModelRegistry {
      * @param flow The flow of the resource to get the sprite for.
      * @return The sprite of the machine block for the given face.
      */
-    static Sprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
         return MachineBakedModel.getSprite(face, machine, stack, provider, type, flow);
     }
 
@@ -110,7 +110,7 @@ public interface MachineModelRegistry {
          * @return The appropriate sprite to render for the given face.
          */
         @Contract(pure = true, value = "null,null,_,_->fail;!null,!null,_,_->fail")
-        @NotNull Sprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<Identifier, Sprite> atlas);
+        @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas);
 
         /**
          * Returns a simple sprite provider which has a different sprite for the front face.
@@ -118,7 +118,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_ -> new")
-        static @NotNull SpriteProvider frontFace(Identifier front) {
+        static @NotNull SpriteProvider frontFace(ResourceLocation front) {
             return new MachineBakedModel.FrontFaceSpriteProvider(front);
         }
 
@@ -128,7 +128,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_ -> new")
-        static @NotNull SpriteProvider single(Identifier id) {
+        static @NotNull SpriteProvider single(ResourceLocation id) {
             return new MachineBakedModel.SingleSpriteProvider(id);
         }
 
@@ -138,7 +138,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_ -> new")
-        static @NotNull SpriteProvider zAxisSided(Identifier id) {
+        static @NotNull SpriteProvider zAxisSided(ResourceLocation id) {
             return zAxisSided(id, id);
         }
 
@@ -148,7 +148,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_ -> new")
-        static @NotNull SpriteProvider zAxis(Identifier id) {
+        static @NotNull SpriteProvider zAxis(ResourceLocation id) {
             return zAxis(id, id);
         }
 
@@ -159,7 +159,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_, _ -> new")
-        static @NotNull SpriteProvider zAxisSided(Identifier front, Identifier back) {
+        static @NotNull SpriteProvider zAxisSided(ResourceLocation front, ResourceLocation back) {
             return new MachineBakedModel.ZAxisSpriteProvider(front, back, true);
         }
 
@@ -170,7 +170,7 @@ public interface MachineModelRegistry {
          * @return The sprite provider.
          */
         @Contract("_, _ -> new")
-        static @NotNull SpriteProvider zAxis(Identifier front, Identifier back) {
+        static @NotNull SpriteProvider zAxis(ResourceLocation front, ResourceLocation back) {
             return new MachineBakedModel.ZAxisSpriteProvider(front, back, false);
         }
     }

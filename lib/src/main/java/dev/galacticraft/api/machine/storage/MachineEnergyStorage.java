@@ -29,7 +29,7 @@ import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -95,13 +95,13 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
      * Serializes the energy storage to NBT.
      * @return The serialized NBT
      */
-    @NotNull NbtElement writeNbt();
+    @NotNull Tag writeNbt();
 
     /**
      * Deserializes the energy storage from NBT.
      * @param nbt The NBT to deserialize from
      */
-    void readNbt(@NotNull NbtElement nbt);
+    void readNbt(@NotNull Tag nbt);
 
     @Override
     default @NotNull SlotType<?, ?> @NotNull [] getTypes() {

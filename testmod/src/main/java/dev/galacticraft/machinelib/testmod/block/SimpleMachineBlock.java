@@ -24,35 +24,39 @@ package dev.galacticraft.machinelib.testmod.block;
 
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.html.BlockView;
+
 public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
-    public SimpleMachineBlock(Settings settings) {
+    public SimpleMachineBlock(Block.Properties settings) {
         super(settings);
     }
 
     @Override
-    public SimpleMachineBlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public SimpleMachineBlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SimpleMachineBlockEntity(pos, state);
     }
 
     @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.onPlaced(world, pos, state, placer, itemStack);
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.setPlacedBy(world, pos, state, placer, itemStack);
         if (placer != null) {
-            placer.addVelocity(0, 1, 0);
+            placer.push(0, 1, 0);
         }
     }
 
     @Override
-    public Text machineDescription(ItemStack stack, BlockView view, boolean advanced) {
-        return Text.empty();
+    public Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced) {
+        return Component.empty();
     }
 }

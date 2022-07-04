@@ -37,14 +37,14 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtByte;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.tag.TagKey;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ import java.util.function.Predicate;
 public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorage<Item, ItemVariant> {
     INSTANCE;
 
-    private static final Inventory EMPTY_INVENTORY = new SimpleInventory(0);
+    private static final Container EMPTY_INVENTORY = new SimpleContainer(0);
     private static final SlotType<Item, ItemVariant>[] NO_SLOTS = new SlotType[0];
 
     @Override
@@ -180,7 +180,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public boolean canAccess(@NotNull PlayerEntity player) {
+    public boolean canAccess(@NotNull Player player) {
         return false;
     }
 
@@ -205,16 +205,16 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull NbtElement writeNbt() {
-        return NbtByte.ZERO;
+    public @NotNull Tag writeNbt() {
+        return ByteTag.ZERO;
     }
 
     @Override
-    public void readNbt(@NotNull NbtElement nbt) {
+    public void readNbt(@NotNull Tag nbt) {
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
     }
 
     @Override
@@ -272,13 +272,13 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
 
     @Contract(pure = true)
     @Override
-    public @NotNull Inventory playerInventory() {
+    public @NotNull Container playerInventory() {
         return EMPTY_INVENTORY;
     }
 
     @Contract(pure = true)
     @Override
-    public @NotNull Inventory subInv(int start, int size) {
+    public @NotNull Container subInv(int start, int size) {
         if (start > 0 || size > 0) throw new IndexOutOfBoundsException("Index out of bounds");
         return EMPTY_INVENTORY;
     }

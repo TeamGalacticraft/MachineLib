@@ -25,7 +25,7 @@ package dev.galacticraft.api.machine;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.impl.machine.MachineIOConfigImpl;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,11 +55,11 @@ public interface MachineIOConfig {
      * Serializes the {@link MachineIOConfig} to NBT.
      * @return a NBT compound containing the serialized {@link MachineIOConfig}
      */
-    @NotNull NbtCompound writeNbt();
+    @NotNull CompoundTag writeNbt();
 
     /**
      * Deserializes the {@link MachineIOConfig} from NBT.
      * @param nbt the NBT compound containing the serialized {@link MachineIOConfig}
      */
-    void readNbt(@NotNull NbtCompound nbt);
+    void readNbt(@NotNull CompoundTag nbt);
 }

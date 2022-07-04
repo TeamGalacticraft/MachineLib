@@ -23,33 +23,33 @@
 package dev.galacticraft.api.machine;
 
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.text.Text;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the level of protection a machine has from other players.
  */
-public enum AccessLevel implements StringIdentifiable {
+public enum AccessLevel implements StringRepresentable {
     /**
      * All players can use this machine.
      */
-    PUBLIC(Text.translatable(MLConstant.TranslationKey.PUBLIC_ACCESS)),
+    PUBLIC(Component.translatable(MLConstant.TranslationKey.PUBLIC_ACCESS)),
     /**
      * Only team members can use this machine.
      */
-    TEAM(Text.translatable(MLConstant.TranslationKey.TEAM_ACCESS)),
+    TEAM(Component.translatable(MLConstant.TranslationKey.TEAM_ACCESS)),
     /**
      * Only the owner can use this machine.
      */
-    PRIVATE(Text.translatable(MLConstant.TranslationKey.PRIVATE_ACCESS));
+    PRIVATE(Component.translatable(MLConstant.TranslationKey.PRIVATE_ACCESS));
 
     /**
      * The name of the access level.
      */
-    private final @NotNull Text name;
+    private final @NotNull Component name;
 
-    AccessLevel(@NotNull Text name) {
+    AccessLevel(@NotNull Component name) {
         this.name = name;
     }
 
@@ -67,12 +67,12 @@ public enum AccessLevel implements StringIdentifiable {
      *
      * @return The name of the access level.
      */
-    public @NotNull Text getName() {
+    public @NotNull Component getName() {
         return this.name;
     }
 
     @Override
-    public @NotNull String asString() {
+    public @NotNull String getSerializedName() {
         return switch (this) {
             case PUBLIC -> "public";
             case TEAM -> "team";

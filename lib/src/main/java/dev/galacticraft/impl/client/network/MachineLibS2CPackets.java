@@ -32,35 +32,34 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.Objects;
 
 @Environment(EnvType.CLIENT)
 public class MachineLibS2CPackets {
     public static void register() {
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "storage_sync"), (client, handler, buf, responseSender) -> {
-            PacketByteBuf packet = PacketByteBufs.copy(buf);
+        ClientPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "storage_sync"), (client, handler, buf, responseSender) -> {
+            FriendlyByteBuf packet = PacketByteBufs.copy(buf);
             client.execute(() -> {
-                if (client.player.currentScreenHandler instanceof MachineScreenHandler<?> machineHandler) {
-                    if (machineHandler.syncId == packet.readByte()) {
+                if (client.player.containerMenu instanceof MachineScreenHandler<?> machineHandler) {
+                    if (machineHandler.containerId == packet.readByte()) {
                         machineHandler.receiveState(packet);
                     }
                 }
             });
         });
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+        ClientPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
-            GameProfile profile = NbtHelper.toGameProfile(Objects.requireNonNull(buf.readNbt()));
+            GameProfile profile = NbtUtils.readGameProfile(Objects.requireNonNull(buf.readNbt()));
 
             client.execute(() -> {
-                assert client.world != null;
-                BlockEntity entity = client.world.getBlockEntity(pos);
+                assert client.level != null;
+                BlockEntity entity = client.level.getBlockEntity(pos);
                 if (entity instanceof MachineBlockEntity machine) {
                     assert profile != null;
                     assert accessLevel != null;
@@ -71,13 +70,13 @@ public class MachineLibS2CPackets {
             });
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(new Identifier(MLConstant.MOD_ID, "redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
+        ClientPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
             RedstoneActivation redstone = RedstoneActivation.values()[buf.readByte()];
 
             client.execute(() -> {
-                assert client.world != null;
-                BlockEntity entity = client.world.getBlockEntity(pos);
+                assert client.level != null;
+                BlockEntity entity = client.level.getBlockEntity(pos);
                 if (entity instanceof MachineBlockEntity) {
                     assert redstone != null;
                     ((MachineBlockEntity) entity).setRedstone(redstone);

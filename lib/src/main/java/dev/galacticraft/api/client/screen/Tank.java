@@ -23,20 +23,20 @@
 package dev.galacticraft.api.client.screen;
 
 import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.client.screen.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Somewhat like a {@link net.minecraft.screen.slot.Slot} but for fluids and gases.
+ * Somewhat like a {@link net.minecraft.world.inventory.Slot} but for fluids and gases.
  * Resources can be inserted into the tank and extracted from it via the gui.
  *
  * @see ResourceType#FLUID
@@ -98,7 +98,7 @@ public interface Tank {
     @ApiStatus.Internal
     void setId(int id);
 
-    void drawTooltip(@NotNull MatrixStack matrices, MinecraftClient client, int x, int y, int mouseX, int mouseY);
+    void drawTooltip(@NotNull PoseStack matrices, Minecraft client, int x, int y, int mouseX, int mouseY);
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 

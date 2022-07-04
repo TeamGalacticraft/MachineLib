@@ -22,7 +22,7 @@
 
 package dev.galacticraft.api.screen;
 
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Contract;
 
 /**
@@ -36,11 +36,11 @@ public interface StorageSyncHandler {
         }
 
         @Override
-        public void sync(PacketByteBuf buf) {
+        public void sync(FriendlyByteBuf buf) {
         }
 
         @Override
-        public void read(PacketByteBuf buf) {
+        public void read(FriendlyByteBuf buf) {
         }
     };
 
@@ -55,11 +55,11 @@ public interface StorageSyncHandler {
      * Serializes the contents of the storage to the given buffer. Called on the (logical) server.
      * @param buf The buffer to write to.
      */
-    void sync(PacketByteBuf buf);
+    void sync(FriendlyByteBuf buf);
 
     /**
      * Deserializes the contents of the storage from the given buffer. Called on the client.
      * @param buf The buffer to read from.
      */
-    void read(PacketByteBuf buf);
+    void read(FriendlyByteBuf buf);
 }

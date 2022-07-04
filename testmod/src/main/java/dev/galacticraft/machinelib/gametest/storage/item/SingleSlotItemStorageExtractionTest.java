@@ -30,28 +30,28 @@ import dev.galacticraft.machinelib.gametest.Util;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.test.TestContext;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static dev.galacticraft.machinelib.gametest.Assertions.assertEquals;
-import static net.minecraft.item.Items.GOLD_INGOT;
-import static net.minecraft.item.Items.IRON_INGOT;
+import static net.minecraft.world.item.Items.GOLD_INGOT;
+import static net.minecraft.world.item.Items.IRON_INGOT;
 
 public final class SingleSlotItemStorageExtractionTest implements MachineLibGametest {
     private MachineItemStorageImpl storage;
 
     @Override
-    public void beforeEach(@NotNull TestContext context) {
+    public void beforeEach(@NotNull GameTestHelper context) {
         this.storage = (MachineItemStorageImpl) MachineItemStorage.Builder.create()
                 .addSlot(TestMod.NO_DIAMOND_SLOT, 64, new ItemSlotDisplay(0, 0))
                 .build();
     }
 
     @Override
-    public void afterEach(@NotNull TestContext context) {
+    public void afterEach(@NotNull GameTestHelper context) {
         this.storage = null;
     }
 
@@ -117,7 +117,7 @@ public final class SingleSlotItemStorageExtractionTest implements MachineLibGame
         }
     }
 
-    private static @NotNull ItemVariant variant(@NotNull Item item, @Nullable NbtCompound nbt) {
+    private static @NotNull ItemVariant variant(@NotNull Item item, @Nullable CompoundTag nbt) {
         return ItemVariant.of(item, nbt);
     }
     

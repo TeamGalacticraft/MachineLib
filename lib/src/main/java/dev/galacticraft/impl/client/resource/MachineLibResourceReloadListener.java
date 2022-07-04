@@ -26,29 +26,28 @@ import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.inventory.InventoryMenu;
 import java.util.Arrays;
 import java.util.Collection;
 
 public class MachineLibResourceReloadListener implements SimpleSynchronousResourceReloadListener {
-    private static final Identifier ID = new Identifier(MLConstant.MOD_ID, "reload_listener");
+    private static final ResourceLocation ID = new ResourceLocation(MLConstant.MOD_ID, "reload_listener");
 
     @Override
-    public Identifier getFabricId() {
+    public ResourceLocation getFabricId() {
         return ID;
     }
 
     @Override
-    public Collection<Identifier> getFabricDependencies() {
+    public Collection<ResourceLocation> getFabricDependencies() {
         return Arrays.asList(ResourceReloadListenerKeys.MODELS, ResourceReloadListenerKeys.TEXTURES);
     }
 
     @Override
-    public void reload(ResourceManager resourceManager) {
-        MachineBakedModel.setSpriteAtlas(MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
+    public void onResourceManagerReload(ResourceManager resourceManager) {
+        MachineBakedModel.setSpriteAtlas(Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS));
     }
 }

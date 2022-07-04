@@ -24,11 +24,11 @@ package dev.galacticraft.api.machine;
 
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.impl.machine.SecuritySettingsImpl;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public interface SecuritySettings {
      * @return Whether the player is the owner of the linked machine.
      */
     @Contract(pure = true)
-    boolean isOwner(@NotNull PlayerEntity player);
+    boolean isOwner(@NotNull Player player);
 
     /**
      * Returns whether the game profile is the owner of the linked machine.
@@ -65,7 +65,7 @@ public interface SecuritySettings {
      * @return Whether the player is allowed to access the linked machine.
      */
     @Contract(pure = true)
-    boolean hasAccess(@Nullable PlayerEntity player);
+    boolean hasAccess(@Nullable Player player);
 
     /**
      * Returns the access level of the linked machine.
@@ -89,7 +89,7 @@ public interface SecuritySettings {
      * Sets the player who owns the linked machine.
      * @param owner The player to set.
      */
-    void setOwner(@NotNull PlayerEntity owner);
+    void setOwner(@NotNull Player owner);
 
     /**
      * Sets the game profile of the owner of the linked machine.
@@ -101,24 +101,24 @@ public interface SecuritySettings {
      * Returns the team of the owner of the linked machine.
      * @return The team of the owner of the linked machine.
      */
-    @Nullable Identifier getTeam();
+    @Nullable ResourceLocation getTeam();
 
     /**
      * Serializes the security settings to nbt.
      * @return The serialized security settings.
      */
-    @NotNull NbtCompound toNbt();
+    @NotNull CompoundTag toNbt();
 
     /**
      * Deserializes the security settings from nbt.
      * @param nbt The nbt to deserialize from.
      */
-    void fromNbt(@NotNull NbtCompound nbt);
+    void fromNbt(@NotNull CompoundTag nbt);
 
     /**
      * Sends the security settings to the client.
      * @param pos The position of the machine.
      * @param player The player to send the settings to.
      */
-    void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayerEntity player);
+    void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player);
 }

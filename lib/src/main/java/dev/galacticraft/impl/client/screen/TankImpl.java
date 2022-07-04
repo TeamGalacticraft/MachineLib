@@ -22,6 +22,7 @@
 
 package dev.galacticraft.impl.client.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
@@ -34,19 +35,20 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Somewhat like a {@link net.minecraft.screen.slot.Slot} but for fluids and gases.
+ * Somewhat like a {@link net.minecraft.world.inventory.Slot} but for fluids and gases.
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public class TankImpl implements Tank {
@@ -106,26 +108,26 @@ public class TankImpl implements Tank {
     }
 
     @Override
-    public void drawTooltip(@NotNull MatrixStack matrices, MinecraftClient client, int x, int y, int mouseX, int mouseY) {
+    public void drawTooltip(@NotNull PoseStack matrices, Minecraft client, int x, int y, int mouseX, int mouseY) {
         matrices.translate(0, 0, 1);
         if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
-            List<Text> lines = new ArrayList<>(2);
-            assert client.currentScreen != null;
+            List<Component> lines = new ArrayList<>(2);
+            assert client.screen != null;
             if (this.getResource().isBlank()) {
-                client.currentScreen.renderTooltip(matrices, Text.translatable(MLConstant.TranslationKey.TANK_EMPTY).setStyle(MLConstant.Text.GRAY_STYLE), mouseX, mouseY);
+                client.screen.renderTooltip(matrices, Component.translatable(MLConstant.TranslationKey.TANK_EMPTY).setStyle(MLConstant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
             long amount = this.getAmount();
-            MutableText text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                    Text.literal(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
-                    : Text.literal(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
+            MutableComponent text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
+                    Component.literal(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
+                    : Component.literal(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
 
-            MutableText translatableText;
-            translatableText = Text.translatable(MLConstant.TranslationKey.TANK_CONTENTS);
+            MutableComponent translatableText;
+            translatableText = Component.translatable(MLConstant.TranslationKey.TANK_CONTENTS);
 
             lines.add(translatableText.setStyle(MLConstant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(MLConstant.Text.BLUE_STYLE));
-            lines.add(Text.translatable(MLConstant.TranslationKey.TANK_AMOUNT).setStyle(MLConstant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
-            client.currentScreen.renderTooltip(matrices, lines, mouseX, mouseY);
+            lines.add(Component.translatable(MLConstant.TranslationKey.TANK_AMOUNT).setStyle(MLConstant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
+            client.screen.renderComponentTooltip(matrices, lines, mouseX, mouseY);
         }
         matrices.translate(0, 0, -1);
     }

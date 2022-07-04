@@ -25,7 +25,7 @@ package dev.galacticraft.impl.machine;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.machine.MachineIOConfig;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,8 +40,8 @@ public class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull ConfiguredMachineFace bottom = ConfiguredMachineFace.create();
 
     @Override
-    public @NotNull NbtCompound writeNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public @NotNull CompoundTag writeNbt() {
+        CompoundTag nbt = new CompoundTag();
         nbt.put("Front", this.front.writeNbt());
         nbt.put("Back", this.back.writeNbt());
         nbt.put("Left", this.left.writeNbt());
@@ -52,7 +52,7 @@ public class MachineIOConfigImpl implements MachineIOConfig {
     }
 
     @Override
-    public void readNbt(@NotNull NbtCompound nbt) {
+    public void readNbt(@NotNull CompoundTag nbt) {
         this.front.readNbt(nbt.getCompound("Front"));
         this.back.readNbt(nbt.getCompound("Back"));
         this.left.readNbt(nbt.getCompound("Left"));

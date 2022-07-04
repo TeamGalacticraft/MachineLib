@@ -44,13 +44,13 @@ import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.tag.TagKey;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,7 +215,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         StoragePreconditions.notNegative(amount);
 
         ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
-        if (invSlot.getResource().getFluid().getRegistryEntry().isIn(tag)) {
+        if (invSlot.getResource().getFluid().builtInRegistryHolder().is(tag)) {
             return this.extractVariant(invSlot, amount, context);
         } else {
             return FluidStack.EMPTY;
@@ -312,7 +312,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public boolean canAccess(@NotNull PlayerEntity player) {
+    public boolean canAccess(@NotNull Player player) {
         return true;
     }
 
@@ -355,10 +355,10 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public @NotNull NbtElement writeNbt() {
-        NbtList list = new NbtList();
+    public @NotNull Tag writeNbt() {
+        ListTag list = new ListTag();
         for (FluidSlot fluidSlot : this.inventory) {
-            NbtCompound compound = fluidSlot.getResource().toNbt();
+            CompoundTag compound = fluidSlot.getResource().toNbt();
             compound.putLong(MLConstant.Nbt.AMOUNT, fluidSlot.getAmount());
             list.add(compound);
         }
@@ -366,18 +366,18 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public void readNbt(@NotNull NbtElement nbt) {
-        if (nbt.getType() == NbtElement.LIST_TYPE) {
-            NbtList list = ((NbtList) nbt);
+    public void readNbt(@NotNull Tag nbt) {
+        if (nbt.getId() == Tag.TAG_LIST) {
+            ListTag list = ((ListTag) nbt);
             for (int i = 0; i < list.size(); i++) {
-                NbtCompound compound = list.getCompound(i);
+                CompoundTag compound = list.getCompound(i);
                 this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(MLConstant.Nbt.AMOUNT), true);
             }
         }
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
         assert !Transaction.isOpen();
         for (FluidSlot fluidSlot : this.inventory) {
             fluidSlot.setStackUnsafe(FluidVariant.blank(), 0, true);
@@ -418,7 +418,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             }
 
             @Override
-            public void sync(PacketByteBuf buf) {
+            public void sync(FriendlyByteBuf buf) {
                 this.modCount = MachineFluidStorageImpl.this.modCount.getModCount();
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
                     slot.getResource().toPacket(buf);
@@ -427,7 +427,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             }
 
             @Override
-            public void read(PacketByteBuf buf) {
+            public void read(FriendlyByteBuf buf) {
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
                     slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readLong(), false);
                 }

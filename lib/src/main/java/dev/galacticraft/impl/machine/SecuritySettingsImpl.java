@@ -28,13 +28,13 @@ import dev.galacticraft.api.machine.SecuritySettings;
 import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +51,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
     /**
      * The team of the player who owns the linked machine.
      */
-    private @Nullable Identifier team = null;
+    private @Nullable ResourceLocation team = null;
     /**
      * The access level of the linked machine.
      */
@@ -64,7 +64,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
      */
     @Override
     @Contract(pure = true)
-    public boolean isOwner(@NotNull PlayerEntity player) {
+    public boolean isOwner(@NotNull Player player) {
         return this.isOwner(player.getGameProfile());
     }
 
@@ -87,7 +87,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
      */
     @Override
     @Contract(pure = true)
-    public boolean hasAccess(PlayerEntity player) {
+    public boolean hasAccess(Player player) {
         if (this.accessLevel == AccessLevel.PUBLIC) {
             return true;
         } else if (this.accessLevel == AccessLevel.TEAM) {
@@ -130,7 +130,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
      * @param owner The player to set.
      */
     @Override
-    public void setOwner(@NotNull PlayerEntity owner) { //todo: teams
+    public void setOwner(@NotNull Player owner) { //todo: teams
         this.setOwner(owner.getGameProfile());
     }
 
@@ -151,7 +151,7 @@ public class SecuritySettingsImpl implements SecuritySettings {
      * @return The team of the owner of the linked machine.
      */
     @Override
-    public @Nullable Identifier getTeam() {
+    public @Nullable ResourceLocation getTeam() {
         return team;
     }
 
@@ -160,12 +160,12 @@ public class SecuritySettingsImpl implements SecuritySettings {
      * @return The serialized security settings.
      */
     @Override
-    public @NotNull NbtCompound toNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public @NotNull CompoundTag toNbt() {
+        CompoundTag nbt = new CompoundTag();
         if (this.getOwner() != null) {
-            nbt.put(MLConstant.Nbt.OWNER, NbtHelper.writeGameProfile(new NbtCompound(), this.getOwner()));
+            nbt.put(MLConstant.Nbt.OWNER, NbtUtils.writeGameProfile(new CompoundTag(), this.getOwner()));
         }
-        nbt.putString(MLConstant.Nbt.ACCESS_LEVEL, this.accessLevel.asString());
+        nbt.putString(MLConstant.Nbt.ACCESS_LEVEL, this.accessLevel.getSerializedName());
         if (this.getTeam() != null) {
             nbt.putString(MLConstant.Nbt.TEAM, this.getTeam().toString());
         }
@@ -177,13 +177,13 @@ public class SecuritySettingsImpl implements SecuritySettings {
      * @param nbt The nbt to deserialize from.
      */
     @Override
-    public void fromNbt(@NotNull NbtCompound nbt) {
+    public void fromNbt(@NotNull CompoundTag nbt) {
         if (nbt.contains(MLConstant.Nbt.OWNER)) {
-            this.owner = NbtHelper.toGameProfile(nbt.getCompound(MLConstant.Nbt.OWNER));
+            this.owner = NbtUtils.readGameProfile(nbt.getCompound(MLConstant.Nbt.OWNER));
         }
 
         if (nbt.contains(MLConstant.Nbt.TEAM)) {
-            this.team = new Identifier(nbt.getString(MLConstant.Nbt.TEAM));
+            this.team = new ResourceLocation(nbt.getString(MLConstant.Nbt.TEAM));
         }
 
         this.accessLevel = AccessLevel.fromString(nbt.getString(MLConstant.Nbt.ACCESS_LEVEL));
@@ -195,12 +195,12 @@ public class SecuritySettingsImpl implements SecuritySettings {
      * @param player The player to send the settings to.
      */
     @Override
-    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayerEntity player) {
+    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
         assert this.owner != null;
-        PacketByteBuf buf = PacketByteBufs.create();
+        FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
         buf.writeByte(this.accessLevel.ordinal());
-        buf.writeNbt(NbtHelper.writeGameProfile(new NbtCompound(), this.owner));
-        ServerPlayNetworking.send(player, new Identifier(MLConstant.MOD_ID, "security_update"), buf);
+        buf.writeNbt(NbtUtils.writeGameProfile(new CompoundTag(), this.owner));
+        ServerPlayNetworking.send(player, new ResourceLocation(MLConstant.MOD_ID, "security_update"), buf);
     }
 }

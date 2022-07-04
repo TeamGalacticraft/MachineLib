@@ -22,33 +22,33 @@
 
 package dev.galacticraft.impl.client.util;
 
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 @ApiStatus.Internal
-public class CachingSpriteAtlas implements Function<Identifier, Sprite> {
-    private final Map<Identifier, Sprite> cache = new HashMap<>();
-    private Function<Identifier, Sprite> atlas;
+public class CachingSpriteAtlas implements Function<ResourceLocation, TextureAtlasSprite> {
+    private final Map<ResourceLocation, TextureAtlasSprite> cache = new HashMap<>();
+    private Function<ResourceLocation, TextureAtlasSprite> atlas;
 
-    public CachingSpriteAtlas(Function<Identifier, Sprite> atlas) {
+    public CachingSpriteAtlas(Function<ResourceLocation, TextureAtlasSprite> atlas) {
         this.atlas = atlas;
     }
 
-    public void setAtlas(Function<Identifier, Sprite> atlas) {
+    public void setAtlas(Function<ResourceLocation, TextureAtlasSprite> atlas) {
         this.atlas = atlas;
         this.cache.clear();
     }
 
     @Override
-    public Sprite apply(Identifier identifier) {
+    public TextureAtlasSprite apply(ResourceLocation identifier) {
         return this.cache.computeIfAbsent(identifier, atlas);
     }
 }

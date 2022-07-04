@@ -44,21 +44,21 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +129,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Passed to the screen handler factory as the name of the machine.
      */
     @ApiStatus.Internal
-    private final Text name;
+    private final Component name;
 
     /**
      * Creates a new machine block entity.
@@ -257,11 +257,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerWorld, BlockPos, BlockState)},
-     * but may be modified manually by calling {@link #setStatus(ServerWorld, MachineStatus)}.
+     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState)},
+     * but may be modified manually by calling {@link #setStatus(ServerLevel, MachineStatus)}.
      *
-     * @see #tick(ServerWorld, BlockPos, BlockState) to calculate the status of this machine.
-     * @see #setStatus(ServerWorld, MachineStatus) to manually change the status of this machine.
+     * @see #tick(ServerLevel, BlockPos, BlockState) to calculate the status of this machine.
+     * @see #setStatus(ServerLevel, MachineStatus) to manually change the status of this machine.
      * @return the status of this machine.
      */
     public @NotNull MachineStatus getStatus() {
@@ -269,16 +269,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Sets the status of this machine. It is recommended to use {@link #tick(ServerWorld, BlockPos, BlockState)} to
+     * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState)} to
      * calculate the status of this machine, rather than setting it manually.
      *
      * @param world the world this machine is in.
      * @param status the status to set.
      */
-    public void setStatus(@Nullable ServerWorld world, @NotNull MachineStatus status) {
+    public void setStatus(@Nullable ServerLevel world, @NotNull MachineStatus status) {
         if (this.isStatusActive() != status.type().isActive()) {
             if (world != null) {
-                world.setBlockState(this.pos, this.getCachedState().with(MachineBlock.ACTIVE, status.type().isActive()));
+                world.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(MachineBlock.ACTIVE, status.type().isActive()));
             }
         }
         this.configuration.setStatus(status);
@@ -365,36 +365,36 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param world the world this machine is in.
      * @return whether the current machine is enabled.
      */
-    public boolean isDisabled(@NotNull World world) {
+    public boolean isDisabled(@NotNull Level world) {
         return switch (this.getRedstoneActivation()) {
-            case LOW -> world.isReceivingRedstonePower(this.pos);
-            case HIGH -> !world.isReceivingRedstonePower(this.pos);
+            case LOW -> world.hasNeighborSignal(this.worldPosition);
+            case HIGH -> !world.hasNeighborSignal(this.worldPosition);
             case IGNORE -> false;
         };
     }
 
     /**
      * Updates the machine every tick.
-     * Override {@link #tick(ServerWorld, BlockPos, BlockState)} for the machine's logic (only called server-side).
+     * Override {@link #tick(ServerLevel, BlockPos, BlockState)} for the machine's logic (only called server-side).
      *
      * @param world the world.
      * @param pos the position of this machine.
      * @param state the block state of this machine.
-     * @see #tick(ServerWorld, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
-     * @see #tickConstant(ServerWorld, BlockPos, BlockState) for the server-side logic that is always called.
-     * @see #tickClient(World, BlockPos, BlockState) for the client-side logic.
+     * @see #tick(ServerLevel, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
+     * @see #tickConstant(ServerLevel, BlockPos, BlockState) for the server-side logic that is always called.
+     * @see #tickClient(Level, BlockPos, BlockState) for the client-side logic.
      */
-    public final void tickBase(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        this.setCachedState(state);
-        if (!world.isClient()) {
+    public final void tickBase(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state) {
+        this.setBlockState(state);
+        if (!world.isClientSide()) {
             world.getProfiler().push("constant");
-            ServerWorld serverWorld = (ServerWorld) world;
+            ServerLevel serverWorld = (ServerLevel) world;
             this.tickConstant(serverWorld, pos, state);
             if (this.isDisabled(world)) {
-                world.getProfiler().swap("disabled");
+                world.getProfiler().popPush("disabled");
                 this.tickDisabled(serverWorld, pos, state);
             } else {
-                world.getProfiler().swap("active");
+                world.getProfiler().popPush("active");
                 this.setStatus(serverWorld, this.tick(serverWorld, pos, state));
             }
         } else {
@@ -411,19 +411,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param world the world.
      * @param pos the position of this machine.
      * @param state the block state of this machine.
-     * @see #tick(ServerWorld, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
+     * @see #tick(ServerLevel, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
      */
-    protected void tickConstant(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {}
+    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
     /**
      * Called every tick, when the machine is explicitly disabled (by redstone, for example).
-     * Use this to clean-up resources distributed by {@link #tick(ServerWorld, BlockPos, BlockState)}.
+     * Use this to clean-up resources distributed by {@link #tick(ServerLevel, BlockPos, BlockState)}.
      *
      * @param world the world.
      * @param pos the position of this machine.
      * @param state the block state of this machine.
      */
-    protected void tickDisabled(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state) {}
+    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
     /**
      * Called every tick on the client.
@@ -432,26 +432,26 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param pos the position of this machine.
      * @param state the block state of this machine.
      */
-    protected void tickClient(@NotNull /*Client*/World world, @NotNull BlockPos pos, @NotNull BlockState state) {}
+    protected void tickClient(@NotNull /*Client*/Level world, @NotNull BlockPos pos, @NotNull BlockState state) {}
 
     /**
      * Called every tick on the server, when the machine is active.
      * Use this to update crafting progress, for example.
-     * Be sure to clean-up state in {@link #tickDisabled(ServerWorld, BlockPos, BlockState)}.
+     * Be sure to clean-up state in {@link #tickDisabled(ServerLevel, BlockPos, BlockState)}.
      *
      * @param world the world.
      * @param pos the position of this machine.
      * @param state the block state of this machine.
-     * @see #tickDisabled(ServerWorld, BlockPos, BlockState)
-     * @see #tickConstant(ServerWorld, BlockPos, BlockState)
+     * @see #tickDisabled(ServerLevel, BlockPos, BlockState)
+     * @see #tickConstant(ServerLevel, BlockPos, BlockState)
      * @return the status of this machine.
      */
-    protected abstract @NotNull MachineStatus tick(@NotNull ServerWorld world, @NotNull BlockPos pos, @NotNull BlockState state);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state);
 
     @ApiStatus.Internal
     private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
-        assert this.world != null;
-        return this.getExposedEnergyStorage(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+        assert this.level != null;
+        return this.getExposedEnergyStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
@@ -461,8 +461,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     @ApiStatus.Internal
     private @NotNull ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
-        assert this.world != null;
-        return this.getExposedItemStorage(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+        assert this.level != null;
+        return this.getExposedItemStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
@@ -472,8 +472,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     @ApiStatus.Internal
     private @NotNull ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
-        assert this.world != null;
-        return this.getExposedFluidInv(BlockFace.toFace(this.world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+        assert this.level != null;
+        return this.getExposedFluidInv(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
@@ -486,8 +486,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param nbt the nbt to serialize to.
      */
     @Override
-    public void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
+    public void saveAdditional(CompoundTag nbt) {
+        super.saveAdditional(nbt);
         nbt.put(MLConstant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
         nbt.put(MLConstant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
         nbt.put(MLConstant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
@@ -500,16 +500,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param nbt the nbt to deserialize from.
      */
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void load(CompoundTag nbt) {
+        super.load(nbt);
         if (nbt.contains(MLConstant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ENERGY_STORAGE)));
         if (nbt.contains(MLConstant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ITEM_STORAGE)));
         if (nbt.contains(MLConstant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.FLUID_STORAGE)));
         this.configuration.readNbt(nbt);
         this.disableDrops = nbt.getBoolean(MLConstant.Nbt.DISABLE_DROPS);
-        assert this.world != null;
-        if (this.world.isClient){
-            MinecraftClient.getInstance().worldRenderer.scheduleBlockRender(this.pos.getX(), this.pos.getY(), this.pos.getZ());
+        assert this.level != null;
+        if (this.level.isClientSide){
+            Minecraft.getInstance().levelRenderer.setSectionDirty(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ());
         }
     }
 
@@ -517,12 +517,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Pushes energy from this machine to adjacent capacitor blocks.
      * @param world the world.
      */
-    public void trySpreadEnergy(@NotNull World world) {
+    public void trySpreadEnergy(@NotNull Level world) {
         for (Direction direction : DIRECTIONS) {
-            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(world.getBlockState(this.pos).get(Properties.HORIZONTAL_FACING), direction.getOpposite()));
+            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(world.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
             if (face.getType() == ResourceType.ENERGY && face.getFlow().canFlowIn(ResourceFlow.OUTPUT)) {
                 try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
+                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
                     transaction.commit();
                 }
             }
@@ -533,11 +533,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Pushes fluids from this machine to adjacent fluid storages.
      * @param world the world.
      */
-    public void trySpreadFluids(@NotNull World world) {
+    public void trySpreadFluids(@NotNull Level world) {
         for (Direction direction : DIRECTIONS) {
             Storage<FluidVariant> storage = this.getExposedFluidInv(direction);
             if (storage.supportsExtraction()) {
-                Storage<FluidVariant> to = FluidStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite());
+                Storage<FluidVariant> to = FluidStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
                     GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();
@@ -550,11 +550,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Pushes items from this machine to adjacent item storages.
      * @param world the world.
      */
-    public void trySpreadItems(@NotNull World world) {
+    public void trySpreadItems(@NotNull Level world) {
         for (Direction direction : DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(direction);
             if (storage.supportsExtraction()) {
-                Storage<ItemVariant> to = ItemStorage.SIDED.find(world, this.pos.offset(direction), direction.getOpposite());
+                Storage<ItemVariant> to = ItemStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite());
                 try (Transaction transaction = Transaction.openOuter()) {
                     GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
                     transaction.commit();
@@ -648,12 +648,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, @NotNull PacketByteBuf packetByteBuf) {
-        packetByteBuf.writeBlockPos(this.getPos());
+    public void writeScreenOpeningData(ServerPlayer serverPlayerEntity, @NotNull FriendlyByteBuf packetByteBuf) {
+        packetByteBuf.writeBlockPos(this.getBlockPos());
     }
 
     @Override
-    public Text getDisplayName() {
+    public Component getDisplayName() {
         return this.name;
     }
 }

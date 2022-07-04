@@ -24,12 +24,12 @@ package dev.galacticraft.api.machine.storage.io;
 
 import com.google.common.collect.ImmutableList;
 import dev.galacticraft.impl.MLConstant;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 /**
  * A resource flow is a way to describe how a resource can be transferred between two storages.
@@ -38,28 +38,28 @@ public enum ResourceFlow {
     /**
      * Resources can flow into the machine.
      */
-    INPUT(Text.translatable(MLConstant.TranslationKey.IN).setStyle(Style.EMPTY.withColor(Formatting.GREEN))),
+    INPUT(Component.translatable(MLConstant.TranslationKey.IN).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN))),
     /**
      * Resources can flow out of the machine.
      */
-    OUTPUT(Text.translatable(MLConstant.TranslationKey.OUT).setStyle(Style.EMPTY.withColor(Formatting.DARK_RED))),
+    OUTPUT(Component.translatable(MLConstant.TranslationKey.OUT).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_RED))),
     /**
      * Resources can flow into and out of the machine.
      */
-    BOTH(Text.translatable(MLConstant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(Formatting.BLUE)));
+    BOTH(Component.translatable(MLConstant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(ChatFormatting.BLUE)));
 
     public static final List<ResourceFlow> ALL_FLOWS = ImmutableList.copyOf(ResourceFlow.values());
 
     /**
      * The name of the flow direction.
      */
-    private final @NotNull Text name;
+    private final @NotNull Component name;
 
     /**
      * Creates a new resource flow.
      * @param name The name of the flow direction.
      */
-    ResourceFlow(@NotNull Text name) {
+    ResourceFlow(@NotNull Component name) {
         this.name = name;
     }
 
@@ -67,7 +67,7 @@ public enum ResourceFlow {
      * Returns the name of the flow direction.
      * @return The name of the flow direction.
      */
-    public @NotNull Text getName() {
+    public @NotNull Component getName() {
         return this.name;
     }
 

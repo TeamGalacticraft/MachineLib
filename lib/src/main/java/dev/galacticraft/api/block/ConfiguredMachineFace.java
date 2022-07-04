@@ -29,7 +29,7 @@ import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;
 import dev.galacticraft.impl.block.ConfiguredMachineFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,11 +126,11 @@ public interface ConfiguredMachineFace {
      * Write the configuration to a new nbt compound.
      * @return The nbt compound that was written to.
      */
-    @NotNull NbtCompound writeNbt();
+    @NotNull CompoundTag writeNbt();
 
     /**
      * Read the configuration from the given nbt compound.
      * @param nbt The nbt compound to read from.
      */
-    void readNbt(@NotNull NbtCompound nbt);
+    void readNbt(@NotNull CompoundTag nbt);
 }

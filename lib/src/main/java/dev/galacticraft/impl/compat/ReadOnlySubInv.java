@@ -24,14 +24,13 @@ package dev.galacticraft.impl.compat;
 
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import java.util.Set;
 
-public class ReadOnlySubInv implements Inventory {
+public class ReadOnlySubInv implements Container {
     private final MachineItemStorage storage;
     private final int start;
     private final int size;
@@ -50,7 +49,7 @@ public class ReadOnlySubInv implements Inventory {
     }
 
     @Override
-    public int size() {
+    public int getContainerSize() {
         return this.size;
     }
 
@@ -65,58 +64,58 @@ public class ReadOnlySubInv implements Inventory {
     }
 
     @Override
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         if (slot >= this.size) throw new IndexOutOfBoundsException();
         return this.storage.getStack(this.start + slot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount) {
+    public ItemStack removeItem(int slot, int amount) {
         if (slot >= this.size) throw new IndexOutOfBoundsException();
         return ItemStack.EMPTY;
     }
 
     @Override
-    public ItemStack removeStack(int slot) {
+    public ItemStack removeItemNoUpdate(int slot) {
         if (slot >= this.size) throw new IndexOutOfBoundsException();
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         if (slot >= this.size) throw new IndexOutOfBoundsException();
     }
 
     @Override
-    public int getMaxCountPerStack() {
+    public int getMaxStackSize() {
         return 64;
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player) {
-        return this.storage.playerInventory().canPlayerUse(player);
+    public boolean stillValid(Player player) {
+        return this.storage.playerInventory().stillValid(player);
     }
 
     @Override
-    public void onOpen(PlayerEntity player) {
+    public void startOpen(Player player) {
     }
 
     @Override
-    public void onClose(PlayerEntity player) {
+    public void stopOpen(Player player) {
     }
 
     @Override
-    public boolean isValid(int slot, ItemStack stack) {
+    public boolean canPlaceItem(int slot, ItemStack stack) {
         if (slot >= this.size) throw new IndexOutOfBoundsException();
         return this.storage.canAccept(this.start + slot, ItemVariant.of(stack));
     }
 
     @Override
-    public int count(Item item) {
+    public int countItem(Item item) {
         int count = 0;
         for (int i = 0; i < this.size; i++) {
             if (storage.getVariant(this.start + i).getItem() == item) {
@@ -127,7 +126,7 @@ public class ReadOnlySubInv implements Inventory {
     }
 
     @Override
-    public boolean containsAny(Set<Item> items) {
+    public boolean hasAnyOf(Set<Item> items) {
         for (int i = 0; i < this.size; i++) {
             if (items.contains(storage.getVariant(this.start + i).getItem())) {
                 return true;
@@ -137,7 +136,7 @@ public class ReadOnlySubInv implements Inventory {
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
         for (int i = 0; i < this.size; i++) {
             this.storage.replace(this.start + i, ItemVariant.blank(), 0);
         }

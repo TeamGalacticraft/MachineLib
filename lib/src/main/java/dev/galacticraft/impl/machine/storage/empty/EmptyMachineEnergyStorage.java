@@ -26,8 +26,8 @@ import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.NbtByte;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
@@ -63,12 +63,12 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public @NotNull NbtElement writeNbt() {
-        return NbtByte.ZERO;
+    public @NotNull Tag writeNbt() {
+        return ByteTag.ZERO;
     }
 
     @Override
-    public void readNbt(@NotNull NbtElement nbt) {
+    public void readNbt(@NotNull Tag nbt) {
     }
 
     @Override

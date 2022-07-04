@@ -35,17 +35,16 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.text.Text;
-
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.world.item.TooltipFlag;
 import java.util.Collections;
 import java.util.List;
 
 public class MachineLibClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new MachineLibResourceReloadListener());
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new MachineLibResourceReloadListener());
 
         ModelLoadingRegistry.INSTANCE.registerResourceProvider(resourceManager -> (resourceId, context) -> {
             if (MachineUnbakedModel.MACHINE_MARKER.equals(resourceId)) return MachineUnbakedModel.INSTANCE;
@@ -62,9 +61,9 @@ public class MachineLibClient implements ClientModInitializer {
         for (GasFluid gasFluid : GasFluid.GAS_FLUIDS) {
             FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
                 @Override
-                public void appendTooltip(FluidVariant fluidVariant, List<Text> tooltip, TooltipContext tooltipContext) {
-                    tooltip.add(Text.translatable(MLConstant.TranslationKey.GAS_MARKER));
-                    if (tooltipContext.isAdvanced()) tooltip.add(Text.of(gasFluid.getSymbol()));
+                public void appendTooltip(FluidVariant fluidVariant, List<Component> tooltip, TooltipFlag tooltipContext) {
+                    tooltip.add(Component.translatable(MLConstant.TranslationKey.GAS_MARKER));
+                    if (tooltipContext.isAdvanced()) tooltip.add(Component.nullToEmpty(gasFluid.getSymbol()));
                 }
             });
             FluidRenderHandlerRegistry.INSTANCE.register(gasFluid, new SimpleFluidRenderHandler(gasFluid.getTexture(), gasFluid.getTexture(), null, gasFluid.getTint()));
