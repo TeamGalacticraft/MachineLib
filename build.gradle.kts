@@ -41,6 +41,9 @@ allprojects {
         include("**/dev/galacticraft/**/*.java")
         include("build.gradle.kts")
     }
+    tasks.withType<Javadoc>() {
+        options.encoding = "UTF-8"
+    }
 }
 
 subprojects {
