@@ -207,7 +207,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
             MachineItemStorage inv = machine.itemStorage();
             List<ItemEntity> entities = new ArrayList<>();
             try (Transaction transaction = Transaction.openOuter()) {
-                inv.iterator().forEachRemaining(view -> entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction))))));
+                inv.iterator().forEachRemaining(view -> {
+                    if (view.isResourceBlank()) return;
+                    entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction)))));
+                });
                 transaction.commit();
             }
             for (ItemEntity itemEntity : entities) {
