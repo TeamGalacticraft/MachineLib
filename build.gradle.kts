@@ -21,15 +21,14 @@
  */
 
 plugins {
-    id("fabric-loom") version "0.11-SNAPSHOT" apply false
-    id("io.github.juuxel.loom-quiltflower") version("1.7.1") apply false
+    id("fabric-loom") version "0.12-SNAPSHOT" apply false
+    id("io.github.juuxel.loom-quiltflower") version("1.7.3") apply false
     id("org.cadixdev.licenser") version "0.6.1" apply false
 }
 
 val modGroup = rootProject.property("mod.group").toString()
 
 val minecraft = rootProject.property("minecraft.version").toString()
-val yarn = rootProject.property("yarn.build").toString()
 val loader = rootProject.property("loader.version").toString()
 val fabric = rootProject.property("fabric.version").toString()
 val energy = rootProject.property("energy.version").toString()
