@@ -22,8 +22,10 @@
 
 package dev.galacticraft.impl;
 
+import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.gas.GasFluid;
 import dev.galacticraft.impl.client.model.MachineBakedModel;
+import dev.galacticraft.impl.client.model.MachineModelLoader;
 import dev.galacticraft.impl.client.model.MachineUnbakedModel;
 import dev.galacticraft.impl.client.network.MachineLibS2CPackets;
 import dev.galacticraft.impl.client.resource.MachineLibResourceReloadListener;
@@ -36,27 +38,27 @@ import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandle
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.item.TooltipFlag;
+
 import java.util.Collections;
 import java.util.List;
 
 public class MachineLibClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new MachineLibResourceReloadListener());
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(MachineLibResourceReloadListener.INSTANCE);
 
-        ModelLoadingRegistry.INSTANCE.registerResourceProvider(resourceManager -> (resourceId, context) -> {
-            if (MachineUnbakedModel.MACHINE_MARKER.equals(resourceId)) return MachineUnbakedModel.INSTANCE;
-            return null;
-        });
+        ModelLoadingRegistry.INSTANCE.registerResourceProvider(MachineModelLoader::applyModel);
 
-        ModelLoadingRegistry.INSTANCE.registerVariantProvider(resourceManager -> (modelId, context) -> {
-            if (modelId.getVariant().equals("inventory") && MachineBakedModel.IDENTIFIERS.getOrDefault(modelId.getNamespace(), Collections.emptySet()).contains(modelId.getPath())) {
-                return MachineUnbakedModel.INSTANCE;
-            }
-            return null;
-        });
+        ModelLoadingRegistry.INSTANCE.registerVariantProvider(MachineModelLoader::applyModelVariant);
+
+        // Builtin Sprite Providers
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "default"), MachineModelRegistry.SpriteProvider.DEFAULT);
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "front_face"), new MachineBakedModel.FrontFaceSpriteProvider());
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "single"), new MachineBakedModel.SingleSpriteProvider());
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "z_axis"), new MachineBakedModel.ZAxisSpriteProvider());
 
         for (GasFluid gasFluid : GasFluid.GAS_FLUIDS) {
             FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {

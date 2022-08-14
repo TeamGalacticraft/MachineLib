@@ -36,6 +36,7 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.api.transfer.StateCachingStorageProvider;
 import dev.galacticraft.impl.MLConstant;
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -77,7 +78,7 @@ import java.util.Objects;
  * @see dev.galacticraft.api.screen.MachineScreenHandler
  * @see dev.galacticraft.api.client.screen.MachineHandledScreen
  */
-public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider {
+public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider, RenderAttachmentBlockEntity {
     /**
      * Array of directions, to avoid reallocating it every tick.
      */
@@ -507,10 +508,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(MLConstant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.FLUID_STORAGE)));
         this.configuration.readNbt(nbt);
         this.disableDrops = nbt.getBoolean(MLConstant.Nbt.DISABLE_DROPS);
-        assert this.level != null;
-        if (this.level.isClientSide){
-            Minecraft.getInstance().levelRenderer.setSectionDirty(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ());
-        }
     }
 
     /**
@@ -655,5 +652,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public Component getDisplayName() {
         return this.name;
+    }
+
+    @Override
+    public Object getRenderAttachmentData() {
+        return getIOConfig();
     }
 }

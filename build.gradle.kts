@@ -50,7 +50,6 @@ subprojects {
     val modId = project.property("mod.id").toString()
     val modVersion = project.property("mod.version").toString()
     val modName = project.property("mod.name").toString()
-    val fabricModules = project.property("fabric.modules").toString().split(',')
 
     group = modGroup
     version = "$modVersion+$minecraft"
@@ -69,18 +68,13 @@ subprojects {
         "mappings"(project.extensions.getByType(net.fabricmc.loom.api.LoomGradleExtensionAPI::class).officialMojangMappings())
         "modImplementation"("net.fabricmc:fabric-loader:$loader")
 
-        val fabricApi = net.fabricmc.loom.configuration.FabricApiExtension(this@subprojects);
-        fabricModules.forEach {
-            "modCompileOnly"(fabricApi.module(it, fabric))
-        }
-
         "include"("modApi"("teamreborn:energy:$energy") {
             exclude(group = "net.fabricmc.fabric-api")
         }) {
             exclude(group = "net.fabricmc.fabric-api")
         }
 
-        "modRuntimeOnly"("net.fabricmc.fabric-api:fabric-api:$fabric")
+        "modImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
     }
 
     tasks.withType<ProcessResources>() {

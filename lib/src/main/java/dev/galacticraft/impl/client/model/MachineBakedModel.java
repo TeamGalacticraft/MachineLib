@@ -23,6 +23,7 @@
 package dev.galacticraft.impl.client.model;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonObject;
 import com.mojang.math.Vector3f;
 import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.MachineBlock;
@@ -30,6 +31,7 @@ import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.MachineConfiguration;
+import dev.galacticraft.api.machine.MachineIOConfig;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.MLConstant;
@@ -39,6 +41,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -51,6 +54,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -138,13 +142,14 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-        MachineBlockEntity machine = ((MachineBlockEntity) blockView.getBlockEntity(pos));
-        assert machine != null;
-        context.pushTransform(quad -> transform(machine, state, quad));
-        for (Direction direction : Direction.values()) {
-            context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
+        // TODO: block entity can be null when loading the world, I don't think that's suppose to happen
+        if (blockView instanceof RenderAttachedBlockView renderAttachedBlockView && renderAttachedBlockView.getBlockEntityRenderAttachment(pos) instanceof MachineIOConfig ioConfig) {
+            context.pushTransform(quad -> transform(ioConfig, (MachineBlockEntity) blockView.getBlockEntity(pos), state, quad));
+            for (Direction direction : Direction.values()) {
+                context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
+            }
+            context.popTransform();
         }
-        context.popTransform();
     }
 
     @Override
@@ -198,9 +203,9 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return ItemOverrides.EMPTY;
     }
 
-    public static boolean transform(@NotNull MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
+    public static boolean transform(@NotNull MachineIOConfig ioConfig, @Nullable MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
-        ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+        ConfiguredMachineFace machineFace = ioConfig.get(face);
         quad.spriteBake(0,
                 getSprite(face,
                         machine,
@@ -271,10 +276,15 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return provider.getSpritesForState(machine, stack, face, CACHING_SPRITE_ATLAS);
     }
 
-    public record FrontFaceSpriteProvider(ResourceLocation sprite) implements MachineModelRegistry.SpriteProvider {
+    public static class FrontFaceSpriteProvider implements MachineModelRegistry.SpriteProvider {
+        private ResourceLocation sprite;
+
         public FrontFaceSpriteProvider(ResourceLocation sprite) {
             this.sprite = sprite;
-            TEXTURE_DEPENDENCIES.add(sprite);
+        }
+
+        public FrontFaceSpriteProvider() {
+            this.sprite = MachineModelRegistry.MACHINE;
         }
 
         @Override
@@ -283,36 +293,33 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
             if (face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
         }
+
+        @Override
+        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
+            this.sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
+            textureDependencies.add(sprite);
+        }
     }
 
-    public record SingleSpriteProvider(ResourceLocation sprite) implements MachineModelRegistry.SpriteProvider {
-        public SingleSpriteProvider(ResourceLocation sprite) {
-            this.sprite = sprite;
-            TEXTURE_DEPENDENCIES.add(sprite);
-        }
+    public static class SingleSpriteProvider implements MachineModelRegistry.SpriteProvider {
+        private ResourceLocation sprite;
 
         @Override
         public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             return atlas.apply(sprite);
         }
+
+        @Override
+        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
+            this.sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
+            textureDependencies.add(sprite);
+        }
     }
 
     public static class ZAxisSpriteProvider implements MachineModelRegistry.SpriteProvider {
-        private final ResourceLocation front;
-        private final ResourceLocation back;
-        private final boolean sided;
-
-        public ZAxisSpriteProvider(ResourceLocation sprite, boolean sided) {
-            this(sprite, sprite, sided);
-        }
-
-        public ZAxisSpriteProvider(ResourceLocation front, ResourceLocation back, boolean sided) {
-            this.front = front;
-            this.back = back;
-            this.sided = sided;
-            TEXTURE_DEPENDENCIES.add(front);
-            TEXTURE_DEPENDENCIES.add(back);
-        }
+        private ResourceLocation front;
+        private ResourceLocation back;
+        private boolean sided;
 
         @Override
         public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
@@ -320,6 +327,21 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
             if (face == BlockFace.BACK) return atlas.apply(this.back);
             if (this.sided && face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
+        }
+
+        @Override
+        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
+            if (jsonObject.has("sprite")) {
+                ResourceLocation sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
+                this.front = sprite;
+                this.back = sprite;
+            } else {
+                this.front = new ResourceLocation(GsonHelper.getAsString(jsonObject, "front"));
+                this.back = new ResourceLocation(GsonHelper.getAsString(jsonObject, "back"));
+            }
+            this.sided = GsonHelper.getAsBoolean(jsonObject, "sided");
+            textureDependencies.add(front);
+            textureDependencies.add(back);
         }
     }
 }

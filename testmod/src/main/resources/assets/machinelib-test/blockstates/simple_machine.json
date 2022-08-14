@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "machinelib-test:models/block/simple_machine"
+    }
+  }
+}

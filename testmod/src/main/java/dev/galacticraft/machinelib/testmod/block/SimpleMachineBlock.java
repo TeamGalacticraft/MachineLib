@@ -25,17 +25,16 @@ package dev.galacticraft.machinelib.testmod.block;
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.text.html.BlockView;
 
 public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
     public SimpleMachineBlock(Block.Properties settings) {
@@ -58,5 +57,13 @@ public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
     @Override
     public Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced) {
         return Component.empty();
+    }
+
+    @Override
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, RandomSource randomSource) {
+        double d = blockPos.getX() + 0.4 + randomSource.nextFloat() * 0.2;
+        double e = blockPos.getY() + 0.7 + randomSource.nextFloat() * 0.3;
+        double f = blockPos.getZ() + 0.4 + randomSource.nextFloat() * 0.2;
+        level.addParticle(ParticleTypes.SMOKE, d, e, f, 0.0, 0.0, 0.0);
     }
 }

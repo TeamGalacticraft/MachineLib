@@ -33,7 +33,8 @@ import net.minecraft.world.inventory.InventoryMenu;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class MachineLibResourceReloadListener implements SimpleSynchronousResourceReloadListener {
+public enum MachineLibResourceReloadListener implements SimpleSynchronousResourceReloadListener {
+    INSTANCE;
     private static final ResourceLocation ID = new ResourceLocation(MLConstant.MOD_ID, "reload_listener");
 
     @Override
