@@ -72,7 +72,7 @@ public class MachineModelLoader {
             JsonObject json = element.getAsJsonObject();
             if (!json.has("machine"))
                 return null;
-            MachineModelRegistry.SpriteProvider provider = MachineModelRegistry.getSpriteProvider(new ResourceLocation(GsonHelper.getAsString(json, "sprite_provider")));
+            MachineModelRegistry.SpriteProvider provider = MachineModelRegistry.getSpriteProvider(new ResourceLocation(GsonHelper.getAsString(json, "sprite_provider"))).get();
             if (json.has("sprite_info"))
                 provider.fromJson(json.getAsJsonObject("sprite_info"), MachineBakedModel.TEXTURE_DEPENDENCIES);
             String blockID = GsonHelper.getAsString(json, "machine");

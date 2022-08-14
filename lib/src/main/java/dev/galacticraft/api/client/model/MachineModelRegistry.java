@@ -38,6 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -45,20 +47,20 @@ import net.minecraft.world.level.block.Block;
 
 /**
  * A registry for {@link MachineBakedModel} sprite providers.
- * Use {@link #register(ResourceLocation, SpriteProvider)} to register a sprite provider for a block.
+ * Use {@link #register(ResourceLocation, Supplier)} to register a sprite provider for a block.
  */
 public interface MachineModelRegistry {
     ResourceLocation MACHINE = new ResourceLocation(MLConstant.MOD_ID, "block/machine");
     ResourceLocation MACHINE_SIDE = new ResourceLocation(MLConstant.MOD_ID, "block/machine_side");
 
-    Map<ResourceLocation, SpriteProvider> REGISTERED_SPRITE_PROVIDERS = new HashMap<>();
+    Map<ResourceLocation, Supplier<SpriteProvider>> REGISTERED_SPRITE_PROVIDERS = new HashMap<>();
 
     /**
      * Registers a sprite provider for a block.
      * @param id The id to register the provider for.
      * @param provider The provider to register.
      */
-    static void register(@NotNull ResourceLocation id, @NotNull SpriteProvider provider) {
+    static void register(@NotNull ResourceLocation id, @NotNull Supplier<SpriteProvider> provider) {
         Preconditions.checkNotNull(id);
         Preconditions.checkNotNull(provider);
 
@@ -70,7 +72,7 @@ public interface MachineModelRegistry {
      * @param providerId The provider id to get the provider for.
      * @return The registered provider, or null if none is registered.
      */
-    static @NotNull SpriteProvider getSpriteProvider(@NotNull ResourceLocation providerId) {
+    static @NotNull Supplier<SpriteProvider> getSpriteProvider(@NotNull ResourceLocation providerId) {
         return REGISTERED_SPRITE_PROVIDERS.get(providerId);
     }
 

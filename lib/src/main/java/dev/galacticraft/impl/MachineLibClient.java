@@ -55,10 +55,10 @@ public class MachineLibClient implements ClientModInitializer {
         ModelLoadingRegistry.INSTANCE.registerVariantProvider(MachineModelLoader::applyModelVariant);
 
         // Builtin Sprite Providers
-        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "default"), MachineModelRegistry.SpriteProvider.DEFAULT);
-        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "front_face"), new MachineBakedModel.FrontFaceSpriteProvider());
-        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "single"), new MachineBakedModel.SingleSpriteProvider());
-        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "z_axis"), new MachineBakedModel.ZAxisSpriteProvider());
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "default"), () -> MachineModelRegistry.SpriteProvider.DEFAULT);
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "front_face"), MachineBakedModel.FrontFaceSpriteProvider::new);
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "single"), MachineBakedModel.SingleSpriteProvider::new);
+        MachineModelRegistry.register(new ResourceLocation(MLConstant.MOD_ID, "z_axis"), MachineBakedModel.ZAxisSpriteProvider::new);
 
         for (GasFluid gasFluid : GasFluid.GAS_FLUIDS) {
             FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
