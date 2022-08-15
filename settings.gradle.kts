@@ -19,5 +19,4 @@ pluginManagement {
     }
 }
 
-include("lib", "testmod")
 rootProject.name = "MachineLib"
