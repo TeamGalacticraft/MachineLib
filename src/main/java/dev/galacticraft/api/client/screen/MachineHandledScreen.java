@@ -1170,6 +1170,22 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     }
 
     /**
+     * Returns the width of the background image.
+     * @return the width of the screen
+     */
+    public int getImageWidth() {
+        return this.imageWidth;
+    }
+
+    /**
+     * Returns the height of the background image.
+     * @return the height of the screen
+     */
+    public int getImageHeight() {
+        return this.imageHeight;
+    }
+
+    /**
      * Returns the requested item based on the id, or defaults to a barrier if nto found.
      * @param id the id of the item
      * @return the item stack
