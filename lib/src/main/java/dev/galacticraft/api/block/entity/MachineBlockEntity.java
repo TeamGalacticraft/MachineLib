@@ -654,6 +654,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.name;
     }
 
+    public MachineConfiguration getConfiguration() {
+        return configuration;
+    }
+
     @Override
     public Object getRenderAttachmentData() {
         return getIOConfig();
