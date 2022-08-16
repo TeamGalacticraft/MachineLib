@@ -51,6 +51,8 @@ extensions.getByType(org.cadixdev.gradle.licenser.LicenseExtension::class).apply
 group = "dev.galacticraft"
 version = buildString {
     append(modVersion)
+    append("+")
+    append(minecraft)
     if (prerelease || snapshot) {
         append("-pre")
     }
@@ -179,9 +181,11 @@ publishing {
     publications {
         register("mavenJava", MavenPublication::class) {
             groupId = group.toString()
-            artifactId = modId
+            artifactId = modName
             version = buildString {
                 append(modVersion)
+                append("+")
+                append(minecraft)
                 if (snapshot) {
                     append("-SNAPSHOT")
                 } else {
