@@ -10,7 +10,7 @@ on:
 
 jobs:
   Analysis:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       security-events: write
     steps:
@@ -36,7 +36,7 @@ jobs:
       - name: Build
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: checkLicenses build
+          arguments: build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

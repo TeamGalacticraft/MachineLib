@@ -7,11 +7,11 @@ on:
 
 jobs:
   Build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -22,8 +22,20 @@ jobs:
           java-version: 17
           distribution: temurin
 
+      - name: License headers
+        id: license_headers
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: checkLicenses
+
       - name: Build
         id: build
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: checkLicenses build :testmod:runGametestServer
+          arguments: build
+
+      - name: Gametest
+        id: gametest
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: runGametest
