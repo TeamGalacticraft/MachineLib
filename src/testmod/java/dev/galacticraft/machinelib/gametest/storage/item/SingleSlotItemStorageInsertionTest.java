@@ -24,348 +24,289 @@ package dev.galacticraft.machinelib.gametest.storage.item;
 
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
+import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
-import dev.galacticraft.machinelib.testmod.TestMod;
+import dev.galacticraft.machinelib.gametest.annotation.SingleSlotItemStorage;
+import dev.galacticraft.machinelib.gametest.misc.ItemType;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.ChatFormatting;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.Item;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static dev.galacticraft.machinelib.gametest.Assertions.assertEquals;
-import static dev.galacticraft.machinelib.gametest.Assertions.assertThrows;
-import static dev.galacticraft.machinelib.gametest.Util.generateNbt;
-import static net.minecraft.world.item.Items.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Objects;
 
+import static dev.galacticraft.machinelib.gametest.Assertions.*;
+
+@SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class SingleSlotItemStorageInsertionTest implements MachineLibGametest {
-    private MachineItemStorageImpl storage;
-
     @Override
-    public void beforeEach(@NotNull GameTestHelper context) {
-        this.storage = (MachineItemStorageImpl) MachineItemStorage.Builder.create()
-                .addSlot(TestMod.NO_DIAMOND_SLOT, 64, new ItemSlotDisplay(0, 0))
-                .build();
-    }
-
-    @Override
-    public void afterEach(@NotNull GameTestHelper context) {
-        this.storage = null;
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$fail_nothing(@NotNull GameTestHelper context) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertThrows(() -> this.storage.insert(ItemVariant.blank(), 5, transaction));
-            assertThrows(() -> this.storage.insert(variant(GOLD_INGOT), -1, transaction));
+    public void invokeTestMethod(@NotNull GameTestHelper context, @NotNull Method method) {
+        GameTest gameTest = method.getAnnotation(GameTest.class);
+        SingleSlotItemStorage test = method.getAnnotation(SingleSlotItemStorage.class);
+        if (gameTest == null) throw new AssertionError("Test method without gametest annotation?!");
+        if (gameTest.timeoutTicks() == 0 && test != null) {
+            method.setAccessible(true);
+            MachineItemStorageImpl impl = (MachineItemStorageImpl) MachineItemStorage.builder().addSlot(
+                    new SlotTypeImpl<>(Objects.requireNonNull(TextColor.fromLegacyFormat(ChatFormatting.WHITE)),
+                            Component.empty().copy(),
+                            v -> {
+                                if (test.blockNbt()) {
+                                    if (v.getNbt() != null && !v.getNbt().isEmpty()) {
+                                        return false;
+                                    }
+                                }
+                                if (test.block() != ItemType.NONE) {
+                                    if (v.isOf(test.block().generateVariant().getItem())) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            },
+                            test.flow(),
+                            ResourceType.ITEM), test.maxCount(), new ItemSlotDisplay(0, 0)).build();
+            if (test.amount() > 0) {
+                impl.setSlot(0, test.type().generateVariant(0), test.amount());
+            }
+                context.succeedWhen(() -> {
+                    try {
+                        method.invoke(this, impl, test.type());
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (InvocationTargetException e) {
+                        if (e.getTargetException() instanceof RuntimeException ex) {
+                            if (PRINT_ERRORS) {
+                                if (PRINT_STACKTRACE) {
+                                    MachineLibGametest.LOGGER.error("", ex);
+                                } else {
+                                    MachineLibGametest.LOGGER.error(ex.getMessage());
+                                }
+                            }
+                            throw ex;
+                        } else {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+        } else {
+            MachineLibGametest.super.invokeTestMethod(context, method);
         }
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$empty(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$fail_nothing(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(5, this.storage.insert(variant(GOLD_INGOT), 5, transaction));
-            assertEquals(5, this.storage.count(variant(GOLD_INGOT)));
+            assertThrows(() -> storage.insert(ItemVariant.blank(), 1, transaction));
         }
-        assertEquals(0, this.storage.count(variant(GOLD_INGOT)));
     }
 
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$empty_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$fail_negative(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(8, this.storage.insert(variant(GOLD_INGOT, tag), 8, transaction));
-            assertEquals(8, this.storage.count(variant(GOLD_INGOT, tag)));
+            assertThrows(() -> storage.insert(type.generateVariant(), -1, transaction));
         }
-        assertEquals(0, this.storage.count(variant(GOLD_INGOT, tag)));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$empty_overflow(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$empty(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(64, this.storage.insert(variant(GOLD_INGOT), 65, transaction));
-            assertEquals(64, this.storage.count(variant(GOLD_INGOT)));
+            assertEquals(5, storage.insert(variant, 5, transaction));
+            assertEquals(5, storage.count(variant));
         }
-        assertEquals(0, this.storage.count(variant(GOLD_INGOT)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$empty_overflow_item(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$empty_nbt(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(1, this.storage.insert(variant(IRON_AXE), 64, transaction));
-            assertEquals(1, this.storage.count(variant(IRON_AXE)));
+            assertEquals(8, storage.insert(variant, 8, transaction));
+            assertEquals(8, storage.count(variant));
         }
-        assertEquals(0, this.storage.count(variant(IRON_AXE)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$empty_overflow(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(1, this.storage.insert(variant(GOLD_INGOT), 4, transaction));
-            assertEquals(5, this.storage.count(variant(GOLD_INGOT)));
+            assertEquals(64, storage.insert(variant, 65, transaction));
+            assertEquals(64, storage.count(variant));
         }
-        assertEquals(0, this.storage.count(variant(GOLD_INGOT)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_type_full(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(IRON_INGOT), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(maxCount = 32)
+    void insert$empty_overflow_small_slot(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(GOLD_INGOT), 4, transaction));
-            assertEquals(1, this.storage.count(variant(IRON_INGOT)));
+            assertEquals(32, storage.insert(variant, 64, transaction));
+            assertEquals(32, storage.count(variant));
         }
-        assertEquals(1, this.storage.count(variant(IRON_INGOT)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_nbt_type_full(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT, tag), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_16)
+    void insert$empty_overflow_item(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(GOLD_INGOT), 4, transaction));
-            assertEquals(1, this.storage.count(variant(GOLD_INGOT, tag)));
+            assertEquals(16, storage.insert(variant, 32, transaction));
+            assertEquals(16, storage.count(variant));
         }
-        assertEquals(1, this.storage.count(variant(GOLD_INGOT, tag)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_type_full_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(amount = 48)
+    void insert$partially_filled(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(GOLD_INGOT, tag), 4, transaction));
-            assertEquals(1, this.storage.count(variant(GOLD_INGOT)));
+            assertEquals(16, storage.insert(variant, 64, transaction));
+            assertEquals(64, storage.count(variant));
         }
-        assertEquals(1, this.storage.count(variant(GOLD_INGOT)));
+        assertEquals(48, storage.count(variant));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_type_full_different_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag1 = generateNbt();
-        CompoundTag tag2 = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT, tag2), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(amount = 64)
+    void insert$filled(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(GOLD_INGOT, tag1), 4, transaction));
-            assertEquals(1, this.storage.count(variant(GOLD_INGOT, tag2)));
+            assertEquals(0, storage.insert(variant, 64, transaction));
+            assertEquals(64, storage.count(variant));
         }
-        assertEquals(1, this.storage.count(variant(GOLD_INGOT, tag2)));
+        assertEquals(64, storage.count(variant));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_count_full(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 64);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(amount = 1)
+    void insert$filled_type_full(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant(1);
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(GOLD_INGOT), 8, transaction));
-            assertEquals(64, this.storage.count(variant(GOLD_INGOT)));
+            assertEquals(0, storage.insert(variant, 64, transaction));
+            assertEquals(0, storage.count(variant));
         }
-        assertEquals(64, this.storage.count(variant(GOLD_INGOT)));
+        assertEquals(1, storage.count(type.generateVariant(0)));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_overflow(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 8);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_64_NBT, amount = 1)
+    void insert$filled_nbt_type_full(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.getNbtInverse().generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(56, this.storage.insert(variant(GOLD_INGOT), 64, transaction));
-            assertEquals(64, this.storage.count(variant(GOLD_INGOT)));
+            assertEquals(0, storage.insert(variant, 64, transaction));
         }
-        assertEquals(8, this.storage.count(variant(GOLD_INGOT)));
+        assertFalse(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filled_overflow_item(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(IRON_AXE), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_64, amount = 1)
+    void insert$filled_type_full_nbt(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.getNbtInverse().generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(IRON_AXE), 64, transaction));
-            assertEquals(1, this.storage.count(variant(IRON_AXE)));
+            assertEquals(0, storage.insert(variant, 64, transaction));
         }
-        assertEquals(0, this.storage.count(variant(IRON_AXE)));
+        assertEquals(1, storage.count(type.generateVariant()));
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filter(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_64_NBT, amount = 1)
+    void insert$filled_type_full_different_nbt(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(DIAMOND), 8, transaction));
-            assertEquals(0, this.storage.count(variant(DIAMOND)));
+            assertEquals(0, storage.insert(variant, 64, transaction));
         }
-        assertEquals(0, this.storage.count(variant(DIAMOND)));
+        assertFalse(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert$filterNbt(@NotNull GameTestHelper context) {
-        CompoundTag nbt = new CompoundTag();
-        nbt.putBoolean("blocked", true);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_64_NBT)
+    void insert$partially_filled_nbt(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(variant(IRON_INGOT, nbt), 8, transaction));
-            assertEquals(0, this.storage.count(variant(IRON_INGOT, nbt)));
+            assertEquals(16, storage.insert(variant, 16, transaction));
+            assertEquals(32, storage.insert(variant, 32, transaction));
         }
-        assertEquals(0, this.storage.count(variant(IRON_INGOT, nbt)));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$empty(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage
+    void insert$fill_overflow(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(5, this.storage.insert(0, variant(GOLD_INGOT), 5, transaction));
-            assertEquals(5, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
+            assertEquals(64, storage.insert(variant, 96, transaction));
+            assertEquals(64, storage.count(variant));
         }
-        assertEquals(0, this.storage.getAmount(0));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$empty_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(maxCount = 16)
+    void insert$fill_overflow_small(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(8, this.storage.insert(0, variant(GOLD_INGOT, tag), 8, transaction));
-            assertEquals(8, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT, tag), this.storage.getVariant(0));
+            assertEquals(16, storage.insert(variant, 64, transaction));
+            assertEquals(16, storage.count(variant));
         }
-        assertEquals(0, this.storage.getAmount(0));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$empty_overflow(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(type = ItemType.STACK_1)
+    void insert$fill_overflow_item(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(64, this.storage.insert(0, variant(GOLD_INGOT), 65, transaction));
-            assertEquals(64, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
+            assertEquals(1, storage.insert(variant, 8, transaction));
+            assertEquals(1, storage.count(variant));
         }
-        assertEquals(0, this.storage.getAmount(0));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$empty_overflow_item(@NotNull GameTestHelper context) {
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(block = ItemType.STACK_64)
+    void insert$filter(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
+        ItemVariant variant2 = type.generateVariant(1);
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(1, this.storage.insert(0, variant(IRON_AXE), 64, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(IRON_AXE), this.storage.getVariant(0));
+            assertEquals(0, storage.insert(variant, 64, transaction));
+            assertEquals(0, storage.count(variant));
         }
-        assertEquals(0, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 1);
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(1, this.storage.insert(0, variant(GOLD_INGOT), 4, transaction));
-            assertEquals(5, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
+            assertEquals(64, storage.insert(variant2, 64, transaction));
+            assertEquals(64, storage.count(variant2));
         }
-        assertEquals(0, this.storage.getAmount(0));
+        assertTrue(storage.isEmpty());
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_type_full(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(IRON_INGOT), 1);
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage/insert/single", timeoutTicks = 0)
+    @SingleSlotItemStorage(blockNbt = true, type = ItemType.STACK_16_NBT)
+    void insert$filter_nbt(@NotNull MachineItemStorageImpl storage, @NotNull ItemType type) {
+        ItemVariant variant = type.generateVariant();
+        ItemVariant variant2 = type.getNbtInverse().generateVariant();
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(GOLD_INGOT), 4, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
+            assertEquals(0, storage.insert(variant, 16, transaction));
+            assertEquals(0, storage.count(variant));
         }
-        assertEquals(1, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_nbt_type_full(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT, tag), 1);
         try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(GOLD_INGOT), 4, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT, tag), this.storage.getVariant(0));
+            assertEquals(16, storage.insert(variant2, 16, transaction));
+            assertEquals(16, storage.count(variant2));
         }
-        assertEquals(1, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_type_full_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT), 1);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(GOLD_INGOT, tag), 4, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
-        }
-        assertEquals(1, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_type_full_different_nbt(@NotNull GameTestHelper context) {
-        CompoundTag tag1 = generateNbt();
-        CompoundTag tag2 = generateNbt();
-        this.storage.setSlot(0, variant(GOLD_INGOT, tag2), 1);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(GOLD_INGOT, tag1), 4, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT, tag2), this.storage.getVariant(0));
-        }
-        assertEquals(1, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_count_full(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 64);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(GOLD_INGOT), 8, transaction));
-            assertEquals(64, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
-        }
-        assertEquals(64, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_overflow(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 8);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(56, this.storage.insert(0, variant(GOLD_INGOT), 64, transaction));
-            assertEquals(64, this.storage.getAmount(0));
-            assertEquals(variant(GOLD_INGOT), this.storage.getVariant(0));
-        }
-        assertEquals(8, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filled_overflow_item(@NotNull GameTestHelper context) {
-        this.storage.setSlot(0, variant(IRON_AXE), 1);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(IRON_AXE), 64, transaction));
-            assertEquals(1, this.storage.getAmount(0));
-            assertEquals(variant(IRON_AXE), this.storage.getVariant(0));
-        }
-        assertEquals(0, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filter(@NotNull GameTestHelper context) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(DIAMOND), 8, transaction));
-            assertEquals(0, this.storage.getAmount(0));
-            assertEquals(variant(DIAMOND), this.storage.getVariant(0));
-        }
-        assertEquals(0, this.storage.getAmount(0));
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void insert_slot$filterNbt(@NotNull GameTestHelper context) {
-        CompoundTag nbt = new CompoundTag();
-        nbt.putBoolean("blocked", true);
-        try (Transaction transaction = Transaction.openOuter()) {
-            assertEquals(0, this.storage.insert(0, variant(IRON_INGOT, nbt), 8, transaction));
-            assertEquals(0, this.storage.getAmount(0));
-            assertEquals(variant(IRON_INGOT, nbt), this.storage.getVariant(0));
-        }
-        assertEquals(0, this.storage.getAmount(0));
-    }
-
-    private static @NotNull ItemVariant variant(@NotNull Item item, @Nullable CompoundTag nbt) {
-        return ItemVariant.of(item, nbt);
-    }
-    
-    private static @NotNull ItemVariant variant(@NotNull Item item) {
-        return ItemVariant.of(item);
+        assertTrue(storage.isEmpty());
     }
 }

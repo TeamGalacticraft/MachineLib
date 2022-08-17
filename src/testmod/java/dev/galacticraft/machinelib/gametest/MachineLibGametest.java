@@ -26,11 +26,16 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
 public interface MachineLibGametest extends FabricGameTest {
+    Logger LOGGER = LoggerFactory.getLogger("ML-GameTest");
     String EMPTY_STRUCTURE = "machinelib-test:empty";
+    boolean PRINT_ERRORS = true;
+    boolean PRINT_STACKTRACE = false;
 
     default void beforeEach(@NotNull GameTestHelper context) {
     }

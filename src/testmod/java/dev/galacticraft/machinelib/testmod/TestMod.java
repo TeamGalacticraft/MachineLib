@@ -60,15 +60,19 @@ public class TestMod implements ModInitializer {
     public static final String MOD_ID = "machinelib-test";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
+
+    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND, ResourceFlow.BOTH, ResourceType.ITEM);
+    public static final SlotType<Item, ItemVariant> NO_NBT_SLOT = SlotType.create(id("no_nbt_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_nbt_slot"), v -> v.getNbt() == null || v.getNbt().isEmpty(), ResourceFlow.BOTH, ResourceType.ITEM);
+    public static final SlotType<Item, ItemVariant> WILDCARD_SLOT = SlotType.create(id("any"), TextColor.fromLegacyFormat(ChatFormatting.GREEN), Component.translatable("machinelib.testmod.wildcard_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
+
     public static final String SIMPLE_MACHINE = "simple_machine";
     public static final MachineStatus WORKING = MachineStatus.createAndRegister(id("charge_slot"), Component.translatable("machinelib.testmod.working"), MachineStatus.Type.WORKING);
-    public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
     public static final Block SIMPLE_MACHINE_BLOCK = new SimpleMachineBlock(FabricBlockSettings.of(Material.METAL));
     public static final Item SIMPLE_MACHINE_ITEM = new BlockItem(SIMPLE_MACHINE_BLOCK, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
     public static final Item INFINITE_BATTERY = new Item(new Item.Properties().tab(CreativeModeTab.TAB_MISC));
     public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE_BE_TYPE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, SIMPLE_MACHINE_BLOCK).build();
     public static final MenuType<SimpleMachineScreenHandler<SimpleMachineBlockEntity>> SIMPLE_MACHINE_SH_TYPE = new ExtendedScreenHandlerType<>(SimpleMachineScreenHandler.createFactory(() -> TestMod.SIMPLE_MACHINE_SH_TYPE));
-    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND && (v.getNbt() == null || !v.getNbt().getBoolean("blocked")), ResourceFlow.BOTH, ResourceType.ITEM);
 
     @Override
     public void onInitialize() {

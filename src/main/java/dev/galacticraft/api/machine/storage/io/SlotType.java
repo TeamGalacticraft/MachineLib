@@ -29,14 +29,12 @@ import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
@@ -46,7 +44,7 @@ import java.util.function.Predicate;
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotType<T, V extends TransferVariant<T>> {
-    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new ResourceLocation(MLConstant.MOD_ID, "none").toString(), ResourceKey.createRegistryKey(new ResourceLocation(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), SlotType::getReference)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+    Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new ResourceLocation(MLConstant.MOD_ID, "none").toString(), ResourceKey.createRegistryKey(new ResourceLocation(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), null)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
 
     static <T, V extends TransferVariant<T>> SlotType<T, V> create(ResourceLocation id, @NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         if (color.getValue() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
@@ -84,7 +82,4 @@ public interface SlotType<T, V extends TransferVariant<T>> {
      * @return Whether the slot type is valid for the given resource.
      */
     boolean willAccept(@NotNull V variant);
-
-    @ApiStatus.Internal
-    @NotNull Holder.Reference<SlotType<?, ?>> getReference();
 }
