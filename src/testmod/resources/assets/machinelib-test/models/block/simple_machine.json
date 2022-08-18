@@ -1,0 +1,4 @@
+{
+  "machine": "machinelib-test:simple_machine",
+  "sprite_provider": "machinelib:default"
+}

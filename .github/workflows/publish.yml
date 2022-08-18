@@ -1,12 +1,13 @@
 name: Maven Publish
 
 on:
-  release:
-    types: [ published ]
+  push:
+    branches:
+      - main
 
 jobs:
   Publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -20,11 +21,14 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-
       - name: Publish
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: :lib:publish
+          arguments: publish
         env:
-          ORG_GRADLE_PROJECT_mavenUsername: ${{ secrets.MAVEN_USER }}
-          ORG_GRADLE_PROJECT_mavenPassword: ${{ secrets.MAVEN_PASS }}
+          SNAPSHOT: true
+          PRE_RELEASE: false
+          NEXUS_REPOSITORY_URL: ${{ secrets.NEXUS_SNAPSHOT_URL }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
