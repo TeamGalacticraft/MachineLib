@@ -63,7 +63,7 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public boolean hasItem() {
-        return this.storage.getVariant(this.getContainerSlot()).isBlank();
+        return !this.storage.getVariant(this.getContainerSlot()).isBlank();
     }
 
     @Override
