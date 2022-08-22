@@ -27,7 +27,6 @@ import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.MLConstant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -47,7 +46,6 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
         Registry.register(REGISTRY, new ResourceLocation(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), Component.translatable(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
     }
 
-    private final @NotNull Holder.Reference<SlotType<?, ?>> reference = REGISTRY.createIntrusiveHolder(this);
     private final @NotNull TextColor color;
     private final @NotNull Component name;
     private final @NotNull Predicate<V> filter;
@@ -85,11 +83,6 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     @Override
     public boolean willAccept(@NotNull V variant) {
         return variant.isBlank() || this.filter.test(variant);
-    }
-
-    @Override
-    public Holder.@NotNull Reference<SlotType<?, ?>> getReference() {
-        return this.reference;
     }
 
     @Override

@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
+import java.util.Objects;
+
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
@@ -160,7 +162,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
             if (this.matching.left().isPresent()) {
                 nbt.putInt(MLConstant.Nbt.VALUE, this.matching.left().get());
             } else {
-                nbt.putString(MLConstant.Nbt.VALUE, this.matching.right().orElseThrow(RuntimeException::new).getReference().key().location().toString());
+                nbt.putString(MLConstant.Nbt.VALUE, Objects.requireNonNull(SlotType.REGISTRY.getKey(this.matching.right().orElseThrow(RuntimeException::new))).toString());
             }
         }
         return nbt;
