@@ -125,8 +125,8 @@ public final class ResourceType<T, V> {
      */
     public static ResourceType<?, ?> getFromOrdinal(byte id) {
         return switch (id) {
-            case 0 -> ANY;
-            case 1 -> NONE;
+            case 0 -> NONE;
+            case 1 -> ANY;
             case 2 -> ENERGY;
             case 3 -> ITEM;
             case 4 -> FLUID;
