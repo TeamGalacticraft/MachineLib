@@ -1287,10 +1287,23 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             ResourceType<?, ?> outType = null;
             ResourceFlow outFlow = null;
 
-            ResourceType<?, ?>[] normalTypes = ResourceType.normalTypes();
+            ResourceType<?, ?>[] normalTypes = new ResourceType<?, ?>[map.size()];
+
+            int arrayIndex = 0;
+
+            for (int i = 0; i < ResourceType.normalTypes().length; i++){
+                ResourceType<?, ?> type = ResourceType.normalTypes()[i];
+
+                if(map.containsKey(type)) {
+                    normalTypes[arrayIndex] = type;
+
+                    arrayIndex++;
+                }
+            }
+
             for (int i = 0; i < normalTypes.length; i++) {
                 ResourceType<?, ?> type = normalTypes[i];
-                if (type == sideOption.getType()) {
+                if (type == sideOption.getType() || sideOption.getType() == ResourceType.NONE) {
                     List<ResourceFlow> resourceFlows = map.get(type);
                     if (resourceFlows != null) {
                         int idx = resourceFlows.indexOf(sideOption.getFlow());
@@ -1308,9 +1321,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                                     }
                                 }
                             } else {
-                                outType = normalTypes[i + (back ? -1 : 1)];
+                                outType = normalTypes[(back ? 0 : normalTypes.length - 1)];
                             }
-                            outFlow = map.get(outType).get(back ? map.get(outType).size() : 0);
+                            outFlow = map.get(outType).get(back ? map.get(outType).size() - 1 : 0);
                         } else {
                             outType = type;
                             outFlow = resourceFlows.get(idx + (back ? -1 : 1));

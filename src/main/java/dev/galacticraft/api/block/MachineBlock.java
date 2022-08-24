@@ -167,7 +167,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
                     tooltip.add(Component.translatable(MLConstant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(MLConstant.Nbt.ACCESS_LEVEL)).getName()).setStyle(MLConstant.Text.GREEN_STYLE));
                 }
             }
-            tooltip.add(Component.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
+
+            if(nbt.contains(MLConstant.Nbt.REDSTONE_ACTIVATION)){
+                tooltip.add(Component.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt.get(MLConstant.Nbt.REDSTONE_ACTIVATION)).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
+            }
         }
     }
 
@@ -231,13 +234,12 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     @Override
     public ItemStack getCloneItemStack(BlockGetter view, BlockPos pos, BlockState state) {
         ItemStack stack = super.getCloneItemStack(view, pos, state);
-        CompoundTag nbt = (stack.getTag() != null ? stack.getTag() : new CompoundTag());
+
         BlockEntity blockEntity = view.getBlockEntity(pos);
         if (blockEntity != null) { // todo: limit to IO config
-            nbt.put(MLConstant.Nbt.BLOCK_ENTITY_TAG, blockEntity.saveWithoutMetadata());
+            stack.getOrCreateTag().put(MLConstant.Nbt.BLOCK_ENTITY_TAG, blockEntity.saveWithoutMetadata());
         }
 
-        stack.setTag(nbt);
         return stack;
     }
 

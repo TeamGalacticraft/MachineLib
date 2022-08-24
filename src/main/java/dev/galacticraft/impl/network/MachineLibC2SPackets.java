@@ -90,6 +90,8 @@ public class MachineLibC2SPackets {
                         if (machine.getSecurity().hasAccess(player)) {
                             machine.getIOConfig().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
                             machine.getIOConfig().get(face).setMatching(null);
+                            machine.setChanged();
+
                             player.level.updateNeighborsAt(machine.getBlockPos(), machine.getBlockState().getBlock());
                         }
                     }
