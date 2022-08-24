@@ -28,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -35,7 +36,7 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public class CachingSpriteAtlas implements Function<ResourceLocation, TextureAtlasSprite> {
-    private final Map<ResourceLocation, TextureAtlasSprite> cache = new HashMap<>();
+    private final Map<ResourceLocation, TextureAtlasSprite> cache = new ConcurrentHashMap<>();
     private Function<ResourceLocation, TextureAtlasSprite> atlas;
 
     public CachingSpriteAtlas(Function<ResourceLocation, TextureAtlasSprite> atlas) {
