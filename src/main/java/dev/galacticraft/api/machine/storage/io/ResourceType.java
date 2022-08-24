@@ -62,6 +62,9 @@ public final class ResourceType<T, V> {
      */
     public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
 
+    private static final ResourceType<?, ?>[] normalTypes =  new ResourceType[] {ENERGY, ITEM, FLUID};
+    private static final ResourceType<?, ?>[] types =  new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
+
     /**
      * The name of the resource type.
      */
@@ -82,7 +85,7 @@ public final class ResourceType<T, V> {
      */
     @Contract(value = " -> new", pure = true)
     public static ResourceType<?, ?> @NotNull [] types() {
-        return new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
+        return types;
     }
 
     /**
@@ -91,7 +94,7 @@ public final class ResourceType<T, V> {
      */
     @Contract(value = " -> new", pure = true)
     public static ResourceType<?, ?> @NotNull [] normalTypes() {
-        return new ResourceType[] {ENERGY, ITEM, FLUID};
+        return normalTypes;
     }
 
     /**
