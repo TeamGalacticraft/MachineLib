@@ -50,15 +50,21 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
+import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -507,6 +513,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(MLConstant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.FLUID_STORAGE)));
         this.configuration.readNbt(nbt);
         this.disableDrops = nbt.getBoolean(MLConstant.Nbt.DISABLE_DROPS);
+
+        if (level != null && level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, Blocks.AIR.defaultBlockState(), this.getBlockState(), Block.UPDATE_IMMEDIATE);
+        }
+    }
+
+    @Override
+    public void setChanged() {
+        super.setChanged();
+
+        if (!(level instanceof ServerLevel serverLevel)) return;
+        serverLevel.getChunkSource().blockChanged(worldPosition);
     }
 
     /**
@@ -660,5 +678,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public Object getRenderAttachmentData() {
         return getIOConfig();
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
+
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }
