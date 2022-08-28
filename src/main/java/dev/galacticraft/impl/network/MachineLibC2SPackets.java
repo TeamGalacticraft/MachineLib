@@ -54,7 +54,7 @@ public class MachineLibC2SPackets {
                 if (buf.readBoolean()) { // int or slot type
                     int i = buf.readInt();
                     server.execute(() -> {
-                        if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                        if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.getSecurity().hasAccess(player)) {
                                 if (i == -1) {
@@ -68,7 +68,7 @@ public class MachineLibC2SPackets {
                 } else {
                     int i = buf.readInt();
                     server.execute(() -> {
-                        if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                        if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                             MachineBlockEntity machine = sHandler.machine;
                             if (machine.getSecurity().hasAccess(player)) {
                                 if (i == -1) {
@@ -102,7 +102,7 @@ public class MachineLibC2SPackets {
         ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().hasAccess(player)) {
                         machine.setRedstone(redstoneActivation);

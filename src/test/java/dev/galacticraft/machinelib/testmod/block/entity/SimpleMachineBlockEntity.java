@@ -35,7 +35,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,14 +73,14 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
 
     @Override
     protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        if (ticks > 0) {
+        if (ticks > 0 && this.level.getBlockState(pos.above()).isAir()) {
             ticks--;
             world.getProfiler().push("transaction");
             try (Transaction transaction = Transaction.openOuter()){
                 if (this.energyStorage().extract(100, transaction) == 100) {
                     transaction.commit();
                     if (ticks == 0) {
-                        world.explode(null, pos.getX(), pos.getY(), pos.getZ(), 1.0F, false, Explosion.BlockInteraction.BREAK);
+                        world.setBlockAndUpdate(pos.above(), Blocks.DRIED_KELP_BLOCK.defaultBlockState());
                     }
                     return TestMod.WORKING;
                 } else {
@@ -91,7 +91,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
                 world.getProfiler().pop();
             }
         } else {
-            if (!this.energyStorage().isEmpty()) {
+            if (!this.energyStorage().isEmpty() && this.level.getBlockState(pos.above()).isAir()) {
                 ticks = 20*20;
                 return TestMod.WORKING;
             } else {

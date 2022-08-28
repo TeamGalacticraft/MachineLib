@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter
 
 plugins {
     `maven-publish`
-    id("fabric-loom") version ("0.12-SNAPSHOT")
+    id("fabric-loom") version ("0.13-SNAPSHOT")
     id("io.github.juuxel.loom-quiltflower") version ("1.7.3")
     id("org.cadixdev.licenser") version ("0.6.1")
 }
@@ -72,40 +72,33 @@ java {
     withJavadocJar()
 }
 
-sourceSets {
-    create("testmod") {
-        compileClasspath += main.get().compileClasspath + main.get().output
-        runtimeClasspath += main.get().runtimeClasspath + main.get().output
-    }
-}
-
 loom {
     mods {
         create("machinelib") {
             sourceSet(sourceSets.main.get())
         }
         create("machinelib-test") {
-            sourceSet(sourceSets.getByName("testmod"))
+            sourceSet(sourceSets.test.get())
         }
     }
 
     runs {
         getByName("client") {
-            source(sourceSets.getByName("testmod"))
+            source(sourceSets.test.get())
         }
         getByName("server") {
-            source(sourceSets.getByName("testmod"))
+            source(sourceSets.test.get())
         }
         register("gametest") {
             name("Game Test Server")
             server()
-            source(sourceSets.getByName("testmod"))
+            source(sourceSets.test.get())
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
         register("gametestClient") {
             name("Game Test Client")
             client()
-            source(sourceSets.getByName("testmod"))
+            source(sourceSets.test.get())
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
     }
