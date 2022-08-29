@@ -3,7 +3,7 @@ name: Maven Publish
 on:
   push:
     branches:
-      - main
+      - '1.19'
 
 jobs:
   Publish:

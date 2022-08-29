@@ -3,10 +3,10 @@ name: CodeQL Analysis
 on:
   push:
     branches:
-      - main
+      - '1.19'
   pull_request:
     branches:
-      - main
+      - '1.19'
 
 jobs:
   Analysis:
