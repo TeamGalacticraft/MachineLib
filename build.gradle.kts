@@ -20,17 +20,19 @@
  * SOFTWARE.
  */
 
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 plugins {
     `maven-publish`
-    id("fabric-loom") version ("0.13-SNAPSHOT")
+    id("fabric-loom") version ("1.0-SNAPSHOT")
     id("io.github.juuxel.loom-quiltflower") version ("1.7.3")
     id("org.cadixdev.licenser") version ("0.6.1")
+    id("org.ajoberstar.grgit") version("5.0.0")
 }
 
 val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
-val snapshot = (System.getenv("SNAPSHOT") ?: "false") == "true"
+val commitHash = (System.getenv("GITHUB_SHA") ?: grgit.head().id)!!
 val prerelease = (System.getenv("PRE_RELEASE") ?: "false") == "true"
 
 val modId = project.property("mod.id").toString()
@@ -51,14 +53,19 @@ extensions.getByType(org.cadixdev.gradle.licenser.LicenseExtension::class).apply
 group = "dev.galacticraft"
 version = buildString {
     append(modVersion)
-    append("+")
-    append(minecraft)
-    if (prerelease || snapshot) {
+    if (prerelease) {
         append("-pre")
     }
+    append('+')
     if (buildNumber.isNotBlank()) {
-        append("+")
         append(buildNumber)
+    } else if (commitHash.isNotEmpty()) {
+        append(commitHash.substring(0, 8))
+        if (!grgit.status().isClean) {
+            append("-dirty")
+        }
+    } else {
+        append("unknown")
     }
 }
 
@@ -152,12 +159,15 @@ tasks.withType<Jar>() {
     from("LICENSE")
     manifest {
         attributes(
-            "Implementation-Title" to modName,
+            "Specification-Title" to modName,
+            "Specification-Vendor" to "Team Galacticraft",
+            "Specification-Version" to modVersion,
+            "Implementation-Title" to project.name,
             "Implementation-Version" to "${project.version}",
             "Implementation-Vendor" to "Team Galacticraft",
-            "Implementation-Timestamp" to DateTimeFormatter.ISO_DATE_TIME,
+            "Implementation-Timestamp" to LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
             "Maven-Artifact" to "${project.group}:${modName}:${project.version}",
-            "ModSide" to "BOTH"
+            "Built-On-Java" to "${System.getProperty("java.vm.version")} (${System.getProperty("java.vm.vendor")})"
         )
     }
 }
@@ -175,19 +185,7 @@ publishing {
         register("mavenJava", MavenPublication::class) {
             groupId = group.toString()
             artifactId = modName
-            version = buildString {
-                append(modVersion)
-                append("+")
-                append(minecraft)
-                if (snapshot) {
-                    append("-SNAPSHOT")
-                } else {
-                    if (buildNumber.isNotBlank()) {
-                        append("+")
-                        append(buildNumber)
-                    }
-                }
-            }
+            version = project.version.toString()
 
             from(components["java"])
 

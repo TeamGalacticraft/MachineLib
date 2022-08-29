@@ -7,7 +7,7 @@
 # Java
 *.java          text diff=java
 *.gradle        text diff=java
-*.gradle.kts    text diff=java
+*.gradle.kts    text diff=kotlin
 
 # Binary
 *.class         binary
