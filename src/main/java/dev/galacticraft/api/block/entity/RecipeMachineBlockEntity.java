@@ -30,6 +30,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -67,6 +68,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * The machine's active recipe. If there is no active recipe, this will be {@code null}.
      */
     private @Nullable R activeRecipe = null;
+    private @Nullable R cachedRecipe = null;
 
     /**
      * The progress of the machine's current recipe.
@@ -130,37 +132,19 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     }
 
     @Override
-    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        if (this.inventoryModCount != this.itemStorage().getModCount()) {
-            world.getProfiler().push("recipe_test");
-            this.inventoryModCount = this.itemStorage().getModCount();
-            world.getProfiler().push("find_recipe");
-            Optional<R> optional = this.findValidRecipe(world);
-            world.getProfiler().pop();
-            if (optional.isPresent()) {
-                R recipe = optional.get();
-                try (Transaction transaction = Transaction.openOuter()) {
-                    if (this.outputStacks(recipe, transaction)) {
-                        this.updateRecipe(recipe);
-                    } else {
-                        return MachineStatuses.OUTPUT_FULL;
-                    }
-                }
-            } else {
-                this.resetRecipe();
-                return MachineStatuses.INVALID_RECIPE;
-            }
-            world.getProfiler().pop();
-        }
-        if (this.activeRecipe != null) {
-            world.getProfiler().push("working_transaction");
+    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        MachineStatus recipeFailure = testInventoryRecipe(world, profiler);
+        if (recipeFailure != null) return recipeFailure;
+
+        if (this.getActiveRecipe() != null) {
+            profiler.push("working_transaction");
             try (Transaction transaction = Transaction.openOuter()) {
                 MachineStatus status = this.extractResourcesToWork(transaction);
                 if (status == null) {
                     if (++this.progress >= this.getMaxProgress()) {
-                        world.getProfiler().push("crafting");
-                        this.craft(world, this.activeRecipe, transaction);
-                        world.getProfiler().pop();
+                        profiler.push("crafting");
+                        this.craft(profiler, this.getActiveRecipe(), transaction);
+                        profiler.pop();
                     }
                     transaction.commit();
                     return this.workingStatus();
@@ -168,12 +152,41 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                     return status;
                 }
             } finally {
-                world.getProfiler().pop();
+                profiler.pop();
             }
         } else {
             if (this.getStatus() == MachineStatuses.OUTPUT_FULL) return MachineStatuses.OUTPUT_FULL; //preserve full state
             return MachineStatuses.INVALID_RECIPE;
         }
+    }
+
+    @Nullable
+    protected MachineStatus testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
+        if (this.inventoryModCount != this.itemStorage().getModCount()) { // includes output slots
+            this.inventoryModCount = this.itemStorage().getModCount();
+            profiler.push("recipe_test");
+            profiler.push("find_recipe");
+            Optional<R> optional = this.findValidRecipe(world);
+            profiler.pop();
+            if (optional.isPresent()) {
+                R recipe = optional.get();
+                try (Transaction transaction = Transaction.openOuter()) {
+                    if (this.outputStacks(recipe, transaction)) {
+                        this.updateRecipe(recipe);
+                    } else {
+                        this.resetRecipe();
+                        profiler.pop();
+                        return MachineStatuses.OUTPUT_FULL;
+                    }
+                }
+            } else {
+                this.resetRecipe();
+                profiler.pop();
+                return MachineStatuses.INVALID_RECIPE;
+            }
+            profiler.pop();
+        }
+        return null;
     }
 
     /**
@@ -199,19 +212,19 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
-    protected void craft(@NotNull Level world, @NotNull R recipe, @Nullable TransactionContext context) {
-        world.getProfiler().push("extract_materials");
+    protected void craft(@NotNull ProfilerFiller profiler, @NotNull R recipe, @Nullable TransactionContext context) {
+        profiler.push("extract_materials");
         try (Transaction inner = Transaction.openNested(context)) {
             if (this.extractCraftingMaterials(recipe, inner)) {
-                world.getProfiler().popPush("output_stacks");
+                profiler.popPush("output_stacks");
                 if (this.outputStacks(recipe, inner)) {
-                    this.activeRecipe = null;
+                    this.inventoryModCount = -1; // make sure everything is recalculated
+                    this.resetRecipe();
                     inner.commit();
                 }
             }
-        } finally {
-            world.getProfiler().pop();
         }
+        profiler.pop();
     }
 
     /**
@@ -238,9 +251,9 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The first valid recipe in the machine's inventory.
      */
     protected @NotNull Optional<R> findValidRecipe(@NotNull Level world) {
-        if (this.getActiveRecipe() != null) {
-            if (this.getActiveRecipe().matches(this.craftingInv(), world)) {
-                return Optional.of(this.getActiveRecipe());
+        if (this.cachedRecipe != null) {
+            if (this.cachedRecipe.matches(this.craftingInv(), world)) {
+                return Optional.of(this.cachedRecipe);
             }
         }
         return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world);
@@ -290,6 +303,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param activeRecipe The recipe to set.
      */
     protected void setActiveRecipe(@Nullable R activeRecipe) {
+        if (activeRecipe != null) this.cachedRecipe = activeRecipe;
         this.activeRecipe = activeRecipe;
     }
 
@@ -318,6 +332,6 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     @Override
     public void setLevel(Level world) {
         super.setLevel(world);
-        this.activeRecipe = this.findValidRecipe(world).orElse(null);
+        this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world).orElse(null);
     }
 }

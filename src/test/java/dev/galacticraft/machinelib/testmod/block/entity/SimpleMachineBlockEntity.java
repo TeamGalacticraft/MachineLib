@@ -32,6 +32,7 @@ import dev.galacticraft.machinelib.testmod.TestMod;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -60,8 +61,8 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     }
 
     @Override
-    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        super.tickConstant(world, pos, state);
+    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        super.tickConstant(world, pos, state, profiler);
         this.attemptChargeFromStack(0);
     }
 
@@ -72,10 +73,10 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     }
 
     @Override
-    protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {
-        if (ticks > 0 && this.level.getBlockState(pos.above()).isAir()) {
+    protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        if (ticks > 0 && world.getBlockState(pos.above()).isAir()) {
             ticks--;
-            world.getProfiler().push("transaction");
+            profiler.push("transaction");
             try (Transaction transaction = Transaction.openOuter()){
                 if (this.energyStorage().extract(100, transaction) == 100) {
                     transaction.commit();
@@ -88,10 +89,10 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
                     return MachineStatuses.NOT_ENOUGH_ENERGY;
                 }
             } finally {
-                world.getProfiler().pop();
+                profiler.pop();
             }
         } else {
-            if (!this.energyStorage().isEmpty() && this.level.getBlockState(pos.above()).isAir()) {
+            if (!this.energyStorage().isEmpty() && world.getBlockState(pos.above()).isAir()) {
                 ticks = 20*20;
                 return TestMod.WORKING;
             } else {

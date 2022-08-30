@@ -55,6 +55,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -64,7 +65,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
-import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -263,10 +263,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState)},
+     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)},
      * but may be modified manually by calling {@link #setStatus(ServerLevel, MachineStatus)}.
      *
-     * @see #tick(ServerLevel, BlockPos, BlockState) to calculate the status of this machine.
+     * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller) to calculate the status of this machine.
      * @see #setStatus(ServerLevel, MachineStatus) to manually change the status of this machine.
      * @return the status of this machine.
      */
@@ -275,7 +275,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState)} to
+     * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)} to
      * calculate the status of this machine, rather than setting it manually.
      *
      * @param world the world this machine is in.
@@ -381,55 +381,58 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Updates the machine every tick.
-     * Override {@link #tick(ServerLevel, BlockPos, BlockState)} for the machine's logic (only called server-side).
+     * Override {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)} for the machine's logic (only called server-side).
      *
-     * @param world the world.
-     * @param pos the position of this machine.
-     * @param state the block state of this machine.
-     * @see #tick(ServerLevel, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
-     * @see #tickConstant(ServerLevel, BlockPos, BlockState) for the server-side logic that is always called.
+     * @param world    the world.
+     * @param pos      the position of this machine.
+     * @param state    the block state of this machine.
+     * @param profiler the world profiler.
+     * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller) for server-side logic that can be disabled (not called) arbitrarily.
+     * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller) for the server-side logic that is always called.
      * @see #tickClient(Level, BlockPos, BlockState) for the client-side logic.
      */
-    public final void tickBase(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    public final void tickBase(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         this.setBlockState(state);
         if (!world.isClientSide()) {
-            world.getProfiler().push("constant");
+            profiler.push("constant");
             ServerLevel serverWorld = (ServerLevel) world;
-            this.tickConstant(serverWorld, pos, state);
+            this.tickConstant(serverWorld, pos, state, profiler);
             if (this.isDisabled(world)) {
-                world.getProfiler().popPush("disabled");
-                this.tickDisabled(serverWorld, pos, state);
+                profiler.popPush("disabled");
+                this.tickDisabled(serverWorld, pos, state, profiler);
             } else {
-                world.getProfiler().popPush("active");
-                this.setStatus(serverWorld, this.tick(serverWorld, pos, state));
+                profiler.popPush("active");
+                this.setStatus(serverWorld, this.tick(serverWorld, pos, state, profiler));
             }
         } else {
-            world.getProfiler().push("client");
+            profiler.push("client");
             this.tickClient(world, pos, state);
         }
-        world.getProfiler().pop();
+        profiler.pop();
     }
 
     /**
      * Called every tick, even if the machine is not active/powered.
      * Use this to tick fuel consumption or transfer resources, for example.
      *
-     * @param world the world.
-     * @param pos the position of this machine.
-     * @param state the block state of this machine.
-     * @see #tick(ServerLevel, BlockPos, BlockState) for server-side logic that can be disabled (not called) arbitrarily.
+     * @param world    the world.
+     * @param pos      the position of this machine.
+     * @param state    the block state of this machine.
+     * @param profiler the world profiler.
+     * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller) for server-side logic that can be disabled (not called) arbitrarily.
      */
-    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {}
+    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {}
 
     /**
      * Called every tick, when the machine is explicitly disabled (by redstone, for example).
-     * Use this to clean-up resources distributed by {@link #tick(ServerLevel, BlockPos, BlockState)}.
+     * Use this to clean-up resources distributed by {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world the world.
-     * @param pos the position of this machine.
-     * @param state the block state of this machine.
+     * @param world    the world.
+     * @param pos      the position of this machine.
+     * @param state    the block state of this machine.
+     * @param profiler the world profiler.
      */
-    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state) {}
+    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {}
 
     /**
      * Called every tick on the client.
@@ -443,16 +446,17 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Called every tick on the server, when the machine is active.
      * Use this to update crafting progress, for example.
-     * Be sure to clean-up state in {@link #tickDisabled(ServerLevel, BlockPos, BlockState)}.
+     * Be sure to clean-up state in {@link #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world the world.
-     * @param pos the position of this machine.
-     * @param state the block state of this machine.
-     * @see #tickDisabled(ServerLevel, BlockPos, BlockState)
-     * @see #tickConstant(ServerLevel, BlockPos, BlockState)
+     * @param world    the world.
+     * @param pos      the position of this machine.
+     * @param state    the block state of this machine.
+     * @param profiler the world profiler.
      * @return the status of this machine.
+     * @see #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)
+     * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
     @ApiStatus.Internal
     private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
