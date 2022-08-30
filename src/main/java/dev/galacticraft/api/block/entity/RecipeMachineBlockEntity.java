@@ -205,6 +205,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
             if (this.extractCraftingMaterials(recipe, inner)) {
                 world.getProfiler().popPush("output_stacks");
                 if (this.outputStacks(recipe, inner)) {
+                    this.activeRecipe = null;
                     inner.commit();
                 }
             }
