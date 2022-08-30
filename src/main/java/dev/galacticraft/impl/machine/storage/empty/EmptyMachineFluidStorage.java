@@ -25,6 +25,7 @@ package dev.galacticraft.impl.machine.storage.empty;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
+import dev.galacticraft.api.machine.storage.StorageSlot;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
@@ -36,7 +37,6 @@ import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.Tag;
@@ -175,7 +175,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull SingleVariantStorage<FluidVariant> getSlot(int slot) {
+    public @NotNull StorageSlot<Fluid, FluidVariant> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 

@@ -295,20 +295,9 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
-        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
-        if (invSlot.getResource().equals(variant)) {
-            long extracted = Math.min(invSlot.getAmount(), amount);
-            if (extracted > 0) {
-                try (Transaction transaction = Transaction.openNested(context)) {
-                    invSlot.extract(extracted, transaction);
-                    this.modCount.increment(transaction);
-                    transaction.commit();
-                    return extracted;
-                }
-            }
-        }
-        return 0;
+        long extracted = this.getSlot(slot).extract(variant, amount, context);
+        if (extracted > 0) this.modCount.increment(context);
+        return extracted;
     }
 
     @Override

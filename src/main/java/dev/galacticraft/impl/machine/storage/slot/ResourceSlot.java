@@ -22,18 +22,18 @@
 
 package dev.galacticraft.impl.machine.storage.slot;
 
+import dev.galacticraft.api.machine.storage.StorageSlot;
 import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements SingleSlotStorage<V> {
+public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements StorageSlot<T, V> {
     private final ModCount modCount = new ModCount();
     private final long capacity;
     private V variant = this.getBlankVariant();
@@ -43,10 +43,12 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         this.capacity = capacity;
     }
 
+    @Override
     public int getModCount() {
         return this.modCount.getModCount();
     }
 
+    @Override
     public int getModCountUnsafe() {
         return this.modCount.getModCountUnsafe();
     }
@@ -61,6 +63,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         if (markDirty) this.modCount.incrementUnsafe();
     }
 
+    @Override
     public void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context) {
         StoragePreconditions.notNegative(amount);
         this.updateSnapshots(context);
@@ -86,14 +89,8 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         this.amount = amount;
     }
 
-    public void extract(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        this.amount -= amount;
-        assert this.amount >= 0;
-        if (this.amount == 0) {
-            this.variant = this.getBlankVariant();
-        }
+    public long extract(long amount, @NotNull TransactionContext context) {
+        return this.extract(this.variant, amount, context);
     }
 
     protected abstract @NotNull V getBlankVariant();
@@ -112,14 +109,14 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
     }
 
     @Override
-    public long insert(V variant, long maxAmount, @NotNull TransactionContext transaction) {
+    public long insert(V variant, long maxAmount, @NotNull TransactionContext context) {
         StoragePreconditions.notBlankNotNegative(variant, maxAmount);
 
-        if ((variant.equals(this.variant) || this.variant.isBlank())) {
+        if (this.variant.isBlank() || this.variant.equals(variant)) {
             long insertedAmount = Math.min(maxAmount, Math.min(this.capacity, getCapacity(variant)) - this.amount);
 
             if (insertedAmount > 0) {
-                updateSnapshots(transaction);
+                updateSnapshots(context);
 
                 if (this.variant.isBlank()) {
                     this.variant = variant;
@@ -127,6 +124,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
                 } else {
                     this.amount += insertedAmount;
                 }
+                this.modCount.increment(context);
             }
 
             return insertedAmount;
@@ -145,6 +143,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
             if (extractedAmount > 0) {
                 updateSnapshots(context);
                 this.amount -= extractedAmount;
+                this.modCount.increment(context);
 
                 if (this.amount == 0) {
                     this.variant = getBlankVariant();

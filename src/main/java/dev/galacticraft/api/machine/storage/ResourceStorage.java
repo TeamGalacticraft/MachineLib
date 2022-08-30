@@ -26,7 +26,6 @@ import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.io.*;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.Tag;
@@ -584,7 +583,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The index of the slot.
      * @return An internal storage representing the given slot.
      */
-    @NotNull SingleSlotStorage<V> getSlot(int slot);
+    @NotNull StorageSlot<T, V> getSlot(int slot);
 
     /**
      * Returns whether the player can access this inventory.
