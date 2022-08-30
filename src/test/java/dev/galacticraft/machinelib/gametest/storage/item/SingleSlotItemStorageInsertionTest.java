@@ -73,7 +73,7 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
                             test.flow(),
                             ResourceType.ITEM), test.maxCount(), new ItemSlotDisplay(0, 0)).build();
             if (test.amount() > 0) {
-                impl.setSlot(0, test.type().generateVariant(0), test.amount());
+                impl.setSlotUnsafe(0, test.type().generateVariant(0), test.amount());
             }
                 context.succeedWhen(() -> {
                     try {

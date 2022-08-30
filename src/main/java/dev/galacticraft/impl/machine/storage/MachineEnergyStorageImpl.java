@@ -40,7 +40,7 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     public final long capacity;
     private final long maxInput;
     private final long maxOutput;
-    private final ModCount modCount = new ModCount();
+    private final ModCount modCount = ModCount.root();
     private final ExposedEnergyStorage view = new ExposedEnergyStorage(this, false, false);
 
     public long amount = 0;
@@ -54,7 +54,7 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
-            private int modCount = -1;
+            private long modCount = -1;
 
             @Override
             public boolean needsSyncing() {

@@ -64,9 +64,7 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        if (this.storage.canExposedExtract(slot)) {
-            this.storage.replace(slot, ItemVariant.of(stack), stack.getCount(), null);
-        }
+        this.storage.setSlotUnsafe(slot, ItemVariant.of(stack), stack.getCount(), true);
     }
 
     @Override
@@ -109,6 +107,6 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
 
     @Override
     public void clearContent() {
-//        this.storage.clear();
+        this.storage.clearContent();
     }
 }

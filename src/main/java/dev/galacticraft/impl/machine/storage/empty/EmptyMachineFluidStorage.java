@@ -130,11 +130,6 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        return new FluidStack(variant.getFluid(), variant.copyNbt(), amount);
-    }
-
-    @Override
     public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
         return 0;
     }
@@ -150,17 +145,22 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public int getModCount() {
+    public long getModCount() {
         return 0;
     }
 
     @Override
-    public int getModCountUnsafe() {
+    public long getModCountUnsafe() {
         return 0;
     }
 
     @Override
-    public int getSlotModCount(int slot) {
+    public long getSlotModCount(int slot) {
+        return 0;
+    }
+
+    @Override
+    public long getSlotModCountUnsafe(int slot) {
         return 0;
     }
 
@@ -175,7 +175,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull StorageSlot<Fluid, FluidVariant> getSlot(int slot) {
+    public @NotNull StorageSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
@@ -228,7 +228,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public void setSlot(int slot, FluidVariant variant, long amount, boolean markDirty) {
+    public void setSlotUnsafe(int slot, FluidVariant variant, long amount, boolean markDirty) {
     }
 
     @Override

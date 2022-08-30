@@ -23,14 +23,15 @@
 package dev.galacticraft.impl.machine.storage.slot;
 
 import dev.galacticraft.impl.fluid.FluidStack;
+import dev.galacticraft.impl.machine.ModCount;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public final class FluidSlot extends ResourceSlot<Fluid, FluidVariant, FluidStack> {
-    public FluidSlot(long capacity) {
-        super(capacity);
+    public FluidSlot(long capacity, @NotNull ModCount modCount) {
+        super(capacity, modCount);
     }
 
     @Override

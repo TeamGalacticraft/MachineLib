@@ -61,7 +61,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * Used to determine if the machine's active recipe must be recalculated.
      */
     @ApiStatus.Internal
-    private int inventoryModCount = -1;
+    private long inventoryModCount = -1;
 
     /**
      * The machine's active recipe. If there is no active recipe, this will be {@code null}.

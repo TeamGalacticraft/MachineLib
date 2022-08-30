@@ -26,9 +26,11 @@ import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +40,15 @@ import java.util.Optional;
 public class VanillaWrappedItemSlot extends Slot {
     private final @NotNull MachineItemStorageImpl storage;
     private final @Nullable Pair<ResourceLocation, ResourceLocation> icon;
+    private final @NotNull ResourceSlot<Item, ItemVariant, ItemStack> slot;
+    private final boolean insert;
 
     public VanillaWrappedItemSlot(@NotNull MachineItemStorageImpl storage, int index, @NotNull ItemSlotDisplay display) {
         super(storage.playerInventory(), index, display.x(), display.y());
         this.storage = storage;
         this.icon = display.icon();
+        this.slot = this.storage.getSlot(index);
+        this.insert = this.storage.canExposedInsert(index);
     }
 
     @Nullable
@@ -53,42 +59,47 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return this.storage.canAccept(this.getContainerSlot(), ItemVariant.of(stack));
+        return this.insert && this.storage.canAccept(this.getContainerSlot(), ItemVariant.of(stack));
     }
 
     @Override
     public ItemStack getItem() {
-        return this.storage.getStack(this.getContainerSlot());
+        return this.slot.copyStack();
     }
 
     @Override
     public boolean hasItem() {
-        return !this.storage.getVariant(this.getContainerSlot()).isBlank();
+        return !this.slot.isResourceBlank();
     }
 
     @Override
     public void set(ItemStack stack) {
-        this.storage.replace(this.getContainerSlot(), ItemVariant.of(stack), stack.getCount(), null);
+        this.slot.setStackUnsafe(ItemVariant.of(stack), stack.getCount(), true);
     }
 
     @Override
     public void setChanged() {
-        this.storage.incrementModCountUnsafe();
+        this.slot.incrementModCountUnsafe();
     }
 
     @Override
     public int getMaxStackSize() {
-        return Math.toIntExact(this.storage.getSlot(this.getContainerSlot()).getCapacity());
+        return Math.toIntExact(this.slot.getCapacity());
     }
 
     @Override
     public int getMaxStackSize(ItemStack stack) {
-        return Math.toIntExact(this.storage.getSlot(this.getContainerSlot()).getCapacity(ItemVariant.of(stack)));
+        return Math.toIntExact(this.slot.getCapacity(ItemVariant.of(stack)));
     }
 
     @Override
     public ItemStack remove(int amount) {
-        return this.storage.extract(this.getContainerSlot(), amount, null);
+        ItemStack extract;
+        try (Transaction transaction = Transaction.openOuter()) {
+            extract = this.slot.extract(amount, transaction);
+            transaction.commit();
+        }
+        return extract;
     }
 
     @Override
@@ -108,7 +119,10 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override //return failed
     public ItemStack safeInsert(ItemStack stack, int count) {
-        long inserted = this.storage.insert(this.getContainerSlot(), ItemVariant.of(stack), count, null);
+        long inserted;
+        try (Transaction transaction = Transaction.openOuter()) {
+            inserted = this.slot.insert(ItemVariant.of(stack), count, transaction);
+        }
         stack.setCount(Math.toIntExact(count - inserted));
         return stack;
     }

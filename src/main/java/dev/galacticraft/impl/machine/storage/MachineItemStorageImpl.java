@@ -69,7 +69,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     private final boolean @NotNull [] extraction;
     private final boolean @NotNull [] insertion;
 
-    private final ModCount modCount = new ModCount();
+    private final ModCount modCount = ModCount.root();
     private final @NotNull ExposedStorage<Item, ItemVariant> view = ExposedStorage.of(this, false, false);
     private final Container playerInventory;
 
@@ -81,7 +81,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         this.insertion = new boolean[this.size];
 
         for (int i = 0; i < this.inventory.length; i++) {
-            this.inventory[i] = new ItemSlot(counts[i]);
+            this.inventory[i] = new ItemSlot(counts[i], this.modCount);
             if (types[i].getFlow() == ResourceFlow.INPUT) {
                 this.insertion[i] = true;
                 this.extraction[i] = false;
@@ -104,18 +104,23 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public int getModCount() {
+    public long getModCount() {
         return this.modCount.getModCount();
     }
 
     @Override
-    public int getModCountUnsafe() {
+    public long getModCountUnsafe() {
         return this.modCount.getModCountUnsafe();
     }
 
     @Override
-    public int getSlotModCount(int slot) {
+    public long getSlotModCount(int slot) {
         return this.getSlot(slot).getModCount();
+    }
+
+    @Override
+    public long getSlotModCountUnsafe(int slot) {
+        return this.getSlot(slot).getModCountUnsafe();
     }
 
     @Override
@@ -210,18 +215,19 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-
-        return this.extractVariant(this.getSlot(slot), amount, context);
+        try (Transaction transaction = Transaction.openNested(context)) {
+            ItemStack extract = this.getSlot(slot).extract(amount, transaction);
+            transaction.commit();
+            return extract;
+        }
     }
 
     @Override
     public @NotNull ItemStack extract(int slot, @NotNull TagKey<Item> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
-        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
-        if (invSlot.getResource().getItem().builtInRegistryHolder().is(tag)) {
-            return this.extractVariant(invSlot, amount, context);
+        if (this.getSlot(slot).getResource().getItem().builtInRegistryHolder().is(tag)) {
+            return this.extract(slot, amount, context);
         } else {
             return ItemStack.EMPTY;
         }
@@ -233,37 +239,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         return this.extract(slot, ItemVariant.of(item), amount, context);
     }
 
-    @NotNull
-    private ItemStack extractVariant(@NotNull ResourceSlot<Item, ItemVariant, ItemStack> invSlot, long amount, @Nullable TransactionContext context) {
-        long extracted = Math.min(invSlot.getAmount(), amount);
-        if (extracted > 0) {
-            try (Transaction transaction = Transaction.openNested(context)) {
-                ItemStack stack = invSlot.copyStack();
-                stack.setCount(Math.toIntExact(extracted));
-                invSlot.extract(extracted, transaction);
-                this.modCount.increment(transaction);
-                transaction.commit();
-                return stack;
-            }
-        }
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ItemStack replace(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-        if (variant.isBlank()) amount = 0;
-        else if (amount == 0) variant = ItemVariant.blank();
-        try (Transaction transaction = Transaction.openNested(context)) {
-            ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
-            ItemStack currentStack = invSlot.copyStack();
-            invSlot.setStack(variant, amount, transaction);
-            this.modCount.increment(transaction);
-            transaction.commit();
-            return currentStack;
-        }
-    }
-
     @Override
     public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notBlankNotNegative(variant, amount);
@@ -273,7 +248,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
                 invSlot.setStack(variant, amount, transaction);
-                this.modCount.increment(transaction);
                 transaction.commit();
                 return amount;
             }
@@ -282,7 +256,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
                 long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
                 if (inserted > 0) {
                     invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
-                    this.modCount.increment(transaction);
                     transaction.commit();
                     return inserted;
                 }
@@ -295,9 +268,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        long extracted = this.getSlot(slot).extract(variant, amount, context);
-        if (extracted > 0) this.modCount.increment(context);
-        return extracted;
+        try (Transaction transaction = Transaction.openNested(context)) {
+            long extract = this.getSlot(slot).extract(variant, amount, transaction);
+            transaction.commit();
+            return extract;
+        }
     }
 
     @Override
@@ -392,7 +367,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         for (ItemSlot itemSlot : this.inventory) {
             itemSlot.setStackUnsafe(ItemVariant.blank(), 0, true);
         }
-        this.modCount.incrementUnsafe();
     }
 
     @Override
@@ -401,10 +375,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public void setSlot(int slot, ItemVariant variant, long amount, boolean markDirty) {
-        assert !Transaction.isOpen();
+    public void setSlotUnsafe(int slot, ItemVariant variant, long amount, boolean markDirty) {
         this.getSlot(slot).setStackUnsafe(variant, amount, markDirty);
-        if (markDirty) this.modCount.incrementUnsafe();
     }
 
     @Override
@@ -420,7 +392,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
-            private int modCount = -1;
+            private long modCount = -1;
 
             @Override
             public boolean needsSyncing() {
@@ -432,14 +404,14 @@ public class MachineItemStorageImpl implements MachineItemStorage {
                 this.modCount = MachineItemStorageImpl.this.modCount.getModCount();
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
                     slot.getResource().toPacket(buf);
-                    buf.writeLong(slot.getAmount());
+                    buf.writeVarLong(slot.getAmount());
                 }
             }
 
             @Override
             public void read(FriendlyByteBuf buf) {
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.setStackUnsafe(ItemVariant.fromPacket(buf), buf.readLong(), false);
+                    slot.setStackUnsafe(ItemVariant.fromPacket(buf), buf.readVarLong(), false);
                 }
             }
         };

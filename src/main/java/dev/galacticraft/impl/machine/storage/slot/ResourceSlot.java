@@ -29,27 +29,29 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements StorageSlot<T, V> {
-    private final ModCount modCount = new ModCount();
+public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends SnapshotParticipant<ResourceAmount<V>>  implements StorageSlot<T, V, S> {
+    private final ModCount modCount;
     private final long capacity;
     private V variant = this.getBlankVariant();
     private long amount = 0;
 
-    public ResourceSlot(long capacity) {
+    public ResourceSlot(long capacity, @NotNull ModCount modCount) {
         this.capacity = capacity;
+        this.modCount = ModCount.parented(modCount);
     }
 
     @Override
-    public int getModCount() {
+    public long getModCount() {
         return this.modCount.getModCount();
     }
 
     @Override
-    public int getModCountUnsafe() {
+    public long getModCountUnsafe() {
         return this.modCount.getModCountUnsafe();
     }
 
@@ -89,8 +91,11 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         this.amount = amount;
     }
 
-    public long extract(long amount, @NotNull TransactionContext context) {
-        return this.extract(this.variant, amount, context);
+    public S extract(long amount, @NotNull TransactionContext context) {
+        if (this.variant.isBlank()) return this.getEmptyStack();
+        V v = this.variant;
+        long extract = this.extract(v, amount, context);
+        return this.createStack(v, extract);
     }
 
     protected abstract @NotNull V getBlankVariant();
@@ -178,6 +183,11 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
 
     public long getCapacity(V variant) {
         return Math.min(this.getVariantCapacity(variant), this.capacity);
+    }
+
+    @ApiStatus.Internal
+    public void incrementModCountUnsafe() {
+        this.modCount.incrementUnsafe();
     }
 
     @Override

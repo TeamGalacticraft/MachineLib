@@ -156,18 +156,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Simulates the replacement of the resource in the given slot with the given resource and amount.
-     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
-     * @param slot The slot to replace.
-     * @param variant The variant of the resource to replace with.
-     * @param amount The amount of resources to replace with.
-     * @return The extracted resources.
-     */
-    default @NotNull S simulateReplace(int slot, @NotNull V variant, long amount) {
-        return this.simulateReplace(slot, variant, amount, null);
-    }
-
-    /**
      * Simulates the insertion of the given amount of resources into the given slot.
      * @param slot The slot to insert into.
      * @param variant The variant of the resource to insert.
@@ -273,20 +261,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Simulates the replacement of the resource in the given slot with the given resource and amount.
-     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
-     * @param slot The slot to replace.
-     * @param variant The variant of the resource to replace with.
-     * @param amount The amount of resources to replace with.
-     * @return The extracted resources.
-     */
-    default @NotNull S simulateReplace(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            return this.replace(slot, variant, amount, transaction);
-        }
-    }
-
-    /**
      * Simulates the insertion of the given amount of resources into the given slot.
      * @param slot The slot to insert into.
      * @param variant The variant of the resource to insert.
@@ -386,18 +360,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Replaces the resource in the given slot with the given resource and amount.
-     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
-     * @param slot The slot to replace.
-     * @param variant The variant of the resource to replace with.
-     * @param amount The amount of resources to replace with.
-     * @return The extracted resources.
-     */
-    default @NotNull S replace(int slot, @NotNull V variant, long amount) {
-        return this.replace(slot, variant, amount, null);
-    }
-
-    /**
      * Inserts the given amount of resources into the given slot.
      * @param slot The slot to insert into.
      * @param variant The variant of the resource to insert.
@@ -473,17 +435,6 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     }
 
     /**
-     * Replaces the resources in the given slot with the given resources.
-     * Does not guarantee that the resources will be replaced. Be sure to check the returned stack!
-     * @param slot The slot to replace.
-     * @param variant The variant of the resource to replace with.
-     * @param amount The amount of resources to replace with.
-     * @param context The transaction context.
-     * @return The leftover resources.
-     */
-    @NotNull S replace(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context);
-
-    /**
      * Inserts the given amount of resources into the given slot.
      * @param slot The slot to insert into.
      * @param variant The variant of the resource to insert.
@@ -543,24 +494,36 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     /**
      * Returns the modification count of this inventory.
      * Do NOT call during a transaction
+     *
      * @return the modification count of this inventory.
      */
-    int getModCount();
+    long getModCount();
 
     /**
      * Returns the modification count of this inventory.
      * The modification count may go down if a transaction fails.
+     *
      * @return the modification count of this inventory.
      */
-    int getModCountUnsafe();
+    long getModCountUnsafe();
 
     /**
      * Returns the modification count of a particular slot in this inventory.
      * Do NOT call during a transaction
+     *
      * @param slot The slot to check.
      * @return the modification count of a particular slot in this inventory.
      */
-    int getSlotModCount(int slot);
+    long getSlotModCount(int slot);
+
+    /**
+     * Returns the modification count of a particular slot in this inventory.
+     * The modification count may go down if a transaction fails.
+     *
+     * @param slot The slot to check.
+     * @return the modification count of a particular slot in this inventory.
+     */
+    long getSlotModCountUnsafe(int slot);
 
     /**
      * Returns whether any more resources can be inserted into the given slot.
@@ -583,7 +546,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The index of the slot.
      * @return An internal storage representing the given slot.
      */
-    @NotNull StorageSlot<T, V> getSlot(int slot);
+    @NotNull StorageSlot<T, V, S> getSlot(int slot);
 
     /**
      * Returns whether the player can access this inventory.
@@ -660,8 +623,8 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param amount The amount of items to set.
      */
     @TestOnly
-    default void setSlot(int slot, V variant, long amount) {
-        this.setSlot(slot, variant, amount, false);
+    default void setSlotUnsafe(int slot, V variant, long amount) {
+        this.setSlotUnsafe(slot, variant, amount, false);
     }
 
     /**
@@ -672,7 +635,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param markDirty Whether to mark the inventory as changed after setting the item.
      */
     @TestOnly
-    void setSlot(int slot, V variant, long amount, boolean markDirty);
+    void setSlotUnsafe(int slot, V variant, long amount, boolean markDirty);
 
     @ApiStatus.Internal
     default Storage<V> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {

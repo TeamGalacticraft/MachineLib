@@ -67,7 +67,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final boolean @NotNull [] extraction;
     private final boolean @NotNull [] insertion;
 
-    private final @NotNull ModCount modCount = new ModCount();
+    private final @NotNull ModCount modCount = ModCount.root();
     private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.of(this, false, false);
 
     public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts, boolean[] allowsGas, TankDisplay[] displays) {
@@ -79,7 +79,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         this.insertion = new boolean[this.size];
 
         for (int i = 0; i < this.inventory.length; i++) {
-            this.inventory[i] = new FluidSlot(counts[i]);
+            this.inventory[i] = new FluidSlot(counts[i], this.modCount);
             if (types[i].getFlow() == ResourceFlow.INPUT) {
                 this.insertion[i] = true;
                 this.extraction[i] = false;
@@ -100,18 +100,23 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public int getModCount() {
+    public long getModCount() {
         return this.modCount.getModCount();
     }
 
     @Override
-    public int getModCountUnsafe() {
+    public long getModCountUnsafe() {
         return this.modCount.getModCountUnsafe();
     }
 
     @Override
-    public int getSlotModCount(int slot) {
+    public long getSlotModCount(int slot) {
         return this.getSlot(slot).getModCount();
+    }
+
+    @Override
+    public long getSlotModCountUnsafe(int slot) {
+        return this.getSlot(slot).getModCountUnsafe();
     }
 
     @Override
@@ -206,17 +211,19 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public @NotNull FluidStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-        return this.extractVariant(this.getSlot(slot), amount, context);
+        try (Transaction transaction = Transaction.openNested(context)) {
+            FluidStack extract = this.getSlot(slot).extract(amount, transaction);
+            transaction.commit();
+            return extract;
+        }
     }
 
     @Override
     public @NotNull FluidStack extract(int slot, @NotNull TagKey<Fluid> tag, long amount, @Nullable TransactionContext context) {
         StoragePreconditions.notNegative(amount);
 
-        ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
-        if (invSlot.getResource().getFluid().builtInRegistryHolder().is(tag)) {
-            return this.extractVariant(invSlot, amount, context);
+        if (this.getSlot(slot).getResource().getFluid().builtInRegistryHolder().is(tag)) {
+            return this.extract(slot, amount, context);
         } else {
             return FluidStack.EMPTY;
         }
@@ -224,39 +231,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long extract(int slot, @NotNull Fluid fluid, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
         return this.extract(slot, FluidVariant.of(fluid), amount, context);
-    }
-
-    @NotNull
-    private FluidStack extractVariant(@NotNull ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot, long amount, @Nullable TransactionContext context) {
-        long extracted = Math.min(invSlot.getAmount(), amount);
-        if (extracted > 0) {
-            try (Transaction transaction = Transaction.openNested(context)) {
-                FluidStack stack = invSlot.copyStack();
-                stack.setAmount(extracted);
-                invSlot.extract(extracted, transaction);
-                this.modCount.increment(transaction);
-                transaction.commit();
-                return stack;
-            }
-        }
-        return FluidStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull FluidStack replace(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-        if (variant.isBlank()) amount = 0;
-        else if (amount == 0) variant = FluidVariant.blank();
-        try (Transaction transaction = Transaction.openNested(context)) {
-            ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
-            FluidStack currentStack = invSlot.copyStack();
-            invSlot.setStack(variant, amount, transaction);
-            this.modCount.increment(transaction);
-            transaction.commit();
-            return currentStack;
-        }
     }
 
     @Override
@@ -268,7 +243,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
             amount = Math.min(amount, invSlot.getCapacity(variant));
             try (Transaction transaction = Transaction.openNested(context)) {
                 invSlot.setStack(variant, amount, transaction);
-                this.modCount.increment(transaction);
                 transaction.commit();
                 return amount;
             }
@@ -277,7 +251,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
                 long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
                 if (inserted > 0) {
                     invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
-                    this.modCount.increment(transaction);
                     transaction.commit();
                     return inserted;
                 }
@@ -290,9 +263,11 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public long extract(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        long extracted = this.getSlot(slot).extract(variant, amount, context);
-        if (extracted > 0) this.modCount.increment(context);
-        return extracted;
+        try (Transaction transaction = Transaction.openNested(context)) {
+            long extract = this.getSlot(slot).extract(variant, amount, transaction);
+            transaction.commit();
+            return extract;
+        }
     }
 
     @Override
@@ -371,7 +346,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         for (FluidSlot fluidSlot : this.inventory) {
             fluidSlot.setStackUnsafe(FluidVariant.blank(), 0, true);
         }
-        this.modCount.incrementUnsafe();
     }
 
     @Override
@@ -380,10 +354,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public void setSlot(int slot, FluidVariant variant, long amount, boolean markDirty) {
+    public void setSlotUnsafe(int slot, FluidVariant variant, long amount, boolean markDirty) {
         assert !Transaction.isOpen();
         this.inventory[slot].setStackUnsafe(variant, amount, markDirty);
-        if (markDirty) this.modCount.incrementUnsafe();
     }
 
     @Override
@@ -399,7 +372,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return new StorageSyncHandler() {
-            private int modCount = -1;
+            private long modCount = -1;
 
             @Override
             public boolean needsSyncing() {
@@ -411,14 +384,14 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
                 this.modCount = MachineFluidStorageImpl.this.modCount.getModCount();
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
                     slot.getResource().toPacket(buf);
-                    buf.writeLong(slot.getAmount());
+                    buf.writeVarLong(slot.getAmount());
                 }
             }
 
             @Override
             public void read(FriendlyByteBuf buf) {
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
-                    slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readLong(), false);
+                    slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readVarLong(), false);
                 }
             }
         };

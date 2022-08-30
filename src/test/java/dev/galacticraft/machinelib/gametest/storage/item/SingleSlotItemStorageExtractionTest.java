@@ -62,56 +62,56 @@ public final class SingleSlotItemStorageExtractionTest implements MachineLibGame
     }
 
     private void extract$single() {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 1);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT), 1);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(1, this.storage.extract(variant(GOLD_INGOT), 1, transaction));
         }
     }
 
     private void extract$multiple() {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 32);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT), 32);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(16, this.storage.extract(variant(GOLD_INGOT), 16, transaction));
         }
     }
 
     private void extract$multiple_exact() {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 16);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT), 16);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(16, this.storage.extract(variant(GOLD_INGOT), 16, transaction));
         }
     }
 
     private void extract$type_fail() {
-        this.storage.setSlot(0, variant(IRON_INGOT), 32);
+        this.storage.setSlotUnsafe(0, variant(IRON_INGOT), 32);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(0, this.storage.extract(variant(GOLD_INGOT), 16, transaction));
         }
     }
 
     private void extract$type_fail_nbt() {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 32);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT), 32);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(0, this.storage.extract(variant(GOLD_INGOT, Util.generateNbt()), 16, transaction));
         }
     }
 
     private void extract$nbt_type_fail() {
-        this.storage.setSlot(0, variant(GOLD_INGOT, Util.generateNbt()), 32);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT, Util.generateNbt()), 32);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(0, this.storage.extract(variant(GOLD_INGOT), 16, transaction));
         }
     }
 
     private void extract$different_nbt_type_fail() {
-        this.storage.setSlot(0, variant(GOLD_INGOT, Util.generateNbt()), 32);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT, Util.generateNbt()), 32);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(0, this.storage.extract(variant(GOLD_INGOT, Util.generateNbt()), 16, transaction));
         }
     }
 
     private void extract$overflow() {
-        this.storage.setSlot(0, variant(GOLD_INGOT), 5);
+        this.storage.setSlotUnsafe(0, variant(GOLD_INGOT), 5);
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(5, this.storage.extract(variant(GOLD_INGOT), 10, transaction));
         }

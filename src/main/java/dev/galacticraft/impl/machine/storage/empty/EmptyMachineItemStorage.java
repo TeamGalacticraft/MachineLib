@@ -125,11 +125,6 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull ItemStack replace(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        return variant.toStack(Math.toIntExact(amount));
-    }
-
-    @Override
     public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
         return 0;
     }
@@ -145,17 +140,22 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public int getModCount() {
+    public long getModCount() {
         return 0;
     }
 
     @Override
-    public int getModCountUnsafe() {
+    public long getModCountUnsafe() {
         return 0;
     }
 
     @Override
-    public int getSlotModCount(int slot) {
+    public long getSlotModCount(int slot) {
+        return 0;
+    }
+
+    @Override
+    public long getSlotModCountUnsafe(int slot) {
         return 0;
     }
 
@@ -170,7 +170,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull StorageSlot<Item, ItemVariant> getSlot(int slot) {
+    public @NotNull StorageSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
         throw new IndexOutOfBoundsException("No slots!");
     }
 
@@ -223,7 +223,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public void setSlot(int slot, ItemVariant variant, long amount, boolean markDirty) {
+    public void setSlotUnsafe(int slot, ItemVariant variant, long amount, boolean markDirty) {
     }
 
     @Override

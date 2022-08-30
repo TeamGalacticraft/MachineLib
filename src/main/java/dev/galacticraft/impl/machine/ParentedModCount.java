@@ -20,39 +20,55 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.machine.storage.slot;
+package dev.galacticraft.impl.machine;
 
-import dev.galacticraft.impl.machine.ModCount;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Contract;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
 
-public final class ItemSlot extends ResourceSlot<Item, ItemVariant, ItemStack> {
-    public ItemSlot(long capacity, @NotNull ModCount modCount) {
-        super(capacity, modCount);
+public class ParentedModCount extends SnapshotParticipant<Long> implements ModCount {
+    private final ModCount parent;
+    private long count = 0;
+
+    protected ParentedModCount(ModCount parent) {
+        this.parent = parent;
     }
 
     @Override
-    protected @NotNull ItemVariant getBlankVariant() {
-        return ItemVariant.blank();
+    public long getModCount() {
+        if (Transaction.isOpen()) {
+            throw new IllegalStateException("getModCount() may not be called during a transaction.");
+        }
+        return this.count;
     }
 
     @Override
-    protected long getVariantCapacity(@NotNull ItemVariant variant) {
-        return variant.getItem().getMaxStackSize();
+    public void increment(@NotNull TransactionContext context) {
+        this.parent.increment(context);
+        updateSnapshots(context);
+        this.count += 1;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull ItemStack getEmptyStack() {
-        return ItemStack.EMPTY;
+    public long getModCountUnsafe() {
+        return this.count;
     }
 
-    @Contract(pure = true)
     @Override
-    protected @NotNull ItemStack createStack(@NotNull ItemVariant variant, long amount) {
-        return variant.toStack(Math.toIntExact(amount));
+    public void incrementUnsafe() {
+        assert !Transaction.isOpen();
+        this.parent.incrementUnsafe();
+        this.count += 1;
+    }
+
+    @Override
+    protected Long createSnapshot() {
+        return this.count;
+    }
+
+    @Override
+    protected void readSnapshot(Long snapshot) {
+        this.count = snapshot;
     }
 }

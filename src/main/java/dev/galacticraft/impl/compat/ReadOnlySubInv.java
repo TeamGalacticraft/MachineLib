@@ -139,7 +139,7 @@ public class ReadOnlySubInv implements Container {
     @Override
     public void clearContent() {
         for (int i = 0; i < this.size; i++) {
-            this.storage.replace(this.start + i, ItemVariant.blank(), 0);
+            this.storage.setSlotUnsafe(this.start + i, ItemVariant.blank(), 0, true);
         }
     }
 }

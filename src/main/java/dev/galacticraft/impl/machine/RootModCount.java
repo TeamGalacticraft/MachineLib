@@ -20,23 +20,50 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.machine.storage;
+package dev.galacticraft.impl.machine;
 
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
-public interface StorageSlot<T, V extends TransferVariant<T>, S> extends SingleSlotStorage<V> {
-    long getModCount();
+public class RootModCount extends SnapshotParticipant<Long> implements ModCount {
+    private long count = 0;
 
-    long getModCountUnsafe();
+    protected RootModCount() {}
 
-    @NotNull S copyStack();
+    @Override
+    public long getModCount() {
+        if (Transaction.isOpen()) {
+            throw new IllegalStateException("getModCount() may not be called during a transaction.");
+        }
+        return this.count;
+    }
 
-    @TestOnly
-    void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty);
+    @Override
+    public void increment(@NotNull TransactionContext context) {
+        updateSnapshots(context);
+        this.count += 1;
+    }
 
-    void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context);
+    @Override
+    public long getModCountUnsafe() {
+        return this.count;
+    }
+
+    @Override
+    public void incrementUnsafe() {
+        assert !Transaction.isOpen();
+        this.count += 1;
+    }
+
+    @Override
+    protected Long createSnapshot() {
+        return this.count;
+    }
+
+    @Override
+    protected void readSnapshot(Long snapshot) {
+        this.count = snapshot;
+    }
 }
