@@ -30,7 +30,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.function.Predicate;
@@ -99,11 +98,6 @@ public class ExposedInventory<T, V extends TransferVariant<T>> implements Expose
     @Override
     public Iterator<StorageView<V>> iterator() {
         return new LimitedIterator(this.storage.iterator());
-    }
-
-    @Override
-    public @Nullable StorageView<V> exactView(TransactionContext transaction, V resource) {
-        return ExposedStorage.super.exactView(transaction, resource);
     }
 
     @Override

@@ -30,7 +30,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -109,11 +108,6 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     @Override
     public Iterator<StorageView<V>> iterator() {
         return new ExtractionLimitingIterator(this.storage.iterator());
-    }
-
-    @Override
-    public @Nullable StorageView<V> exactView(TransactionContext transaction, V resource) {
-        return null; //todo
     }
 
     @Override

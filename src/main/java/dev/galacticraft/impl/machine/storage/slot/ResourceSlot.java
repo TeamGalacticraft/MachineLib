@@ -191,6 +191,21 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
     }
 
     @Override
+    public long getVersion() {
+        return this.getModCount();
+    }
+
+    @Override
+    public boolean supportsInsertion() {
+        return true; // I/O handling covered by exposed storages
+    }
+
+    @Override
+    public boolean supportsExtraction() {
+        return true; // I/O handling covered by exposed storages
+    }
+
+    @Override
     protected ResourceAmount<V> createSnapshot() {
         return new ResourceAmount<>(this.variant, this.amount);
     }
