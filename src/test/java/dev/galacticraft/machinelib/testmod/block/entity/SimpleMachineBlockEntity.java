@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.testmod.block.entity;
 
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.MachineStatuses;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
@@ -73,7 +72,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     }
 
     @Override
-    protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected void tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         if (ticks > 0 && world.getBlockState(pos.above()).isAir()) {
             ticks--;
             profiler.push("transaction");
@@ -83,20 +82,19 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
                     if (ticks == 0) {
                         world.setBlockAndUpdate(pos.above(), Blocks.DRIED_KELP_BLOCK.defaultBlockState());
                     }
-                    return TestMod.WORKING;
+                    this.setStatus(TestMod.WORKING);
                 } else {
                     ticks = -1;
-                    return MachineStatuses.NOT_ENOUGH_ENERGY;
+                    this.setStatus(MachineStatuses.NOT_ENOUGH_ENERGY);
                 }
-            } finally {
-                profiler.pop();
             }
+            profiler.pop();
         } else {
             if (!this.energyStorage().isEmpty() && world.getBlockState(pos.above()).isAir()) {
                 ticks = 20*20;
-                return TestMod.WORKING;
+                this.setStatus(TestMod.WORKING);
             } else {
-                return MachineStatuses.NOT_ENOUGH_ENERGY;
+                this.setStatus(MachineStatuses.NOT_ENOUGH_ENERGY);
             }
         }
     }

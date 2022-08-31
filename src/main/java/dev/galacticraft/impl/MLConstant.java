@@ -27,7 +27,6 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -77,10 +76,6 @@ public interface MLConstant {
         String ENERGY_STORAGE = "EnergyStorage";
         String ITEM_STORAGE = "ItemStorage";
         String FLUID_STORAGE = "FluidStorage";
-    }
-
-    interface Property {
-        BooleanProperty ACTIVE = BooleanProperty.create("active");
     }
 
     interface ScreenTexture {
