@@ -35,6 +35,8 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public class VanillaWrappedItemSlot extends Slot {
     private final @NotNull MachineItemStorageImpl storage;
     private final @Nullable Pair<ResourceLocation, ResourceLocation> icon;
@@ -116,16 +118,22 @@ public class VanillaWrappedItemSlot extends Slot {
     }
 
     @Override //return failed
-    public ItemStack safeInsert(ItemStack stack, int count) {
+    public ItemStack safeInsert(@NotNull ItemStack stack, int count) {
+        assert stack.getCount() >= count;
         if (this.mayPlace(stack)) {
             long inserted;
             try (Transaction transaction = Transaction.openOuter()) {
                 inserted = this.slot.insert(ItemVariant.of(stack), count, transaction);
                 transaction.commit();
             }
-            stack.setCount(Math.toIntExact(count - inserted));
+            stack.setCount(Math.toIntExact(stack.getCount() - inserted));
             return stack;
         }
         return stack;
+    }
+
+    @Override
+    public Optional<ItemStack> tryRemove(int i, int j, Player player) {
+        return super.tryRemove(i, j, player);
     }
 }
