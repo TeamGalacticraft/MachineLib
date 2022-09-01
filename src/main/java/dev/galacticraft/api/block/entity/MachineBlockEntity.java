@@ -285,6 +285,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param status the status to set.
      */
     public void setStatus(@NotNull MachineStatus status) {
+        if (this.isStatusActive() != status.type().isActive()) {
+            if (this.level != null) {
+                this.level.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(MachineBlock.ACTIVE, status.type().isActive()));
+            }
+        }
         this.configuration.setStatus(status);
     }
 
