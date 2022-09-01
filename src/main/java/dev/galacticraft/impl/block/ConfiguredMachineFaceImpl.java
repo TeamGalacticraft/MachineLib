@@ -101,12 +101,12 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
+    public <T, V extends TransferVariant<T>> @Nullable ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
         if (this.getType().willAcceptResource(storage.getResource())) {
             if (this.storage == null) this.storage = storage.getExposedStorage(this.matching, this.flow);
             return (ExposedStorage<T, V>) this.storage;
         }
-        return storage.view();
+        return null;
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
             if (this.storage == null) this.storage = storage.getExposedStorage(this.flow);
             return (EnergyStorage) this.storage;
         }
-        return storage.view();
+        return null;
     }
 
     @Override

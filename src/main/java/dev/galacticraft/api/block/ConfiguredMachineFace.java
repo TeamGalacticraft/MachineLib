@@ -103,7 +103,7 @@ public interface ConfiguredMachineFace {
      * @param <V> The type of resource.
      * @return The exposed storage of this face.
      */
-    <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage);
+    <T, V extends TransferVariant<T>> @Nullable ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage);
 
     /**
      * Returns the exposed energy storage of this face.
@@ -111,7 +111,7 @@ public interface ConfiguredMachineFace {
      * @param storage The storage to use.
      * @return The exposed energy storage of this face.
      */
-    EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage);
+    @Nullable EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage);
 
     /**
      * Returns the matching slots of this face in the provided storage.

@@ -457,35 +457,35 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
     @ApiStatus.Internal
-    private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
         assert this.level != null;
         return this.getExposedEnergyStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
-    private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull BlockFace face) {
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.energyStorage);
     }
 
     @ApiStatus.Internal
-    private @NotNull ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
         assert this.level != null;
         return this.getExposedItemStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
-    private @NotNull ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.itemStorage);
     }
 
     @ApiStatus.Internal
-    private @NotNull ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
         assert this.level != null;
         return this.getExposedFluidInv(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
     }
 
     @ApiStatus.Internal
-    private @NotNull ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull BlockFace face) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.fluidStorage);
     }
 
