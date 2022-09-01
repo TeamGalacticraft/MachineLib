@@ -40,6 +40,6 @@ public class StatusProperty extends DataSlot {
 
     @Override
     public void set(int value) {
-        this.machine.setStatus(null, MachineStatus.REGISTRY.byIdOrThrow(value));
+        this.machine.setStatus(MachineStatus.REGISTRY.byIdOrThrow(value));
     }
 }

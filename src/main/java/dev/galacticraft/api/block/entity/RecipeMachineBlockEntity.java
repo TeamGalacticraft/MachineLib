@@ -68,6 +68,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * The machine's active recipe. If there is no active recipe, this will be {@code null}.
      */
     private @Nullable R activeRecipe = null;
+
+    @ApiStatus.Internal
     private @Nullable R cachedRecipe = null;
 
     /**
@@ -133,8 +135,12 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     @Override
     public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        profiler.push("recipe_test");
         MachineStatus recipeFailure = testInventoryRecipe(world, profiler);
-        if (recipeFailure != null) return recipeFailure;
+        profiler.pop();
+        if (recipeFailure != null) {
+            return recipeFailure;
+        }
 
         if (this.getActiveRecipe() != null) {
             profiler.push("working_transaction");
@@ -164,7 +170,6 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected MachineStatus testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
         if (this.inventoryModCount != this.itemStorage().getModCount()) { // includes output slots
             this.inventoryModCount = this.itemStorage().getModCount();
-            profiler.push("recipe_test");
             profiler.push("find_recipe");
             Optional<R> optional = this.findValidRecipe(world);
             profiler.pop();
@@ -175,16 +180,13 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                         this.updateRecipe(recipe);
                     } else {
                         this.resetRecipe();
-                        profiler.pop();
                         return MachineStatuses.OUTPUT_FULL;
                     }
                 }
             } else {
                 this.resetRecipe();
-                profiler.pop();
                 return MachineStatuses.INVALID_RECIPE;
             }
-            profiler.pop();
         }
         return null;
     }
@@ -316,7 +318,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     }
 
     @Override
-    public void saveAdditional(@NotNull CompoundTag nbt) {
+    protected void saveAdditional(@NotNull CompoundTag nbt) {
         super.saveAdditional(nbt);
         nbt.putInt(MLConstant.Nbt.PROGRESS, this.getProgress());
         nbt.putInt(MLConstant.Nbt.MAX_PROGRESS, this.getMaxProgress());
