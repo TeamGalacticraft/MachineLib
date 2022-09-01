@@ -28,7 +28,6 @@ import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.impl.machine.storage.MachineEnergyStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Contract;
@@ -47,46 +46,6 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
         StoragePreconditions.notNegative(energyCapacity);
         if (energyCapacity == 0) return EmptyMachineEnergyStorage.INSTANCE;
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
-    }
-
-    default long extract(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            long extract = this.extract(amount, transaction);
-            transaction.commit();
-            return extract;
-        }
-    }
-
-    default long insert(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            long extract = this.insert(amount, transaction);
-            transaction.commit();
-            return extract;
-        }
-    }
-
-    default boolean extractExact(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            boolean success = this.extractExact(amount, transaction);
-            transaction.commit();
-            return success;
-        }
-    }
-
-    default boolean insertExact(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            boolean success = this.insertExact(amount, transaction);
-            transaction.commit();
-            return success;
-        }
-    }
-
-    default boolean extractExact(long amount, @NotNull TransactionContext context) {
-        return this.extract(amount, context) == amount;
-    }
-
-    default boolean insertExact(long amount, @NotNull TransactionContext context) {
-        return this.insert(amount, context) == amount;
     }
 
     /**

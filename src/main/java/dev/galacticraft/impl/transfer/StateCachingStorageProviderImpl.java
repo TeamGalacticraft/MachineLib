@@ -47,17 +47,15 @@ public class StateCachingStorageProviderImpl<T> implements StateCachingStoragePr
     @Nullable
     @Override
     public T getStorage() {
-        if (!Transaction.isOpen()) {
-            long version = this.slot.getVersion();
-            if (this.modCount != version) {
-                this.modCount = version;
-                T storage = this.context.find(this.lookup);
-                this.hasStorage = storage != null;
-                return storage;
-            }
-            return this.hasStorage ? this.context.find(this.lookup) : null;
-        } else {
-            return this.context.find(this.lookup);
+        assert !Transaction.isOpen();
+        long version = this.slot.getVersion();
+        if (this.modCount != version) {
+            this.modCount = version;
+            T storage = this.context.find(this.lookup);
+            this.hasStorage = storage != null;
+            return storage;
         }
+
+        return this.hasStorage ? this.context.find(this.lookup) : null;
     }
 }

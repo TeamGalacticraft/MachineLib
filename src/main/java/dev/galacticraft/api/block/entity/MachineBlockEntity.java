@@ -135,7 +135,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Passed to the screen handler factory as the name of the machine.
      */
     @ApiStatus.Internal
-    private final @NotNull Component name;
+    private final Component name;
 
     /**
      * Creates a new machine block entity.
@@ -145,12 +145,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param state The block state of this machine.
      */
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state) {
-        this(type, pos, state, state.getBlock().getName().setStyle(MLConstant.Text.DARK_GRAY_STYLE));
-    }
-
-    protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
         super(type, pos, state);
-        this.name = name;
+        this.name = state.getBlock().getName().setStyle(MLConstant.Text.DARK_GRAY_STYLE);
     }
 
     /**
@@ -186,7 +182,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyItemInsertionRate() {
-        return (long)(this.getEnergyCapacity() / 160.0);
+        return this.getEnergyCapacity() / 80;
     }
 
     /**
@@ -197,7 +193,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyItemExtractionRate() {
-        return (long)(this.getEnergyCapacity() / 160.0);
+        return this.getEnergyCapacity() / 80;
     }
 
     /**
@@ -208,7 +204,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyInsertionRate() {
-        return (long)(this.getEnergyCapacity() / 120.0);
+        return this.getEnergyCapacity() / 60;
     }
 
     /**
@@ -219,7 +215,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyExtractionRate() {
-        return (long)(this.getEnergyCapacity() / 120.0);
+        return this.getEnergyCapacity() / 60;
     }
 
     /**
@@ -268,10 +264,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)},
-     * but may be modified manually by calling {@link #setStatus(MachineStatus)}.
+     * but may be modified manually by calling {@link #setStatus(ServerLevel, MachineStatus)}.
      *
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller) to calculate the status of this machine.
-     * @see #setStatus(MachineStatus) to manually change the status of this machine.
+     * @see #setStatus(ServerLevel, MachineStatus) to manually change the status of this machine.
      * @return the status of this machine.
      */
     public @NotNull MachineStatus getStatus() {
@@ -282,9 +278,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)} to
      * calculate the status of this machine, rather than setting it manually.
      *
+     * @param world the world this machine is in.
      * @param status the status to set.
      */
-    public void setStatus(@NotNull MachineStatus status) {
+    public void setStatus(@Nullable ServerLevel world, @NotNull MachineStatus status) {
+        if (this.isStatusActive() != status.type().isActive()) {
+            if (world != null) {
+                world.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(MachineBlock.ACTIVE, status.type().isActive()));
+            }
+        }
         this.configuration.setStatus(status);
     }
 
@@ -400,10 +402,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
                 this.tickDisabled(serverWorld, pos, state, profiler);
             } else {
                 profiler.popPush("active");
-                MachineStatus status = this.tick(serverWorld, pos, state, profiler);
-                if (status != null) {
-                    this.setStatus(status);
-                }
+                this.setStatus(serverWorld, this.tick(serverWorld, pos, state, profiler));
             }
         } else {
             profiler.push("client");
@@ -457,7 +456,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected abstract @Nullable MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
     @ApiStatus.Internal
     private @NotNull EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
@@ -497,7 +496,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param nbt the nbt to serialize to.
      */
     @Override
-    protected void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(CompoundTag nbt) {
         super.saveAdditional(nbt);
         nbt.put(MLConstant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
         nbt.put(MLConstant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());

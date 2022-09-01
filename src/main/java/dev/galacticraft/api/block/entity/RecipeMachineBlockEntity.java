@@ -38,7 +38,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * The progress of the machine's current recipe.
-     * Counts upwards until it reaches {@link #maxProgress maximum progress}.
+     * Counts upwards until it reaches {@link #maxProgress maximum rogress}.
      */
     private int progress = 0;
 
@@ -98,7 +97,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Inserts the recipe's output into the machine's inventory.
      *
-     * @param recipe  The recipe to output.
+     * @param recipe The recipe to output.
      * @param context The current transaction.
      * @return Whether the recipe was successfully output.
      */
@@ -107,7 +106,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Extracts the recipe's input from the machine's inventory.
      *
-     * @param recipe  The recipe to extract.
+     * @param recipe The recipe to extract.
      * @param context The current transaction.
      * @return Whether the recipe was successfully extracted.
      */
@@ -119,7 +118,6 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      *
      * @return The machine status to use when the machine is working.
      */
-    @Contract(pure = true)
     protected abstract @NotNull MachineStatus workingStatus();
 
     /**
@@ -127,45 +125,46 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * This can be energy, fuel, or any other resource (or nothing!).
      *
      * @param context The current transaction.
-     * @return {@code true} if the machine can run, or return false and set the machine status if it cannot.
+     * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
      */
-    protected abstract boolean extractResourcesToWork(@NotNull TransactionContext context);
+    protected @Nullable MachineStatus extractResourcesToWork(@NotNull TransactionContext context) {
+        return null;
+    }
 
     @Override
-    protected @Nullable MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
-        profiler.push("recipe_test");
-        if (!this.testInventoryRecipe(world, profiler)) {
-            this.resetRecipe();
-            profiler.pop();
-            return null;
-        }
-        profiler.pop();
-        assert this.getActiveRecipe() != null;
+    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        MachineStatus recipeFailure = testInventoryRecipe(world, profiler);
+        if (recipeFailure != null) return recipeFailure;
 
-        profiler.push("working_transaction");
-        try (Transaction transaction = Transaction.openOuter()) {
-            profiler.push("extract_resources");
-            if (this.extractResourcesToWork(transaction)) {
-                if (++this.progress >= this.getMaxProgress()) {
-                    profiler.push("crafting");
-                    this.craft(profiler, this.getActiveRecipe(), transaction);
-                    profiler.pop();
+        if (this.getActiveRecipe() != null) {
+            profiler.push("working_transaction");
+            try (Transaction transaction = Transaction.openOuter()) {
+                MachineStatus status = this.extractResourcesToWork(transaction);
+                if (status == null) {
+                    if (++this.progress >= this.getMaxProgress()) {
+                        profiler.push("crafting");
+                        this.craft(profiler, this.getActiveRecipe(), transaction);
+                        profiler.pop();
+                    }
+                    transaction.commit();
+                    return this.workingStatus();
+                } else {
+                    return status;
                 }
-                transaction.commit();
+            } finally {
                 profiler.pop();
-                return this.workingStatus();
-            } else {
-                profiler.pop();
-                return null;
             }
-        } finally {
-            profiler.pop();
+        } else {
+            if (this.getStatus() == MachineStatuses.OUTPUT_FULL) return MachineStatuses.OUTPUT_FULL; //preserve full state
+            return MachineStatuses.INVALID_RECIPE;
         }
     }
 
-    protected boolean testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
+    @Nullable
+    protected MachineStatus testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
         if (this.inventoryModCount != this.itemStorage().getModCount()) { // includes output slots
             this.inventoryModCount = this.itemStorage().getModCount();
+            profiler.push("recipe_test");
             profiler.push("find_recipe");
             Optional<R> optional = this.findValidRecipe(world);
             profiler.pop();
@@ -174,18 +173,20 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                 try (Transaction transaction = Transaction.openOuter()) {
                     if (this.outputStacks(recipe, transaction)) {
                         this.updateRecipe(recipe);
-                        return true;
                     } else {
-                        this.setStatus(MachineStatuses.OUTPUT_FULL);
-                        return false;
+                        this.resetRecipe();
+                        profiler.pop();
+                        return MachineStatuses.OUTPUT_FULL;
                     }
                 }
             } else {
-                this.setStatus(MachineStatuses.INVALID_RECIPE);
-                return false;
+                this.resetRecipe();
+                profiler.pop();
+                return MachineStatuses.INVALID_RECIPE;
             }
+            profiler.pop();
         }
-        return this.getActiveRecipe() != null;
+        return null;
     }
 
     /**
@@ -315,7 +316,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     }
 
     @Override
-    protected void saveAdditional(@NotNull CompoundTag nbt) {
+    public void saveAdditional(@NotNull CompoundTag nbt) {
         super.saveAdditional(nbt);
         nbt.putInt(MLConstant.Nbt.PROGRESS, this.getProgress());
         nbt.putInt(MLConstant.Nbt.MAX_PROGRESS, this.getMaxProgress());

@@ -54,12 +54,15 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -79,6 +82,12 @@ import java.util.List;
  */
 public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEntityBlock {
     /**
+     * This property represents whether the machine is active.
+     * It is used for world rendering purposes.
+     */
+    public static final BooleanProperty ACTIVE = MLConstant.Property.ACTIVE;
+
+    /**
      * Creates a new machine block.
      * @param settings The settings for the block.
      */
@@ -87,11 +96,17 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     }
 
     @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(BlockStateProperties.HORIZONTAL_FACING, ACTIVE);
+    }
+
+    @Override
     public abstract T newBlockEntity(BlockPos pos, BlockState state);
 
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
+        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite()).setValue(ACTIVE, false);
     }
 
     @Override
