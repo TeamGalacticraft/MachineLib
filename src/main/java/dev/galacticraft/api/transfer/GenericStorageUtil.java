@@ -31,8 +31,6 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-
 public interface GenericStorageUtil {
     static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null) return 0;
@@ -56,22 +54,18 @@ public interface GenericStorageUtil {
     }
 
     static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
-        if (from == null || to == null) return;
+        if (from == null || to == null || !from.supportsExtraction() || !to.supportsInsertion()) return;
         StoragePreconditions.notNegative(maxPerTransaction);
         LongList list = new LongArrayList();
         try (Transaction indexingTransaction = Transaction.openNested(context)) {
-            Iterator<? extends StorageView<T>> it = from.iterator();
-            while (it.hasNext()) {
-                StorageView<T> storageView = it.next();
+            for (StorageView<T> storageView : from) {
                 list.add(to.insert(storageView.getResource(), storageView.extract(storageView.getResource(), maxPerTransaction, indexingTransaction), indexingTransaction));
             }
         }
 
         int i = 0;
         try (Transaction extractingTransaction = Transaction.openNested(context)) {
-            Iterator<? extends StorageView<T>> it = from.iterator();
-            while (it.hasNext()) {
-                StorageView<T> storageView = it.next();
+            for (StorageView<T> storageView : from) {
                 list.add(to.insert(storageView.getResource(), storageView.extract(storageView.getResource(), list.getLong(i++), extractingTransaction), extractingTransaction));
             }
             extractingTransaction.commit();

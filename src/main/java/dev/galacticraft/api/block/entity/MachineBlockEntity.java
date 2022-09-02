@@ -22,16 +22,15 @@
 
 package dev.galacticraft.api.block.entity;
 
-import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.MachineBlock;
 import dev.galacticraft.api.block.util.BlockFace;
 import dev.galacticraft.api.machine.*;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
+import dev.galacticraft.api.machine.storage.cache.AdjacentBlockApiCache;
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.api.transfer.StateCachingStorageProvider;
@@ -123,6 +122,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();
 
+    private @Nullable AdjacentBlockApiCache<EnergyStorage> energyCache = null;
+    private @Nullable AdjacentBlockApiCache<Storage<FluidVariant>> fluidCache = null;
+    private @Nullable AdjacentBlockApiCache<Storage<ItemVariant>> itemCache = null;
+
     /**
      * Whether the machine will not drop items when broken.
      * Used for machines that are placed in structures to prevent players from obtaining too many free resources.
@@ -163,7 +166,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     public static void registerComponents(@NotNull BlockEntityType<? extends MachineBlockEntity> type) {
         EnergyStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedEnergyStorage, type);
         ItemStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedItemStorage, type);
-        FluidStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedFluidInv, type);
+        FluidStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedFluidStorage, type);
     }
 
     /**
@@ -461,10 +464,17 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
+
     @ApiStatus.Internal
     private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
         assert this.level != null;
-        return this.getExposedEnergyStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
+        return this.getExposedEnergyStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
+    }
+
+    @ApiStatus.Internal
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction facing, @NotNull Direction direction) {
+        assert this.level != null;
+        return this.getExposedEnergyStorage(BlockFace.toFace(facing, direction));
     }
 
     @ApiStatus.Internal
@@ -475,7 +485,13 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
         assert this.level != null;
-        return this.getExposedItemStorage(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
+        return this.getExposedItemStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
+    }
+
+    @ApiStatus.Internal
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction facing, @NotNull Direction direction) {
+        assert this.level != null;
+        return this.getExposedItemStorage(BlockFace.toFace(facing, direction));
     }
 
     @ApiStatus.Internal
@@ -484,13 +500,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction direction) {
         assert this.level != null;
-        return this.getExposedFluidInv(BlockFace.toFace(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
+        return this.getExposedFluidStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidInv(@NotNull BlockFace face) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @NotNull Direction direction) {
+        assert this.level != null;
+        return this.getExposedFluidStorage(BlockFace.toFace(facing, direction));
+    }
+
+    @ApiStatus.Internal
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockFace face) {
         return this.getIOConfig().get(face).getExposedStorage(this.fluidStorage);
     }
 
@@ -536,50 +558,51 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Pushes energy from this machine to adjacent capacitor blocks.
-     * @param world the world.
+     * @param level the level.
      */
-    protected void trySpreadEnergy(@NotNull Level world) {
+    protected void trySpreadEnergy(@NotNull ServerLevel level) {
+        if (this.energyCache == null) {
+            this.energyCache = AdjacentBlockApiCache.create(EnergyStorage.SIDED, level, this.worldPosition);
+        }
+        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : DIRECTIONS) {
-            ConfiguredMachineFace face = this.getIOConfig().get(BlockFace.toFace(world.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction.getOpposite()));
-            if (face.getType() == ResourceType.ENERGY && face.getFlow().canFlowIn(ResourceFlow.OUTPUT)) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(this.energyStorage, EnergyStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite()), this.getEnergyExtractionRate(), transaction);
-                    transaction.commit();
-                }
+            EnergyStorage storage = this.getExposedEnergyStorage(facing, direction);
+            if (storage != null && storage.supportsExtraction()) {
+                EnergyStorageUtil.move(storage, this.energyCache.find(direction), Long.MAX_VALUE, null);
             }
         }
     }
 
     /**
      * Pushes fluids from this machine to adjacent fluid storages.
-     * @param world the world.
+     * @param level the level.
      */
-    protected void trySpreadFluids(@NotNull Level world) {
+    protected void trySpreadFluids(@NotNull ServerLevel level) {
+        if (this.fluidCache == null) {
+            this.fluidCache = AdjacentBlockApiCache.create(FluidStorage.SIDED, level, this.worldPosition);
+        }
+        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : DIRECTIONS) {
-            Storage<FluidVariant> storage = this.getExposedFluidInv(direction);
-            if (storage.supportsExtraction()) {
-                Storage<FluidVariant> to = FluidStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite());
-                try (Transaction transaction = Transaction.openOuter()) {
-                    GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
-                    transaction.commit();
-                }
+            ExposedStorage<Fluid, FluidVariant> storage = this.getExposedFluidStorage(facing, direction);
+            if (storage != null && storage.supportsExtraction()) {
+                GenericStorageUtil.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
             }
         }
     }
 
     /**
      * Pushes items from this machine to adjacent item storages.
-     * @param world the world.
+     * @param level the level.
      */
-    protected void trySpreadItems(@NotNull Level world) {
+    protected void trySpreadItems(@NotNull ServerLevel level) {
+        if (this.itemCache == null) {
+            this.itemCache = AdjacentBlockApiCache.create(ItemStorage.SIDED, level, this.worldPosition);
+        }
+        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : DIRECTIONS) {
-            Storage<ItemVariant> storage = this.getExposedItemStorage(direction);
-            if (storage.supportsExtraction()) {
-                Storage<ItemVariant> to = ItemStorage.SIDED.find(world, this.worldPosition.relative(direction), direction.getOpposite());
-                try (Transaction transaction = Transaction.openOuter()) {
-                    GenericStorageUtil.moveAll(storage, to, Long.MAX_VALUE, transaction);
-                    transaction.commit();
-                }
+            Storage<ItemVariant> storage = this.getExposedItemStorage(facing, direction);
+            if (storage != null && storage.supportsExtraction()) {
+                GenericStorageUtil.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
             }
         }
     }

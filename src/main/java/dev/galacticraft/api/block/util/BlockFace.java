@@ -83,7 +83,7 @@ public enum BlockFace {
      */
     @NotNull
     public static BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) {
-        assert facing.getAxis() != Direction.Axis.Y;
+        assert facing != Direction.UP && facing != Direction.DOWN;
 
         if (target == Direction.DOWN) {
             return BOTTOM;
