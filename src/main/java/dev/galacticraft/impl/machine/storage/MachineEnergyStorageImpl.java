@@ -40,15 +40,19 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
     public final long capacity;
     private final long maxInput;
     private final long maxOutput;
+    private final boolean insert;
+    private final boolean extract;
     private final ModCount modCount = ModCount.root();
     private final ExposedEnergyStorage view = new ExposedEnergyStorage(this, false, false);
 
     public long amount = 0;
 
-    public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput) {
+    public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput, boolean insert, boolean extract) {
         this.capacity = capacity;
         this.maxInput = maxInput;
         this.maxOutput = maxOutput;
+        this.insert = insert;
+        this.extract = extract;
     }
 
     @Override
@@ -158,12 +162,22 @@ public class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implemen
 
     @Override
     public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
-        return new ExposedEnergyStorage(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+        return new ExposedEnergyStorage(this, this.insert && flow.canFlowIn(ResourceFlow.INPUT), this.extract && flow.canFlowIn(ResourceFlow.OUTPUT));
     }
 
     @Override
     public @NotNull EnergyStorage view() {
         return this.view;
+    }
+
+    @Override
+    public boolean canExposedInsert() {
+        return this.insert;
+    }
+
+    @Override
+    public boolean canExposedExtract() {
+        return this.extract;
     }
 
     @Override

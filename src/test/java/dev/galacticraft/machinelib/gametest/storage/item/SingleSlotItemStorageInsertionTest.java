@@ -70,6 +70,7 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
                                 }
                                 return true;
                             },
+                            true,
                             test.flow(),
                             ResourceType.ITEM), test.maxCount(), new ItemSlotDisplay(0, 0)).build();
             if (test.amount() > 0) {

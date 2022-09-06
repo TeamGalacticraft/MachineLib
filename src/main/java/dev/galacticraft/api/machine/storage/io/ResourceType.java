@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <V> The resource variant type.
  */
 @SuppressWarnings("unused")
-public final class ResourceType<T, V> {
+public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>> {
     /**
      * No resources can be stored/transferred.
      */
@@ -48,19 +48,19 @@ public final class ResourceType<T, V> {
     /**
      * All resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(1, Component.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
+    public static final ResourceType<?, ?> ANY = new ResourceType<>(4, Component.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
     /**
      * Energy can be stored/transferred.
      */
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(2, Component.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)));
+    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(1, Component.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)));
     /**
      * Items can be stored/transferred.
      */
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(3, Component.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
+    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(2, Component.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
     /**
      * Fluids can be stored/transferred.
      */
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(4, Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
+    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(3, Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
 
     private static final ResourceType<?, ?>[] normalTypes =  new ResourceType[] {ENERGY, ITEM, FLUID};
     private static final ResourceType<?, ?>[] types =  new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
@@ -144,5 +144,11 @@ public final class ResourceType<T, V> {
      */
     public boolean willAcceptResource(ResourceType<?, ?> other) {
         return this != NONE && (this == other || this == ANY);
+    }
+
+    @Override
+    public int compareTo(@NotNull ResourceType<?, ?> resourceType) {
+        if (resourceType == this) return 0;
+        return this.ordinal < resourceType.ordinal ? -1 : 1;
     }
 }

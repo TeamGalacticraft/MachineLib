@@ -63,6 +63,16 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
+    public boolean canExposedInsert() {
+        return false;
+    }
+
+    @Override
+    public boolean canExposedExtract() {
+        return false;
+    }
+
+    @Override
     public @NotNull Tag writeNbt() {
         return ByteTag.ZERO;
     }

@@ -104,7 +104,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @see #energyStorage() for the energy storage.
      */
-    private final @NotNull MachineEnergyStorage energyStorage = MachineEnergyStorage.of(this.getEnergyCapacity(), this.getEnergyInsertionRate(), this.getEnergyExtractionRate());
+    private final @NotNull MachineEnergyStorage energyStorage = MachineEnergyStorage.of(this.getEnergyCapacity(), this.getEnergyInsertionRate(), this.getEnergyExtractionRate(), this.canExposedInsertEnergy(), this.canExposedExtractEnergy());
 
     /**
      * The item storage for this machine.
@@ -223,6 +223,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Contract(pure = true)
     public long getEnergyExtractionRate() {
         return (long)(this.getEnergyCapacity() / 120.0);
+    }
+
+    @Contract(pure = true)
+    public boolean canExposedInsertEnergy() {
+        return false;
+    }
+
+    @Contract(pure = true)
+    public boolean canExposedExtractEnergy() {
+        return false;
     }
 
     /**

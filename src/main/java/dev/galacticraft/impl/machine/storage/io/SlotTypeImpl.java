@@ -43,18 +43,20 @@ import java.util.function.Predicate;
  */
 public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T, V> {
     static {
-        Registry.register(REGISTRY, new ResourceLocation(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), Component.translatable(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, ResourceFlow.BOTH, ResourceType.NONE));
+        Registry.register(REGISTRY, new ResourceLocation(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), Component.translatable(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, false, ResourceFlow.BOTH, ResourceType.NONE));
     }
 
     private final @NotNull TextColor color;
     private final @NotNull Component name;
     private final @NotNull Predicate<V> filter;
+    private final boolean automatable;
     private final @NotNull ResourceFlow flow;
     private final @NotNull ResourceType<T, V> type;
 
-    public SlotTypeImpl(@NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+    public SlotTypeImpl(@NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, boolean automatable, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         this.color = color;
         this.filter = filter;
+        this.automatable = automatable;
         this.name = name.setStyle(Style.EMPTY.withColor(color));
         this.flow = flow;
         this.type = type;
@@ -81,6 +83,11 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     }
 
     @Override
+    public boolean isAutomatable() {
+        return this.automatable;
+    }
+
+    @Override
     public boolean willAccept(@NotNull V variant) {
         return variant.isBlank() || this.filter.test(variant);
     }
@@ -88,8 +95,10 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     @Override
     public String toString() {
         return "SlotTypeImpl{" +
-                ", color=" + color +
+                "color=" + color +
                 ", name=" + name +
+                ", filter=" + filter +
+                ", automatable=" + automatable +
                 ", flow=" + flow +
                 ", type=" + type +
                 '}';
@@ -99,12 +108,12 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SlotTypeImpl<?, ?> slotTypeImpl = (SlotTypeImpl<?, ?>) o;
-        return color.equals(slotTypeImpl.color) && name.equals(slotTypeImpl.name) && flow == slotTypeImpl.flow && type.equals(slotTypeImpl.type);
+        SlotTypeImpl<?, ?> slotType = (SlotTypeImpl<?, ?>) o;
+        return automatable == slotType.automatable && color.equals(slotType.color) && name.equals(slotType.name) && filter.equals(slotType.filter) && flow == slotType.flow && type.equals(slotType.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(color, name, flow, type);
+        return Objects.hash(color, name, filter, automatable, flow, type);
     }
 }

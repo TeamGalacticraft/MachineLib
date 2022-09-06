@@ -47,9 +47,13 @@ public interface SlotType<T, V extends TransferVariant<T>> {
     Registry<SlotType<?, ?>> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<SlotType<?, ?>>(new ResourceLocation(MLConstant.MOD_ID, "none").toString(), ResourceKey.createRegistryKey(new ResourceLocation(MLConstant.MOD_ID, "slot_type")), Lifecycle.stable(), null)).attribute(RegistryAttribute.SYNCED).buildAndRegister();
 
     static <T, V extends TransferVariant<T>> SlotType<T, V> create(ResourceLocation id, @NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+        return create(id, color, name, filter, true, flow, type);
+    }
+
+    static <T, V extends TransferVariant<T>> SlotType<T, V> create(ResourceLocation id, @NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, boolean automatable, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
         if (color.getValue() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
         if (type.isSpecial()) throw new IllegalArgumentException("Resource type cannot be special!");
-        return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, flow, type));
+        return Registry.register(REGISTRY, id, new SlotTypeImpl<>(color, name, filter, automatable, flow, type));
     }
 
     /**
@@ -75,6 +79,12 @@ public interface SlotType<T, V extends TransferVariant<T>> {
      * @return The exposed resource flow of the slot type.
      */
     @NotNull ResourceFlow getFlow();
+
+    /**
+     * Returns whether the slot can be accessed by external blocks (eg. pipes)
+     * @return whether the slot can be accessed by external blocks
+     */
+    boolean isAutomatable();
 
     /**
      * Returns whether the slot type is valid for the given resource.

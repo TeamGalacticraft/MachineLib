@@ -1249,7 +1249,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                 return;
             }
-            Map<ResourceType<?, ?>, List<ResourceFlow>> map = new IdentityHashMap<>();
+            Map<ResourceType<?, ?>, List<ResourceFlow>> map = new IdentityHashMap<>(3);
 
             for (SlotType<Item, ItemVariant> type : machine.itemStorage().getTypes()) {
                 List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ITEM, l -> new ArrayList<>());
@@ -1273,15 +1273,18 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 }
             }
 
-            if (machine.getEnergyItemExtractionRate() > 0) {
-                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>());
-                if (machine.getEnergyItemInsertionRate() > 0) {
+            if (machine.energyStorage().canExposedExtract()) {
+                if (machine.energyStorage().canExposedInsert()) {
                     map.put(ResourceType.ENERGY, ResourceFlow.ALL_FLOWS);
                 } else {
-                    flows.add(0, ResourceFlow.OUTPUT);
+                    map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.OUTPUT));
                 }
-            } else if (machine.getEnergyItemInsertionRate() > 0) {
-                map.computeIfAbsent(ResourceType.ENERGY, l -> new ArrayList<>()).add(0, ResourceFlow.INPUT);
+            } else if (machine.energyStorage().canExposedInsert()) {
+                map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.INPUT));
+            }
+
+            if (!map.isEmpty()) {
+                map.put(ResourceType.ANY, ResourceFlow.ALL_FLOWS);
             }
 
             ResourceType<?, ?> outType = null;

@@ -42,11 +42,11 @@ import team.reborn.energy.api.EnergyStorage;
 public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     SlotType<?, ?>[] NO_SLOTS = new SlotType[0];
 
-    @Contract("_, _, _ -> new")
-    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction) {
+    @Contract("_, _, _, _, _ -> new")
+    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean insert, boolean extract) {
         StoragePreconditions.notNegative(energyCapacity);
         if (energyCapacity == 0) return EmptyMachineEnergyStorage.INSTANCE;
-        return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction);
+        return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, insert, extract);
     }
 
     default long extract(long amount) {
@@ -131,6 +131,10 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
      * @return The read-only view of the energy storage
      */
     @NotNull EnergyStorage view();
+
+    boolean canExposedInsert();
+
+    boolean canExposedExtract();
 
     /**
      * Serializes the energy storage to NBT.

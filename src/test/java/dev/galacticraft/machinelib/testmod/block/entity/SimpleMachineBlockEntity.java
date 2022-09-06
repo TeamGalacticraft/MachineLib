@@ -25,10 +25,13 @@ package dev.galacticraft.machinelib.testmod.block.entity;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.MachineStatuses;
+import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
+import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.testmod.TestMod;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -53,6 +56,18 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
         return MachineItemStorage.builder()
                 .addSlot(TestMod.CHARGE_SLOT, new ItemSlotDisplay(32, 32))
                 .build();
+    }
+
+    @Override
+    protected @NotNull MachineFluidStorage createFluidStorage() {
+        return MachineFluidStorage.builder()
+                .addTank(TestMod.ANY_FLUID_SLOT, FluidConstants.BUCKET, new TankDisplay(12, 8, 48))
+                .build();
+    }
+
+    @Override
+    public boolean canExposedInsertEnergy() {
+        return true;
     }
 
     @Override

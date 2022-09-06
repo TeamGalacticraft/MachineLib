@@ -33,6 +33,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
@@ -47,6 +48,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -61,10 +63,8 @@ public class TestMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
-
     public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND, ResourceFlow.BOTH, ResourceType.ITEM);
-    public static final SlotType<Item, ItemVariant> NO_NBT_SLOT = SlotType.create(id("no_nbt_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_nbt_slot"), v -> v.getNbt() == null || v.getNbt().isEmpty(), ResourceFlow.BOTH, ResourceType.ITEM);
-    public static final SlotType<Item, ItemVariant> WILDCARD_SLOT = SlotType.create(id("any"), TextColor.fromLegacyFormat(ChatFormatting.GREEN), Component.translatable("machinelib.testmod.wildcard_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
+    public static final SlotType<Fluid, FluidVariant> ANY_FLUID_SLOT = SlotType.create(id("fluids"), TextColor.fromLegacyFormat(ChatFormatting.BLACK), Component.translatable("machinelib.testmod.fluids"), v -> true, ResourceFlow.BOTH, ResourceType.FLUID);
 
     public static final String SIMPLE_MACHINE = "simple_machine";
     public static final MachineStatus WORKING = MachineStatus.createAndRegister(id("charge_slot"), Component.translatable("machinelib.testmod.working"), MachineStatus.Type.WORKING);
