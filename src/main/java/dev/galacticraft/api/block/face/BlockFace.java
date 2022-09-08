@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.block.util;
+package dev.galacticraft.api.block.face;
 
 import dev.galacticraft.impl.MLConstant;
 import net.minecraft.core.Direction;
@@ -82,7 +82,7 @@ public enum BlockFace {
      * @return The face corresponding to the given direction and rotation.
      */
     @NotNull
-    public static BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) {
+    public static BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) { //todo: a better way to do this?
         assert facing != Direction.UP && facing != Direction.DOWN;
 
         if (target == Direction.DOWN) {

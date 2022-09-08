@@ -23,7 +23,7 @@
 package dev.galacticraft.api.block.entity;
 
 import dev.galacticraft.api.block.MachineBlock;
-import dev.galacticraft.api.block.util.BlockFace;
+import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.machine.*;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;

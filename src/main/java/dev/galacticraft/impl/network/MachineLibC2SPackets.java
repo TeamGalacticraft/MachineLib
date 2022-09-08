@@ -24,7 +24,7 @@ package dev.galacticraft.impl.network;
 
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.block.util.BlockFace;
+import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
@@ -85,7 +85,7 @@ public class MachineLibC2SPackets {
                 byte i = buf.readByte();
                 byte j = buf.readByte();
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             machine.getIOConfig().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
@@ -114,7 +114,7 @@ public class MachineLibC2SPackets {
         ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().isOwner(player)) {
                         machine.getSecurity().setAccessLevel(accessLevel);
@@ -127,9 +127,9 @@ public class MachineLibC2SPackets {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler sHandler) {
+                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                     if (sHandler.containerId == syncId) {
-                        acceptStack((Tank)sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
+                        acceptStack(sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
                     }
                 }
             });

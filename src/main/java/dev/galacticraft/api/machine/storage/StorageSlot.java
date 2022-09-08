@@ -33,10 +33,18 @@ public interface StorageSlot<T, V extends TransferVariant<T>, S> extends SingleS
 
     long getModCountUnsafe();
 
+    long getCapacity(V variant);
+
+    boolean isFull();
+
+    boolean isEmpty();
+
     @NotNull S copyStack();
 
     @TestOnly
     void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty);
 
     void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context);
+
+    S extract(long amount, @NotNull TransactionContext transaction);
 }

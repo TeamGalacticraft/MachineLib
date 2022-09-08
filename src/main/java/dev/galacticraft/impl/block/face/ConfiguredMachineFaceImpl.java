@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.impl.block;
+package dev.galacticraft.impl.block.face;
 
 import com.mojang.datafixers.util.Either;
-import dev.galacticraft.api.block.ConfiguredMachineFace;
+import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;

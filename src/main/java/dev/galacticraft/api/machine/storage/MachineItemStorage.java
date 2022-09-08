@@ -25,12 +25,13 @@ package dev.galacticraft.api.machine.storage;
 import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineItemStorage;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.minecraft.world.Container;
@@ -77,6 +78,16 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      */
     @NotNull Container subInv(int start, int size);
 
+    @Override
+    default @NotNull ItemVariant createVariant(@NotNull Item type) {
+        return ItemVariant.of(type);
+    }
+
+    @Override
+    default @NotNull ResourceType<Item, ItemVariant> getResource() {
+        return ResourceType.ITEM;
+    }
+
     /**
      * Returns the default empty storage.
      * @return The default empty storage.
@@ -101,7 +112,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
         private int size = 0;
         private final List<@NotNull SlotType<Item, ItemVariant>> types = new ArrayList<>();
         private final List<@NotNull ItemSlotDisplay> displays = new ArrayList<>();
-        private final LongList counts = new LongArrayList();
+        private final IntList capacities = new IntArrayList();
 
         public Builder() {}
 
@@ -123,20 +134,22 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
         /**
          * Adds a slot to the builder.
          * @param type The type of slot.
-         * @param maxCount The maximum count of items in the slot. Clamped to {@code 64} and cannot be negative.
+         * @param capacity The maximum count of items in the slot. Clamped to {@code 64} and cannot be negative.
          * @param display The display for the slot.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, int maxCount, @NotNull ItemSlotDisplay display) {
+        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, int capacity, @NotNull ItemSlotDisplay display) {
             Preconditions.checkNotNull(type);
             Preconditions.checkNotNull(display);
-            StoragePreconditions.notNegative(maxCount);
-            maxCount = Math.min(maxCount, 64);
+            StoragePreconditions.notNegative(capacity);
+            if (capacity > 64) {
+                throw new IllegalArgumentException("Capacity cannot be greater than 64!");
+            }
 
             this.size++;
             this.types.add(type);
             this.displays.add(display);
-            this.counts.add(maxCount);
+            this.capacities.add(capacity);
             return this;
         }
 
@@ -147,7 +160,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineItemStorage build() {
             if (this.size == 0) return empty();
-            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.displays.toArray(new ItemSlotDisplay[0]));
+            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.capacities.toIntArray(), this.displays.toArray(new ItemSlotDisplay[0]));
         }
     }
 }

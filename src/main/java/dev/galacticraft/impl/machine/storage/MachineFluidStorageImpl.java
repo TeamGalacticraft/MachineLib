@@ -29,7 +29,6 @@ import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
@@ -56,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
@@ -96,7 +94,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public int size() {
-        return size;
+        return this.size;
     }
 
     @Override
@@ -120,16 +118,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public boolean isFull(int slot) {
-        return this.getAmount(slot) == this.getCapacity(slot);
-    }
-
-    @Override
-    public boolean isEmpty(int slot) {
-        return this.getSlot(slot).getAmount() == 0;
-    }
-
-    @Override
     public @NotNull ResourceSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
         return this.inventory[slot];
     }
@@ -145,26 +133,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public @NotNull FluidStack getStack(int slot) {
-        return this.getSlot(slot).copyStack();
-    }
-
-    @Override
-    public @NotNull FluidVariant getVariant(int slot) {
-        return this.getSlot(slot).getResource();
-    }
-
-    @Override
-    public long getAmount(int slot) {
-        return this.getSlot(slot).getAmount();
-    }
-
-    @Override
-    public @NotNull ResourceType<Fluid, FluidVariant> getResource() {
-        return ResourceType.FLUID;
-    }
-
-    @Override
     public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
@@ -175,47 +143,8 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public long insert(FluidVariant resource, long maxAmount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
-        long inserted = 0;
-        for (int i = 0; i < this.size(); i++) {
-            if (this.canAccept(i, resource)) {
-                inserted += this.insert(i, resource, maxAmount - inserted, context);
-                if (inserted == maxAmount) {
-                    break;
-                }
-            }
-        }
-
-        return inserted;
-    }
-
-    @Override
-    public long extract(FluidVariant resource, long maxAmount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
-        long extracted = 0;
-        for (int i = 0; i < this.size(); i++) {
-            extracted += this.extract(i, resource, maxAmount - extracted, context);
-            if (extracted == maxAmount) {
-                break;
-            }
-        }
-
-        return extracted;
-    }
-
-    @Override
     public Iterator<StorageView<FluidVariant>> iterator() {
-        return new CombinedIterator();
-    }
-
-    @Override
-    public @NotNull FluidStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            FluidStack extract = this.getSlot(slot).extract(amount, transaction);
-            transaction.commit();
-            return extract;
-        }
+        return Iterators.forArray(this.inventory); // we do not need to iterate over the inner slots' iterator as there's only one slot.
     }
 
     @Override
@@ -227,11 +156,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         } else {
             return FluidStack.EMPTY;
         }
-    }
-
-    @Override
-    public long extract(int slot, @NotNull Fluid fluid, long amount, @Nullable TransactionContext context) {
-        return this.extract(slot, FluidVariant.of(fluid), amount, context);
     }
 
     @Override
@@ -259,20 +183,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         } else {
             return 0;
         }
-    }
-
-    @Override
-    public long extract(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            long extract = this.getSlot(slot).extract(variant, amount, transaction);
-            transaction.commit();
-            return extract;
-        }
-    }
-
-    @Override
-    public long getMaxCount(int slot) {
-        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -331,8 +241,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public void readNbt(@NotNull Tag nbt) {
-        if (nbt.getId() == Tag.TAG_LIST) {
-            ListTag list = ((ListTag) nbt);
+        if (nbt instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag compound = list.getCompound(i);
                 this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(MLConstant.Nbt.AMOUNT), true);
@@ -409,62 +318,6 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
             handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height()));
-        }
-    }
-
-    /*
-     * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-    private class CombinedIterator implements Iterator<StorageView<FluidVariant>> {
-        private final Iterator<FluidSlot> partIterator = Iterators.forArray(MachineFluidStorageImpl.this.inventory);
-        // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
-        private Iterator<StorageView<FluidVariant>> currentPartIterator = null;
-
-        private CombinedIterator() {
-            advanceCurrentPartIterator();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return currentPartIterator != null && currentPartIterator.hasNext();
-        }
-
-        @Override
-        public StorageView<FluidVariant> next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-
-            StorageView<FluidVariant> returned = currentPartIterator.next();
-
-            // Advance the current part iterator
-            if (!currentPartIterator.hasNext()) {
-                advanceCurrentPartIterator();
-            }
-
-            return returned;
-        }
-
-        private void advanceCurrentPartIterator() {
-            while (partIterator.hasNext()) {
-                this.currentPartIterator = partIterator.next().iterator();
-
-                if (this.currentPartIterator.hasNext()) {
-                    break;
-                }
-            }
         }
     }
 }

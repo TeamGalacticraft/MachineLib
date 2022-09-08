@@ -93,6 +93,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
      */
     protected MachineBlock(Properties settings) {
         super(settings);
+        this.registerDefaultState(this.defaultBlockState().setValue(ACTIVE, false));
     }
 
     @Override
@@ -106,7 +107,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
 
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite()).setValue(ACTIVE, false);
+        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
@@ -168,7 +169,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
                 }
             }
 
-            if(nbt.contains(MLConstant.Nbt.REDSTONE_ACTIVATION)){
+            if (nbt.contains(MLConstant.Nbt.REDSTONE_ACTIVATION)){
                 tooltip.add(Component.translatable(MLConstant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt.get(MLConstant.Nbt.REDSTONE_ACTIVATION)).getName()).setStyle(MLConstant.Text.DARK_RED_STYLE));
             }
         }

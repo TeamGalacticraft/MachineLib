@@ -55,6 +55,17 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         return this.modCount.getModCountUnsafe();
     }
 
+    @Override
+    public boolean isFull() {
+        return this.amount >= this.getCapacity(this.variant);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        assert !this.isResourceBlank() || this.amount == 0;
+        return this.isResourceBlank();
+    }
+
     @TestOnly
     public void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty) {
         StoragePreconditions.notNegative(amount);
@@ -91,8 +102,12 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         this.amount = amount;
     }
 
+    @Override
     public S extract(long amount, @NotNull TransactionContext context) {
         if (this.variant.isBlank()) return this.getEmptyStack();
+        amount = Math.min(amount, this.getVariantCapacity(this.variant));
+        if (amount == 0) return this.getEmptyStack();
+
         V v = this.variant;
         long extract = this.extract(v, amount, context);
         return this.createStack(v, extract);
@@ -181,6 +196,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         return this.getCapacity(this.variant);
     }
 
+    @Override
     public long getCapacity(V variant) {
         return Math.min(this.getVariantCapacity(variant), this.capacity);
     }

@@ -28,7 +28,6 @@ import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
@@ -58,9 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
-//todo: more integer sanity checks?
 public class MachineItemStorageImpl implements MachineItemStorage {
     private final int size;
     private final @NotNull ItemSlotDisplay[] displays;
@@ -73,7 +70,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     private final @NotNull ExposedStorage<Item, ItemVariant> view = ExposedStorage.of(this, false, false);
     private final Container playerInventory;
 
-    public MachineItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, long[] counts, ItemSlotDisplay[] displays) {
+    public MachineItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, int[] counts, ItemSlotDisplay[] displays) {
         this.size = size;
         this.displays = displays;
         this.inventory = new ItemSlot[this.size];
@@ -100,7 +97,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public int size() {
-        return size;
+        return this.size;
     }
 
     @Override
@@ -124,16 +121,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public boolean isFull(int slot) {
-        return this.getSlot(slot).getAmount() == this.getSlot(slot).getCapacity();
-    }
-
-    @Override
-    public boolean isEmpty(int slot) {
-        return this.getSlot(slot).getAmount() == 0;
-    }
-
-    @Override
     public @NotNull ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
         return this.inventory[slot];
     }
@@ -149,26 +136,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public @NotNull ItemStack getStack(int slot) {
-        return this.getSlot(slot).copyStack();
-    }
-
-    @Override
-    public @NotNull ItemVariant getVariant(int slot) {
-        return this.getSlot(slot).getResource();
-    }
-
-    @Override
-    public long getAmount(int slot) {
-        return this.getSlot(slot).getAmount();
-    }
-
-    @Override
-    public @NotNull ResourceType<Item, ItemVariant> getResource() {
-        return ResourceType.ITEM;
-    }
-
-    @Override
     public boolean canExposedExtract(int slot) {
         return this.extraction[slot];
     }
@@ -179,47 +146,8 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public long insert(ItemVariant resource, long maxAmount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
-        long inserted = 0;
-        for (int i = 0; i < this.size(); i++) {
-            if (this.canAccept(i, resource)) {
-                inserted += this.insert(i, resource, maxAmount - inserted, context);
-                if (inserted == maxAmount) {
-                    break;
-                }
-            }
-        }
-
-        return inserted;
-    }
-
-    @Override
-    public long extract(ItemVariant resource, long maxAmount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
-        long extracted = 0;
-        for (int i = 0; i < this.size(); i++) {
-            extracted += this.extract(i, resource, maxAmount - extracted, context);
-            if (extracted == maxAmount) {
-                break;
-            }
-        }
-
-        return extracted;
-    }
-
-    @Override
     public Iterator<StorageView<ItemVariant>> iterator() {
-        return new CombinedIterator();
-    }
-
-    @Override
-    public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            ItemStack extract = this.getSlot(slot).extract(amount, transaction);
-            transaction.commit();
-            return extract;
-        }
+        return Iterators.forArray(this.inventory); // we do not need to iterate over the inner slots' iterator as there's only one slot.
     }
 
     @Override
@@ -231,12 +159,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         } else {
             return ItemStack.EMPTY;
         }
-    }
-
-    @Override
-    public long extract(int slot, @NotNull Item item, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-        return this.extract(slot, ItemVariant.of(item), amount, context);
     }
 
     @Override
@@ -264,20 +186,6 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         } else {
             return 0;
         }
-    }
-
-    @Override
-    public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            long extract = this.getSlot(slot).extract(variant, amount, transaction);
-            transaction.commit();
-            return extract;
-        }
-    }
-
-    @Override
-    public long getMaxCount(int slot) {
-        return this.getSlot(slot).getCapacity();
     }
 
     @Override
@@ -352,8 +260,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public void readNbt(@NotNull Tag nbt) {
-        if (nbt.getId() == Tag.TAG_LIST) {
-            ListTag list = ((ListTag) nbt);
+        if (nbt instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag compound = list.getCompound(i);
                 this.getSlot(i).setStackUnsafe(ItemVariant.fromNbt(compound), compound.getLong(MLConstant.Nbt.AMOUNT), true);
@@ -420,61 +327,5 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     @ApiStatus.Internal
     public void incrementModCountUnsafe() {
         this.modCount.incrementUnsafe();
-    }
-
-    /*
-     * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-    private class CombinedIterator implements Iterator<StorageView<ItemVariant>> {
-        private final Iterator<ItemSlot> partIterator = Iterators.forArray(MachineItemStorageImpl.this.inventory);
-        // Always holds the next StorageView<T>, except during next() while the iterator is being advanced.
-        private Iterator<StorageView<ItemVariant>> currentPartIterator = null;
-
-        private CombinedIterator() {
-            advanceCurrentPartIterator();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return currentPartIterator != null && currentPartIterator.hasNext();
-        }
-
-        @Override
-        public StorageView<ItemVariant> next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-
-            StorageView<ItemVariant> returned = currentPartIterator.next();
-
-            // Advance the current part iterator
-            if (!currentPartIterator.hasNext()) {
-                advanceCurrentPartIterator();
-            }
-
-            return returned;
-        }
-
-        private void advanceCurrentPartIterator() {
-            while (partIterator.hasNext()) {
-                this.currentPartIterator = partIterator.next().iterator();
-
-                if (this.currentPartIterator.hasNext()) {
-                    break;
-                }
-            }
-        }
     }
 }

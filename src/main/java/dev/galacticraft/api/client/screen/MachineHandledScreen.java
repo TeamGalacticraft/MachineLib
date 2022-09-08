@@ -27,9 +27,9 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.datafixers.util.Either;
-import dev.galacticraft.api.block.ConfiguredMachineFace;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.block.util.BlockFace;
+import dev.galacticraft.api.block.face.BlockFace;
+import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.MachineStatus;
@@ -1070,8 +1070,8 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         RenderSystem.disableTexture();
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuilder();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferBuilder = tesselator.getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         fillGradient(matrices.last().pose(), bufferBuilder,
                 slot.x - 1, slot.y - 1,
@@ -1097,7 +1097,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.getBlitOffset(),
                 this.machine.itemStorage().getTypes()[index].getColor().getValue(),
                 this.machine.itemStorage().getTypes()[index].getColor().getValue());
-        tessellator.end();
+        tesselator.end();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
         RenderSystem.enableTexture();

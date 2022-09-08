@@ -28,7 +28,6 @@ import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.StorageSlot;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
@@ -92,11 +91,6 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     @Override
     public long getCapacity(int slot) {
         return 0;
-    }
-
-    @Override
-    public @NotNull ResourceType<Item, ItemVariant> getResource() {
-        return ResourceType.ITEM;
     }
 
     @Override
@@ -247,7 +241,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+    public long insert(@NotNull ItemVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
         return 0;
     }
 
@@ -257,7 +251,7 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+    public long extract(@NotNull ItemVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
         return 0;
     }
 

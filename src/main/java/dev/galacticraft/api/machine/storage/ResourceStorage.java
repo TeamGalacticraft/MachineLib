@@ -25,6 +25,7 @@ package dev.galacticraft.api.machine.storage;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.io.*;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -57,22 +58,27 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The slot to get the stack from.
      * @return A resource stack with the amount and type of the resource in the storage.
      */
-    @NotNull S getStack(int slot);
+    default @NotNull S getStack(int slot) {
+        return this.getSlot(slot).copyStack();
+    }
 
     /**
      * Returns the resource variant contained in the slot.
-     * Should NEVER be modified.
      * @param slot The slot to get the variant from.
      * @return The resource variant contained in the slot.
      */
-    @NotNull V getVariant(int slot);
+    default @NotNull V getVariant(int slot) {
+        return this.getSlot(slot).getResource();
+    }
 
     /**
      * The amount of resources in the given slot.
      * @param slot The slot to get the amount of resources from.
      * @return The amount of resources in the slot.
      */
-    long getAmount(int slot);
+    default long getAmount(int slot) {
+        return this.getSlot(slot).getAmount();
+    }
 
     /**
      * Returns the type of resource contained in this storage.
@@ -434,6 +440,37 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
         return this.extract(slot, variant, Long.MAX_VALUE, context);
     }
 
+
+    @Override
+    default long insert(@NotNull V resource, long maxAmount, @NotNull TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
+        long inserted = 0;
+        for (int i = 0; i < this.size(); i++) {
+            if (this.canAccept(i, resource)) {
+                inserted += this.insert(i, resource, maxAmount - inserted, context);
+                if (inserted == maxAmount) {
+                    break;
+                }
+            }
+        }
+
+        return inserted;
+    }
+
+    @Override
+    default long extract(@NotNull V resource, long maxAmount, @NotNull TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(resource, maxAmount);
+        long extracted = 0;
+        for (int i = 0; i < this.size(); i++) {
+            extracted += this.extract(i, resource, maxAmount - extracted, context);
+            if (extracted == maxAmount) {
+                break;
+            }
+        }
+
+        return extracted;
+    }
+
     /**
      * Inserts the given amount of resources into the given slot.
      * @param slot The slot to insert into.
@@ -442,7 +479,15 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The amount of inserted resources.
      */
-    long insert(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context);
+    default long insert(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(variant, amount);
+        if (!this.canAccept(slot, variant) || amount == 0) return 0;
+        try (Transaction transaction = Transaction.openNested(context)) {
+            long inserted = this.getSlot(slot).insert(variant, amount, transaction);
+            transaction.commit();
+            return inserted;
+        }
+    }
 
     /**
      * Extracts the given amount of resources from the given slot.
@@ -451,7 +496,14 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The extracted resources.
      */
-    @NotNull S extract(int slot, long amount, @Nullable TransactionContext context);
+    default @NotNull S extract(int slot, long amount, @Nullable TransactionContext context) {
+        StoragePreconditions.notNegative(amount);
+        try (Transaction transaction = Transaction.openNested(context)) {
+            S extract = this.getSlot(slot).extract(amount, transaction);
+            transaction.commit();
+            return extract;
+        }
+    }
 
     /**
      * Extracts the given amount of resources from the given slot if they match the tag.
@@ -471,7 +523,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The amount of extracted resources.
      */
-    long extract(int slot, @NotNull T resource, long amount, @Nullable TransactionContext context);
+    default long extract(int slot, @NotNull T resource, long amount, @Nullable TransactionContext context) {
+        return this.extract(slot, this.createVariant(resource), amount, context);
+    }
 
     /**
      * Extracts the given amount of resources from the given slot of the given type.
@@ -481,7 +535,13 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param context The transaction context.
      * @return The amount of extracted resources.
      */
-    long extract(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context);
+    default long extract(int slot, @NotNull V variant, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            long extract = this.getSlot(slot).extract(variant, amount, transaction);
+            transaction.commit();
+            return extract;
+        }
+    }
 
     /**
      * Returns the maximum amount of resources that can be stored in the given slot.
@@ -489,7 +549,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The slot to check.
      * @return The maximum amount of resources that can be stored in the given slot.
      */
-    long getMaxCount(int slot);
+    default long getMaxCount(int slot) {
+        return this.getSlot(slot).getCapacity();
+    }
 
     /**
      * Returns the modification count of this inventory.
@@ -531,7 +593,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The slot to check.
      * @return Whether any more resources can be inserted into the given slot.
      */
-    boolean isFull(int slot);
+    default boolean isFull(int slot) {
+        return this.getSlot(slot).isFull();
+    }
 
     /**
      * Returns whether the given slot contains any resources.
@@ -539,7 +603,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param slot The slot to check.
      * @return Whether the given slot contains any resources.
      */
-    boolean isEmpty(int slot);
+    default boolean isEmpty(int slot) {
+        return this.getSlot(slot).isEmpty();
+    }
 
     /**
      * Returns an internal storage representing the given slot.
@@ -615,6 +681,9 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     default long getVersion() {
         return this.getModCount();
     }
+
+    @ApiStatus.Internal
+    @NotNull V createVariant(@NotNull T type);
 
     /**
      * Sets the items in the given slot without using a transaction and without modifying the {@link #getModCount() mod count}.

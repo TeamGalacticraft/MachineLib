@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.api.block;
+package dev.galacticraft.api.block.face;
 
 import com.google.common.base.Preconditions;
 import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;
-import dev.galacticraft.impl.block.ConfiguredMachineFaceImpl;
+import dev.galacticraft.impl.block.face.ConfiguredMachineFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
@@ -42,10 +42,10 @@ import team.reborn.energy.api.EnergyStorage;
  */
 public interface ConfiguredMachineFace {
     /**
-     * Creates a new {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     * Creates a new {@link ConfiguredMachineFace}.
      * @param type The type of resource to accept.
      * @param flow The flow direction of the resource.
-     * @return A new {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     * @return A new {@link ConfiguredMachineFace}.
      */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull ConfiguredMachineFace of(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
@@ -56,8 +56,8 @@ public interface ConfiguredMachineFace {
     }
 
     /**
-     * Creates a new, blank {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
-     * @return A new, blank {@link dev.galacticraft.api.block.ConfiguredMachineFace}.
+     * Creates a new, blank {@link ConfiguredMachineFace}.
+     * @return A new, blank {@link ConfiguredMachineFace}.
      */
     @Contract(value = " -> new", pure = true)
     static @NotNull ConfiguredMachineFace create() {

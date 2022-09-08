@@ -25,6 +25,7 @@ package dev.galacticraft.api.machine.storage;
 import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.display.TankDisplay;
+import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.api.machine.storage.io.SlotType;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
@@ -61,6 +62,17 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
      * @param <M> The type of machine.
      */
     <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+
+    @Override
+    @NotNull
+    default FluidVariant createVariant(@NotNull Fluid fluid) {
+        return FluidVariant.of(fluid);
+    }
+
+    @Override
+    default @NotNull ResourceType<Fluid, FluidVariant> getResource() {
+        return ResourceType.FLUID;
+    }
 
     /**
      * Returns the default empty fluid storage.

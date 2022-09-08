@@ -25,7 +25,7 @@ package dev.galacticraft.api.client.model;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.api.block.util.BlockFace;
+import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.MLConstant;

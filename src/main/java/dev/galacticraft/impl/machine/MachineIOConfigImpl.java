@@ -22,8 +22,8 @@
 
 package dev.galacticraft.impl.machine;
 
-import dev.galacticraft.api.block.ConfiguredMachineFace;
-import dev.galacticraft.api.block.util.BlockFace;
+import dev.galacticraft.api.block.face.BlockFace;
+import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.machine.MachineIOConfig;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
