@@ -23,8 +23,7 @@
 package dev.galacticraft.impl.machine.storage.io;
 
 import dev.galacticraft.api.machine.storage.ResourceStorage;
-import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import dev.galacticraft.api.machine.storage.io.ExposedSlot;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -34,14 +33,14 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStorage<T, V>, StorageView<V> {
+public class ExposedStorageSlot<T, V extends TransferVariant<T>> implements ExposedSlot<T, V> {
     private final @NotNull ResourceStorage<T, V, ?> storage;
     private final @NotNull StorageView<V> slot;
     private final int index;
     private final boolean insertion;
     private final boolean extraction;
 
-    public ExposedSlot(@NotNull ResourceStorage<T, V, ?> storage, int index, boolean insert, boolean extract) {
+    public ExposedStorageSlot(@NotNull ResourceStorage<T, V, ?> storage, int index, boolean insert, boolean extract) {
         this.storage = storage;
         this.index = index;
         this.insertion = insert && storage.canExposedInsert(index);
@@ -118,11 +117,6 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
     }
 
     @Override
-    public @NotNull Storage<V> getSlot(int slot) {
-        return slot == this.index ? this : ExposedStorage.ofSlot(this.storage, slot, false, false);
-    }
-
-    @Override
     public @NotNull Predicate<V> getFilter(int slot) {
         return v -> this.storage.canAccept(slot, v);
     }
@@ -150,7 +144,7 @@ public class ExposedSlot<T, V extends TransferVariant<T>> implements ExposedStor
             if (!this.hasNext()) {
                 throw new NoSuchElementException();
             }
-            return UnmodifiableStorageView.maybeCreate(this.iterator.next(), ExposedSlot.this.supportsExtraction() && ExposedSlot.this.index == this.index++);
+            return UnmodifiableStorageView.maybeCreate(this.iterator.next(), ExposedStorageSlot.this.supportsExtraction() && ExposedStorageSlot.this.index == this.index++);
         }
     }
 }

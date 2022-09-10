@@ -23,9 +23,7 @@
 package dev.galacticraft.machinelib.testmod;
 
 import dev.galacticraft.api.machine.MachineStatus;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.testmod.block.SimpleMachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
@@ -48,7 +46,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +55,19 @@ import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.InfiniteEnergyStorage;
 import team.reborn.energy.api.base.LimitingEnergyStorage;
 
+import java.util.function.Predicate;
+
 public class TestMod implements ModInitializer {
     public static final String MOD_ID = "machinelib-test";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final SlotType<Item, ItemVariant> CHARGE_SLOT = SlotType.create(id("charge_slot"), TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), v -> true, ResourceFlow.BOTH, ResourceType.ITEM);
-    public static final SlotType<Item, ItemVariant> NO_DIAMOND_SLOT = SlotType.create(id("no_diamond_slot"), TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), v -> v.getItem() != Items.DIAMOND, ResourceFlow.BOTH, ResourceType.ITEM);
-    public static final SlotType<Fluid, FluidVariant> ANY_FLUID_SLOT = SlotType.create(id("fluids"), TextColor.fromLegacyFormat(ChatFormatting.BLACK), Component.translatable("machinelib.testmod.fluids"), v -> true, ResourceFlow.BOTH, ResourceType.FLUID);
+    public static final SlotGroup CHARGE_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), false);
+    public static final SlotGroup NO_DIAMOND_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), true);
+    public static final SlotGroup ANY_FLUID_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.BLACK), Component.translatable("machinelib.testmod.fluids"), true);
+
+    public static final Predicate<ItemVariant> NO_DIAMONDS = v -> v.getItem() != Items.DIAMOND;
+    public static final Predicate<ItemVariant> ANY_ITEM = v -> true;
+    public static final Predicate<FluidVariant> ANY_FLUID = v -> true;
 
     public static final String SIMPLE_MACHINE = "simple_machine";
     public static final MachineStatus WORKING = MachineStatus.createAndRegister(id("charge_slot"), Component.translatable("machinelib.testmod.working"), MachineStatus.Type.WORKING);

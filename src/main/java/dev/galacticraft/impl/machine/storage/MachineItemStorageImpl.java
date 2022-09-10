@@ -27,8 +27,7 @@ import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.MLConstant;
@@ -57,40 +56,31 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 public class MachineItemStorageImpl implements MachineItemStorage {
     private final int size;
     private final @NotNull ItemSlotDisplay[] displays;
     private final @NotNull ItemSlot[] inventory;
-    private final @NotNull SlotType<Item, ItemVariant>[] types;
-    private final boolean @NotNull [] extraction;
-    private final boolean @NotNull [] insertion;
+    private final @NotNull SlotGroup[] types;
+    private final @NotNull Predicate<ItemVariant> @NotNull [] filters;
+    private final boolean @NotNull [] playerInsertion;
 
     private final ModCount modCount = ModCount.root();
-    private final @NotNull ExposedStorage<Item, ItemVariant> view = ExposedStorage.of(this, false, false);
+    private final @NotNull ExposedStorage<Item, ItemVariant> view = ExposedStorage.view(this);
     private final Container playerInventory;
 
-    public MachineItemStorageImpl(int size, SlotType<Item, ItemVariant>[] types, int[] counts, ItemSlotDisplay[] displays) {
+    public MachineItemStorageImpl(int size, SlotGroup[] types, Predicate<ItemVariant> @NotNull [] filters, boolean @NotNull [] playerInsertion, int[] counts, ItemSlotDisplay[] displays) {
         this.size = size;
         this.displays = displays;
         this.inventory = new ItemSlot[this.size];
-        this.extraction = new boolean[this.size];
-        this.insertion = new boolean[this.size];
+        this.filters = filters;
+        this.playerInsertion = playerInsertion;
+        this.types = types;
 
         for (int i = 0; i < this.inventory.length; i++) {
             this.inventory[i] = new ItemSlot(counts[i], this.modCount);
-            if (types[i].getFlow() == ResourceFlow.INPUT) {
-                this.insertion[i] = true;
-                this.extraction[i] = false;
-            } else if (types[i].getFlow() == ResourceFlow.OUTPUT) {
-                this.insertion[i] = false;
-                this.extraction[i] = true;
-            } else if (types[i].getFlow() == ResourceFlow.BOTH) {
-                this.insertion[i] = true;
-                this.extraction[i] = true;
-            }
         }
-        this.types = types;
 
         this.playerInventory = new PlayerExposedVanillaInventory(this);
     }
@@ -137,12 +127,17 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public boolean canExposedExtract(int slot) {
-        return this.extraction[slot];
+        return this.types[slot].isAutomatable();
     }
 
     @Override
     public boolean canExposedInsert(int slot) {
-        return this.insertion[slot];
+        return this.canPlayerInsert(slot) && this.types[slot].isAutomatable();
+    }
+
+    @Override
+    public boolean canPlayerInsert(int slot) {
+        return this.playerInsertion[slot];
     }
 
     @Override
@@ -195,7 +190,12 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public boolean canAccept(int slot, @NotNull ItemVariant variant) {
-        return this.types[slot].willAccept(variant);
+        return this.filters[slot].test(variant);
+    }
+
+    @Override
+    public Predicate<ItemVariant> getFilter(int slot) {
+        return this.filters[slot];
     }
 
     @Override
@@ -292,7 +292,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public SlotType<Item, ItemVariant> @NotNull [] getTypes() {
+    public @NotNull SlotGroup @NotNull [] getGroups() {
         return this.types;
     }
 

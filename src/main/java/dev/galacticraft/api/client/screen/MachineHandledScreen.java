@@ -22,11 +22,11 @@
 
 package dev.galacticraft.api.client.screen;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.block.face.ConfiguredMachineFace;
@@ -34,16 +34,12 @@ import dev.galacticraft.api.client.model.MachineModelRegistry;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.MachineStatus;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.*;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import dev.galacticraft.impl.machine.storage.slot.VanillaWrappedItemSlot;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -56,7 +52,6 @@ import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -83,7 +78,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -746,12 +740,12 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
-        if (configuredFace.getMatching() != null) {
-            if (configuredFace.getMatching().left().isPresent()) {
-                TOOLTIP_ARRAY.add(Component.translatable(MLConstant.TranslationKey.MATCHES, Component.literal(String.valueOf(configuredFace.getMatching().left().get())).setStyle(MLConstant.Text.AQUA_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
+        if (configuredFace.getSelection() != null) {
+            if (configuredFace.getSelection().isSlot()) {
+                TOOLTIP_ARRAY.add(Component.translatable(MLConstant.TranslationKey.MATCHES, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(MLConstant.Text.AQUA_STYLE)).setStyle(MLConstant.Text.GRAY_STYLE));
             } else {
-                assert configuredFace.getMatching().right().isPresent();
-                TOOLTIP_ARRAY.add(Component.translatable(MLConstant.TranslationKey.MATCHES, configuredFace.getMatching().right().get().getName()).setStyle(MLConstant.Text.GRAY_STYLE));
+                assert configuredFace.getSelection().isGroup();
+                TOOLTIP_ARRAY.add(Component.translatable(MLConstant.TranslationKey.MATCHES, configuredFace.getSelection().getGroup().getName()).setStyle(MLConstant.Text.GRAY_STYLE));
             }
         }
         this.renderComponentTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -929,27 +923,27 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             mouseX -= this.leftPos - MLConstant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= this.topPos + MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.fluidStorage()));
                 groupFluid(out, list);
             }
@@ -970,27 +964,27 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             mouseX -= this.leftPos - MLConstant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= this.topPos + MLConstant.TextureCoordinate.TAB_HEIGHT + SPACING;
             Int2IntArrayMap out = new Int2IntArrayMap();
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching() != null) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getSelection() != null) {
                 IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.itemStorage()));
                 groupItem(out, list);
             }
@@ -1003,7 +997,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     private void groupFluid(Int2IntMap out, IntList list) {
         for (Tank tank : this.menu.tanks) {
             if (list.contains(tank.getIndex())) {
-                out.put(tank.getIndex(), this.machine.fluidStorage().getTypes()[tank.getIndex()].getColor().getValue());
+                out.put(tank.getIndex(), this.machine.fluidStorage().getGroups()[tank.getIndex()].getColor().getValue());
             }
         }
     }
@@ -1013,7 +1007,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
         for (Slot slot : this.menu.slots) {
             int index = slot.getContainerSlot();
             if (list.contains(index)) {
-                out.put(index, this.machine.itemStorage().getTypes()[index].getColor().getValue());
+                out.put(index, this.machine.itemStorage().getGroups()[index].getColor().getValue());
             }
         }
     }
@@ -1077,26 +1071,26 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 slot.x - 1, slot.y - 1,
                 slot.x - 1, slot.y + 17,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue());
+                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
+                this.machine.itemStorage().getGroups()[index].getColor().getValue());
         fillGradient(matrices.last().pose(), bufferBuilder,
                 slot.x - 1, slot.y + 17,
                 slot.x + 17, slot.y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue());
+                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
+                this.machine.itemStorage().getGroups()[index].getColor().getValue());
         fillGradient(matrices.last().pose(), bufferBuilder,
                 slot.x + 17, slot.y + 17,
                 slot.x + 17, slot.y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue());
+                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
+                this.machine.itemStorage().getGroups()[index].getColor().getValue());
         fillGradient(matrices.last().pose(), bufferBuilder,
                 slot.x + 17, slot.y - 1,
                 slot.x - 1, slot.y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue(),
-                this.machine.itemStorage().getTypes()[index].getColor().getValue());
+                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
+                this.machine.itemStorage().getGroups()[index].getColor().getValue());
         tesselator.end();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
@@ -1247,35 +1241,20 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
             if (reset) {
                 sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                sideOption.setSelection(null);
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(true)
+                        )
+                );
                 return;
             }
-            Map<ResourceType<?, ?>, List<ResourceFlow>> map = new IdentityHashMap<>(3);
-
-            for (SlotType<Item, ItemVariant> type : machine.itemStorage().getTypes()) {
-                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.ITEM, l -> new ArrayList<>());
-                if (type.getFlow() == ResourceFlow.BOTH) {
-                    map.put(ResourceType.ITEM, ResourceFlow.ALL_FLOWS);
-                    break;
-                } else {
-                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
-                    if (flows.size() == 3) break;
-                }
-            }
-
-            for (SlotType<Fluid, FluidVariant> type : machine.fluidStorage().getTypes()) {
-                List<ResourceFlow> flows = map.computeIfAbsent(ResourceType.FLUID, l -> new ArrayList<>());
-                if (type.getFlow() == ResourceFlow.BOTH) {
-                    map.put(ResourceType.FLUID, ResourceFlow.ALL_FLOWS);
-                    break;
-                } else {
-                    if (!flows.contains(type.getFlow())) flows.add(type.getFlow());
-                    if (flows.size() == 3) break;
-                }
-            }
+            Map<ResourceType, List<ResourceFlow>> map = new EnumMap<>(ResourceType.class);
 
             if (machine.energyStorage().canExposedExtract()) {
                 if (machine.energyStorage().canExposedInsert()) {
-                    map.put(ResourceType.ENERGY, ResourceFlow.ALL_FLOWS);
+                    map.put(ResourceType.ENERGY, ResourceFlow.VALUES);
                 } else {
                     map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.OUTPUT));
                 }
@@ -1283,168 +1262,247 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.INPUT));
             }
 
-            if (!map.isEmpty()) {
-                map.put(ResourceType.ANY, ResourceFlow.ALL_FLOWS);
-            }
+            SlotGroup[] groups = machine.itemStorage().getGroups();
 
-            ResourceType<?, ?> outType = null;
-            ResourceFlow outFlow = null;
-
-            ResourceType<?, ?>[] normalTypes = new ResourceType<?, ?>[map.size()];
-
-            int arrayIndex = 0;
-
-            for (int i = 0; i < ResourceType.normalTypes().length; i++){
-                ResourceType<?, ?> type = ResourceType.normalTypes()[i];
-
-                if(map.containsKey(type)) {
-                    normalTypes[arrayIndex] = type;
-
-                    arrayIndex++;
-                }
-            }
-
-            for (int i = 0; i < normalTypes.length; i++) {
-                ResourceType<?, ?> type = normalTypes[i];
-                if (type == sideOption.getType() || sideOption.getType() == ResourceType.NONE) {
-                    List<ResourceFlow> resourceFlows = map.get(type);
-                    if (resourceFlows != null) {
-                        int idx = resourceFlows.indexOf(sideOption.getFlow());
-                        if (idx + (back ? -1 : 1) == (back ? -1 : resourceFlows.size())) {
-                            if (i + (back ? -1 : 1) == (back ? -1 : normalTypes.length)) {
-                                for (int i1 = back ? normalTypes.length - 1 : 0; back ? i1 >= 0 : i1 < normalTypes.length;) {
-                                    if (map.get(normalTypes[i1]) != null) {
-                                        outType = normalTypes[i1];
-                                        break;
-                                    }
-                                    if (back) {
-                                        i1--;
-                                    } else {
-                                        i1++;
-                                    }
-                                }
-                            } else {
-                                outType = normalTypes[(back ? 0 : normalTypes.length - 1)];
-                            }
-                            outFlow = map.get(outType).get(back ? map.get(outType).size() - 1 : 0);
-                        } else {
-                            outType = type;
-                            outFlow = resourceFlows.get(idx + (back ? -1 : 1));
-                        }
+            List<ResourceFlow> list = new ArrayList<>(3);
+            for (int i = 0; i < groups.length; i++) {
+                if (machine.itemStorage().canExposedExtract(i)) {
+                    if (machine.itemStorage().canExposedInsert(i)) {
+                        map.put(ResourceType.ITEM, ResourceFlow.VALUES);
+                        list.clear();
+                        break;
                     } else {
-                        for (int i1 = back ? normalTypes.length - 1 : 0; back ? i1 >= 0 : i1 < normalTypes.length;) {
-                            if (map.get(normalTypes[i1]) != null) {
-                                outType = normalTypes[i1];
-                                break;
-                            }
-                            if (back) {
-                                i1--;
-                            } else {
-                                i1++;
-                            }
-                        }
-                        outFlow = map.get(outType).get(0);
+                        list.add(ResourceFlow.OUTPUT);
                     }
-                    break;
+                } else {
+                    list.add(ResourceFlow.INPUT);
+                }
+                if (list.size() == 2) {
+                    map.put(ResourceType.ITEM, ResourceFlow.VALUES);
+                    list.clear();
                 }
             }
-            if (outType == null) {
-                outType = ResourceType.NONE;
-                outFlow = ResourceFlow.BOTH;
+            if (!list.isEmpty()) {
+                map.putIfAbsent(ResourceType.ITEM, ImmutableList.sortedCopyOf(list));
             }
-            assert outFlow != null;
-            sideOption.setOption(outType, outFlow);
-            sideOption.setMatching(null);
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeByte(face.ordinal()).writeBoolean(false).writeByte(sideOption.getType().getOrdinal()).writeByte(sideOption.getFlow().ordinal());
-            ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "side_config"), buf);
+            list.clear();
 
+            groups = machine.fluidStorage().getGroups();
+
+            for (int i = 0; i < groups.length; i++) {
+                if (machine.fluidStorage().canExposedExtract(i)) {
+                    if (machine.fluidStorage().canExposedInsert(i)) {
+                        map.put(ResourceType.FLUID, ResourceFlow.VALUES);
+                        list.clear();
+                        break;
+                    } else {
+                        list.add(ResourceFlow.OUTPUT);
+                    }
+                } else {
+                    list.add(ResourceFlow.INPUT);
+                }
+                if (list.size() == 2) {
+                    map.put(ResourceType.FLUID, ResourceFlow.VALUES);
+                    list.clear();
+                }
+            }
+            if (!list.isEmpty()) {
+                map.putIfAbsent(ResourceType.FLUID, ImmutableList.sortedCopyOf(list));
+            }
+            list.clear();
+
+            if (!map.isEmpty()) {
+                map.put(ResourceType.ANY, ResourceFlow.VALUES);
+            } else {
+                sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                sideOption.setSelection(null);
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(true)
+                        )
+                );
+
+                return; // there are no types available
+            }
+
+            ResourceType[] types = new ResourceType[map.size()];
+            int idx = 0;
+            for (Map.Entry<ResourceType, List<ResourceFlow>> entry : map.entrySet()) {
+                types[idx++] = entry.getKey();
+            }
+            Arrays.sort(types);
+
+            ResourceType outType;
+            ResourceFlow outFlow;
+
+            if (sideOption.getType() == ResourceType.NONE) {
+                if (back) {
+                    outType = types[types.length - 1];
+                    List<ResourceFlow> resourceFlows = map.get(types[types.length - 1]);
+                    outFlow = resourceFlows.get(resourceFlows.size() - 1);
+                } else {
+                    outType = types[0];
+                    outFlow = map.get(types[0]).get(0);
+                }
+            } else {
+                int index = Arrays.binarySearch(types, sideOption.getType()); //sorted array
+                List<ResourceFlow> flows = map.get(sideOption.getType());
+                int sectionIndex = flows.indexOf(sideOption.getFlow());
+                assert index != -1;
+                int nextSection = sectionIndex + (back ? -1 : 1);
+                if (nextSection == -1) {
+                    int nextIndex = index - 1;
+                    if (nextIndex == -1) { // met beginning of loop
+                        outType = ResourceType.NONE;
+                        outFlow = ResourceFlow.BOTH;
+                    } else {
+                        ResourceType type = types[nextIndex];
+                        List<ResourceFlow> prevFlows = map.get(type);
+
+                        outType = type;
+                        outFlow = prevFlows.get(prevFlows.size() - 1);
+                    }
+                } else if (nextSection == flows.size()) {
+                    int nextIndex = index + 1;
+                    if (nextIndex == types.length) { // met end of loop
+                        outType = ResourceType.NONE;
+                        outFlow = ResourceFlow.BOTH;
+                    } else {
+                        ResourceType type = types[nextIndex];
+                        List<ResourceFlow> nextFlows = map.get(type);
+
+                        outType = type;
+                        outFlow = nextFlows.get(0);
+                    }
+                } else {
+                    outType = sideOption.getType();
+                    outFlow = flows.get(nextSection);
+                }
+            }
+
+            sideOption.setOption(outType, outFlow);
+            sideOption.setSelection(null);
+            ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "face_type"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
+                            .writeByte(face.ordinal())
+                            .writeByte(sideOption.getType().ordinal())
+                            .writeByte(sideOption.getFlow().ordinal()))
+            );
         }), //LEFT
         CHANGE_MATCH((player, machine, face, back, reset) -> {
             ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
-            if (sideOption.getType().willAcceptResource(ResourceType.ENERGY) || sideOption.getType() == ResourceType.NONE) return;
+            if (!sideOption.getType().matchesGroups()) return;
             if (reset) {
-                sideOption.setMatching(null);
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(-1);
-                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "side_config"), buf);
+                sideOption.setSelection(null);
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(false)
+                        )
+                );
                 return;
             }
 
-            ConfiguredStorage<?, ?> storage = machine.getStorage(sideOption.getType());
-            SlotType<?, ?>[] slotTypes = storage != null ? storage.getTypes() : new SlotType[0];
+            SlotGroup[] groups = sideOption.getMatchingGroups(machine);
 
-            slotTypes = Arrays.copyOf(slotTypes, slotTypes.length);
-            int s = 0;
-            for (int i = 0; i < slotTypes.length; i++) {
-                if (!slotTypes[i].getType().willAcceptResource(sideOption.getType())) {
-                    slotTypes[i] = null;
-                    s++;
+            int next;
+            if (sideOption.getSelection() != null && sideOption.getSelection().isGroup()) {
+                next = Arrays.binarySearch(groups, sideOption.getSelection().getGroup(), Comparator.comparingInt(g -> g.getColor().getValue())) + (back ? -1 : 1); //todo proper sorting
+                if (next == groups.length) {
+                    next = -1;
                 }
-            }
-            if (s > 0) {
-                SlotType<?, ?>[] tmp = new SlotType[slotTypes.length - s];
-                s = 0;
-                for (int i = 0; i < slotTypes.length; i++) {
-                    if (slotTypes[i] == null) {
-                        s++;
-                    } else {
-                        tmp[i - s] = slotTypes[i];
-                    }
+            } else {
+                if (back) {
+                    next = groups.length - 1;
+                } else {
+                    next = 0;
                 }
-                slotTypes = tmp;
-            }
-            int i = 0;
-            if (sideOption.getMatching() != null && sideOption.getMatching().right().isPresent()) {
-                SlotType<?, ?> slotType = sideOption.getMatching().right().get();
-                for (; i < slotTypes.length; i++) {
-                    if (slotTypes[i] == slotType) break;
-                }
-                if (back) i--;
-                else i++;
             }
 
-            if (i == slotTypes.length) i = 0;
-            if (i == -1) i = slotTypes.length - 1;
-            sideOption.setMatching(Either.right(slotTypes[i]));
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(false).writeInt(SlotType.REGISTRY.getId(slotTypes[i]));
-            ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "side_config"), buf);
+            if (next == -1) {
+                sideOption.setSelection(null);
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(false)
+                        )
+                );
+            } else {
+                sideOption.setSelection(StorageSelection.createGroup(groups[next]));
+
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "match_group"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
+                                .writeByte(face.ordinal())
+                                .writeInt(next))
+                );
+            }
         }), //RIGHT
         CHANGE_MATCH_SLOT((player, machine, face, back, reset) -> {
             ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
-            if (sideOption.getType().isSpecial() || sideOption.getType() == ResourceType.ENERGY) return;
+            if (!sideOption.getType().matchesSlots()) return;
             if (reset) {
-                sideOption.setMatching(null);
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeByte(face.ordinal()).writeBoolean(true).writeBoolean(true).writeInt(-1);
-                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "side_config"), buf);
+                sideOption.setSelection(null);
+                ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(false)
+                        )
+                );
                 return;
             }
-            int i = 0;
-            IntList list = null;
-            if (sideOption.getMatching() != null && sideOption.getMatching().left().isPresent()) {
-                i = sideOption.getMatching().left().get();
-                sideOption.setMatching(null);
-                list = new IntArrayList(sideOption.getMatching(machine.getStorage(sideOption.getType())));
-                i = list.indexOf(i);
-            }
-            if (list == null)
-                list = new IntArrayList(sideOption.getMatching(machine.getStorage(sideOption.getType())));
 
-            if (!back) {
-                if (++i == list.size()) i = 0;
+            ConfiguredStorage storage = machine.getStorage(sideOption.getType());
+            assert storage != null; // matchesSlots
+            int[] matching = sideOption.getMatchingWild(storage);
+            int i = -1;
+            if (sideOption.getSelection() != null && sideOption.getSelection().isSlot()) {
+                i = sideOption.getSelection().getSlot();
+            }
+            if (matching.length == 0) {
+                return;
+            }
+            if (i == -1) {
+                if (back) {
+                    i = matching.length - 1;
+                } else {
+                    i = 0;
+                }
             } else {
-                if (i == 0) i = list.size();
-                i--;
+                i = Arrays.binarySearch(matching, i);
+                if (back) {
+                    i--;
+                    if (i == -1) {
+                        sideOption.setSelection(null);
+                        ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                                new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                        .writeByte(face.ordinal())
+                                        .writeBoolean(false)
+                                )
+                        );
+                        return;
+                    }
+                } else {
+                    i++;
+                    if (i == matching.length) {
+                        sideOption.setSelection(null);
+                        ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "reset_face"),
+                                new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                        .writeByte(face.ordinal())
+                                        .writeBoolean(false)
+                                )
+                        );
+                        return;
+                    }
+                }
             }
-            sideOption.setMatching(Either.left(list.getInt(i)));
+            sideOption.setSelection(StorageSelection.createSlot(matching[i]));
 
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeByte(face.ordinal());
-            buf.writeBoolean(true).writeBoolean(true);
-            buf.writeInt(i);
-            ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "side_config"), buf);
+            ClientPlayNetworking.send(new ResourceLocation(MLConstant.MOD_ID, "match_slot"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
+                            .writeByte(face.ordinal())
+                            .writeInt(i))
+            );
         }); //MID
 
 

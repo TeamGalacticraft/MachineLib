@@ -24,9 +24,8 @@ package dev.galacticraft.machinelib.gametest.storage.item;
 
 import dev.galacticraft.api.machine.storage.MachineItemStorage;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
-import dev.galacticraft.impl.machine.storage.io.SlotTypeImpl;
+import dev.galacticraft.impl.machine.storage.io.SlotGroupImpl;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.annotation.SingleSlotItemStorage;
 import dev.galacticraft.machinelib.gametest.misc.ItemType;
@@ -55,24 +54,22 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
         if (gameTest.timeoutTicks() == 0 && test != null) {
             method.setAccessible(true);
             MachineItemStorageImpl impl = (MachineItemStorageImpl) MachineItemStorage.builder().addSlot(
-                    new SlotTypeImpl<>(Objects.requireNonNull(TextColor.fromLegacyFormat(ChatFormatting.WHITE)),
+                    new SlotGroupImpl(Objects.requireNonNull(TextColor.fromLegacyFormat(ChatFormatting.WHITE)),
                             Component.empty().copy(),
-                            v -> {
-                                if (test.blockNbt()) {
-                                    if (v.getNbt() != null && !v.getNbt().isEmpty()) {
-                                        return false;
-                                    }
-                                }
-                                if (test.block() != ItemType.NONE) {
-                                    if (v.isOf(test.block().generateVariant().getItem())) {
-                                        return false;
-                                    }
-                                }
-                                return true;
-                            },
-                            true,
-                            test.flow(),
-                            ResourceType.ITEM), test.maxCount(), new ItemSlotDisplay(0, 0)).build();
+
+                            true), v -> {
+                        if (test.blockNbt()) {
+                            if (v.getNbt() != null && !v.getNbt().isEmpty()) {
+                                return false;
+                            }
+                        }
+                        if (test.block() != ItemType.NONE) {
+                            if (v.isOf(test.block().generateVariant().getItem())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }, true, test.maxCount(), new ItemSlotDisplay(0, 0)).build();
             if (test.amount() > 0) {
                 impl.setSlotUnsafe(0, test.type().generateVariant(0), test.amount());
             }

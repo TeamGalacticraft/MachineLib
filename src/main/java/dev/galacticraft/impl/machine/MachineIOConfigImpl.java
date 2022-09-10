@@ -25,8 +25,10 @@ package dev.galacticraft.impl.machine;
 import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.machine.MachineIOConfig;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -40,25 +42,25 @@ public class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull ConfiguredMachineFace bottom = ConfiguredMachineFace.create();
 
     @Override
-    public @NotNull CompoundTag writeNbt() {
+    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups) {
         CompoundTag nbt = new CompoundTag();
-        nbt.put("Front", this.front.writeNbt());
-        nbt.put("Back", this.back.writeNbt());
-        nbt.put("Left", this.left.writeNbt());
-        nbt.put("Right", this.right.writeNbt());
-        nbt.put("Top", this.top.writeNbt());
-        nbt.put("Bottom", this.bottom.writeNbt());
+        nbt.put("Front", this.front.writeNbt(groups));
+        nbt.put("Back", this.back.writeNbt(groups));
+        nbt.put("Left", this.left.writeNbt(groups));
+        nbt.put("Right", this.right.writeNbt(groups));
+        nbt.put("Top", this.top.writeNbt(groups));
+        nbt.put("Bottom", this.bottom.writeNbt(groups));
         return nbt;
     }
 
     @Override
-    public void readNbt(@NotNull CompoundTag nbt) {
-        this.front.readNbt(nbt.getCompound("Front"));
-        this.back.readNbt(nbt.getCompound("Back"));
-        this.left.readNbt(nbt.getCompound("Left"));
-        this.right.readNbt(nbt.getCompound("Right"));
-        this.top.readNbt(nbt.getCompound("Top"));
-        this.bottom.readNbt(nbt.getCompound("Bottom"));
+    public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
+        this.front.readNbt(nbt.getCompound("Front"), groups);
+        this.back.readNbt(nbt.getCompound("Back"), groups);
+        this.left.readNbt(nbt.getCompound("Left"), groups);
+        this.right.readNbt(nbt.getCompound("Right"), groups);
+        this.top.readNbt(nbt.getCompound("Top"), groups);
+        this.bottom.readNbt(nbt.getCompound("Bottom"), groups);
     }
 
     @Override

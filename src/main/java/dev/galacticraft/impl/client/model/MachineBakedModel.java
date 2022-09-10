@@ -220,7 +220,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(MLConstant.Nbt.BLOCK_ENTITY_TAG, Tag.TAG_COMPOUND)) {
-            CONFIGURATION.readNbt(tag.getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG));
+            CONFIGURATION.readNbt(tag.getCompound(MLConstant.Nbt.BLOCK_ENTITY_TAG), null);
             ConfiguredMachineFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),
@@ -237,7 +237,7 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
         return true;
     }
 
-    public static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    public static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
         switch (flow) {
             case INPUT -> {
                 if (type == ResourceType.ENERGY) {

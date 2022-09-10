@@ -27,6 +27,7 @@ import dev.galacticraft.impl.MLConstant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,7 +49,7 @@ public enum ResourceFlow {
      */
     BOTH(Component.translatable(MLConstant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(ChatFormatting.BLUE)));
 
-    public static final List<ResourceFlow> ALL_FLOWS = ImmutableList.copyOf(ResourceFlow.values());
+    public static final List<ResourceFlow> VALUES = ImmutableList.copyOf(ResourceFlow.values());
 
     /**
      * The name of the flow direction.
@@ -59,6 +60,7 @@ public enum ResourceFlow {
      * Creates a new resource flow.
      * @param name The name of the flow direction.
      */
+    @Contract(pure = true)
     ResourceFlow(@NotNull Component name) {
         this.name = name;
     }
@@ -67,6 +69,7 @@ public enum ResourceFlow {
      * Returns the name of the flow direction.
      * @return The name of the flow direction.
      */
+    @Contract(pure = true)
     public @NotNull Component getName() {
         return this.name;
     }
@@ -76,7 +79,8 @@ public enum ResourceFlow {
      * @param flow The flow to check.
      * @return Whether this flow can flow into the given flow.
      */
+    @Contract(pure = true)
     public boolean canFlowIn(ResourceFlow flow) {
-        return this == flow || this == BOTH;
+        return this == flow || this == BOTH || flow == BOTH;
     }
 }

@@ -32,6 +32,7 @@ import dev.galacticraft.api.machine.storage.cache.AdjacentBlockApiCache;
 import dev.galacticraft.api.machine.storage.io.ConfiguredStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.api.transfer.StateCachingStorageProvider;
 import dev.galacticraft.impl.MLConstant;
@@ -71,7 +72,7 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A block entity that represents a machine.>
@@ -139,6 +140,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private final @NotNull Component name;
+    private final SlotGroup[] groups;
 
     /**
      * Creates a new machine block entity.
@@ -154,6 +156,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
         super(type, pos, state);
         this.name = name;
+        this.groups = this.cacheGroups();
     }
 
     /**
@@ -254,6 +257,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @return An item storage configured for this machine.
      */
+    @Contract(pure = true)
     protected @NotNull MachineItemStorage createItemStorage() {
         return MachineItemStorage.empty();
     }
@@ -265,6 +269,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @return The fluid storage configured for this machine.
      */
+    @Contract(pure = true)
     protected @NotNull MachineFluidStorage createFluidStorage() {
         return MachineFluidStorage.empty();
     }
@@ -312,6 +317,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getEnergyCapacity() for the maximum amount of energy that this machine can hold.
      * @return The energy storage of this machine.
      */
+    @Contract(pure = true)
     public final @NotNull MachineEnergyStorage energyStorage() {
         return this.energyStorage;
     }
@@ -322,6 +328,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #createItemStorage() for the properties of the item storage.
      * @return The item storage of this machine.
      */
+    @Contract(pure = true)
     public final @NotNull MachineItemStorage itemStorage() {
         return this.itemStorage;
     }
@@ -332,6 +339,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #createFluidStorage() for the properties of the fluid storage.
      * @return the fluid storage of this machine.
      */
+    @Contract(pure = true)
     public final @NotNull MachineFluidStorage fluidStorage() {
         return this.fluidStorage;
     }
@@ -342,8 +350,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @return the security settings of this machine.
      */
+    @Contract(pure = true)
     public final @NotNull SecuritySettings getSecurity() {
         return this.configuration.getSecurity();
+    }
+
+    @Contract(pure = true)
+    public final @NotNull SlotGroup @NotNull [] getGroups() {
+        return this.groups;
     }
 
     /**
@@ -374,7 +388,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public @Nullable ConfiguredStorage<?, ?> getStorage(@NotNull ResourceType<?, ?> type) {
+    @Contract(pure = true)
+    public @Nullable ConfiguredStorage getStorage(@NotNull ResourceType type) {
         if (type == ResourceType.ENERGY) return this.energyStorage();
         if (type == ResourceType.ITEM) return this.itemStorage();
         if (type == ResourceType.FLUID) return this.fluidStorage();
@@ -474,7 +489,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
-
     @ApiStatus.Internal
     private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
         assert this.level != null;
@@ -536,7 +550,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         nbt.put(MLConstant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
         nbt.put(MLConstant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
         nbt.put(MLConstant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
-        this.configuration.writeNbt(nbt);
+        this.configuration.writeNbt(nbt, this.groups);
         nbt.putBoolean(MLConstant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
@@ -550,7 +564,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(MLConstant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ENERGY_STORAGE)));
         if (nbt.contains(MLConstant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.ITEM_STORAGE)));
         if (nbt.contains(MLConstant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.FLUID_STORAGE)));
-        this.configuration.readNbt(nbt);
+        this.configuration.readNbt(nbt, this.groups);
         this.disableDrops = nbt.getBoolean(MLConstant.Nbt.DISABLE_DROPS);
 
         if (level != null && level.isClientSide()) {
@@ -699,6 +713,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     public boolean isFaceLocked(@NotNull BlockFace face) {
         return false;
+    }
+
+    private @NotNull SlotGroup @NotNull [] cacheGroups() {
+        Set<SlotGroup> groups = new HashSet<>(this.itemStorage().size() + this.fluidStorage.size());
+        Collections.addAll(groups, this.itemStorage().getGroups());
+        Collections.addAll(groups, this.fluidStorage().getGroups());
+        Collections.addAll(groups, this.energyStorage().getGroups());
+        SlotGroup[] array = groups.toArray(new SlotGroup[0]);
+        Arrays.sort(array, Comparator.comparingInt(g -> g.getColor().getValue())); //todo: how to sort?
+        return array;
     }
 
     @Override

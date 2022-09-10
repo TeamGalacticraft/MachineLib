@@ -29,7 +29,7 @@
   "ui.machinelib.machine.redstone_activation.status.disabled": "Disabled",
 
   "ui.machinelib.machine.configuration": "I/O Configuration",
-  "ui.machinelib.machine.configuration.matches": "Matches: ",
+  "ui.machinelib.machine.configuration.matches": "Matches: %s",
 
   "ui.machinelib.machine.statistics": "Statistics",
 

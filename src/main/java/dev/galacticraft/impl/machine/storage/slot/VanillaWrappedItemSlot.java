@@ -48,7 +48,7 @@ public class VanillaWrappedItemSlot extends Slot {
         this.storage = storage;
         this.icon = display.icon();
         this.slot = this.storage.getSlot(index);
-        this.insert = this.storage.canExposedInsert(index);
+        this.insert = this.storage.canPlayerInsert(index);
     }
 
     @Nullable

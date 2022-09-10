@@ -98,7 +98,7 @@ public interface MachineModelRegistry {
      * @param flow The flow of the resource to get the sprite for.
      * @return The sprite of the machine block for the given face.
      */
-    static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
         return MachineBakedModel.getSprite(face, machine, stack, provider, type, flow);
     }
 

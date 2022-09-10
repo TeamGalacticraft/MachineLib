@@ -24,8 +24,7 @@ package dev.galacticraft.impl.machine.storage.io;
 
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.SlotType;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -35,23 +34,21 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
+public class ExposedSlotGroup<T, V extends TransferVariant<T>> implements ExposedStorage<T, V> {
     private final @NotNull ResourceStorage<T, V, ?> storage;
-    private final @NotNull SlotType<T, V> type;
     private final boolean insertion;
     private final boolean extraction;
     private final boolean[] slots;
 
-    public ExposedSlots(@NotNull ResourceStorage<T, V, ?> storage, @NotNull SlotType<T, V> type, boolean allowInsertion, boolean allowExtraction) {
+    public ExposedSlotGroup(@NotNull ResourceStorage<T, V, ?> storage, @NotNull SlotGroup group, boolean allowInsertion, boolean allowExtraction) {
         this.storage = storage;
-        this.type = type;
 
         this.slots = new boolean[storage.size()];
-        SlotType<T, V>[] types = storage.getTypes();
+        SlotGroup[] types = storage.getGroups();
         boolean insertion = false;
         boolean extraction = false;
         for (int i = 0; i < types.length; i++) {
-            if (types[i].equals(this.type)) {
+            if (types[i].equals(group)) {
                 this.slots[i] = true;
                 if (allowInsertion) insertion |= storage.canExposedInsert(i);
                 if (allowExtraction) extraction |= storage.canExposedExtract(i);
@@ -68,7 +65,7 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
 
     @Override
     public long insert(V resource, long maxAmount, TransactionContext transaction) {
-        if (this.type.willAccept(resource) && this.supportsInsertion()) {
+        if (this.supportsInsertion()) {
             long inserted = 0;
             for (int i = 0; i < this.storage.size(); i++) {
                 if (this.slots[i] && this.storage.canExposedInsert(i)) {
@@ -131,13 +128,8 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
     }
 
     @Override
-    public @NotNull Storage<V> getSlot(int slot) {
-        return this.slots[slot] ? ExposedStorage.ofSlot(this.storage, slot, this.extraction, this.insertion) : ExposedStorage.ofSlot(this.storage, slot, false, false);
-    }
-
-    @Override
     public @NotNull Predicate<V> getFilter(int slot) {
-        return v -> this.storage.canAccept(slot, v);
+        return this.storage.getFilter(slot);
     }
 
     private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {
@@ -159,9 +151,9 @@ public class ExposedSlots<T, V extends TransferVariant<T>> implements ExposedSto
                 throw new NoSuchElementException();
             }
             return UnmodifiableStorageView.maybeCreate(this.iterator.next(),
-                    ExposedSlots.this.supportsExtraction()
-                            && ExposedSlots.this.slots[this.index]
-                            && ExposedSlots.this.storage.canExposedExtract(this.index++));
+                    ExposedSlotGroup.this.supportsExtraction()
+                            && ExposedSlotGroup.this.slots[this.index]
+                            && ExposedSlotGroup.this.storage.canExposedExtract(this.index++));
         }
     }
 }

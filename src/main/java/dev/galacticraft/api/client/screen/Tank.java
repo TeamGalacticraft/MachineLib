@@ -24,7 +24,7 @@ package dev.galacticraft.api.client.screen;
 
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import dev.galacticraft.api.machine.storage.io.ExposedSlot;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
 import dev.galacticraft.impl.client.screen.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Tank {
     @Contract(value = "_, _, _, _, _ -> new", pure = true)
-    static @NotNull Tank create(@NotNull ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
+    static @NotNull Tank create(@NotNull ExposedSlot<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
         Preconditions.checkNotNull(storage);
         return new TankImpl(storage, index, x, y, height);
     }
@@ -102,7 +102,7 @@ public interface Tank {
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 
-    @ApiStatus.Internal ExposedStorage<Fluid, FluidVariant> getStorage();
+    @ApiStatus.Internal ExposedSlot<Fluid, FluidVariant> getStorage();
 
     long getAmount();
 

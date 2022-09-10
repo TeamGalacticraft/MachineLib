@@ -22,49 +22,32 @@
 
 package dev.galacticraft.impl.machine.storage.io;
 
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
-import dev.galacticraft.impl.MLConstant;
-import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
-import net.minecraft.core.Registry;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T, V> {
-    static {
-        Registry.register(REGISTRY, new ResourceLocation(MLConstant.MOD_ID, "none"), new SlotTypeImpl(TextColor.fromRgb(0x000000), Component.translatable(MLConstant.TranslationKey.INVALID_SLOT_TYPE), v -> false, false, ResourceFlow.BOTH, ResourceType.NONE));
-    }
-
+public class SlotGroupImpl implements SlotGroup {
     private final @NotNull TextColor color;
     private final @NotNull Component name;
-    private final @NotNull Predicate<V> filter;
     private final boolean automatable;
-    private final @NotNull ResourceFlow flow;
-    private final @NotNull ResourceType<T, V> type;
 
-    public SlotTypeImpl(@NotNull TextColor color, @NotNull MutableComponent name, @NotNull Predicate<V> filter, boolean automatable, @NotNull ResourceFlow flow, @NotNull ResourceType<T, V> type) {
+    public SlotGroupImpl(@NotNull TextColor color, @NotNull MutableComponent name, boolean automatable) {
         this.color = color;
-        this.filter = filter;
         this.automatable = automatable;
         this.name = name.setStyle(Style.EMPTY.withColor(color));
-        this.flow = flow;
-        this.type = type;
     }
 
     @Override
     public @NotNull TextColor getColor() {
-        return color;
+        return this.color;
     }
 
     @Override
@@ -73,23 +56,8 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     }
 
     @Override
-    public @NotNull ResourceType<T, V> getType() {
-        return this.type;
-    }
-
-    @Override
-    public @NotNull ResourceFlow getFlow() {
-        return this.flow;
-    }
-
-    @Override
     public boolean isAutomatable() {
         return this.automatable;
-    }
-
-    @Override
-    public boolean willAccept(@NotNull V variant) {
-        return variant.isBlank() || this.filter.test(variant);
     }
 
     @Override
@@ -97,10 +65,7 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
         return "SlotTypeImpl{" +
                 "color=" + color +
                 ", name=" + name +
-                ", filter=" + filter +
                 ", automatable=" + automatable +
-                ", flow=" + flow +
-                ", type=" + type +
                 '}';
     }
 
@@ -108,12 +73,12 @@ public class SlotTypeImpl<T, V extends TransferVariant<T>> implements SlotType<T
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SlotTypeImpl<?, ?> slotType = (SlotTypeImpl<?, ?>) o;
-        return automatable == slotType.automatable && color.equals(slotType.color) && name.equals(slotType.name) && filter.equals(slotType.filter) && flow == slotType.flow && type.equals(slotType.type);
+        SlotGroupImpl slotType = (SlotGroupImpl) o;
+        return automatable == slotType.automatable && color.equals(slotType.color) && name.equals(slotType.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(color, name, filter, automatable, flow, type);
+        return Objects.hash(color, name, automatable);
     }
 }

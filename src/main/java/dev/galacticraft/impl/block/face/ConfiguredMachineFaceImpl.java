@@ -22,7 +22,7 @@
 
 package dev.galacticraft.impl.block.face;
 
-import com.mojang.datafixers.util.Either;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
@@ -32,12 +32,10 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
-
-import java.util.Objects;
 
 /**
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
@@ -46,7 +44,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     /**
      * The type of resource that this face is configured to accept.
      */
-    private @NotNull ResourceType<?, ?> type;
+    private @NotNull ResourceType type;
     /**
      * The flow direction of this face.
      */
@@ -56,37 +54,36 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
      * <p>
      * When it is null, the face is not filtering.
      * When it is an Integer, the face is locked to a single slot/
-     * When it is a {@link SlotType}, the face is locked to all slots of that type.
+     * When it is a {@link SlotGroup}, the face is locked to all slots of that type.
      */
-    private @Nullable Either<Integer, SlotType<?, ?>> matching = null;
+    private @Nullable StorageSelection selection = null;
 
     /**
      * The cached exposed storage of this face.
      */
     private @Nullable Object storage = null;
 
-    public ConfiguredMachineFaceImpl(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    public ConfiguredMachineFaceImpl(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         this.type = type;
         this.flow = flow;
     }
 
     @Override
-    public void setOption(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    public void setOption(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         this.type = type;
         this.flow = flow;
-        this.matching = null;
+        this.selection = null;
         this.storage = null;
     }
 
     @Override
-    public void setMatching(@Nullable Either<Integer, SlotType<?, ?>> matching) {
-        assert matching == null || matching.right().isEmpty() || this.type.willAcceptResource(matching.right().get().getType());
-        this.matching = matching;
+    public void setSelection(@Nullable StorageSelection selection) {
+        this.selection = selection;
         this.storage = null;
     }
 
     @Override
-    public @NotNull ResourceType<?, ?> getType() {
+    public @NotNull ResourceType getType() {
         return type;
     }
 
@@ -96,14 +93,14 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public @Nullable Either<Integer, SlotType<?, ?>> getMatching() {
-        return matching;
+    public @Nullable StorageSelection getSelection() {
+        return selection;
     }
 
     @Override
     public <T, V extends TransferVariant<T>> @Nullable ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
         if (this.getType().willAcceptResource(storage.getResource())) {
-            if (this.storage == null) this.storage = storage.getExposedStorage(this.matching, this.flow);
+            if (this.storage == null) this.storage = storage.getExposedStorage(this.selection, this.flow);
             return (ExposedStorage<T, V>) this.storage;
         }
         return null;
@@ -111,7 +108,7 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
 
     @Override
     public EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage) {
-        if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.matching == null) {
+        if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.selection == null) {
             if (this.storage == null) this.storage = storage.getExposedStorage(this.flow);
             return (EnergyStorage) this.storage;
         }
@@ -119,67 +116,113 @@ public class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     }
 
     @Override
-    public <T, V extends TransferVariant<T>> int @NotNull [] getMatching(@Nullable ConfiguredStorage<T, V> storage) {
+    public int @NotNull [] getMatching(@Nullable ConfiguredStorage storage) { //SORTED
         if (storage == null) return new int[0];
-        if (matching != null) {
-            if (matching.left().isPresent()) {
-                return new int[]{matching.left().get()};
+        if (selection != null) {
+            if (selection.isSlot()) {
+                return new int[]{selection.getSlot()};
             } else {
                 IntList types = new IntArrayList();
-                SlotType<T, V>[] slots = storage.getTypes();
-                //noinspection OptionalGetWithoutIsPresent - we know that right is present because left is not present
-                SlotType<?, ?> type = matching.right().get();
+                SlotGroup[] slots = storage.getGroups();
+                SlotGroup type = selection.getGroup();
                 for (int i = 0; i < slots.length; i++) {
-                    if (slots[i].equals(type)) {
-                        types.add(i);
+                    SlotGroup slot = slots[i];
+                    if (slot.isAutomatable() && slot.equals(type)) {
+                        if (this.flow != ResourceFlow.INPUT || storage.canExposedInsert(i)) {
+                            types.add(i);
+                        }
                     }
                 }
                 return types.toIntArray();
             }
         } else {
-            IntList types = new IntArrayList();
-            SlotType<T, V>[] slots = storage.getTypes();
-            for (int i = 0; i < slots.length; i++) {
-                SlotType<T, V> slot = slots[i];
-                if (slot.getType().willAcceptResource(this.type)) {
-                    if (slot.getFlow().canFlowIn(this.flow)) {
-                        types.add(i);
-                    }
-                }
-            }
-            return types.toIntArray();
+            return all(storage);
         }
     }
 
+    private int @NotNull [] all(@NotNull ConfiguredStorage storage) {
+        IntList types = new IntArrayList();
+        SlotGroup[] slots = storage.getGroups();
+        for (int i = 0; i < slots.length; i++) {
+            SlotGroup slot = slots[i];
+            if (slot.isAutomatable() && (this.flow != ResourceFlow.INPUT || storage.canExposedInsert(i))) {
+                types.add(i);
+            }
+        }
+        return types.toIntArray();
+    }
+
     @Override
-    public @NotNull CompoundTag writeNbt() {
+    public int @NotNull [] getMatchingWild(@Nullable ConfiguredStorage storage) {
+        if (storage == null) return new int[0];
+        return all(storage);
+    }
+
+    @Override
+    @Contract(pure = true)
+    public @NotNull SlotGroup @NotNull [] getMatchingGroups(@NotNull MachineBlockEntity machine) {
+        ConfiguredStorage storage = machine.getStorage(this.getType());
+        SlotGroup[] groups; // SLOT TYPE ALL
+        if (storage != null) {
+            groups = storage.getGroups();
+        } else {
+            groups = machine.getGroups();
+        }
+
+        int count = 0;
+        for (SlotGroup group : groups) {
+            if (group.isAutomatable()) count++;
+        }
+        if (count == 0) return new SlotGroup[0];
+        int c = 0;
+        SlotGroup[] out = new SlotGroup[count];
+        for (SlotGroup group : groups) {
+            if (group.isAutomatable()) out[c++] = group;
+        }
+        return out;
+    }
+
+    @Override
+    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups) {
         CompoundTag nbt = new CompoundTag();
         nbt.putByte(MLConstant.Nbt.FLOW, (byte) this.flow.ordinal());
-        nbt.putByte(MLConstant.Nbt.RESOURCE, this.type.getOrdinal());
-        nbt.putBoolean(MLConstant.Nbt.MATCH, this.matching != null);
-        if (this.matching != null) {
-            nbt.putBoolean(MLConstant.Nbt.IS_SLOT_ID, this.matching.left().isPresent());
-            if (this.matching.left().isPresent()) {
-                nbt.putInt(MLConstant.Nbt.VALUE, this.matching.left().get());
+        nbt.putByte(MLConstant.Nbt.RESOURCE, (byte) this.type.ordinal());
+        nbt.putBoolean(MLConstant.Nbt.MATCH, this.selection != null);
+        if (this.selection != null) {
+            nbt.putBoolean(MLConstant.Nbt.IS_SLOT_ID, this.selection.isSlot());
+            if (this.selection.isSlot()) {
+                nbt.putInt(MLConstant.Nbt.VALUE, this.selection.getSlot());
             } else {
-                nbt.putString(MLConstant.Nbt.VALUE, Objects.requireNonNull(SlotType.REGISTRY.getKey(this.matching.right().orElseThrow(RuntimeException::new))).toString());
+                int idx = -1;
+                for (int i = 0; i < groups.length; i++) {
+                    if (groups[i] == this.selection.getGroup()) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx == -1) throw new AssertionError();
+                nbt.putInt(MLConstant.Nbt.VALUE, idx);
             }
         }
         return nbt;
     }
 
     @Override
-    public void readNbt(@NotNull CompoundTag nbt) {
+    public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
         this.type = ResourceType.getFromOrdinal(nbt.getByte(MLConstant.Nbt.RESOURCE));
         this.flow = ResourceFlow.values()[nbt.getByte(MLConstant.Nbt.FLOW)];
         if (nbt.getBoolean(MLConstant.Nbt.MATCH)) {
             if (nbt.getBoolean(MLConstant.Nbt.IS_SLOT_ID)) {
-                this.matching = Either.left(nbt.getInt(MLConstant.Nbt.VALUE));
+                this.selection = StorageSelection.createSlot(nbt.getInt(MLConstant.Nbt.VALUE));
             } else {
-                this.matching = Either.right(SlotType.REGISTRY.get(new ResourceLocation(nbt.getString(MLConstant.Nbt.VALUE))));
+                if (groups != null) { // should only be null for client rendering
+                    this.selection = StorageSelection.createGroup(groups[nbt.getInt(MLConstant.Nbt.VALUE)]);
+                } else {
+                    this.selection = null;
+                }
             }
         } else {
-            this.matching = null;
+            this.selection = null;
         }
     }
 }

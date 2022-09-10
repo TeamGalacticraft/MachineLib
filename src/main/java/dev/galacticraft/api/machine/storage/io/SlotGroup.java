@@ -22,42 +22,42 @@
 
 package dev.galacticraft.api.machine.storage.io;
 
-import dev.galacticraft.api.screen.StorageSyncHandler;
+import dev.galacticraft.impl.machine.storage.io.SlotGroupImpl;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A storage that can be configured for use in machine I/O faces and synced to the client.
+ * Used for filtering, flow and I/O configuration of resources.
  * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
-public interface ConfiguredStorage {
-    /**
-     * Returns the slot type of each slot in the storage.
-     *
-     * @return The slot type of each slot in the storage.
-     */
-    @Contract(pure = true)
-    @NotNull SlotGroup @NotNull [] getGroups();
+public interface SlotGroup {
+    @Contract("_, _, _ -> new")
+    static @NotNull SlotGroup create(@NotNull TextColor color, @NotNull MutableComponent name, boolean automatable) {
+        if (color.getValue() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
+        return new SlotGroupImpl(color, name, automatable);
+    }
 
     /**
-     * Returns whether the storage allows extraction from the given slot.
-     * @param slot The slot to check.
-     * @return Whether the storage allows extraction from the given slot.
+     * Returns the color of the slot type.
+     * @return The color of the slot type.
      */
     @Contract(pure = true)
-    boolean canExposedExtract(int slot);
+    @NotNull TextColor getColor();
 
     /**
-     * Returns whether the storage allows insertion into the given slot.
-     * @param slot The slot to check.
-     * @return Whether the storage allows insertion into the given slot.
+     * Returns the name of the slot type.
+     * @return The name of the slot type.
      */
     @Contract(pure = true)
-    boolean canExposedInsert(int slot);
+    @NotNull Component getName();
 
     /**
-     * Creates a storage sync handler for this storage.
-     * @return A storage sync handler for this storage.
+     * Returns whether the slot can be accessed by external blocks (eg. pipes)
+     * @return whether the slot can be accessed by external blocks
      */
-    @NotNull StorageSyncHandler createSyncHandler();
+    @Contract(pure = true)
+    boolean isAutomatable();
 }

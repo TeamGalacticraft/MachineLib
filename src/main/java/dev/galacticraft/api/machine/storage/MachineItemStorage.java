@@ -26,10 +26,12 @@ import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
 import dev.galacticraft.impl.machine.storage.empty.EmptyMachineItemStorage;
+import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
+import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, ItemStack> {
     /**
@@ -84,7 +87,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
     }
 
     @Override
-    default @NotNull ResourceType<Item, ItemVariant> getResource() {
+    default @NotNull ResourceType getResource() {
         return ResourceType.ITEM;
     }
 
@@ -110,9 +113,11 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      */
     class Builder {
         private int size = 0;
-        private final List<@NotNull SlotType<Item, ItemVariant>> types = new ArrayList<>();
+        private final List<@NotNull SlotGroup> types = new ArrayList<>();
         private final List<@NotNull ItemSlotDisplay> displays = new ArrayList<>();
+        private final List<@NotNull Predicate<ItemVariant>> filters = new ArrayList<>();
         private final IntList capacities = new IntArrayList();
+        private final BooleanList insertion = new BooleanArrayList();
 
         public Builder() {}
 
@@ -127,8 +132,8 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
          * @param display The display for the slot.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, @NotNull ItemSlotDisplay display) {
-            return this.addSlot(type, 64, display);
+        public @NotNull Builder addSlot(@NotNull SlotGroup type, @NotNull Predicate<ItemVariant> filter, boolean insertion, @NotNull ItemSlotDisplay display) {
+            return this.addSlot(type, filter, insertion, 64, display);
         }
 
         /**
@@ -138,7 +143,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
          * @param display The display for the slot.
          * @return The builder.
          */
-        public @NotNull Builder addSlot(@NotNull SlotType<Item, ItemVariant> type, int capacity, @NotNull ItemSlotDisplay display) {
+        public @NotNull Builder addSlot(@NotNull SlotGroup type, @NotNull Predicate<ItemVariant> filter, boolean insertion, int capacity, @NotNull ItemSlotDisplay display) {
             Preconditions.checkNotNull(type);
             Preconditions.checkNotNull(display);
             StoragePreconditions.notNegative(capacity);
@@ -149,6 +154,8 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
             this.size++;
             this.types.add(type);
             this.displays.add(display);
+            this.filters.add(filter);
+            this.insertion.add(insertion);
             this.capacities.add(capacity);
             return this;
         }
@@ -160,7 +167,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineItemStorage build() {
             if (this.size == 0) return empty();
-            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.capacities.toIntArray(), this.displays.toArray(new ItemSlotDisplay[0]));
+            return new MachineItemStorageImpl(this.size, this.types.toArray(new SlotGroup[0]), this.filters.toArray(new Predicate[0]), this.insertion.toBooleanArray(), this.capacities.toIntArray(), this.displays.toArray(new ItemSlotDisplay[0]));
         }
     }
 }

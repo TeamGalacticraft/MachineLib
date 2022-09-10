@@ -48,18 +48,12 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
-        if (this.storage.canExposedExtract(slot) || this.storage.canExposedInsert(slot)) {
-            return this.storage.extract(slot, amount, null);
-        }
-        return ItemStack.EMPTY;
+        return this.storage.extract(slot, amount, null);
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        if (this.storage.canExposedExtract(slot) || this.storage.canExposedInsert(slot)) {
-            return this.storage.extract(slot, Long.MAX_VALUE, null);
-        }
-        return ItemStack.EMPTY;
+        return this.storage.extract(slot, Long.MAX_VALUE, null);
     }
 
     @Override

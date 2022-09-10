@@ -24,10 +24,12 @@ package dev.galacticraft.api.machine;
 
 import dev.galacticraft.api.block.face.BlockFace;
 import dev.galacticraft.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.impl.machine.MachineIOConfigImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Stores the configuration of a machine's IO for all six faces.
@@ -55,11 +57,13 @@ public interface MachineIOConfig {
      * Serializes the {@link MachineIOConfig} to NBT.
      * @return a NBT compound containing the serialized {@link MachineIOConfig}
      */
-    @NotNull CompoundTag writeNbt();
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups);
 
     /**
      * Deserializes the {@link MachineIOConfig} from NBT.
-     * @param nbt the NBT compound containing the serialized {@link MachineIOConfig}
+     *
+     * @param nbt    the NBT compound containing the serialized {@link MachineIOConfig}
+     * @param groups
      */
-    void readNbt(@NotNull CompoundTag nbt);
+    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
 }

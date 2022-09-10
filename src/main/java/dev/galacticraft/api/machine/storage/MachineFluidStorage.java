@@ -26,7 +26,7 @@ import com.google.common.base.Preconditions;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.display.TankDisplay;
 import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
 import dev.galacticraft.impl.machine.storage.MachineFluidStorageImpl;
@@ -38,11 +38,13 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Fluid storage for machines.
@@ -70,7 +72,8 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
     }
 
     @Override
-    default @NotNull ResourceType<Fluid, FluidVariant> getResource() {
+    @ApiStatus.NonExtendable
+    default @NotNull ResourceType getResource() {
         return ResourceType.FLUID;
     }
 
@@ -96,10 +99,12 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
      */
     class Builder {
         private int size = 0;
-        private final List<@NotNull SlotType<Fluid, FluidVariant>> types = new ArrayList<>();
+        private final List<@NotNull SlotGroup> groups = new ArrayList<>();
         private final List<@NotNull TankDisplay> displays = new ArrayList<>();
-        private final LongList counts = new LongArrayList();
-        private final BooleanList allowsGas = new BooleanArrayList();
+        private final List<@NotNull Predicate<FluidVariant>> filters = new ArrayList<>();
+        private final LongList capacities = new LongArrayList();
+        private final BooleanList gases = new BooleanArrayList();
+        private final BooleanList insertion = new BooleanArrayList();
 
         public Builder() {}
 
@@ -119,8 +124,8 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
          * @param display The display for the tank.
          * @return The builder.
          */
-        public @NotNull Builder addTank(@NotNull SlotType<Fluid, FluidVariant> type, long capacity, @NotNull TankDisplay display) {
-            return this.addTank(type, capacity, display, false);
+        public @NotNull Builder addTank(@NotNull SlotGroup type, long capacity, @NotNull Predicate<FluidVariant> filter, @NotNull TankDisplay display) {
+            return this.addTank(type, capacity, filter, true, display, false);
         }
 
         /**
@@ -131,15 +136,17 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
          * @param allowsGases Whether the tank allows gases.
          * @return The builder.
          */
-        public @NotNull Builder addTank(@NotNull SlotType<Fluid, FluidVariant> type, long capacity, @NotNull TankDisplay display, boolean allowsGases) {
+        public @NotNull Builder addTank(@NotNull SlotGroup type, long capacity, @NotNull Predicate<FluidVariant> filter, boolean insertion, @NotNull TankDisplay display, boolean allowsGases) {
             Preconditions.checkNotNull(type);
             Preconditions.checkNotNull(display);
             StoragePreconditions.notNegative(capacity);
             this.size++;
-            this.types.add(type);
+            this.groups.add(type);
             this.displays.add(display);
-            this.counts.add(capacity);
-            this.allowsGas.add(allowsGases);
+            this.filters.add(filter);
+            this.capacities.add(capacity);
+            this.gases.add(allowsGases);
+            this.insertion.add(insertion);
             return this;
         }
 
@@ -150,7 +157,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
         @Contract(pure = true, value = " -> new")
         public @NotNull MachineFluidStorage build() {
             if (this.size == 0) return empty();
-            return new MachineFluidStorageImpl(this.size, this.types.toArray(new SlotType[0]), this.counts.toLongArray(), this.allowsGas.toBooleanArray(), this.displays.toArray(new TankDisplay[0]));
+            return new MachineFluidStorageImpl(this.size, this.groups.toArray(new SlotGroup[0]), this.capacities.toLongArray(), this.filters.toArray(new Predicate[0]), this.insertion.toBooleanArray(), this.gases.toBooleanArray(), this.displays.toArray(new TankDisplay[0]));
         }
     }
 }

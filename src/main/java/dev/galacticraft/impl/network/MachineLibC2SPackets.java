@@ -22,16 +22,13 @@
 
 package dev.galacticraft.impl.network;
 
-import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.block.face.BlockFace;
+import dev.galacticraft.api.block.face.ConfiguredMachineFace;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.AccessLevel;
 import dev.galacticraft.api.machine.RedstoneActivation;
-import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.ResourceType;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.*;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.impl.MLConstant;
@@ -48,51 +45,133 @@ import org.jetbrains.annotations.NotNull;
 
 public class MachineLibC2SPackets {
     public static void register() {
-        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "side_config"), (server, player, handler, buf, responseSender) -> {
-            BlockFace face = BlockFace.values()[buf.readByte()];
-            if (buf.readBoolean()) { //match
-                if (buf.readBoolean()) { // int or slot type
-                    int i = buf.readInt();
-                    server.execute(() -> {
-                        if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
-                            MachineBlockEntity machine = sHandler.machine;
-                            if (machine.getSecurity().hasAccess(player)) {
-                                if (i == -1) {
-                                    machine.getIOConfig().get(face).setMatching(null);
-                                    return;
-                                }
-                                machine.getIOConfig().get(face).setMatching(Either.left(i));
-                            }
-                        }
-                    });
-                } else {
-                    int i = buf.readInt();
-                    server.execute(() -> {
-                        if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
-                            MachineBlockEntity machine = sHandler.machine;
-                            if (machine.getSecurity().hasAccess(player)) {
-                                if (i == -1) {
-                                    machine.getIOConfig().get(face).setMatching(null);
-                                    return;
-                                }
-                                SlotType<?, ?> type = SlotType.REGISTRY.byId(i);
-                                machine.getIOConfig().get(face).setMatching(Either.right(type));
-                            }
-                        }
-                    });
-                }
-            } else {
-                byte i = buf.readByte();
-                byte j = buf.readByte();
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "reset_face"), (server, player, handler, buf, responseSender) -> {
+            byte b = buf.readByte();
+            boolean type = buf.readBoolean();
+
+            if (b >= 0 && b < BlockFace.values().length) {
+                BlockFace face = BlockFace.values()[b];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            machine.getIOConfig().get(face).setOption(ResourceType.getFromOrdinal(i), ResourceFlow.values()[j]);
-                            machine.getIOConfig().get(face).setMatching(null);
-                            machine.setChanged();
+                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            if (type) machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                            machineFace.setSelection(null);
+                        }
+                    }
+                });
+            }
+        });
 
-                            player.level.updateNeighborsAt(machine.getBlockPos(), machine.getBlockState().getBlock());
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "face_type"), (server, player, handler, buf, responseSender) -> {
+            byte b = buf.readByte();
+            byte type = buf.readByte();
+            byte flow = buf.readByte();
+
+            if (b >= 0 && b < BlockFace.values().length
+                    && type >= 0 && type < ResourceType.values().length
+                    && flow >= 0 && flow < ResourceFlow.VALUES.size()
+            ) {
+                BlockFace face = BlockFace.values()[b];
+                server.execute(() -> {
+                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                        MachineBlockEntity machine = sHandler.machine;
+                        if (machine.getSecurity().hasAccess(player)) {
+                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(ResourceType.values()[type], ResourceFlow.VALUES.get(flow));
+                            machineFace.setSelection(null);
+                        }
+                    }
+                });
+            }
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "match_slot"), (server, player, handler, buf, responseSender) -> {
+            byte b = buf.readByte();
+            int slot = buf.readInt();
+
+            if (b >= 0 && b < BlockFace.values().length && slot >= 0) {
+                BlockFace face = BlockFace.values()[b];
+                server.execute(() -> {
+                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                        MachineBlockEntity machine = sHandler.machine;
+                        if (machine.getSecurity().hasAccess(player)) {
+                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            if (machineFace.getType().matchesSlots()) {
+                                machineFace.setSelection(null);
+                                ConfiguredStorage storage = machine.getStorage(machineFace.getType());
+                                if (storage != null) {
+                                    int[] matching = machineFace.getMatching(storage);
+                                    if (matching.length == 0) {
+                                        return;
+                                    }
+
+                                    int count = 0;
+                                    for (int j : matching) {
+                                        ResourceFlow flow;
+                                        if (storage.canExposedInsert(j)) {
+                                            if (storage.canExposedExtract(j)) {
+                                                flow = ResourceFlow.BOTH;
+                                            } else {
+                                                flow = ResourceFlow.INPUT;
+                                            }
+                                        } else if (storage.canExposedExtract(j)) {
+                                            flow = ResourceFlow.OUTPUT;
+                                        } else {
+                                            continue;
+                                        }
+                                        if (flow.canFlowIn(machineFace.getFlow())) count++;
+                                    }
+                                    if (count == 0) return;
+                                    int[] tmp = new int[count];
+
+                                    int c = 0;
+                                    for (int j : matching) {
+                                        ResourceFlow flow;
+                                        if (storage.canExposedInsert(j)) {
+                                            if (storage.canExposedExtract(j)) {
+                                                flow = ResourceFlow.BOTH;
+                                            } else {
+                                                flow = ResourceFlow.INPUT;
+                                            }
+                                        } else if (storage.canExposedExtract(j)) {
+                                            flow = ResourceFlow.OUTPUT;
+                                        } else {
+                                            continue;
+                                        }
+                                        if (flow.canFlowIn(machineFace.getFlow())) tmp[c++] = j;
+                                    }
+                                    matching = tmp;
+
+                                    if (slot < matching.length) {
+                                        machineFace.setSelection(StorageSelection.createSlot(matching[slot]));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(new ResourceLocation(MLConstant.MOD_ID, "match_group"), (server, player, handler, buf, responseSender) -> {
+            byte b = buf.readByte();
+            int group = buf.readInt();
+
+            if (b >= 0 && b < BlockFace.values().length && group >= 0) {
+                BlockFace face = BlockFace.values()[b];
+                server.execute(() -> {
+                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                        MachineBlockEntity machine = sHandler.machine;
+                        if (machine.getSecurity().hasAccess(player)) {
+                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            if (machineFace.getType().matchesGroups()) {
+                                SlotGroup[] groups = machineFace.getMatchingGroups(machine);
+                                if (group < groups.length) {
+                                    machineFace.setSelection(StorageSelection.createGroup(groups[group]));
+                                }
+                            }
                         }
                     }
                 });
@@ -139,28 +218,28 @@ public class MachineLibC2SPackets {
     private static boolean acceptStack(@NotNull Tank tank, @NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            ExposedStorage<Fluid, FluidVariant> eStorage = tank.getStorage();
-            if (storage.supportsExtraction() && eStorage.supportsInsertion()) {
+            ExposedSlot<Fluid, FluidVariant> slot = tank.getStorage();
+            if (storage.supportsExtraction() && slot.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (tank.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, eStorage.getFilter(tank.getIndex()));
+                        storedResource = StorageUtil.findStoredResource(storage, slot.getFilter(tank.getIndex()));
                     } else {
                         storedResource = tank.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericStorageUtil.move(storedResource, storage, eStorage.getSlot(tank.getIndex()), Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, storage, slot, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && eStorage.supportsExtraction()) {
+            } else if (storage.supportsInsertion() && slot.supportsExtraction()) {
                 FluidVariant storedResource = tank.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericStorageUtil.move(storedResource, eStorage.getSlot(tank.getIndex()), storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, slot, storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }

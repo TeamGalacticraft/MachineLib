@@ -23,7 +23,7 @@
 package dev.galacticraft.api.block.face;
 
 import com.google.common.base.Preconditions;
-import com.mojang.datafixers.util.Either;
+import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineEnergyStorage;
 import dev.galacticraft.api.machine.storage.ResourceStorage;
 import dev.galacticraft.api.machine.storage.io.*;
@@ -48,7 +48,7 @@ public interface ConfiguredMachineFace {
      * @return A new {@link ConfiguredMachineFace}.
      */
     @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull ConfiguredMachineFace of(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow) {
+    static @NotNull ConfiguredMachineFace of(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(flow);
 
@@ -69,19 +69,19 @@ public interface ConfiguredMachineFace {
      * @param type The type of resource to accept.
      * @param flow The flow direction of the resource.
      */
-    void setOption(@NotNull ResourceType<?, ?> type, @NotNull ResourceFlow flow);
+    void setOption(@NotNull ResourceType type, @NotNull ResourceFlow flow);
 
     /**
      * Sets the filter of this face.
      * @param matching the filter to set.
      */
-    void setMatching(@Nullable Either<Integer, SlotType<?, ?>> matching);
+    void setSelection(@Nullable StorageSelection matching);
 
     /**
      * Returns the type of resource that this face is configured to accept.
      * @return The type of resource that this face is configured to accept.
      */
-    @NotNull ResourceType<?, ?> getType();
+    @NotNull ResourceType getType();
 
     /**
      * Returns the flow direction of this face.
@@ -93,7 +93,7 @@ public interface ConfiguredMachineFace {
      * Returns the filter of this face.
      * @return The filter of this face.
      */
-    @Nullable Either<Integer, SlotType<?, ?>> getMatching();
+    @Nullable StorageSelection getSelection();
 
     /**
      * Returns the exposed storage of this face.
@@ -114,23 +114,27 @@ public interface ConfiguredMachineFace {
     @Nullable EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage);
 
     /**
-     * Returns the matching slots of this face in the provided storage.
+     * Returns the matching slots of this face in the provided storage. Sorted
      * @param storage The storage to match.
-     * @param <T> The type of storage.
-     * @param <V> The type of resource.
      * @return The matching slots of this face in the provided storage.
      */
-    <T, V extends TransferVariant<T>> int @NotNull[] getMatching(@Nullable ConfiguredStorage<T, V> storage);
+    int @NotNull[] getMatching(@Nullable ConfiguredStorage storage);
+
+    int @NotNull[] getMatchingWild(@Nullable ConfiguredStorage storage);
+
+    @NotNull SlotGroup @NotNull [] getMatchingGroups(MachineBlockEntity machine);
 
     /**
      * Write the configuration to a new nbt compound.
      * @return The nbt compound that was written to.
      */
-    @NotNull CompoundTag writeNbt();
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups);
 
     /**
      * Read the configuration from the given nbt compound.
-     * @param nbt The nbt compound to read from.
+     *
+     * @param nbt    The nbt compound to read from.
+     * @param groups
      */
-    void readNbt(@NotNull CompoundTag nbt);
+    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
 }

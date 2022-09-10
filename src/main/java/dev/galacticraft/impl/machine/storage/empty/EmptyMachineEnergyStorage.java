@@ -82,6 +82,16 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
+    public boolean canExposedExtract(int slot) {
+        return false;
+    }
+
+    @Override
+    public boolean canExposedInsert(int slot) {
+        return false;
+    }
+
+    @Override
     public @NotNull StorageSyncHandler createSyncHandler() {
         return StorageSyncHandler.DEFAULT;
     }

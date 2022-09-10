@@ -22,7 +22,6 @@
 
 package dev.galacticraft.api.machine.storage;
 
-import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.machine.storage.io.*;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
@@ -39,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
-public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends ConfiguredStorage<T, V>, Storage<V>, Clearable {
+public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends ConfiguredStorage, Storage<V>, Clearable {
     /**
      * Returns the number of slots in the storage.
      * @return The number of slots in the storage.
@@ -84,7 +84,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * Returns the type of resource contained in this storage.
      * @return The type of resource contained in this storage.
      */
-    @NotNull ResourceType<T, V> getResource();
+    @NotNull ResourceType getResource();
 
     /**
      * Returns whether the storage allows extraction from the given slot.
@@ -99,6 +99,13 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @return Whether the storage allows insertion into the given slot.
      */
     boolean canExposedInsert(int slot);
+
+    /**
+     * Returns whether the storage allows insertion into the given slot.
+     * @param slot The slot to check.
+     * @return Whether the storage allows insertion into the given slot.
+     */
+    boolean canPlayerInsert(int slot);
 
     /**
      * Simulates the extraction of all resources from the given slot.
@@ -630,6 +637,13 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     boolean canAccept(int slot, @NotNull V variant);
 
     /**
+     * Returns whether the given slot can contain the given resource.
+     * @param slot The slot to check.
+     * @return Whether the given slot can contain the given resource.
+     */
+    Predicate<V> getFilter(int slot);
+
+    /**
      * Returns the number of the given resource in this inventory.
      * @param resource The resource to check.
      *                 Note: This is not a variant. Items with different NBT will also be included.
@@ -675,6 +689,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * Returns a read-only view of this storage.
      * @return A read-only view of this storage.
      */
+    @Deprecated // todo: look if there are any potential uses
     ExposedStorage<T, V> view();
 
     @Override
@@ -707,14 +722,12 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
     void setSlotUnsafe(int slot, V variant, long amount, boolean markDirty);
 
     @ApiStatus.Internal
-    default Storage<V> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {
-        if (either != null) {
-            if (either.right().isPresent()) {
-                assert either.right().get().getType().willAcceptResource(this.getResource());
-                return ExposedStorage.ofType(this, (SlotType<T, V>) either.right().get(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+    default Storage<V> getExposedStorage(@Nullable StorageSelection selection, @NotNull ResourceFlow flow) {
+        if (selection != null) {
+            if (selection.isGroup()) {
+                return ExposedStorage.ofType(this, selection.getGroup(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
             } else {
-                //noinspection OptionalGetWithoutIsPresent - we can assert that left is present if right is not.
-                return ExposedStorage.ofSlot(this, either.left().get(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+                return ExposedSlot.ofSlot(this, selection.getSlot(), flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
             }
         } else {
             return ExposedStorage.of(this, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));

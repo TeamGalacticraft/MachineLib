@@ -24,11 +24,12 @@ package dev.galacticraft.impl.client.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.api.client.screen.Tank;
-import dev.galacticraft.api.machine.storage.io.ExposedStorage;
+import dev.galacticraft.api.machine.storage.io.ExposedSlot;
 import dev.galacticraft.api.transfer.GenericStorageUtil;
 import dev.galacticraft.impl.MLConstant;
 import dev.galacticraft.impl.client.util.DrawableUtil;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -52,14 +53,14 @@ import java.util.List;
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public class TankImpl implements Tank {
-    public final ExposedStorage<Fluid, FluidVariant> storage;
+    public final ExposedSlot<Fluid, FluidVariant> storage;
     private final int index;
     public int id = -1;
     private final int x;
     private final int y;
     private final int height;
 
-    public TankImpl(ExposedStorage<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
+    public TankImpl(ExposedSlot<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
         this.storage = storage;
         this.index = index;
         this.x = x;
@@ -69,7 +70,7 @@ public class TankImpl implements Tank {
 
     @Override
     public @NotNull FluidVariant getResource() {
-        return this.storage.getResource(this.index);
+        return this.storage.getResource();
     }
 
     @Override
@@ -140,12 +141,12 @@ public class TankImpl implements Tank {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (this.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, this.storage.getFilter(this.index));
+                        storedResource = StorageUtil.findStoredResource(storage, v -> this.storage.simulateInsert(v, FluidConstants.BUCKET, null) != 0);
                     } else {
                         storedResource = this.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericStorageUtil.move(storedResource, storage, this.storage.getSlot(this.index), Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, storage, this.storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
@@ -156,7 +157,7 @@ public class TankImpl implements Tank {
                 FluidVariant storedResource = this.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericStorageUtil.move(storedResource, this.storage.getSlot(this.index), storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericStorageUtil.move(storedResource, this.storage, storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
@@ -169,7 +170,7 @@ public class TankImpl implements Tank {
     }
 
     @Override
-    public ExposedStorage<Fluid, FluidVariant> getStorage() {
+    public ExposedSlot<Fluid, FluidVariant> getStorage() {
         return this.storage;
     }
 

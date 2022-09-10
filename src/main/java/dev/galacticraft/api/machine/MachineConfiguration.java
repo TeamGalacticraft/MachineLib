@@ -22,10 +22,12 @@
 
 package dev.galacticraft.api.machine;
 
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.impl.machine.MachineConfigurationImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A class that holds the configuration of a machine.
@@ -46,48 +48,59 @@ public interface MachineConfiguration {
      * Sets the status of the machine.
      * @param status The status of the machine.
      */
+    @Contract(mutates = "this")
     void setStatus(@NotNull MachineStatus status);
 
     /**
      * Sets the redstone activation of the machine.
      * @param redstone The redstone activation of the machine.
      */
+    @Contract(mutates = "this")
     void setRedstoneActivation(@NotNull RedstoneActivation redstone);
 
     /**
      * Returns the I/O configuration of the machine.
      * @return The I/O configuration of the machine.
      */
+    @Contract(pure = true)
     @NotNull MachineIOConfig getIOConfiguration();
 
     /**
      * Returns the security configuration of the machine.
      * @return The security configuration of the machine.
      */
+    @Contract(pure = true)
     @NotNull SecuritySettings getSecurity();
 
     /**
      * Returns the status of the machine.
      * @return The status of the machine.
      */
+    @Contract(pure = true)
     @NotNull MachineStatus getStatus();
 
     /**
      * Returns the redstone activation of the machine.
      * @return The redstone activation of the machine.
      */
+    @Contract(pure = true)
     @NotNull RedstoneActivation getRedstoneActivation();
 
     /**
      * Serializes the machine configuration to NBT.
-     * @param nbt The NBT compound to serialize to.
+     *
+     * @param nbt    The NBT compound to serialize to.
+     * @param groups
      * @return The NBT compound.
      */
-    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt);
+    @Contract(mutates = "param1", value = "_, _ -> param1")
+    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @NotNull [] groups);
 
     /**
      * Deserializes the machine configuration from NBT.
-     * @param nbt The NBT compound to deserialize from.
+     *
+     * @param nbt    The NBT compound to deserialize from.
+     * @param groups
      */
-    void readNbt(@NotNull CompoundTag nbt);
+    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
 }

@@ -27,9 +27,9 @@ import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.client.screen.Tank;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.display.TankDisplay;
+import dev.galacticraft.api.machine.storage.io.ExposedSlot;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.MLConstant;
@@ -55,41 +55,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final int size;
-    private final boolean[] allowsGas;
-    private final TankDisplay[] displays;
-    private final @NotNull FluidSlot[] inventory;
-    private final @NotNull SlotType<Fluid, FluidVariant>[] types;
-    private final boolean @NotNull [] extraction;
-    private final boolean @NotNull [] insertion;
+    private final boolean @NotNull [] allowsGas;
+    private final TankDisplay @NotNull [] displays;
+    private final @NotNull FluidSlot @NotNull [] inventory;
+    private final @NotNull SlotGroup @NotNull [] types;
+    private final @NotNull Predicate<FluidVariant> @NotNull [] filters;
+    private final boolean @NotNull [] playerInsertion;
 
     private final @NotNull ModCount modCount = ModCount.root();
-    private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.of(this, false, false);
+    private final @NotNull ExposedStorage<Fluid, FluidVariant> view = ExposedStorage.view(this);
 
-    public MachineFluidStorageImpl(int size, SlotType<Fluid, FluidVariant>[] types, long[] counts, boolean[] allowsGas, TankDisplay[] displays) {
+    public MachineFluidStorageImpl(int size, @NotNull SlotGroup @NotNull [] types, long[] capacities, @NotNull Predicate<FluidVariant> @NotNull [] filters, boolean @NotNull [] playerInsertion, boolean @NotNull [] allowsGas, @NotNull TankDisplay @NotNull [] displays) {
         this.size = size;
         this.allowsGas = allowsGas;
         this.displays = displays;
+        this.filters = filters;
         this.inventory = new FluidSlot[this.size];
-        this.extraction = new boolean[this.size];
-        this.insertion = new boolean[this.size];
-
-        for (int i = 0; i < this.inventory.length; i++) {
-            this.inventory[i] = new FluidSlot(counts[i], this.modCount);
-            if (types[i].getFlow() == ResourceFlow.INPUT) {
-                this.insertion[i] = true;
-                this.extraction[i] = false;
-            } else if (types[i].getFlow() == ResourceFlow.OUTPUT) {
-                this.insertion[i] = false;
-                this.extraction[i] = true;
-            } else if (types[i].getFlow() == ResourceFlow.BOTH) {
-                this.insertion[i] = true;
-                this.extraction[i] = true;
-            }
-        }
+        this.playerInsertion = playerInsertion;
         this.types = types;
+
+        for (int i = 0; i < this.size; i++) {
+            this.inventory[i] = new FluidSlot(capacities[i], this.modCount);
+        }
     }
 
     @Override
@@ -134,12 +125,17 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public boolean canExposedExtract(int slot) {
-        return this.extraction[slot];
+        return this.types[slot].isAutomatable();
     }
 
     @Override
     public boolean canExposedInsert(int slot) {
-        return this.insertion[slot];
+        return this.canPlayerInsert(slot) && this.types[slot].isAutomatable();
+    }
+
+    @Override
+    public boolean canPlayerInsert(int slot) {
+        return this.playerInsertion[slot];
     }
 
     @Override
@@ -193,7 +189,12 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public boolean canAccept(int slot, @NotNull FluidVariant variant) {
         if (!this.allowsGases(slot) && FluidVariantAttributes.isLighterThanAir(variant)) return false;
-        return this.types[slot].willAccept(variant);
+        return this.filters[slot].test(variant);
+    }
+
+    @Override
+    public Predicate<FluidVariant> getFilter(int slot) {
+        return this.filters[slot];
     }
 
     @Override
@@ -274,7 +275,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public SlotType<Fluid, FluidVariant> @NotNull [] getTypes() {
+    public @NotNull SlotGroup @NotNull [] getGroups() {
         return this.types;
     }
 
@@ -314,10 +315,9 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
         TankDisplay[] tankDisplays = this.displays;
-        ExposedStorage<Fluid, FluidVariant> of = ExposedStorage.ofPlayer(this, true, true);
         for (int i = 0; i < tankDisplays.length; i++) {
             TankDisplay tankDisplay = tankDisplays[i];
-            handler.addTank(Tank.create(of, i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height()));
+            handler.addTank(Tank.create(ExposedSlot.ofPlayerSlot(this, i, true), i, tankDisplay.x(), tankDisplay.y(), tankDisplay.height()));
         }
     }
 }

@@ -23,59 +23,47 @@
 package dev.galacticraft.api.machine.storage.io;
 
 import dev.galacticraft.impl.MLConstant;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines the types of resources that can be stored in a {@link ConfiguredStorage}.
- * Has compile-time generics to allow for more specific resource filtering.
- * @param <T> The inner type of resource.
- * @param <V> The resource variant type.
  */
 @SuppressWarnings("unused")
-public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>> {
+public enum ResourceType {
     /**
      * No resources can be stored/transferred.
      */
-    public static final ResourceType<?, ?> NONE = new ResourceType<>(0, Component.translatable(MLConstant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
-    /**
-     * All resources can be stored/transferred.
-     */
-    public static final ResourceType<?, ?> ANY = new ResourceType<>(4, Component.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
+    NONE(Component.translatable(MLConstant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY))),
     /**
      * Energy can be stored/transferred.
      */
-    public static final ResourceType<Long, Long> ENERGY = new ResourceType<>(1, Component.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)));
+    ENERGY(Component.translatable(MLConstant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE))),
     /**
      * Items can be stored/transferred.
      */
-    public static final ResourceType<Item, ItemVariant> ITEM = new ResourceType<>(2, Component.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
+    ITEM(Component.translatable(MLConstant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD))),
     /**
      * Fluids can be stored/transferred.
      */
-    public static final ResourceType<Fluid, FluidVariant> FLUID = new ResourceType<>(3, Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
+    FLUID(Component.translatable(MLConstant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN))),
+    /**
+     * All resources can be stored/transferred.
+     */
+    ANY(Component.translatable(MLConstant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
 
-    private static final ResourceType<?, ?>[] normalTypes =  new ResourceType[] {ENERGY, ITEM, FLUID};
-    private static final ResourceType<?, ?>[] types =  new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
+    private static final ResourceType[] normalTypes =  new ResourceType[] {ENERGY, ITEM, FLUID};
+    private static final ResourceType[] types =  new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
 
     /**
      * The name of the resource type.
      */
     private final @NotNull Component name;
-    /**
-     * The ID of the resource type.
-     */
-    private final byte ordinal;
 
-    private ResourceType(int ordinal, @NotNull Component name) {
-        this.ordinal = (byte)ordinal;
+    ResourceType(@NotNull Component name) {
         this.name = name;
     }
 
@@ -84,7 +72,7 @@ public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>>
      * @return An array of all resource types.
      */
     @Contract(value = " -> new", pure = true)
-    public static ResourceType<?, ?> @NotNull [] types() {
+    public static ResourceType @NotNull [] types() {
         return types;
     }
 
@@ -93,7 +81,7 @@ public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>>
      * @return An array of all resource types except {@link #NONE} and {@link #ANY}.
      */
     @Contract(value = " -> new", pure = true)
-    public static ResourceType<?, ?> @NotNull [] normalTypes() {
+    public static ResourceType @NotNull [] normalTypes() {
         return normalTypes;
     }
 
@@ -109,16 +97,12 @@ public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>>
      * Returns whether the resource type is {@link #NONE} or {@link #ANY}.
      * @return Whether the resource type is {@link #NONE} or {@link #ANY}.
      */
-    public boolean isSpecial() {
-        return this == ANY || this == NONE;
+    public boolean matchesSlots() {
+        return this != ANY && this != NONE && this != ENERGY;
     }
 
-    /**
-     * Returns the ID of the resource type.
-     * @return The ID of the resource type.
-     */
-    public byte getOrdinal() {
-        return ordinal;
+    public boolean matchesGroups() {
+        return this != NONE && this != ENERGY;
     }
 
     /**
@@ -126,13 +110,13 @@ public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>>
      * @param id The ID of the resource type.
      * @return The resource type with the given ID.
      */
-    public static ResourceType<?, ?> getFromOrdinal(byte id) {
+    public static ResourceType getFromOrdinal(byte id) {
         return switch (id) {
             case 0 -> NONE;
-            case 1 -> ANY;
-            case 2 -> ENERGY;
-            case 3 -> ITEM;
-            case 4 -> FLUID;
+            case 1 -> ENERGY;
+            case 2 -> ITEM;
+            case 3 -> FLUID;
+            case 4 -> ANY;
             default -> throw new IllegalStateException("Unexpected id: " + id);
         };
     }
@@ -142,13 +126,7 @@ public final class ResourceType<T, V>  implements Comparable<ResourceType<?, ?>>
      * @param other The other resource type.
      * @return Whether the given resource type is compatible with this resource type.
      */
-    public boolean willAcceptResource(ResourceType<?, ?> other) {
+    public boolean willAcceptResource(ResourceType other) {
         return this != NONE && (this == other || this == ANY);
-    }
-
-    @Override
-    public int compareTo(@NotNull ResourceType<?, ?> resourceType) {
-        if (resourceType == this) return 0;
-        return this.ordinal < resourceType.ordinal ? -1 : 1;
     }
 }

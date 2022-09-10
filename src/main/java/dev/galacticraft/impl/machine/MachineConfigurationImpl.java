@@ -23,9 +23,11 @@
 package dev.galacticraft.impl.machine;
 
 import dev.galacticraft.api.machine.*;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
 import dev.galacticraft.impl.MLConstant;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -69,17 +71,17 @@ public class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt) {
+    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @NotNull [] groups) {
         nbt.put(MLConstant.Nbt.SECURITY, this.getSecurity().toNbt());
-        nbt.put(MLConstant.Nbt.CONFIGURATION, this.getIOConfiguration().writeNbt());
+        nbt.put(MLConstant.Nbt.CONFIGURATION, this.getIOConfiguration().writeNbt(groups));
         nbt.put(MLConstant.Nbt.REDSTONE_ACTIVATION, this.getRedstoneActivation().writeNbt());
         return nbt;
     }
 
     @Override
-    public void readNbt(@NotNull CompoundTag nbt) {
+    public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
         this.getSecurity().fromNbt(nbt.getCompound(MLConstant.Nbt.SECURITY));
-        this.getIOConfiguration().readNbt(nbt.getCompound(MLConstant.Nbt.CONFIGURATION));
+        this.getIOConfiguration().readNbt(nbt.getCompound(MLConstant.Nbt.CONFIGURATION), groups);
         this.setRedstoneActivation(RedstoneActivation.readNbt(Objects.requireNonNull(nbt.get(MLConstant.Nbt.REDSTONE_ACTIVATION))));
     }
 }

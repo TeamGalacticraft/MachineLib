@@ -22,13 +22,13 @@
 
 package dev.galacticraft.impl.machine.storage.empty;
 
-import com.mojang.datafixers.util.Either;
 import dev.galacticraft.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.api.machine.storage.MachineFluidStorage;
 import dev.galacticraft.api.machine.storage.StorageSlot;
 import dev.galacticraft.api.machine.storage.io.ExposedStorage;
 import dev.galacticraft.api.machine.storage.io.ResourceFlow;
-import dev.galacticraft.api.machine.storage.io.SlotType;
+import dev.galacticraft.api.machine.storage.io.SlotGroup;
+import dev.galacticraft.api.machine.storage.io.StorageSelection;
 import dev.galacticraft.api.screen.MachineScreenHandler;
 import dev.galacticraft.api.screen.StorageSyncHandler;
 import dev.galacticraft.impl.fluid.FluidStack;
@@ -52,7 +52,7 @@ import java.util.function.Predicate;
 public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStorage<Fluid, FluidVariant> {
     INSTANCE;
 
-    private static final SlotType<Fluid, FluidVariant>[] NO_SLOTS = new SlotType[0];
+    private static final SlotGroup[] NO_SLOTS = new SlotGroup[0];
 
     @Override
     public boolean allowsGases(int slot) {
@@ -105,6 +105,11 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
 
     @Override
     public boolean canExposedInsert(int slot) {
+        return false;
+    }
+
+    @Override
+    public boolean canPlayerInsert(int slot) {
         return false;
     }
 
@@ -226,12 +231,12 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public Storage<FluidVariant> getExposedStorage(@Nullable Either<Integer, SlotType<?, ?>> either, @NotNull ResourceFlow flow) {
+    public Storage<FluidVariant> getExposedStorage(@Nullable StorageSelection either, @NotNull ResourceFlow flow) {
         return this;
     }
 
     @Override
-    public @NotNull SlotType<Fluid, FluidVariant> @NotNull [] getTypes() {
+    public @NotNull SlotGroup @NotNull [] getGroups() {
         return NO_SLOTS;
     }
 

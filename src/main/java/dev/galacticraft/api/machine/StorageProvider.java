@@ -36,5 +36,5 @@ public interface StorageProvider {
      * @param type The type of resource to get a storage for.
      * @return The storage for the given resource type.
      */
-    @Nullable ConfiguredStorage<?, ?> getStorage(@NotNull ResourceType<?, ?> type);
+    @Nullable ConfiguredStorage getStorage(@NotNull ResourceType type);
 }
