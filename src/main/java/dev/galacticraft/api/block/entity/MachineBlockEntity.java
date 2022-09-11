@@ -118,7 +118,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * The fluid storage for this machine.
      *
-     * @see #createFluidStorage() () to modify the item storage's settings.
+     * @see #createFluidStorage() to modify the item storage's settings.
      * @see #fluidStorage()
      */
     private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();

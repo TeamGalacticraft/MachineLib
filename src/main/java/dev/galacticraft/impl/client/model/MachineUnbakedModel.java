@@ -58,23 +58,23 @@ public class MachineUnbakedModel implements UnbakedModel {
 
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ENERGY_IN));
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ENERGY_OUT));
-        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ENERGY_IO));
+        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ENERGY_BOTH));
 
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_FLUID_IN));
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_FLUID_OUT));
-        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_FLUID_IO));
+        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_FLUID_BOTH));
 
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ITEM_IN));
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ITEM_OUT));
-        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ITEM_IO));
+        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ITEM_BOTH));
 
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_GAS_IN));
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_GAS_OUT));
-        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_GAS_IO));
+        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_GAS_BOTH));
 
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ANY_IN));
         builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ANY_OUT));
-        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ANY_IO));
+        builder.add(SpriteUtil.identifier(MachineBakedModel.MACHINE_ANY_BOTH));
 
         builder.addAll(SpriteUtil.identifiers(MachineBakedModel.TEXTURE_DEPENDENCIES));
         return builder.build();

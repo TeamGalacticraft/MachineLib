@@ -80,23 +80,23 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     public static final ResourceLocation MACHINE_ENERGY_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_input");
     public static final ResourceLocation MACHINE_ENERGY_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_output");
-    public static final ResourceLocation MACHINE_ENERGY_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_io");
+    public static final ResourceLocation MACHINE_ENERGY_BOTH = new ResourceLocation(MLConstant.MOD_ID, "block/machine_power_both");
 
     public static final ResourceLocation MACHINE_FLUID_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_input");
     public static final ResourceLocation MACHINE_FLUID_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_output");
-    public static final ResourceLocation MACHINE_FLUID_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_io");
+    public static final ResourceLocation MACHINE_FLUID_BOTH = new ResourceLocation(MLConstant.MOD_ID, "block/machine_fluid_both");
 
     public static final ResourceLocation MACHINE_ITEM_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_input");
     public static final ResourceLocation MACHINE_ITEM_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_output");
-    public static final ResourceLocation MACHINE_ITEM_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_io");
+    public static final ResourceLocation MACHINE_ITEM_BOTH = new ResourceLocation(MLConstant.MOD_ID, "block/machine_item_both");
 
     public static final ResourceLocation MACHINE_GAS_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_input");
     public static final ResourceLocation MACHINE_GAS_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_output");
-    public static final ResourceLocation MACHINE_GAS_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_io");
+    public static final ResourceLocation MACHINE_GAS_BOTH = new ResourceLocation(MLConstant.MOD_ID, "block/machine_gas_both");
 
     public static final ResourceLocation MACHINE_ANY_IN = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_input");
     public static final ResourceLocation MACHINE_ANY_OUT = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_output");
-    public static final ResourceLocation MACHINE_ANY_IO = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_io");
+    public static final ResourceLocation MACHINE_ANY_BOTH = new ResourceLocation(MLConstant.MOD_ID, "block/machine_any_both");
 
     private static final ItemTransforms ITEM_TRANSFORMATION = new ItemTransforms(
             new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
@@ -263,13 +263,13 @@ public class MachineBakedModel implements FabricBakedModel, BakedModel {
             }
             case BOTH -> {
                 if (type == ResourceType.ENERGY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ENERGY_IO);
+                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ENERGY_BOTH);
                 } else if (type == ResourceType.ITEM) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_IO);
+                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_BOTH);
                 } else if (type == ResourceType.FLUID) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_IO);
+                    return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_BOTH);
                 } else if (type == ResourceType.ANY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_IO);
+                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_BOTH);
                 }
             }
         }
