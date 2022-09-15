@@ -49,7 +49,6 @@ import java.util.Optional;
  * @param <C> The type of inventory the recipe type uses.
  *           This is usually {@link Container} but can be any inventory type.
  * @param <R> The type of recipe the machine uses.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public abstract class RecipeMachineBlockEntity<C extends Container, R extends Recipe<C>> extends MachineBlockEntity {
     /**

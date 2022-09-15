@@ -31,9 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @ApiStatus.Internal
 public final class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull ConfiguredMachineFace front = ConfiguredMachineFace.create();

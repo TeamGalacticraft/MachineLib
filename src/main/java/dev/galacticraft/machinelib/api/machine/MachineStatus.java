@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the status of a machine.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineStatus {
     /**

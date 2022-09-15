@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Stores the configuration of a machine's IO for all six faces.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineIOConfig {
     /**

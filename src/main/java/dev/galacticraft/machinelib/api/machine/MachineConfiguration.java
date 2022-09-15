@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A class that holds the configuration of a machine.
  * Can be used to save and load the configuration of a machine.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface MachineConfiguration {
     /**

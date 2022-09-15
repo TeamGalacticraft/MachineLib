@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @ApiStatus.Internal
 public final class SlotGroupImpl implements SlotGroup {
     private final @NotNull TextColor color;

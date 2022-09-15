@@ -30,9 +30,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @ApiStatus.Internal
 public final class CachingSpriteAtlas implements Function<ResourceLocation, TextureAtlasSprite> {
     private final Map<ResourceLocation, TextureAtlasSprite> cache = new ConcurrentHashMap<>();

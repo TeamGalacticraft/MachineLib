@@ -70,9 +70,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @Environment(EnvType.CLIENT)
 @ApiStatus.Internal
 public final class MachineBakedModel implements FabricBakedModel, BakedModel {

@@ -94,7 +94,6 @@ import java.util.*;
 /**
  * Handles most of the boilerplate code for machine screens.
  * Handles the rendering of tanks, configuration panels and capacitors.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 @Environment(EnvType.CLIENT)
 public abstract class MachineHandledScreen<M extends MachineBlockEntity, H extends MachineScreenHandler<M>> extends AbstractContainerScreen<H> {

@@ -44,7 +44,6 @@ import java.util.List;
 
 /**
  * Screen handler for machines.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends AbstractContainerMenu {
     /**

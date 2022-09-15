@@ -80,7 +80,6 @@ import java.util.*;
  * A block entity that represents a machine.>
  * This class handles the different types of storage and IO configurations.
  *
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  * @see MachineBlock
  * @see MachineScreenHandler
  * @see MachineHandledScreen

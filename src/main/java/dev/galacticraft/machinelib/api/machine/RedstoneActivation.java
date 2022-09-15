@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the behavior of a machine when it is activated by redstone.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public enum RedstoneActivation implements StringRepresentable {
     /**

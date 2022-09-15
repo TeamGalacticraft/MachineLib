@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @ApiStatus.Internal
 public final class SpriteUtil {
     @Contract("_ -> new")

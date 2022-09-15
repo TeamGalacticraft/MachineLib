@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Used for filtering, flow and I/O configuration of resources.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface SlotGroup {
     @Contract("_, _, _ -> new")

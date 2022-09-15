@@ -43,7 +43,6 @@ import team.reborn.energy.api.EnergyStorage;
 /**
  * Represents a face of a {@link MachineBlockEntity} that has been configured to
  * accept certain types of resources.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface ConfiguredMachineFace {
     /**

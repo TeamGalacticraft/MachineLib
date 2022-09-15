@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
- */
 @ApiStatus.Internal
 public final class MachineConfigurationImpl implements MachineConfiguration {
     private MachineStatus status = MachineStatus.INVALID;

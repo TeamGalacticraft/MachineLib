@@ -77,7 +77,6 @@ import java.util.List;
 /**
  * The base block for all machines.
  *
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  * @see MachineBlockEntity
  */
 public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEntityBlock {

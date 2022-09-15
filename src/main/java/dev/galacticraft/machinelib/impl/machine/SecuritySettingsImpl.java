@@ -42,7 +42,6 @@ import java.util.UUID;
 
 /**
  * Represents a security setting of a machine.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 @ApiStatus.Internal
 public final class SecuritySettingsImpl implements SecuritySettings {

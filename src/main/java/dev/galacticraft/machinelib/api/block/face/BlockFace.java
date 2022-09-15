@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * An enum representing a face of a block.
  * Used in machine I/O face calculations.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public enum BlockFace {
     /**

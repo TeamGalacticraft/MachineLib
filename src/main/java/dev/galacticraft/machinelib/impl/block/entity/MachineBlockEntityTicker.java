@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Default implementation of a {@link BlockEntityTicker} for {@link MachineBlockEntity}s for convenience.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public final class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEntityTicker<T> {
     private static final MachineBlockEntityTicker<? extends MachineBlockEntity> INSTANCE = new MachineBlockEntityTicker<>();

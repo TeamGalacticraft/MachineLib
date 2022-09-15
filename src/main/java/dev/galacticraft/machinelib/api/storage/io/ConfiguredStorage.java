@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A storage that can be configured for use in machine I/O faces and synced to the client.
- * @author <a href="https://github.com/TeamGalacticraft">TeamGalacticraft</a>
  */
 public interface ConfiguredStorage {
     /**
