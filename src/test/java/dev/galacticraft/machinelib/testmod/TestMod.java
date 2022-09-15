@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.testmod;
 
-import dev.galacticraft.api.machine.MachineStatus;
-import dev.galacticraft.api.machine.storage.io.SlotGroup;
-import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.screen.SimpleMachineScreenHandler;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.testmod.block.SimpleMachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.fabricmc.api.ModInitializer;

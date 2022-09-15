@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.testmod.client.screen;
 
-import dev.galacticraft.api.client.screen.MachineHandledScreen;
-import dev.galacticraft.api.screen.SimpleMachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.SimpleMachineScreenHandler;
+import dev.galacticraft.machinelib.client.api.screen.MachineHandledScreen;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.network.chat.Component;

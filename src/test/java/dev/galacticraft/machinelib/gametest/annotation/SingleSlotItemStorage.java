@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.gametest.annotation;
 
-import dev.galacticraft.api.machine.storage.io.ResourceFlow;
+import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.gametest.misc.ItemType;
 
 import java.lang.annotation.Retention;

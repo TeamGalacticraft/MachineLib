@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.gametest;
 
-import dev.galacticraft.impl.fluid.FluidStack;
+import dev.galacticraft.machinelib.impl.fluid.FluidStack;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;

@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.testmod.block;
 
-import dev.galacticraft.api.block.MachineBlock;
+import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;

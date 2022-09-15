@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.gametest.storage.item;
 
-import dev.galacticraft.api.machine.storage.MachineItemStorage;
-import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import net.minecraft.gametest.framework.GameTest;

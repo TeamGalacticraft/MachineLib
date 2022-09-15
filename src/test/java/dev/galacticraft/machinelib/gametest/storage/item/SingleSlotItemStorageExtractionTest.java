@@ -22,11 +22,11 @@
 
 package dev.galacticraft.machinelib.gametest.storage.item;
 
-import dev.galacticraft.api.machine.storage.MachineItemStorage;
-import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
-import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.Util;
+import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;

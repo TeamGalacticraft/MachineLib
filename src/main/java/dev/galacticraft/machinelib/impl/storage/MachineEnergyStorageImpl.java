@@ -1,0 +1,200 @@
+/*
+ * Copyright (c) 2021-2022 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package dev.galacticraft.machinelib.impl.storage;
+
+import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
+import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
+import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import team.reborn.energy.api.EnergyStorage;
+
+@ApiStatus.Internal
+public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> implements MachineEnergyStorage {
+    public final long capacity;
+    private final long maxInput;
+    private final long maxOutput;
+    private final boolean insert;
+    private final boolean extract;
+    private final ModCount modCount = ModCount.root();
+
+    public long amount = 0;
+
+    public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput, boolean insert, boolean extract) {
+        this.capacity = capacity;
+        this.maxInput = maxInput;
+        this.maxOutput = maxOutput;
+        this.insert = insert;
+        this.extract = extract;
+    }
+
+    @Override
+    public boolean canExposedExtract(int slot) {
+        return false;
+    }
+
+    @Override
+    public boolean canExposedInsert(int slot) {
+        return false;
+    }
+
+    @Override
+    public @NotNull StorageSyncHandler createSyncHandler() {
+        return new StorageSyncHandler() {
+            private long modCount = -1;
+
+            @Override
+            public boolean needsSyncing() {
+                return MachineEnergyStorageImpl.this.modCount.getModCount() != this.modCount;
+            }
+
+            @Override
+            public void sync(FriendlyByteBuf buf) {
+                this.modCount = MachineEnergyStorageImpl.this.modCount.getModCount();
+                buf.writeLong(MachineEnergyStorageImpl.this.amount);
+            }
+
+            @Override
+            public void read(FriendlyByteBuf buf) {
+                MachineEnergyStorageImpl.this.amount = buf.readLong();
+            }
+        };
+    }
+
+    @Override
+    protected Long createSnapshot() {
+        return this.amount;
+    }
+
+    @Override
+    protected void readSnapshot(Long snapshot) {
+        this.amount = snapshot;
+    }
+
+    @Override
+    public boolean supportsInsertion() {
+        return this.maxInput > 0;
+    }
+
+    @Override
+    public long insert(long maxAmount, TransactionContext transaction) {
+        long inserted = Math.min(Math.min(maxAmount, maxInput), capacity - amount);
+
+        if (inserted > 0) {
+            this.updateSnapshots(transaction);
+            this.modCount.increment(transaction);
+            this.amount += inserted;
+            return inserted;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public boolean supportsExtraction() {
+        return this.maxOutput > 0;
+    }
+
+    @Override
+    public long extract(long maxAmount, TransactionContext transaction) {
+        long extracted = Math.min(this.amount, Math.min(maxAmount, this.maxOutput));
+
+        if (extracted > 0) {
+            this.updateSnapshots(transaction);
+            this.modCount.increment(transaction);
+            this.amount -= extracted;
+            return extracted;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public long getAmount() {
+        return this.amount;
+    }
+
+    @Override
+    public long getCapacity() {
+        return this.capacity;
+    }
+
+    @Override
+    public boolean isFull() {
+        return this.amount == this.capacity;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.amount == 0;
+    }
+
+    @Override
+    public void setEnergy(long amount, @NotNull TransactionContext context) {
+        this.updateSnapshots(context);
+        this.modCount.increment(context);
+        this.amount = amount;
+    }
+
+    @Override
+    public void setEnergyUnsafe(long amount) {
+        assert !Transaction.isOpen();
+        this.modCount.incrementUnsafe();
+        this.amount = amount;
+    }
+
+    @Override
+    public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
+        return new ExposedEnergyStorage(this, this.insert && flow.canFlowIn(ResourceFlow.INPUT), this.extract && flow.canFlowIn(ResourceFlow.OUTPUT));
+    }
+
+    @Override
+    public boolean canExposedInsert() {
+        return this.insert;
+    }
+
+    @Override
+    public boolean canExposedExtract() {
+        return this.extract;
+    }
+
+    @Override
+    public @NotNull Tag writeNbt() {
+        return LongTag.valueOf(this.amount);
+    }
+
+    @Override
+    public void readNbt(@NotNull Tag nbt) {
+        if (nbt.getId() == Tag.TAG_LONG) {
+            this.amount = ((LongTag)nbt).getAsLong();
+        }
+    }
+}

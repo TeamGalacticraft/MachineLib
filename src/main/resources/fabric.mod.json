@@ -32,10 +32,10 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "dev.galacticraft.impl.MachineLibClient"
+      "dev.galacticraft.machinelib.client.impl.MachineLibClient"
     ],
     "main": [
-      "dev.galacticraft.impl.MachineLib"
+      "dev.galacticraft.machinelib.impl.MachineLib"
     ]
   },
   "depends": {

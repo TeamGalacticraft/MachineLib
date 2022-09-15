@@ -22,13 +22,13 @@
 
 package dev.galacticraft.machinelib.gametest.storage.item;
 
-import dev.galacticraft.api.machine.storage.MachineItemStorage;
-import dev.galacticraft.api.machine.storage.display.ItemSlotDisplay;
-import dev.galacticraft.impl.machine.storage.MachineItemStorageImpl;
-import dev.galacticraft.impl.machine.storage.io.SlotGroupImpl;
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.annotation.SingleSlotItemStorage;
 import dev.galacticraft.machinelib.gametest.misc.ItemType;
+import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupImpl;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.ChatFormatting;
@@ -64,9 +64,7 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
                             }
                         }
                         if (test.block() != ItemType.NONE) {
-                            if (v.isOf(test.block().generateVariant().getItem())) {
-                                return false;
-                            }
+                            return !v.isOf(test.block().generateVariant().getItem());
                         }
                         return true;
                     }, true, test.maxCount(), new ItemSlotDisplay(0, 0)).build();
