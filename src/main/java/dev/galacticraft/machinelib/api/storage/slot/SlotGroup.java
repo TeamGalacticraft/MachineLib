@@ -31,8 +31,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Used for filtering, flow and I/O configuration of resources.
+ * Groups can be arbitrary and cover multiple resource types.
  */
 public interface SlotGroup {
+    /**
+     * Constructs a new slot group with the given properties.
+     *
+     * @param color the colour for highlighting
+     * @param name the name of the goups
+     * @param automatable whether the given slots can be accessed or modified by external blocks.
+     * @return a new slot group.
+     */
     @Contract("_, _, _ -> new")
     static @NotNull SlotGroup create(@NotNull TextColor color, @NotNull MutableComponent name, boolean automatable) {
         if (color.getValue() == 0xFFFFFFFF) throw new IllegalArgumentException("Color cannot be totally white (-1)! (It is used as a default/invalid number)");
@@ -41,6 +50,7 @@ public interface SlotGroup {
 
     /**
      * Returns the color of the slot type.
+     *
      * @return The color of the slot type.
      */
     @Contract(pure = true)
@@ -48,6 +58,7 @@ public interface SlotGroup {
 
     /**
      * Returns the name of the slot type.
+     *
      * @return The name of the slot type.
      */
     @Contract(pure = true)
@@ -55,6 +66,7 @@ public interface SlotGroup {
 
     /**
      * Returns whether the slot can be accessed by external blocks (eg. pipes)
+     *
      * @return whether the slot can be accessed by external blocks
      */
     @Contract(pure = true)

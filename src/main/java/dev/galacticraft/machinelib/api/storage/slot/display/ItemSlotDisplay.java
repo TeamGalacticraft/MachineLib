@@ -28,11 +28,17 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Display information for an item slot.
+ *
  * @param x The x position of the slot.
  * @param y The y position of the slot.
  * @param icon The icon to display in the slot.
  */
 public record ItemSlotDisplay(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
+    /**
+     * Constructs an item slot display without an icon
+     * @param x The x position of the slot.
+     * @param y The y position of the slot.
+     */
     public ItemSlotDisplay(int x, int y) {
         this(x, y, null);
     }

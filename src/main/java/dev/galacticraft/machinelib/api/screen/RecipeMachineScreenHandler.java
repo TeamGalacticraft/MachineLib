@@ -23,10 +23,10 @@
 package dev.galacticraft.machinelib.api.screen;
 
 import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
+import dev.galacticraft.machinelib.impl.network.DirectDataSlot;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Contract;
@@ -34,35 +34,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class RecipeMachineScreenHandler<C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> extends MachineScreenHandler<T> {
-    public final DataSlot progress = new DataSlot() {
-        @Override
-        public int get() {
-            return RecipeMachineScreenHandler.this.machine.getProgress();
-        }
-
-        @Override
-        public void set(int value) {
-            RecipeMachineScreenHandler.this.machine.setProgress(value);
-        }
-    };
-
-    public final DataSlot maxProgress = new DataSlot() {
-        @Override
-        public int get() {
-            return RecipeMachineScreenHandler.this.machine.getMaxProgress();
-        }
-
-        @Override
-        public void set(int value) {
-            RecipeMachineScreenHandler.this.machine.setMaxProgress(value);
-        }
-    };
-
-    protected RecipeMachineScreenHandler(int syncId, Player player, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> type, int invX, int invY) {
+/**
+ * A simple screen handler that keeps track of recipe progress
+ *
+ * @param <M> The type of machine block entity
+ * @param <R> The type of recipe the machine processes
+ * @param <C> The type of storage the recipe uses
+ * @see MachineScreenHandler
+ */
+public class RecipeMachineScreenHandler<C extends Container, R extends Recipe<C>, M extends RecipeMachineBlockEntity<C, R>> extends MachineScreenHandler<M> {
+    /**
+     * Constructs a new recipe screen handler.
+     * @param syncId The sync id for this screen handler.
+     * @param player The player who is interacting with this screen handler.
+     * @param machine The machine this screen handler is for.
+     * @param type The type of screen handler this is.
+     * @param invX The leftmost x position of the player inventory.
+     * @param invY The topmost y position of the player inventory.
+     */
+    protected RecipeMachineScreenHandler(int syncId, Player player, M machine, MenuType<? extends RecipeMachineScreenHandler<C, R, M>> type, int invX, int invY) {
         super(syncId, player, machine, type);
-        this.addDataSlot(this.progress);
-        this.addDataSlot(this.maxProgress);
+        this.addDataSlot(new DirectDataSlot(this.machine::getProgress, this.machine::setProgress));
+        this.addDataSlot(new DirectDataSlot(this.machine::getMaxProgress, this.machine::setMaxProgress));
         this.addPlayerInventorySlots(invX, invY);
     }
 

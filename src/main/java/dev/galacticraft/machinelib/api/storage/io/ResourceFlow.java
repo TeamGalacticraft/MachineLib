@@ -29,6 +29,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -49,7 +50,10 @@ public enum ResourceFlow {
      */
     BOTH(Component.translatable(Constant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(ChatFormatting.BLUE)));
 
-    public static final List<ResourceFlow> VALUES = ImmutableList.copyOf(ResourceFlow.values());
+    /**
+     * An immutable list of all possible resource flows.
+     */
+    public static final @Unmodifiable List<ResourceFlow> VALUES = ImmutableList.copyOf(ResourceFlow.values());
 
     /**
      * The name of the flow direction.
@@ -58,6 +62,7 @@ public enum ResourceFlow {
 
     /**
      * Creates a new resource flow.
+     *
      * @param name The name of the flow direction.
      */
     @Contract(pure = true)
@@ -67,6 +72,7 @@ public enum ResourceFlow {
 
     /**
      * Returns the name of the flow direction.
+     *
      * @return The name of the flow direction.
      */
     @Contract(pure = true)
@@ -76,6 +82,7 @@ public enum ResourceFlow {
 
     /**
      * Returns whether this flow can flow into the given flow.
+     *
      * @param flow The flow to check.
      * @return Whether this flow can flow into the given flow.
      */

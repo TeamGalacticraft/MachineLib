@@ -29,8 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A storage that can be configured for use in machine I/O faces and synced to the client.
+ * @see SlotGroup
  */
-public interface ConfiguredStorage {
+public interface ConfiguredStorage { //todo: split client sync
     /**
      * Returns the slot type of each slot in the storage.
      *
@@ -41,6 +42,7 @@ public interface ConfiguredStorage {
 
     /**
      * Returns whether the storage allows extraction from the given slot.
+     *
      * @param slot The slot to check.
      * @return Whether the storage allows extraction from the given slot.
      */
@@ -49,6 +51,7 @@ public interface ConfiguredStorage {
 
     /**
      * Returns whether the storage allows insertion into the given slot.
+     *
      * @param slot The slot to check.
      * @return Whether the storage allows insertion into the given slot.
      */
@@ -57,6 +60,7 @@ public interface ConfiguredStorage {
 
     /**
      * Creates a storage sync handler for this storage.
+     *
      * @return A storage sync handler for this storage.
      */
     @NotNull

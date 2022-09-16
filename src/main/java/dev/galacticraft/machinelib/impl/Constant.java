@@ -22,7 +22,10 @@
 
 package dev.galacticraft.machinelib.impl;
 
+import dev.galacticraft.machinelib.api.block.face.BlockFace;
+import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -242,9 +245,16 @@ public interface Constant {
         @SuppressWarnings("rawtypes")
         Predicate ALWAYS = o -> true;
 
+        @Contract(pure = true)
         @SuppressWarnings("unchecked")
         static <T> Predicate<T> always() {
             return (Predicate<T>) ALWAYS;
         }
+    }
+
+    interface Cache {
+        Direction[] DIRECTIONS = Direction.values();
+        BlockFace[] BLOCK_FACES = BlockFace.values();
+        ResourceType[] RESOURCE_TYPES = ResourceType.values();
     }
 }

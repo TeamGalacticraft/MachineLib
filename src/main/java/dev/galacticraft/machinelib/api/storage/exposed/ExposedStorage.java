@@ -37,12 +37,14 @@ import java.util.function.Predicate;
 
 /**
  * A storage that exposes the contents of a {@link ResourceStorage} but keeps modification restricted to certain slots or operations.
+ *
  * @param <T> The inner type of the storage.
  * @param <V> The {@link TransferVariant} to expose.
  */
 public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage<V> {
     /**
      * Returns the resource in the given slot.
+     *
      * @param slot The slot to get the resource from.
      * @return The resource in the slot.
      */
@@ -50,6 +52,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
 
     /**
      * Returns the amount of resources in the given slot.
+     *
      * @param slot The slot to get the amount of resources from.
      * @return The amount of resources in the slot.
      */
@@ -57,6 +60,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
 
     /**
      * Returns the capacity of the given slot.
+     *
      * @param slot The slot to get the capacity of.
      * @return The capacity of the slot.
      */
@@ -64,6 +68,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
 
     /**
      * Returns the filter for the given slot.
+     *
      * @param slot The slot to get the filter for.
      * @return The filter for the slot.
      */
@@ -71,6 +76,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
 
     /**
      * Creates a new storage that restricts insertion or extraction.
+     *
      * @param storage The storage to expose.
      * @param insert Whether to allow insertion.
      * @param extract Whether to allow extraction.
@@ -84,6 +90,15 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
         return new dev.galacticraft.machinelib.impl.storage.exposed.ExposedStorage<>(storage, insert, extract);
     }
 
+    /**
+     * Returns a view of an exposed storage.
+     *
+     * @param storage the storage
+     * @return a view of the given storage
+     * @param <T> The inner type of the storage.
+     * @param <V> The {@link TransferVariant} to expose.
+     */
+    @Deprecated(forRemoval = true)
     @Contract("_ -> new")
     static <T, V extends TransferVariant<T>> @NotNull ExposedStorage<T, V> view(@NotNull ResourceStorage<T, V, ?> storage) {
         Preconditions.checkNotNull(storage);
@@ -108,6 +123,7 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
 
     /**
      * Creates a new storage that restricts insertion or extraction to a specific type of slot.
+     *
      * @param storage The storage to expose.
      * @param type The type of slot to expose.
      * @param insert Whether to allow insertion.
@@ -122,5 +138,4 @@ public interface ExposedStorage<T, V extends TransferVariant<T>> extends Storage
         Preconditions.checkNotNull(type);
         return new ExposedSlotGroup<>(storage, type, insert, extract);
     }
-
 }

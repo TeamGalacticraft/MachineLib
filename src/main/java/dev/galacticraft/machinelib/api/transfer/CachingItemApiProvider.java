@@ -20,46 +20,38 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.transfer;
+package dev.galacticraft.machinelib.api.transfer;
 
-import dev.galacticraft.machinelib.api.transfer.StateCachingStorageProvider;
+import dev.galacticraft.machinelib.impl.transfer.CachingItemApiProviderImpl;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class StateCachingStorageProviderImpl<T> implements StateCachingStorageProvider<T> {
-    private final @NotNull SingleSlotStorage<ItemVariant> slot;
-    private final @NotNull ContainerItemContext context;
-    private final @NotNull ItemApiLookup<T, ContainerItemContext> lookup;
-    private boolean hasStorage = false;
-    private long modCount = -1;
-
-    public StateCachingStorageProviderImpl(@NotNull SingleSlotStorage<ItemVariant> slot, @NotNull ItemApiLookup<T, ContainerItemContext> lookup) {
-        this.slot = slot;
-        this.context = ContainerItemContext.ofSingleSlot(slot);
-        this.lookup = lookup;
+/**
+ * Retrieves an api from an item in a slot.
+ *
+ * @param <A> the api to search for
+ */
+public interface CachingItemApiProvider<A> {
+    /**
+     * Constructs a new caching api provider
+     * @param slot the slot to check.
+     * @param lookup the api lookup.
+     * @return a new caching api provider.
+     * @param <A> the api to search for.
+     */
+    @Contract("_, _ -> new")
+    static <A> @NotNull CachingItemApiProvider<A> create(@NotNull SingleSlotStorage<ItemVariant> slot, @NotNull ItemApiLookup<A, ContainerItemContext> lookup) {
+        return new CachingItemApiProviderImpl<>(slot, lookup);
     }
 
-    @Nullable
-    @Override
-    public T getStorage() {
-        if (!Transaction.isOpen()) {
-            long version = this.slot.getVersion();
-            if (this.modCount != version) {
-                this.modCount = version;
-                T storage = this.context.find(this.lookup);
-                this.hasStorage = storage != null;
-                return storage;
-            }
-            return this.hasStorage ? this.context.find(this.lookup) : null;
-        } else {
-            return this.context.find(this.lookup);
-        }
-    }
+    /**
+     * Returns the api of the item in this slot.
+     * @return the api of the item in this slot.
+     */
+    @Nullable A getApi();
 }

@@ -31,7 +31,23 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A single slot that restricts input and output.
+ *
+ * @param <T> The type of resource
+ * @param <V> The resource variant type
+ */
 public interface ExposedSlot<T, V extends TransferVariant<T>> extends ExposedStorage<T, V>, SingleSlotStorage<V> {
+    /**
+     * Creates a new slot storage that can restrict insertion for a player.
+     *
+     * @param storage The storage to expose.
+     * @param slot The slot to expose.
+     * @param insert Whether to allow insertion.
+     * @param <T> The inner type of the storage.
+     * @param <V> The {@link TransferVariant} to expose.
+     * @return The exposed storage.
+     */
     @Contract("_, _, _ -> new")
     static <T, V extends TransferVariant<T>> @NotNull ExposedSlot<T, V> ofPlayerSlot(@NotNull ResourceStorage<T, V, ?> storage, int slot, boolean insert) {
         Preconditions.checkNotNull(storage);
@@ -39,7 +55,8 @@ public interface ExposedSlot<T, V extends TransferVariant<T>> extends ExposedSto
     }
 
     /**
-     * Creates a new storage that restricts insertion or extraction to a specific slot.
+     * Creates a new slot storage that restricts insertion or extraction.
+     *
      * @param storage The storage to expose.
      * @param slot The slot to expose.
      * @param insert Whether to allow insertion.

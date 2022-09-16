@@ -20,22 +20,46 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.transfer;
+package dev.galacticraft.machinelib.impl.transfer;
 
-import dev.galacticraft.machinelib.impl.transfer.StateCachingStorageProviderImpl;
+import dev.galacticraft.machinelib.api.transfer.CachingItemApiProvider;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
-import org.jetbrains.annotations.Contract;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface StateCachingStorageProvider<T> {
-    @Contract("_, _ -> new")
-    static <T> @NotNull StateCachingStorageProvider<T> create(@NotNull SingleSlotStorage<ItemVariant> slot, @NotNull ItemApiLookup<T, ContainerItemContext> lookup) {
-        return new StateCachingStorageProviderImpl<>(slot, lookup);
+@ApiStatus.Internal
+public final class CachingItemApiProviderImpl<T> implements CachingItemApiProvider<T> {
+    private final @NotNull SingleSlotStorage<ItemVariant> slot;
+    private final @NotNull ContainerItemContext context;
+    private final @NotNull ItemApiLookup<T, ContainerItemContext> lookup;
+    private boolean hasStorage = false;
+    private long modCount = -1;
+
+    public CachingItemApiProviderImpl(@NotNull SingleSlotStorage<ItemVariant> slot, @NotNull ItemApiLookup<T, ContainerItemContext> lookup) {
+        this.slot = slot;
+        this.context = ContainerItemContext.ofSingleSlot(slot);
+        this.lookup = lookup;
     }
 
-    @Nullable T getStorage();
+    @Nullable
+    @Override
+    public T getApi() {
+        if (!Transaction.isOpen()) {
+            long version = this.slot.getVersion();
+            if (this.modCount != version) {
+                this.modCount = version;
+                T storage = this.context.find(this.lookup);
+                this.hasStorage = storage != null;
+                return storage;
+            }
+            return this.hasStorage ? this.context.find(this.lookup) : null;
+        } else {
+            return this.context.find(this.lookup);
+        }
+    }
 }

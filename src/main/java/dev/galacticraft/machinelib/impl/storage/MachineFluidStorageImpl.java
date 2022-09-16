@@ -283,7 +283,7 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
             }
 
             @Override
-            public void sync(FriendlyByteBuf buf) {
+            public void sync(@NotNull FriendlyByteBuf buf) {
                 this.modCount = MachineFluidStorageImpl.this.modCount.getModCount();
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
                     slot.getResource().toPacket(buf);
@@ -292,7 +292,7 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
             }
 
             @Override
-            public void read(FriendlyByteBuf buf) {
+            public void read(@NotNull FriendlyByteBuf buf) {
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
                     slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readVarLong(), false);
                 }

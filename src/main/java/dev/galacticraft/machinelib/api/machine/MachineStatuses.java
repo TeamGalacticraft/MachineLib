@@ -26,13 +26,15 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import org.jetbrains.annotations.Contract;
 
 /**
  * Default builtin machine statuses.
  */
 public final class MachineStatuses {
+    @Contract(value = " -> fail", pure = true)
     private MachineStatuses() {
-        throw new IllegalStateException("MachineStatuses cannot be instantiated");
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
     /**
@@ -60,6 +62,10 @@ public final class MachineStatuses {
      */
     public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(Constant.id("active"), Component.translatable(Constant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)), MachineStatus.Type.WORKING);
 
+    /**
+     * Utility method to initialize the class
+     */
+    @Contract(pure = true)
     public static void init() {
     }
 }

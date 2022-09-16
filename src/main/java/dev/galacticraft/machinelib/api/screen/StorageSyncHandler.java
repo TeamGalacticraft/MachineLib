@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.screen;
 
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles syncing of storage contents between the server and client.
@@ -36,16 +37,17 @@ public interface StorageSyncHandler {
         }
 
         @Override
-        public void sync(FriendlyByteBuf buf) {
+        public void sync(@NotNull FriendlyByteBuf buf) {
         }
 
         @Override
-        public void read(FriendlyByteBuf buf) {
+        public void read(@NotNull FriendlyByteBuf buf) {
         }
     };
 
     /**
      * Returns whether the storage needs syncing.
+     *
      * @return Whether the storage needs syncing.
      */
     @Contract(pure = true)
@@ -53,13 +55,15 @@ public interface StorageSyncHandler {
 
     /**
      * Serializes the contents of the storage to the given buffer. Called on the (logical) server.
+     *
      * @param buf The buffer to write to.
      */
-    void sync(FriendlyByteBuf buf);
+    void sync(@NotNull FriendlyByteBuf buf);
 
     /**
      * Deserializes the contents of the storage from the given buffer. Called on the client.
+     *
      * @param buf The buffer to read from.
      */
-    void read(FriendlyByteBuf buf);
+    void read(@NotNull FriendlyByteBuf buf);
 }

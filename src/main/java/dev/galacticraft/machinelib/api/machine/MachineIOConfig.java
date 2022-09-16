@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.machine.MachineIOConfigImpl;
 import net.minecraft.nbt.CompoundTag;
@@ -32,11 +32,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Stores the configuration of a machine's IO for all six faces.
+ * Stores the configuration of a machine's I/O for all six faces.
  */
 public interface MachineIOConfig {
     /**
-     * Creates a new {@link MachineIOConfig}.
+     * Constructs a new machine i/o configuration.
+     * @see MachineIOConfigImpl the default implementation
      * @return a new {@link MachineIOConfig}
      */
     @Contract(" -> new")
@@ -45,24 +46,24 @@ public interface MachineIOConfig {
     }
 
     /**
-     * Please do not modify the returned {@link ConfiguredMachineFace}
-     *
+     * Returns the I/O configuration for the given face.
      * @param face the block face to pull the option from
-     * @return a {@link ConfiguredMachineFace} assigned to the given face.
+     * @return the I/O configuration for the given face.
      */
-    @NotNull ConfiguredMachineFace get(@NotNull BlockFace face);
+    @NotNull MachineIOFaceConfig get(@NotNull BlockFace face);
 
     /**
      * Serializes the {@link MachineIOConfig} to NBT.
+     * @param groups The available slot groups.
      * @return a NBT compound containing the serialized {@link MachineIOConfig}
      */
-    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups);
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull[] groups);
 
     /**
      * Deserializes the {@link MachineIOConfig} from NBT.
      *
-     * @param nbt    the NBT compound containing the serialized {@link MachineIOConfig}
-     * @param groups
+     * @param nbt    the nbt compound to deserialize.
+     * @param groups The available slot groups.
      */
-    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
+    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable[] groups);
 }

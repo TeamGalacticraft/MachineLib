@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MachineConfiguration {
     /**
-     * Creates a new MachineConfiguration.
-     * @return A new MachineConfiguration.
+     * Creates a new configuration.
+     * @return a new configuration.
      */
     @Contract(" -> new")
     static @NotNull MachineConfiguration create() {
@@ -45,6 +45,7 @@ public interface MachineConfiguration {
 
     /**
      * Sets the status of the machine.
+     *
      * @param status The status of the machine.
      */
     @Contract(mutates = "this")
@@ -52,6 +53,7 @@ public interface MachineConfiguration {
 
     /**
      * Sets the redstone activation of the machine.
+     *
      * @param redstone The redstone activation of the machine.
      */
     @Contract(mutates = "this")
@@ -59,6 +61,7 @@ public interface MachineConfiguration {
 
     /**
      * Returns the I/O configuration of the machine.
+     *
      * @return The I/O configuration of the machine.
      */
     @Contract(pure = true)
@@ -66,6 +69,7 @@ public interface MachineConfiguration {
 
     /**
      * Returns the security configuration of the machine.
+     *
      * @return The security configuration of the machine.
      */
     @Contract(pure = true)
@@ -73,6 +77,7 @@ public interface MachineConfiguration {
 
     /**
      * Returns the status of the machine.
+     *
      * @return The status of the machine.
      */
     @Contract(pure = true)
@@ -80,6 +85,7 @@ public interface MachineConfiguration {
 
     /**
      * Returns the redstone activation of the machine.
+     *
      * @return The redstone activation of the machine.
      */
     @Contract(pure = true)
@@ -89,7 +95,7 @@ public interface MachineConfiguration {
      * Serializes the machine configuration to NBT.
      *
      * @param nbt    The NBT compound to serialize to.
-     * @param groups
+     * @param groups The available slot groups.
      * @return The NBT compound.
      */
     @Contract(mutates = "param1", value = "_, _ -> param1")
@@ -99,7 +105,7 @@ public interface MachineConfiguration {
      * Deserializes the machine configuration from NBT.
      *
      * @param nbt    The NBT compound to deserialize from.
-     * @param groups
+     * @param groups The available slot groups.
      */
     void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
 }

@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.block.face;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedStorage;
@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 @ApiStatus.Internal
-public final class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
+public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
     /**
      * The type of resource that this face is configured to accept.
      */
@@ -67,7 +67,7 @@ public final class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
      */
     private @Nullable Object storage = null;
 
-    public ConfiguredMachineFaceImpl(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
+    public MachineIOFaceConfigImpl(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         this.type = type;
         this.flow = flow;
     }
@@ -214,7 +214,7 @@ public final class ConfiguredMachineFaceImpl implements ConfiguredMachineFace {
     @Override
     public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
         this.type = ResourceType.getFromOrdinal(nbt.getByte(Constant.Nbt.RESOURCE));
-        this.flow = ResourceFlow.values()[nbt.getByte(Constant.Nbt.FLOW)];
+        this.flow = ResourceFlow.VALUES.get(nbt.getByte(Constant.Nbt.FLOW));
         if (nbt.getBoolean(Constant.Nbt.MATCH)) {
             if (nbt.getBoolean(Constant.Nbt.IS_SLOT_ID)) {
                 this.selection = StorageSelection.createSlot(nbt.getInt(Constant.Nbt.VALUE));

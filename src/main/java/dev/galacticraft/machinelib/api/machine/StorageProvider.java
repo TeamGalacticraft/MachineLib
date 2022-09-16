@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +34,11 @@ import org.jetbrains.annotations.Nullable;
 public interface StorageProvider {
     /**
      * Returns a storage for the given resource type.
+     *
      * @param type The type of resource to get a storage for.
      * @return The storage for the given resource type.
      */
+    @Contract(pure = true)
     @Nullable
     ConfiguredStorage getStorage(@NotNull ResourceType type);
 }

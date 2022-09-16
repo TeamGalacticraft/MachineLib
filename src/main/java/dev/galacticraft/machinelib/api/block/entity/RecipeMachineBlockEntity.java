@@ -38,6 +38,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +48,11 @@ import java.util.Optional;
  * A machine block entity that processes recipes.
  *
  * @param <C> The type of inventory the recipe type uses.
- *           This is usually {@link Container} but can be any inventory type.
  * @param <R> The type of recipe the machine uses.
  */
 public abstract class RecipeMachineBlockEntity<C extends Container, R extends Recipe<C>> extends MachineBlockEntity {
     /**
-     * The recipe type that this machine processes.
+     * The type of recipe that this machine processes.
      */
     private final @NotNull RecipeType<R> recipeType;
 
@@ -68,6 +68,10 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      */
     private @Nullable R activeRecipe = null;
 
+    /**
+     * The last recipe to be processed in this machine.
+     * Used to speed up the recipe search process.
+     */
     @ApiStatus.Internal
     private @Nullable R cachedRecipe = null;
 
@@ -82,6 +86,14 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      */
     private int maxProgress = 0;
 
+    /**
+     * Constructs a new machine block entity that processes recipes.
+     *
+     * @param type The type of block entity.
+     * @param pos The position of the machine in the level.
+     * @param state The block state of the machine.
+     * @param recipeType The type of recipe to be processed.
+     */
     protected RecipeMachineBlockEntity(@NotNull BlockEntityType<? extends RecipeMachineBlockEntity<C, R>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
         super(type, pos, state);
         this.recipeType = recipeType;
@@ -89,10 +101,12 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * The crafting inventory of the machine.
-     * Used to determine the machine's active recipe. Will not be modified.
+     * Used to determine the machine's active recipe via the vanilla recipe search system.
+     * Should never be modified through this method (modify the inventory directly instead).
      *
      * @return The crafting inventory of the machine.
      */
+    @Contract(pure = true)
     protected abstract @NotNull C craftingInv();
 
     /**
@@ -119,6 +133,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      *
      * @return The machine status to use when the machine is working.
      */
+    @Contract(pure = true)
     protected abstract @NotNull MachineStatus workingStatus();
 
     /**
@@ -165,6 +180,12 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         }
     }
 
+    /**
+     * Updates the currently active recipe if the inventory has changed.
+     * @param world The world.
+     * @param profiler The world profiler.
+     * @return {@code null} if the machine can have a recipe, or a {@link MachineStatus machine status} describing why it cannot.
+     */
     @Nullable
     protected MachineStatus testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
         if (this.inventoryModCount != this.itemStorage().getModCount()) { // includes output slots
@@ -197,6 +218,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param recipe The recipe to set.
      *               If {@code null}, the recipe will be reset.
      */
+    @Contract(mutates = "this")
     private void updateRecipe(@Nullable R recipe) {
         if (recipe == null) {
             this.resetRecipe();
@@ -210,6 +232,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Crafts the given recipe.
      *
+     * @param profiler The world profiler.
      * @param recipe The recipe to craft.
      * @param context The current transaction.
      */
@@ -231,6 +254,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Resets the progress of the machine and clears the active recipe.
      */
+    @Contract(mutates = "this")
     protected void resetRecipe() {
         this.setActiveRecipe(null);
         this.setProgress(0);
@@ -239,8 +263,10 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * Returns the recipe type of the machine.
+     *
      * @return The recipe type of the machine.
      */
+    @Contract(pure = true)
     public @NotNull RecipeType<R> getRecipeType() {
         return this.recipeType;
     }
@@ -249,6 +275,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * Finds the first valid recipe in the machine's inventory.
      * Will always test for the current recipe first.
      *
+     * @param world The world.
      * @return The first valid recipe in the machine's inventory.
      */
     protected @NotNull Optional<R> findValidRecipe(@NotNull Level world) {
@@ -262,47 +289,59 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * Returns the process time of the given recipe.
+     *
      * @param recipe The recipe to get the process time of.
      * @return The process time of the given recipe.
      */
+    @Contract(pure = true)
     protected abstract int getProcessTime(@NotNull R recipe);
 
     /**
      * Sets and returns the crafting progress of the machine.
+     *
      * @param progress The progress to set.
      */
+    @Contract(mutates = "this")
     public void setProgress(int progress) {
         this.progress = progress;
     }
 
     /**
      * Sets the maximum progress of the machine.
+     *
      * @param maxProgress The maximum progress to set.
      */
+    @Contract(mutates = "this")
     public void setMaxProgress(int maxProgress) {
         this.maxProgress = maxProgress;
     }
 
     /**
      * Returns the progress of the machine.
+     *
      * @return The progress of the machine.
      */
+    @Contract(pure = true)
     public int getProgress() {
         return this.progress;
     }
 
     /**
      * Returns the active recipe of the machine. May be {@code null}.
+     *
      * @return The active recipe of the machine.
      */
+    @Contract(pure = true)
     public @Nullable R getActiveRecipe() {
         return this.activeRecipe;
     }
 
     /**
      * Sets the active recipe of the machine.
+     *
      * @param activeRecipe The recipe to set.
      */
+    @Contract(mutates = "this")
     protected void setActiveRecipe(@Nullable R activeRecipe) {
         if (activeRecipe != null) this.cachedRecipe = activeRecipe;
         this.activeRecipe = activeRecipe;
@@ -310,8 +349,10 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * Returns the maximum progress of the machine.
+     *
      * @return The maximum progress of the machine.
      */
+    @Contract(pure = true)
     public int getMaxProgress() {
         return this.maxProgress;
     }
@@ -333,6 +374,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     @Override
     public void setLevel(Level world) {
         super.setLevel(world);
-        this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world).orElse(null);
+        if (!world.isClientSide) {
+            this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world).orElse(null);
+        }
     }
 }

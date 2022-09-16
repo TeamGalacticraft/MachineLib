@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.machine;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,16 +50,24 @@ public enum AccessLevel implements StringRepresentable {
      */
     private final @NotNull Component name;
 
+    @Contract(pure = true)
     AccessLevel(@NotNull Component name) {
         this.name = name;
     }
 
-    public static AccessLevel fromString(String string) {
-        return switch (string) {
+    /**
+     * Deserializes an access level from a string
+     * @param value the string to deserialize
+     * @see #getSerializedName()
+     * @return the deserialized access level
+     */
+    @Contract(pure = true)
+    public static @NotNull AccessLevel fromString(@NotNull String value) {
+        return switch (value) {
             case "public" -> PUBLIC;
             case "team" -> TEAM;
             case "private" -> PRIVATE;
-            default -> throw new IllegalArgumentException("Invalid access level: " + string);
+            default -> throw new IllegalArgumentException("Invalid access level: " + value);
         };
     }
 
@@ -67,11 +76,13 @@ public enum AccessLevel implements StringRepresentable {
      *
      * @return The name of the access level.
      */
+    @Contract(pure = true)
     public @NotNull Component getName() {
         return this.name;
     }
 
     @Override
+    @Contract(pure = true)
     public @NotNull String getSerializedName() {
         return switch (this) {
             case PUBLIC -> "public";

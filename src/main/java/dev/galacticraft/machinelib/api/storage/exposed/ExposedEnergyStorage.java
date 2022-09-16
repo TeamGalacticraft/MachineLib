@@ -28,6 +28,7 @@ import team.reborn.energy.api.EnergyStorage;
 
 /**
  * An {@link EnergyStorage} that can be configured to restrict input and output.
+ *
  * @param parent The parent {@link EnergyStorage}
  * @param insertion Whether this {@link EnergyStorage} can accept energy
  * @param extraction Whether this {@link EnergyStorage} can extract energy

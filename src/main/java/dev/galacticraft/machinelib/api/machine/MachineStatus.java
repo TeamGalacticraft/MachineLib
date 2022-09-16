@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 public interface MachineStatus {
     /**
      * Registry for machine statuses.
-     * All machine statuses should be registered in this registry to be used.
+     * All machine statuses should be registered in this registry before being used.
      */
     Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
     /**
@@ -87,16 +87,16 @@ public interface MachineStatus {
      */
     enum Type {
         /**
-         * The machine is active
+         * The machine is active and generating resources.
          */
         WORKING(true),
         /**
-         * The machine is active, but at reduced efficiency.
+         * The machine is active at reduced efficiency.
          */
         PARTIALLY_WORKING(true),
         /**
          * The machine is missing a resource it needs to function.
-         * Should not be an item, fluid or energy.
+         * Prefer more specific static types over this one.
          *
          * @see #MISSING_ENERGY
          * @see #MISSING_FLUIDS
@@ -105,17 +105,14 @@ public interface MachineStatus {
         MISSING_RESOURCE(false),
         /**
          * The machine is missing a fluid it needs to function.
-         * Should be preferred over {@link #MISSING_RESOURCE}
          */
         MISSING_FLUIDS(false),
         /**
          * The machine does not have the amount of energy needed to function.
-         * Should be preferred over {@link #MISSING_RESOURCE}
          */
         MISSING_ENERGY(false),
         /**
          * The machine does not have the items needed to function.
-         * Should be preferred over {@link #MISSING_RESOURCE}
          */
         MISSING_ITEMS(false),
         /**
@@ -123,16 +120,22 @@ public interface MachineStatus {
          */
         OUTPUT_FULL(false),
         /**
-         * Everything else
+         * All other problems.
          */
         OTHER(false);
 
         private final boolean active;
 
+        @Contract(pure = true)
         Type(boolean active) {
             this.active = active;
         }
 
+        /**
+         * Returns whether the machine should be considered to be generating resources.
+         * @return whether the machine should be considered to be generating resources.
+         */
+        @Contract(pure = true)
         public boolean isActive() {
             return this.active;
         }

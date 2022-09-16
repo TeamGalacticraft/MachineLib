@@ -30,7 +30,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
@@ -382,7 +382,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * @param face the face to draw
      */
     private void drawMachineFace(@NotNull PoseStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
-        ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+        MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
         blit(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
@@ -742,7 +742,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     protected void renderFaceTooltip(PoseStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
-        ConfiguredMachineFace configuredFace = this.machine.getIOConfig().get(face);
+        MachineIOFaceConfig configuredFace = this.machine.getIOConfig().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
@@ -1244,7 +1244,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
     private enum SideConfigurationAction {
         CHANGE_TYPE((player, machine, face, back, reset) -> {
-            ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
+            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
             if (reset) {
                 sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                 sideOption.setSelection(null);
@@ -1397,7 +1397,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             );
         }), //LEFT
         CHANGE_MATCH((player, machine, face, back, reset) -> {
-            ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
+            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
             if (!sideOption.getType().matchesGroups()) return;
             if (reset) {
                 sideOption.setSelection(null);
@@ -1445,7 +1445,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             }
         }), //RIGHT
         CHANGE_MATCH_SLOT((player, machine, face, back, reset) -> {
-            ConfiguredMachineFace sideOption = machine.getIOConfig().get(face);
+            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
             if (!sideOption.getType().matchesSlots()) return;
             if (reset) {
                 sideOption.setSelection(null);

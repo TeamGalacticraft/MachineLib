@@ -105,7 +105,7 @@ public interface MachineModelRegistry {
     @FunctionalInterface
     interface SpriteProvider {
         SpriteProvider DEFAULT = (machine, stack, face, atlas) -> {
-            if (face.horizontal()) return atlas.apply(MACHINE_SIDE);
+            if (face.side()) return atlas.apply(MACHINE_SIDE);
             return atlas.apply(MACHINE);
         };
 

@@ -28,7 +28,7 @@ import com.mojang.math.Vector3f;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
@@ -142,7 +142,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         // TODO: block entity can be null when loading the world, I don't think that's suppose to happen
         if (blockView instanceof RenderAttachedBlockView renderAttachedBlockView && renderAttachedBlockView.getBlockEntityRenderAttachment(pos) instanceof MachineIOConfig ioConfig) {
             context.pushTransform(quad -> transform(ioConfig, (MachineBlockEntity) blockView.getBlockEntity(pos), state, quad));
-            for (Direction direction : Direction.values()) {
+            for (Direction direction : Constant.Cache.DIRECTIONS) {
                 context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
             }
             context.popTransform();
@@ -154,7 +154,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         assert stack.getItem() instanceof BlockItem;
         assert ((BlockItem) stack.getItem()).getBlock() instanceof MachineBlock;
         context.pushTransform(quad -> transformItem(stack, quad));
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : Constant.Cache.DIRECTIONS) {
             context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
         }
         context.popTransform();
@@ -202,7 +202,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     public static boolean transform(@NotNull MachineIOConfig ioConfig, @Nullable MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
-        ConfiguredMachineFace machineFace = ioConfig.get(face);
+        MachineIOFaceConfig machineFace = ioConfig.get(face);
         quad.spriteBake(0,
                 getSprite(face,
                         machine,
@@ -218,7 +218,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, Tag.TAG_COMPOUND)) {
             CONFIGURATION.readNbt(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG), null);
-            ConfiguredMachineFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
+            MachineIOFaceConfig machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),
                             null,
@@ -287,7 +287,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         @Override
         public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             if (face == BlockFace.FRONT) return atlas.apply(sprite);
-            if (face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
+            if (face.side()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
         }
 
@@ -322,7 +322,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
             if (face == BlockFace.FRONT) return atlas.apply(this.front);
             if (face == BlockFace.BACK) return atlas.apply(this.back);
-            if (this.sided && face.horizontal()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
+            if (this.sided && face.side()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
             return atlas.apply(MachineModelRegistry.MACHINE);
         }
 

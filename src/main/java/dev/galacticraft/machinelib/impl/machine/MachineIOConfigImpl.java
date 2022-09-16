@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import net.minecraft.nbt.CompoundTag;
@@ -33,12 +33,12 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class MachineIOConfigImpl implements MachineIOConfig {
-    private final @NotNull ConfiguredMachineFace front = ConfiguredMachineFace.create();
-    private final @NotNull ConfiguredMachineFace back = ConfiguredMachineFace.create();
-    private final @NotNull ConfiguredMachineFace left = ConfiguredMachineFace.create();
-    private final @NotNull ConfiguredMachineFace right = ConfiguredMachineFace.create();
-    private final @NotNull ConfiguredMachineFace top = ConfiguredMachineFace.create();
-    private final @NotNull ConfiguredMachineFace bottom = ConfiguredMachineFace.create();
+    private final @NotNull MachineIOFaceConfig front = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFaceConfig back = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFaceConfig left = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFaceConfig right = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFaceConfig top = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFaceConfig bottom = MachineIOFaceConfig.blank();
 
     @Override
     public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups) {
@@ -63,7 +63,7 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
     }
 
     @Override
-    public @NotNull ConfiguredMachineFace get(@NotNull BlockFace face) {
+    public @NotNull MachineIOFaceConfig get(@NotNull BlockFace face) {
         return switch (face) {
             case FRONT -> this.front;
             case TOP -> this.top;

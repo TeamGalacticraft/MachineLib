@@ -77,13 +77,13 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
             }
 
             @Override
-            public void sync(FriendlyByteBuf buf) {
+            public void sync(@NotNull FriendlyByteBuf buf) {
                 this.modCount = MachineEnergyStorageImpl.this.modCount.getModCount();
                 buf.writeLong(MachineEnergyStorageImpl.this.amount);
             }
 
             @Override
-            public void read(FriendlyByteBuf buf) {
+            public void read(@NotNull FriendlyByteBuf buf) {
                 MachineEnergyStorageImpl.this.amount = buf.readLong();
             }
         };

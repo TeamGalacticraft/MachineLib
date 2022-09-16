@@ -299,7 +299,7 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
             }
 
             @Override
-            public void sync(FriendlyByteBuf buf) {
+            public void sync(@NotNull FriendlyByteBuf buf) {
                 this.modCount = MachineItemStorageImpl.this.modCount.getModCount();
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
                     slot.getResource().toPacket(buf);
@@ -308,7 +308,7 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
             }
 
             @Override
-            public void read(FriendlyByteBuf buf) {
+            public void read(@NotNull FriendlyByteBuf buf) {
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
                     slot.setStackUnsafe(ItemVariant.fromPacket(buf), buf.readVarLong(), false);
                 }

@@ -55,61 +55,58 @@ public enum ResourceType {
      */
     ANY(Component.translatable(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
 
-    private static final ResourceType[] normalTypes =  new ResourceType[] {ENERGY, ITEM, FLUID};
-    private static final ResourceType[] types =  new ResourceType[] {NONE, ANY, ENERGY, ITEM, FLUID};
-
     /**
      * The name of the resource type.
      */
     private final @NotNull Component name;
 
+    /**
+     * Constructs a new resource type.
+     *
+     * @param name the name of the resource.
+     */
+    @Contract(pure = true)
     ResourceType(@NotNull Component name) {
         this.name = name;
     }
 
     /**
-     * Returns an array of all resource types.
-     * @return An array of all resource types.
-     */
-    @Contract(value = " -> new", pure = true)
-    public static ResourceType @NotNull [] types() {
-        return types;
-    }
-
-    /**
-     * Returns an array of all resource types except {@link #NONE} and {@link #ANY}.
-     * @return An array of all resource types except {@link #NONE} and {@link #ANY}.
-     */
-    @Contract(value = " -> new", pure = true)
-    public static ResourceType @NotNull [] normalTypes() {
-        return normalTypes;
-    }
-
-    /**
      * Returns the name of the resource type.
+     *
      * @return The name of the resource type.
      */
+    @Contract(pure = true)
     public @NotNull Component getName() {
         return this.name;
     }
 
     /**
-     * Returns whether the resource type is {@link #NONE} or {@link #ANY}.
-     * @return Whether the resource type is {@link #NONE} or {@link #ANY}.
+     * Returns whether the resource type is associated with slots.
+     *
+     * @return whether the resource type is associated with slots.
      */
+    @Contract(pure = true)
     public boolean matchesSlots() {
         return this != ANY && this != NONE && this != ENERGY;
     }
 
+    /**
+     * Returns whether the resource types can have groups applied to them.
+     *
+     * @return whether the resource types can have groups applied to them.
+     */
+    @Contract(pure = true)
     public boolean matchesGroups() {
         return this != NONE && this != ENERGY;
     }
 
     /**
      * Returns the resource type with the given ID.
+     *
      * @param id The ID of the resource type.
      * @return The resource type with the given ID.
      */
+    @Contract(pure = true)
     public static ResourceType getFromOrdinal(byte id) {
         return switch (id) {
             case 0 -> NONE;
@@ -123,9 +120,11 @@ public enum ResourceType {
 
     /**
      * Returns whether the given resource type is compatible with this resource type.
+     *
      * @param other The other resource type.
      * @return Whether the given resource type is compatible with this resource type.
      */
+    @Contract(pure = true)
     public boolean willAcceptResource(ResourceType other) {
         return this != NONE && (this == other || this == ANY);
     }

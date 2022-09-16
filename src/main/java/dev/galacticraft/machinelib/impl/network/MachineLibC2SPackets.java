@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.ConfiguredMachineFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
@@ -57,13 +57,13 @@ public final class MachineLibC2SPackets {
             byte b = buf.readByte();
             boolean type = buf.readBoolean();
 
-            if (b >= 0 && b < BlockFace.values().length) {
-                BlockFace face = BlockFace.values()[b];
+            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
                             if (type) machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                             machineFace.setSelection(null);
                         }
@@ -77,17 +77,17 @@ public final class MachineLibC2SPackets {
             byte type = buf.readByte();
             byte flow = buf.readByte();
 
-            if (b >= 0 && b < BlockFace.values().length
-                    && type >= 0 && type < ResourceType.values().length
+            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length
+                    && type >= 0 && type < Constant.Cache.RESOURCE_TYPES.length
                     && flow >= 0 && flow < ResourceFlow.VALUES.size()
             ) {
-                BlockFace face = BlockFace.values()[b];
+                BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
-                            machineFace.setOption(ResourceType.values()[type], ResourceFlow.VALUES.get(flow));
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES.get(flow));
                             machineFace.setSelection(null);
                         }
                     }
@@ -99,13 +99,13 @@ public final class MachineLibC2SPackets {
             byte b = buf.readByte();
             int slot = buf.readInt();
 
-            if (b >= 0 && b < BlockFace.values().length && slot >= 0) {
-                BlockFace face = BlockFace.values()[b];
+            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && slot >= 0) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
                             if (machineFace.getType().matchesSlots()) {
                                 machineFace.setSelection(null);
                                 ConfiguredStorage storage = machine.getStorage(machineFace.getType());
@@ -167,13 +167,13 @@ public final class MachineLibC2SPackets {
             byte b = buf.readByte();
             int group = buf.readInt();
 
-            if (b >= 0 && b < BlockFace.values().length && group >= 0) {
-                BlockFace face = BlockFace.values()[b];
+            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && group >= 0) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            ConfiguredMachineFace machineFace = machine.getIOConfig().get(face);
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
                             if (machineFace.getType().matchesGroups()) {
                                 SlotGroup[] groups = machineFace.getMatchingGroups(machine);
                                 if (group < groups.length) {

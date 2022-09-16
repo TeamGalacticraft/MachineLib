@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@ApiStatus.Experimental
 public final class GasFluid extends Fluid implements FluidVariantAttributeHandler, Gas {
     @ApiStatus.Internal
     public static final List<GasFluid> GAS_FLUIDS = new ArrayList<>(); // used for registering client hooks

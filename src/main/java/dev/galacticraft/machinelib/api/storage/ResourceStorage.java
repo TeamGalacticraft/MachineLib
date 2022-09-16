@@ -654,9 +654,7 @@ public interface ResourceStorage<T, V extends TransferVariant<T>, S> extends Con
      * @param resource The resource to check.
      *                 Note: This is not a variant. Items with different NBT will also be included.
      * @return The number of the given resource in this inventory.
-     * @deprecated Use {@link #count(V)} instead.
      */
-    @Deprecated
     long count(@NotNull T resource);
 
     /**

@@ -23,10 +23,24 @@
 package dev.galacticraft.machinelib.api.gas;
 
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public interface Gas { // TODO: better gas implementation
+/**
+ * Represents a gas.
+ * Not yet stable API - use is not recommended.
+ */
+@ApiStatus.Experimental
+public interface Gas { // TODO: better gas implementation/
+    /**
+     * The name of the gas
+     * @return the name of the gas
+     */
     @NotNull Component getName();
 
+    /**
+     * The gas' symbol
+     * @return the gas' symbol
+     */
     @NotNull String getSymbol();
 }

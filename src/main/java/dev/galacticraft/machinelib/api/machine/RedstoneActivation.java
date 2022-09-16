@@ -32,10 +32,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents the behavior of a machine when it is activated by redstone.
+ * Dictates how a machine behaves when it interacts with redstone.
  */
 public enum RedstoneActivation implements StringRepresentable {
     /**
@@ -58,6 +59,11 @@ public enum RedstoneActivation implements StringRepresentable {
      */
     private final @NotNull Component name;
 
+    /**
+     * Constructs a redstone activation type with the given name.
+     * @param name the name of the interaction.
+     */
+    @Contract(pure = true)
     RedstoneActivation(@NotNull Component name) {
         this.name = name;
     }
@@ -67,6 +73,7 @@ public enum RedstoneActivation implements StringRepresentable {
      * @param string The string identifier.
      * @return The redstone activation state.
      */
+    @Contract(pure = true)
     public static @NotNull RedstoneActivation fromString(@NotNull String string) {
         return switch (string) {
             case "low" -> LOW;
@@ -91,10 +98,12 @@ public enum RedstoneActivation implements StringRepresentable {
      * Returns the name of the redstone activation state.
      * @return The name of the redstone activation state.
      */
+    @Contract(pure = true)
     public @NotNull Component getName() {
         return this.name;
     }
 
+    @Contract(pure = true)
     @Override
     public @NotNull String getSerializedName() {
         return switch (this) {

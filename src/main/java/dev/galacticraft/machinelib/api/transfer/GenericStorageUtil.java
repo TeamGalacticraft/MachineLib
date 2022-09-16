@@ -29,10 +29,30 @@ import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-public interface GenericStorageUtil {
-    static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+/**
+ * Utility methods for dealing with {@link Storage storages}.
+ */
+public final class GenericStorageUtil {
+    @Contract(value = " -> fail", pure = true)
+    private GenericStorageUtil() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
+    /**
+     * Moves an amount of a variant from one storage to another.
+     * @param variant the variant to be moved.
+     * @param from the storage to extract from.
+     * @param to the storage to insert into.
+     * @param maxAmount the maximum amount to transfer.
+     * @param context the transaction context.
+     * @return the amount of the variant that was moved.
+     * @param <T> the transfer variant type
+     * @param <S> the storage type
+     */
+    public static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null) return 0;
         StoragePreconditions.notNegative(maxAmount);
 
@@ -53,7 +73,16 @@ public interface GenericStorageUtil {
         return 0;
     }
 
-    static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
+    /**
+     * Naively moves as many resources as possible from one storage to another.
+     * @param from the storage to extract from.
+     * @param to the storage to insert into.
+     * @param maxPerTransaction the maximum amount of a resource to move per transaction.
+     * @param context the transaction context.
+     * @param <T> the transfer variant type
+     * @param <S> the storage type
+     */
+    public static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
         if (from == null || to == null || !from.supportsExtraction() || !to.supportsInsertion()) return;
         StoragePreconditions.notNegative(maxPerTransaction);
         LongList list = new LongArrayList();

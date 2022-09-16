@@ -38,12 +38,15 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Screen handler for machines.
+ * Base screen handler for machines.
+ *
+ * @param <M> The type of machine block entity this screen handler is linked to.
  */
 public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends AbstractContainerMenu {
     /**
@@ -64,14 +67,15 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     public final List<Tank> tanks = new ArrayList<>();
 
     /**
-     * Creates a new screen handler for a machine.
+     * Constructs a new screen handler for a machine.
+     *
      * @param syncId The sync id for this screen handler.
      * @param player The player who is interacting with this screen handler.
      * @param machine The machine this screen handler is for.
-     * @param handlerType The type of screen handler this is.
+     * @param type The type of screen handler this is.
      */
-    protected MachineScreenHandler(int syncId, Player player, M machine, MenuType<? extends MachineScreenHandler<M>> handlerType) {
-        super(handlerType, syncId);
+    protected MachineScreenHandler(int syncId, @NotNull Player player, @NotNull M machine, @Nullable MenuType<? extends MachineScreenHandler<M>> type) {
+        super(type, syncId);
         this.player = player;
         this.machine = machine;
 
@@ -85,8 +89,16 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
         this.addDataSlot(new StatusProperty(this.machine));
     }
 
-    protected MachineScreenHandler(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, MenuType<? extends MachineScreenHandler<M>> handlerType) {
-        this(syncId, inventory.player, (M) inventory.player.level.getBlockEntity(buf.readBlockPos()), handlerType);
+    /**
+     * Constructs a new screen handler for a machine.
+     *
+     * @param syncId The sync id for this screen handler.
+     * @param buf The synchronization buffer from the server. Should contain exactly one block pos.
+     * @param inventory The inventory of the player interacting with this screen handler.
+     * @param type The type of screen handler this is.
+     */
+    protected MachineScreenHandler(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @Nullable MenuType<? extends MachineScreenHandler<M>> type) {
+        this(syncId, inventory.player, (M) inventory.player.level.getBlockEntity(buf.readBlockPos()), type);
     }
 
     @Override
@@ -121,6 +133,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
 
     /**
      * Creates player inventory slots for this screen in the default inventory formation.
+     *
      * @param x The x position of the top left slot.
      * @param y The y position of the top left slot.
      */
@@ -181,6 +194,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
 
     /**
      * Receives and deserialized storage sync packets from the server.
+     *
      * @param buf The packet buffer.
      */
     @ApiStatus.Internal

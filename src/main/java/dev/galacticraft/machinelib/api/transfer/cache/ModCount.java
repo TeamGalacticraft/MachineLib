@@ -28,12 +28,24 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Helpful class to keep track of the number of times something has been modified, transactively.
+ */
 public interface ModCount {
+    /**
+     * Constructs a new mod count.
+     * @return a new mod count.
+     */
     @Contract(value = " -> new", pure = true)
     static @NotNull ModCount root() {
         return new RootModCount();
     }
 
+    /**
+     * Constructs a new mod count that modifies its parent when modified.
+     * @param parent the parent mod count.
+     * @return a new mod count
+     */
     @Contract("_ -> new")
     static @NotNull ModCount parented(@NotNull ModCount parent) {
         return new ParentedModCount(parent);

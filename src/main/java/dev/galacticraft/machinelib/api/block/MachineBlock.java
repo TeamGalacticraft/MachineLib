@@ -88,6 +88,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
 
     /**
      * Creates a new machine block.
+     *
      * @param settings The settings for the block.
      */
     protected MachineBlock(Properties settings) {
@@ -251,6 +252,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
 
     /**
      * Returns this machine's description for the tooltip when left shift is pressed.
+     *
      * @param stack The item stack (the contained item is this block).
      * @param view The world.
      * @param advanced Whether advanced tooltips are enabled.

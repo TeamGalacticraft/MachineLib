@@ -31,8 +31,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class SimpleMachineScreenHandler<T extends MachineBlockEntity> extends MachineScreenHandler<T> {
-    protected SimpleMachineScreenHandler(int syncId, Player player, T machine, MenuType<? extends MachineScreenHandler<T>> type, int invX, int invY) {
+/**
+ * A simple screen handler for a machine.
+ *
+ * @param <M> the type of machine block entity
+ */
+public class SimpleMachineScreenHandler<M extends MachineBlockEntity> extends MachineScreenHandler<M> {
+    protected SimpleMachineScreenHandler(int syncId, Player player, M machine, MenuType<? extends MachineScreenHandler<M>> type, int invX, int invY) {
         super(syncId, player, machine, type);
         this.addPlayerInventorySlots(invX, invY);
     }

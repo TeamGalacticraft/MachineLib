@@ -32,7 +32,7 @@ import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.impl.block.face.ConfiguredMachineFaceImpl;
+import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceConfigImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
@@ -44,32 +44,37 @@ import team.reborn.energy.api.EnergyStorage;
  * Represents a face of a {@link MachineBlockEntity} that has been configured to
  * accept certain types of resources.
  */
-public interface ConfiguredMachineFace {
+public interface MachineIOFaceConfig {
     /**
-     * Creates a new, blank {@link ConfiguredMachineFace}.
-     * @return A new, blank {@link ConfiguredMachineFace}.
+     * Creates a new, blank {@link MachineIOFaceConfig}.
+     *
+     * @see #of(ResourceType, ResourceFlow)
+     * @return A new, blank {@link MachineIOFaceConfig}.
      */
     @Contract(value = " -> new", pure = true)
-    static @NotNull ConfiguredMachineFace create() {
+    static @NotNull MachineIOFaceConfig blank() {
         return of(ResourceType.NONE, ResourceFlow.BOTH);
     }
 
     /**
-     * Creates a new {@link ConfiguredMachineFace}.
+     * Creates a new {@link MachineIOFaceConfig}.
+     *
      * @param type The type of resource to accept.
      * @param flow The flow direction of the resource.
-     * @return A new {@link ConfiguredMachineFace}.
+     * @see MachineIOFaceConfigImpl the default implementation
+     * @return A new {@link MachineIOFaceConfig}.
      */
     @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull ConfiguredMachineFace of(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
+    static @NotNull MachineIOFaceConfig of(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(flow);
 
-        return new ConfiguredMachineFaceImpl(type, flow);
+        return new MachineIOFaceConfigImpl(type, flow);
     }
 
     /**
      * Configures this face to accept the given resource type and flow.
+     *
      * @param type The type of resource to accept.
      * @param flow The flow direction of the resource.
      */
@@ -78,6 +83,7 @@ public interface ConfiguredMachineFace {
 
     /**
      * Sets the filter of this face.
+     *
      * @param matching the filter to set.
      */
     @Contract(mutates = "this")
@@ -85,6 +91,7 @@ public interface ConfiguredMachineFace {
 
     /**
      * Returns the type of resource that this face is configured to accept.
+     *
      * @return The type of resource that this face is configured to accept.
      */
     @Contract(pure = true)
@@ -92,6 +99,7 @@ public interface ConfiguredMachineFace {
 
     /**
      * Returns the flow direction of this face.
+     *
      * @return The flow direction of this face.
      */
     @Contract(pure = true)
@@ -99,6 +107,7 @@ public interface ConfiguredMachineFace {
 
     /**
      * Returns the filter of this face.
+     *
      * @return The filter of this face.
      */
     @Contract(pure = true)
@@ -106,7 +115,8 @@ public interface ConfiguredMachineFace {
 
     /**
      * Returns the exposed storage of this face.
-     * If the type of storage is invalid for this slot, it will be replaced with a read only storage view.
+     * If the type of storage is invalid for this slot, this method will return {@code null}.
+     *
      * @param storage The storage to use.
      * @param <T> The type of storage.
      * @param <V> The type of resource.
@@ -116,34 +126,52 @@ public interface ConfiguredMachineFace {
 
     /**
      * Returns the exposed energy storage of this face.
-     * If the type of storage is not an energy storage, it will be replaced with a read only storage view.
+     * If the type of storage is not an energy storage, this method will return {@code null}.
+     *
      * @param storage The storage to use.
      * @return The exposed energy storage of this face.
      */
     @Nullable EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage);
 
     /**
-     * Returns the matching slots of this face in the provided storage. Sorted
+     * Returns a sorted array of the matching slots of this face in the provided storage.
+     *
      * @param storage The storage to match.
      * @return The matching slots of this face in the provided storage.
      */
     int @NotNull[] getMatching(@Nullable ConfiguredStorage storage);
 
+    /**
+     * Returns a sorted array of the matching slots of this face in the provided storage.
+     * Ignores face selection filtering.
+     *
+     * @param storage The storage to match.
+     * @return The matching slots of this face in the provided storage.
+     */
     int @NotNull[] getMatchingWild(@Nullable ConfiguredStorage storage);
 
+    /**
+     * Returns the matching slot groups for this face.
+     * Ignores face selection filtering.
+     *
+     * @param machine the machine to get the groups from.
+     * @return the matching slot groups for this face.
+     */
     @NotNull SlotGroup @NotNull[] getMatchingGroups(MachineBlockEntity machine);
 
     /**
-     * Write the configuration to a new nbt compound.
+     * Write this configuration to a new nbt compound.
+     *
+     * @param groups The available slot groups.
      * @return The nbt compound that was written to.
      */
-    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups);
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull[] groups);
 
     /**
      * Read the configuration from the given nbt compound.
      *
      * @param nbt    The nbt compound to read from.
-     * @param groups
+     * @param groups The available slot groups.
      */
-    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
+    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable[] groups);
 }

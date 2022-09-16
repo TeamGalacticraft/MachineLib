@@ -26,6 +26,7 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -58,18 +59,26 @@ public enum BlockFace {
      */
     BOTTOM(Component.translatable(Constant.TranslationKey.BOTTOM), false);
 
-    private final MutableComponent name;
-    private final boolean horizontal;
+    /**
+     * The name of the face
+     */
+    private final Component name;
+    /**
+     * Whether the face is considered the side of a block.
+     * Includes all faces except for top and bottom.
+     */
+    private final boolean side;
 
-    BlockFace(@NotNull MutableComponent name, boolean horizontal) {
+    BlockFace(@NotNull MutableComponent name, boolean side) {
         this.name = name.setStyle(Constant.Text.GOLD_STYLE);
-        this.horizontal = horizontal;
+        this.side = side;
     }
 
     /**
      * The name of this face.
      * @return The name of this face.
      */
+    @Contract(pure = true)
     public Component getName() {
         return name;
     }
@@ -80,8 +89,8 @@ public enum BlockFace {
      * @param target The direction to get the face for.
      * @return The face corresponding to the given direction and rotation.
      */
-    @NotNull
-    public static BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) { //todo: a better way to do this?
+    @Contract(pure = true)
+    public static @NotNull BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) { //todo: a better way to do this?
         assert facing != Direction.UP && facing != Direction.DOWN;
 
         if (target == Direction.DOWN) {
@@ -128,9 +137,9 @@ public enum BlockFace {
      * @param facing The rotation of the block.
      * @return The corresponding direction.
      */
-    @NotNull
-    public Direction toDirection(Direction facing) {
-        assert facing == Direction.NORTH || facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.WEST;
+    @Contract(pure = true)
+    public @NotNull Direction toDirection(@NotNull Direction facing) {
+        assert facing != Direction.UP && facing != Direction.DOWN;
 
         if (this == BOTTOM) {
             return Direction.DOWN;
@@ -175,7 +184,8 @@ public enum BlockFace {
      * Returns the opposite face.
      * @return The opposite face.
      */
-    public BlockFace getOpposite() {
+    @Contract(pure = true)
+    public @NotNull BlockFace getOpposite() {
         return switch (this) {
             case BOTTOM -> TOP;
             case TOP -> BOTTOM;
@@ -187,18 +197,20 @@ public enum BlockFace {
     }
 
     /**
-     * Whether this face is a horizontal face.
-     * @return Whether this face is a horizontal face.
+     * Returns whether this face is the side of a block.
+     * @return whether this face is the side of a block.
      */
-    public boolean horizontal() {
-        return this.horizontal;
+    @Contract(pure = true)
+    public boolean side() {
+        return this.side;
     }
 
     /**
-     * Whether this face is a vertical face.
-     * @return Whether this face is a vertical face.
+     * Returns whether this face is the top or bottom of a block.
+     * @return Whether this face is the top or bottom of a block.
      */
-    public boolean vertical() {
-        return !this.horizontal;
+    @Contract(pure = true)
+    public boolean base() {
+        return !this.side;
     }
 }

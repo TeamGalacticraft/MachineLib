@@ -219,6 +219,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     @Override
     public void setTeam(ResourceLocation team, String name) { //todo: team validation
+        if (team == null && name != null) throw new IllegalArgumentException("Team name without linked team??");
         this.team = team;
         this.teamName = name;
     }

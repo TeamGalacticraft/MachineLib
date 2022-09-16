@@ -27,11 +27,19 @@ import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 
 /**
  * Defines some common gases for convenience.
  */
+@ApiStatus.Experimental
 public final class Gases {
+    @Contract(value = " -> fail", pure = true)
+    private Gases() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
     public static final ResourceLocation HYDROGEN_ID = Constant.id("hydrogen");
     /**
      * Hydrogen gas.
@@ -161,6 +169,7 @@ public final class Gases {
             Constant.id("gas/iodine"), "I2"
     );
 
+    @Contract(pure = true)
     public static void init() {}
 
     static {
