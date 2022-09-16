@@ -202,12 +202,27 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * This needs to be called for every block entity type that extends this class.
      * Otherwise, in-world resource transfer will not work.
      *
-     * @param type the block entity type to register.
+     * @param blocks the blocks to register.
      */
-    public static void registerComponents(@NotNull BlockEntityType<? extends MachineBlockEntity> type) {
-        EnergyStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedEnergyStorage, type);
-        ItemStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedItemStorage, type);
-        FluidStorage.SIDED.registerForBlockEntity(MachineBlockEntity::getExposedFluidStorage, type);
+    public static void registerComponents(@NotNull Block... blocks) {
+        EnergyStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+            if (blockEntity != null) {
+                return ((MachineBlockEntity)blockEntity).getExposedEnergyStorage(state, context);
+            }
+            return null;
+        }, blocks);
+        ItemStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+            if (blockEntity != null) {
+                return ((MachineBlockEntity)blockEntity).getExposedItemStorage(state, context);
+            }
+            return null;
+        }, blocks);
+        FluidStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+            if (blockEntity != null) {
+                return ((MachineBlockEntity)blockEntity).getExposedFluidStorage(state, context);
+            }
+            return null;
+        }, blocks);
     }
 
     /**
@@ -576,9 +591,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled energy storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction direction) {
-        assert this.level != null;
-        return this.getExposedEnergyStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockState state, @NotNull Direction direction) {
+        return this.getExposedEnergyStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
     /**
@@ -613,9 +627,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled item storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction direction) {
-        assert this.level != null;
-        return this.getExposedItemStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockState state, @NotNull Direction direction) {
+        return this.getExposedItemStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
     /**
@@ -650,9 +663,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled fluid storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction direction) {
-        assert this.level != null;
-        return this.getExposedFluidStorage(this.level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @NotNull Direction direction) {
+        return this.getExposedFluidStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
     /**
@@ -724,11 +736,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @param level the level.
      */
-    protected void trySpreadEnergy(@NotNull ServerLevel level) {
+    protected void trySpreadEnergy(@NotNull ServerLevel level, @NotNull BlockState state) {
         if (this.energyCache == null) {
             this.energyCache = AdjacentBlockApiCache.create(EnergyStorage.SIDED, level, this.worldPosition);
         }
-        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
+        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             EnergyStorage storage = this.getExposedEnergyStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
@@ -742,11 +754,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @param level the level.
      */
-    protected void trySpreadFluids(@NotNull ServerLevel level) {
+    protected void trySpreadFluids(@NotNull ServerLevel level, @NotNull BlockState state) {
         if (this.fluidCache == null) {
             this.fluidCache = AdjacentBlockApiCache.create(FluidStorage.SIDED, level, this.worldPosition);
         }
-        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
+        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             ExposedStorage<Fluid, FluidVariant> storage = this.getExposedFluidStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
@@ -760,11 +772,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @param level the level.
      */
-    protected void trySpreadItems(@NotNull ServerLevel level) {
+    protected void trySpreadItems(@NotNull ServerLevel level, @NotNull BlockState state) {
         if (this.itemCache == null) {
             this.itemCache = AdjacentBlockApiCache.create(ItemStorage.SIDED, level, this.worldPosition);
         }
-        Direction facing = level.getBlockState(this.worldPosition).getValue(BlockStateProperties.HORIZONTAL_FACING);
+        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {

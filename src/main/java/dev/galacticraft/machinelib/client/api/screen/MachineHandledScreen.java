@@ -173,9 +173,9 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     protected final BlockPos pos;
 
     /**
-     * The world the machine is in.
+     * The level the machine is in.
      */
-    protected final Level world;
+    protected final Level level;
 
     /**
      * The machine this screen is attached to.
@@ -228,11 +228,11 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
     protected MachineHandledScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
         super(handler, inv, title);
         this.pos = this.menu.machine.getBlockPos();
-        this.world = inv.player.level;
+        this.level = inv.player.level;
         this.machine = this.menu.machine;
         this.texture = texture;
 
-        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.machine.getBlockState() == null ? world.getBlockState(pos).getBlock() : this.machine.getBlockState().getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
+        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.machine.getBlockState() == null ? level.getBlockState(pos).getBlock() : this.machine.getBlockState().getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
 
         Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.machine.getSecurity().getOwner(), this.machine.getSecurity().getUsername()), (type, identifier, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && identifier != null) {
@@ -292,7 +292,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
                         machine.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
                 this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                        !machine.isDisabled(this.world) ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
+                        !machine.isDisabled(this.level) ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                 : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                         .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
@@ -395,7 +395,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      */
     private void renderItemIcon(@NotNull PoseStack matrices, int x, int y, @NotNull ItemStack stack) {
         assert this.minecraft != null;
-        BakedModel model = this.itemRenderer.getModel(stack, this.world, this.menu.player, 8910823);
+        BakedModel model = this.itemRenderer.getModel(stack, this.level, this.menu.player, 8910823);
         matrices.pushPose();
         this.minecraft.getTextureManager().getTexture(InventoryMenu.BLOCK_ATLAS).setFilter(false, false);
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
