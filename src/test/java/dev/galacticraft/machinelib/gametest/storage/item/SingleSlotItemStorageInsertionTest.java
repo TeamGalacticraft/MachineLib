@@ -67,7 +67,7 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
                             return !v.isOf(test.block().generateVariant().getItem());
                         }
                         return true;
-                    }, true, test.maxCount(), new ItemSlotDisplay(0, 0)).build();
+                    }, true, test.maxCount(), ItemSlotDisplay.create(0, 0)).build();
             if (test.amount() > 0) {
                 impl.setSlot(0, test.type().generateVariant(0), test.amount());
             }

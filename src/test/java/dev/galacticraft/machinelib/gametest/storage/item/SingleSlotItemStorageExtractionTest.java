@@ -46,7 +46,7 @@ public final class SingleSlotItemStorageExtractionTest implements MachineLibGame
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
         this.storage = (MachineItemStorageImpl) MachineItemStorage.Builder.create()
-                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 64, new ItemSlotDisplay(0, 0))
+                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 64, ItemSlotDisplay.create(0, 0))
                 .build();
     }
 

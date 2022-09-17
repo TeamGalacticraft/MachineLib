@@ -37,8 +37,8 @@ public final class ItemStorageBuilderTest implements MachineLibGametest {
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void size(@NotNull GameTestHelper context) {
         assertEquals(0, MachineItemStorage.empty().size());
-        assertEquals(1, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, new ItemSlotDisplay(0, 0)).build().size());
-        assertEquals(2, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, new ItemSlotDisplay(0, 0)).addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, new ItemSlotDisplay(0, 0)).build().size());
+        assertEquals(1, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().size());
+        assertEquals(2, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().size());
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
@@ -48,9 +48,9 @@ public final class ItemStorageBuilderTest implements MachineLibGametest {
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void create_slot_size(@NotNull GameTestHelper context) {
-        assertEquals(64, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, new ItemSlotDisplay(0, 0)).build().getCapacity(0));
-        assertEquals(16, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 16, new ItemSlotDisplay(0, 0)).build().getCapacity(0));
-        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 5000, new ItemSlotDisplay(0, 0)));
-        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, -1, new ItemSlotDisplay(0, 0)));
+        assertEquals(64, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().getCapacity(0));
+        assertEquals(16, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 16, ItemSlotDisplay.create(0, 0)).build().getCapacity(0));
+        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 5000, ItemSlotDisplay.create(0, 0)));
+        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, -1, ItemSlotDisplay.create(0, 0)));
     }
 }

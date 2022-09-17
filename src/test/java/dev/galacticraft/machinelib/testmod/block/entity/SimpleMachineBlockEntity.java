@@ -54,15 +54,15 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     @Override
     protected @NotNull MachineItemStorage createItemStorage() {
         return MachineItemStorage.builder()
-                .addSlot(TestMod.CHARGE_SLOT, TestMod.ANY_ITEM, true, new ItemSlotDisplay(32, 32))
-                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, new ItemSlotDisplay(32, 32))
+                .addSlot(TestMod.CHARGE_SLOT, TestMod.ANY_ITEM, true, ItemSlotDisplay.create(32, 32))
+                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(32, 32))
                 .build();
     }
 
     @Override
     protected @NotNull MachineFluidStorage createFluidStorage() {
         return MachineFluidStorage.builder()
-                .addTank(TestMod.ANY_FLUID_SLOT, FluidConstants.BUCKET, TestMod.ANY_FLUID, true, new TankDisplay(12, 8, 48), false)
+                .addTank(TestMod.ANY_FLUID_SLOT, FluidConstants.BUCKET, TestMod.ANY_FLUID, true, TankDisplay.create(12, 8), false)
                 .build();
     }
 
