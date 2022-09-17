@@ -187,25 +187,28 @@ public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
     }
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups) {
+    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups) {
         CompoundTag nbt = new CompoundTag();
         nbt.putByte(Constant.Nbt.FLOW, (byte) this.flow.ordinal());
         nbt.putByte(Constant.Nbt.RESOURCE, (byte) this.type.ordinal());
         nbt.putBoolean(Constant.Nbt.MATCH, this.selection != null);
         if (this.selection != null) {
-            nbt.putBoolean(Constant.Nbt.IS_SLOT_ID, this.selection.isSlot());
             if (this.selection.isSlot()) {
+                nbt.putBoolean(Constant.Nbt.IS_SLOT_ID, true);
                 nbt.putInt(Constant.Nbt.VALUE, this.selection.getSlot());
             } else {
-                int idx = -1;
-                for (int i = 0; i < groups.length; i++) {
-                    if (groups[i] == this.selection.getGroup()) {
-                        idx = i;
-                        break;
+                if (groups != null) {
+                    nbt.putBoolean(Constant.Nbt.IS_SLOT_ID, false);
+                    int idx = -1;
+                    for (int i = 0; i < groups.length; i++) {
+                        if (groups[i] == this.selection.getGroup()) {
+                            idx = i;
+                            break;
+                        }
                     }
+                    if (idx == -1) throw new AssertionError();
+                    nbt.putInt(Constant.Nbt.VALUE, idx);
                 }
-                if (idx == -1) throw new AssertionError();
-                nbt.putInt(Constant.Nbt.VALUE, idx);
             }
         }
         return nbt;

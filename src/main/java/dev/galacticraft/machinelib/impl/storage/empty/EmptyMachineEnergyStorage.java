@@ -33,8 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
 @ApiStatus.Internal
-public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
-    INSTANCE;
+public final class EmptyMachineEnergyStorage implements MachineEnergyStorage {
+    public static final MachineEnergyStorage INSTANCE = new EmptyMachineEnergyStorage();
+
+    private EmptyMachineEnergyStorage() {}
 
     @Override
     public boolean isFull() {
@@ -98,7 +100,7 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public long insert(long maxAmount, TransactionContext transaction) {
+    public long insert(long maxAmount, @NotNull TransactionContext transaction) {
         return 0;
     }
 
@@ -108,7 +110,17 @@ public enum EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public long extract(long maxAmount, TransactionContext transaction) {
+    public long extract(long amount) {
+        return 0;
+    }
+
+    @Override
+    public long insert(long amount) {
+        return 0;
+    }
+
+    @Override
+    public long extract(long maxAmount, @NotNull TransactionContext transaction) {
         return 0;
     }
 

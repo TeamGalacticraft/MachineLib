@@ -74,6 +74,7 @@ public interface ModCount {
 
     /**
      * Increments the counter without creating a snapshot.
+     * Cannot be called during a transaction.
      */
-    void incrementUnsafe();
+    void increment();
 }

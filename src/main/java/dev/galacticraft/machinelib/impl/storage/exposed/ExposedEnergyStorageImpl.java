@@ -20,57 +20,54 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.transfer.cache;
+package dev.galacticraft.machinelib.impl.storage.exposed;
 
-import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.NotNull;
+import team.reborn.energy.api.EnergyStorage;
 
-public final class ParentedModCount extends SnapshotParticipant<Long> implements ModCount {
-    private final ModCount parent;
-    private long count = 0;
-
-    public ParentedModCount(ModCount parent) {
-        this.parent = parent;
+/**
+ * An {@link EnergyStorage} that can be configured to restrict input and output.
+ *
+ * @param parent The parent {@link EnergyStorage}
+ * @param insertion Whether this {@link EnergyStorage} can accept energy
+ * @param extraction Whether this {@link EnergyStorage} can extract energy
+ */
+public record ExposedEnergyStorageImpl(@NotNull EnergyStorage parent, boolean insertion, boolean extraction) implements ExposedEnergyStorage {
+    @Override
+    public boolean supportsInsertion() {
+        return this.insertion;
     }
 
     @Override
-    public long getModCount() {
-        if (Transaction.isOpen()) {
-            throw new IllegalStateException("getModCount() may not be called during a transaction.");
+    public long insert(long maxAmount, TransactionContext transaction) {
+        if (this.supportsInsertion()) {
+            return this.parent.insert(maxAmount, transaction);
         }
-        return this.count;
+        return 0;
     }
 
     @Override
-    public void increment(@NotNull TransactionContext context) {
-        this.parent.increment(context);
-        updateSnapshots(context);
-        this.count += 1;
+    public boolean supportsExtraction() {
+        return this.extraction;
     }
 
     @Override
-    public long getModCountUnsafe() {
-        return this.count;
+    public long extract(long maxAmount, TransactionContext transaction) {
+        if (this.supportsExtraction()) {
+            return this.parent.extract(maxAmount, transaction);
+        }
+        return 0;
     }
 
     @Override
-    public void increment() {
-        GenericApiUtil.noTransaction();
-        this.parent.increment();
-        this.count += 1;
+    public long getAmount() {
+        return this.parent.getAmount();
     }
 
     @Override
-    protected Long createSnapshot() {
-        return this.count;
-    }
-
-    @Override
-    protected void readSnapshot(Long snapshot) {
-        this.count = snapshot;
+    public long getCapacity() {
+        return this.parent.getCapacity();
     }
 }

@@ -50,7 +50,7 @@ import java.util.function.Predicate;
 
 /**
  * Simple item storage for machines.
- * The flow and types of items are not restricted by this storage.
+ * The flow of items is not restricted by this storage.
  * If you need to expose a storage that restricts item flow/types see {@link ResourceStorage#getExposedStorage(StorageSelection, ResourceFlow)}
  *
  * @see ResourceStorage

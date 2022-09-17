@@ -57,7 +57,7 @@ public interface MachineIOConfig {
      * @param groups The available slot groups.
      * @return a NBT compound containing the serialized {@link MachineIOConfig}
      */
-    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull[] groups);
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups);
 
     /**
      * Deserializes the {@link MachineIOConfig} from NBT.

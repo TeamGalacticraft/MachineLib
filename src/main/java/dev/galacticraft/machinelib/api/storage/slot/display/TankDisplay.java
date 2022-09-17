@@ -22,12 +22,27 @@
 
 package dev.galacticraft.machinelib.api.storage.slot.display;
 
+import dev.galacticraft.machinelib.impl.storage.exposed.slot.display.TankDisplayImpl;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Display information for a tank.
- *
- * @param x The x position of the tank.
- * @param y The y position of the tank.
- * @param height The height of the tank.
  */
-public record TankDisplay(int x, int y, int height) {
+public interface TankDisplay {
+    @Contract("_, _ -> new")
+    static @NotNull TankDisplay create(int x, int y) {
+        return create(x, y, 48);
+    }
+
+    @Contract("_, _, _ -> new")
+    static @NotNull TankDisplay create(int x, int y, int height) {
+        return new TankDisplayImpl(x, y, height);
+    }
+
+    int x();
+
+    int y();
+
+    int height();
 }

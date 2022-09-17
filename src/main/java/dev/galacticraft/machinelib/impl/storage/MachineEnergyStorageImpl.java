@@ -27,7 +27,7 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.nbt.LongTag;
@@ -105,8 +105,21 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public long insert(long maxAmount, TransactionContext transaction) {
-        long inserted = Math.min(Math.min(maxAmount, maxInput), capacity - amount);
+    public long insert(long amount) {
+        long inserted = Math.min(Math.min(amount, maxInput), capacity - amount);
+
+        if (inserted > 0) {
+            this.modCount.increment();
+            this.amount += inserted;
+            return inserted;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public long insert(long amount, @NotNull TransactionContext transaction) {
+        long inserted = Math.min(Math.min(amount, maxInput), capacity - this.amount);
 
         if (inserted > 0) {
             this.updateSnapshots(transaction);
@@ -124,8 +137,21 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public long extract(long maxAmount, TransactionContext transaction) {
-        long extracted = Math.min(this.amount, Math.min(maxAmount, this.maxOutput));
+    public long extract(long amount) {
+        long extracted = Math.min(this.amount, Math.min(amount, this.maxOutput));
+
+        if (extracted > 0) {
+            this.modCount.increment();
+            this.amount -= extracted;
+            return extracted;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public long extract(long amount, @NotNull TransactionContext transaction) {
+        long extracted = Math.min(this.amount, Math.min(amount, this.maxOutput));
 
         if (extracted > 0) {
             this.updateSnapshots(transaction);
@@ -166,14 +192,14 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
     @Override
     public void setEnergyUnsafe(long amount) {
-        assert !Transaction.isOpen();
-        this.modCount.incrementUnsafe();
+        GenericApiUtil.noTransaction();
+        this.modCount.increment();
         this.amount = amount;
     }
 
     @Override
     public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
-        return new ExposedEnergyStorage(this, this.insert && flow.canFlowIn(ResourceFlow.INPUT), this.extract && flow.canFlowIn(ResourceFlow.OUTPUT));
+        return ExposedEnergyStorage.create(this, this.insert && flow.canFlowIn(ResourceFlow.INPUT), this.extract && flow.canFlowIn(ResourceFlow.OUTPUT));
     }
 
     @Override

@@ -50,17 +50,17 @@ public record PlayerExposedVanillaInventory(MachineItemStorageImpl storage) impl
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
-        return this.storage.extract(slot, amount, null);
+        return this.storage.extract(slot, amount);
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        return this.storage.extract(slot, Long.MAX_VALUE, null);
+        return this.storage.extract(slot, Long.MAX_VALUE);
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        this.storage.setSlotUnsafe(slot, ItemVariant.of(stack), stack.getCount(), true);
+        this.storage.setSlot(slot, ItemVariant.of(stack), stack.getCount());
     }
 
     @Override

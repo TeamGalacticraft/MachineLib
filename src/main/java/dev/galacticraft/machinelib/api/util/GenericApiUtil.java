@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.transfer;
+package dev.galacticraft.machinelib.api.util;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -35,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Utility methods for dealing with {@link Storage storages}.
  */
-public final class GenericStorageUtil {
+public final class GenericApiUtil {
     @Contract(value = " -> fail", pure = true)
-    private GenericStorageUtil() {
+    private GenericApiUtil() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
@@ -98,6 +98,12 @@ public final class GenericStorageUtil {
                 list.add(to.insert(storageView.getResource(), storageView.extract(storageView.getResource(), list.getLong(i++), extractingTransaction), extractingTransaction));
             }
             extractingTransaction.commit();
+        }
+    }
+
+    public static void noTransaction() {
+        if (Transaction.isOpen()) {
+            throw new IllegalStateException("Cannot run during a transaction!");
         }
     }
 }

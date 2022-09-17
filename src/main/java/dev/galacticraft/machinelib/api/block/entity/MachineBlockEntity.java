@@ -34,8 +34,8 @@ import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.transfer.CachingItemApiProvider;
-import dev.galacticraft.machinelib.api.transfer.GenericStorageUtil;
 import dev.galacticraft.machinelib.api.transfer.cache.AdjacentBlockApiCache;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.MachineHandledScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
@@ -458,6 +458,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.configuration.getIOConfiguration();
     }
 
+    public @NotNull MachineConfiguration getConfiguration() {
+        return this.configuration;
+    }
+
     /**
      * Returns whether this machine will drop items when broken.
      * @return whether this machine will drop items when broken.
@@ -762,7 +766,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             ExposedStorage<Fluid, FluidVariant> storage = this.getExposedFluidStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericStorageUtil.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
+                GenericApiUtil.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
             }
         }
     }
@@ -780,7 +784,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericStorageUtil.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
+                GenericApiUtil.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
             }
         }
     }

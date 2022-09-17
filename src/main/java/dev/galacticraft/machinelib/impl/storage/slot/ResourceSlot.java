@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.impl.storage.slot;
 
 import dev.galacticraft.machinelib.api.storage.slot.StorageSlot;
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
@@ -32,7 +33,6 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Predicate;
 
@@ -67,18 +67,24 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
 
     @Override
     public boolean isEmpty() {
-        assert !this.isResourceBlank() || this.amount == 0;
+        assert !(this.isResourceBlank() && this.amount != 0);
         return this.isResourceBlank();
     }
 
-    @TestOnly
-    public void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty) {
+    @Override
+    public void setStack(@NotNull V variant, long amount) {
         StoragePreconditions.notNegative(amount);
-        if (amount == 0) variant = this.getBlankVariant();
-        else if (variant.isBlank()) amount = 0;
+        GenericApiUtil.noTransaction();
+        this.modCount.increment();
+
+        if (amount == 0) {
+            variant = this.getBlankVariant();
+        } else if (variant.isBlank()) {
+            amount = 0;
+        }
+
         this.variant = variant;
         this.amount = amount;
-        if (markDirty) this.modCount.incrementUnsafe();
     }
 
     @Override
@@ -86,32 +92,31 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         StoragePreconditions.notNegative(amount);
         this.updateSnapshots(context);
         this.modCount.increment(context);
-        if (amount == 0) variant = this.getBlankVariant();
-        else if (variant.isBlank()) amount = 0;
+
+        if (amount == 0) {
+            variant = this.getBlankVariant();
+        } else if (variant.isBlank()) {
+            amount = 0;
+        }
+
         this.variant = variant;
         this.amount = amount;
     }
 
-    public void setAmount(long amount, @NotNull TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-        if (this.variant.isBlank()) {
-            if (amount != 0) {
-                throw new IllegalArgumentException("Cannot set amount of blank variant");
-            }
-        }
-        this.updateSnapshots(context);
-        this.modCount.increment(context);
-        if (amount == 0) {
-            this.variant = this.getBlankVariant();
-        }
-        this.amount = amount;
+    @Override
+    public S extract(long amount) {
+        if (this.isResourceBlank() || amount == 0) return this.getEmptyStack();
+        amount = Math.min(amount, this.getVariantCapacity(this.variant));
+
+        V v = this.variant;
+        long extract = this.extract(v, amount);
+        return this.createStack(v, extract);
     }
 
     @Override
     public S extract(long amount, @NotNull TransactionContext context) {
-        if (this.variant.isBlank()) return this.getEmptyStack();
+        if (this.isResourceBlank() || amount == 0) return this.getEmptyStack();
         amount = Math.min(amount, this.getVariantCapacity(this.variant));
-        if (amount == 0) return this.getEmptyStack();
 
         V v = this.variant;
         long extract = this.extract(v, amount, context);
@@ -139,61 +144,112 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
     protected abstract @NotNull S createStack(@NotNull V variant, long amount);
 
     public @NotNull S copyStack() {
-        if (this.variant.isBlank() || this.amount == 0) return this.getEmptyStack();
+        if (this.isResourceBlank()) return this.getEmptyStack();
         return this.createStack(this.variant, this.amount);
     }
 
     @Override
-    public long insert(V variant, long maxAmount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, maxAmount);
+    public long insert(V resource, long amount) {
+        GenericApiUtil.noTransaction();
+        StoragePreconditions.notBlankNotNegative(resource, amount);
 
-        if (this.variant.isBlank() || this.variant.equals(variant)) {
-            long insertedAmount = Math.min(maxAmount, Math.min(this.capacity, getCapacity(variant)) - this.amount);
-
+        if (this.isResourceBlank() || this.variant.equals(resource)) {
+            long insertedAmount = Math.min(amount, Math.min(this.capacity, getCapacity(resource)) - this.amount);
             if (insertedAmount > 0) {
-                updateSnapshots(context);
-
-                if (this.variant.isBlank()) {
-                    this.variant = variant;
+                this.modCount.increment();
+                if (this.isResourceBlank()) {
+                    this.variant = resource;
                     this.amount = insertedAmount;
                 } else {
                     this.amount += insertedAmount;
                 }
-                this.modCount.increment(context);
             }
-
             return insertedAmount;
         }
-
         return 0;
     }
 
     @Override
-    public long extract(V variant, long amount, @NotNull TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
+    public long insert(@NotNull V resource, long amount, @NotNull TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(resource, amount);
 
-        if (variant.equals(this.variant)) {
-            long extractedAmount = Math.min(amount, this.amount);
-
-            if (extractedAmount > 0) {
-                updateSnapshots(context);
-                this.amount -= extractedAmount;
+        if (this.isResourceBlank() || this.variant.equals(resource)) {
+            long insertedAmount = Math.min(amount, Math.min(this.capacity, getCapacity(resource)) - this.amount);
+            if (insertedAmount > 0) {
+                this.updateSnapshots(context);
                 this.modCount.increment(context);
+                if (this.isResourceBlank()) {
+                    this.variant = resource;
+                    this.amount = insertedAmount;
+                } else {
+                    this.amount += insertedAmount;
+                }
+            }
+            return insertedAmount;
+        }
+        return 0;
+    }
+
+    @Override
+    public long extract(V resource, long amount) {
+        GenericApiUtil.noTransaction();
+        StoragePreconditions.notBlankNotNegative(resource, amount);
+
+        if (resource.equals(this.variant)) {
+            long extractedAmount = Math.min(amount, this.amount);
+            if (extractedAmount > 0) {
+                this.modCount.increment();
+                this.amount -= extractedAmount;
 
                 if (this.amount == 0) {
                     this.variant = getBlankVariant();
                 }
             }
-
             return extractedAmount;
         }
+        return this.extractInternal(resource, amount);
+    }
 
+    @Override
+    public long extract(V resource, long amount, @NotNull TransactionContext context) {
+        StoragePreconditions.notBlankNotNegative(resource, amount);
+
+        if (resource.equals(this.variant)) {
+            long extractedAmount = Math.min(amount, this.amount);
+            if (extractedAmount > 0) {
+                this.updateSnapshots(context);
+                this.modCount.increment(context);
+                this.amount -= extractedAmount;
+
+                if (this.amount == 0) {
+                    this.variant = getBlankVariant();
+                }
+            }
+            return extractedAmount;
+        }
         return 0;
     }
 
     @Override
+    public long extractType(T resource, long amount) {
+        GenericApiUtil.noTransaction();
+        this.modCount.increment();
+
+        return this.extractInternalType(resource, amount);
+    }
+
+    @Override
+    public long extractType(T resource, long amount, @NotNull TransactionContext context) {
+        this.updateSnapshots(context);
+        this.modCount.increment(context);
+
+        return this.extractInternalType(resource, amount);
+    }
+
+    @Override
     public boolean isResourceBlank() {
-        return this.variant.isBlank();
+        assert !(this.amount == 0 && !this.variant.isBlank());
+        return this.amount == 0;
     }
 
     @Override
@@ -218,7 +274,7 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
 
     @ApiStatus.Internal
     public void incrementModCountUnsafe() {
-        this.modCount.incrementUnsafe();
+        this.modCount.increment();
     }
 
     @Override
@@ -243,7 +299,49 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
 
     @Override
     protected void readSnapshot(@NotNull ResourceAmount<V> snapshot) {
+        assert !(snapshot.resource().isBlank() && snapshot.amount() != 0);
         this.variant = snapshot.resource();
         this.amount = snapshot.amount();
+    }
+
+    private long extractInternal(@NotNull V resource, long amount) {
+        StoragePreconditions.notBlankNotNegative(resource, amount);
+
+        if (resource.equals(this.variant)) {
+            long extractedAmount = Math.min(amount, this.amount);
+
+            if (extractedAmount > 0) {
+                this.amount -= extractedAmount;
+
+                if (this.amount == 0) {
+                    this.variant = getBlankVariant();
+                }
+            }
+
+            return extractedAmount;
+        }
+
+        return 0;
+    }
+
+    private long extractInternalType(@NotNull T resource, long amount) {
+        StoragePreconditions.notNegative(amount);
+        if (resource == this.getBlankVariant().getObject()) throw new IllegalArgumentException("blank");
+
+        if (this.variant.getObject() == resource) {
+            long extractedAmount = Math.min(amount, this.amount);
+
+            if (extractedAmount > 0) {
+                this.amount -= extractedAmount;
+
+                if (this.amount == 0) {
+                    this.variant = getBlankVariant();
+                }
+            }
+
+            return extractedAmount;
+        }
+
+        return 0;
     }
 }

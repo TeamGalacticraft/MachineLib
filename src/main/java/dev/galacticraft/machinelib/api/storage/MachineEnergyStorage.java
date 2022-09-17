@@ -33,6 +33,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import team.reborn.energy.api.EnergyStorage;
 
@@ -53,44 +54,42 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, insert, extract);
     }
 
-    default long extract(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            long extract = this.extract(amount, transaction);
-            transaction.commit();
-            return extract;
+    long extract(long amount);
+
+    long insert(long amount);
+
+    @Override
+    long extract(long amount, @NotNull TransactionContext transaction);
+
+    @Override
+    long insert(long amount, @NotNull TransactionContext transaction);
+
+    default boolean extractExact(long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            if (this.extract(amount, transaction) == amount) {
+                transaction.commit();
+                return true;
+            }
+            return false;
         }
     }
 
-    default long insert(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            long extract = this.insert(amount, transaction);
-            transaction.commit();
-            return extract;
+    default boolean insertExact(long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            if (this.insert(amount, transaction) == amount) {
+                transaction.commit();
+                return true;
+            }
+            return false;
         }
     }
 
     default boolean extractExact(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            boolean success = this.extractExact(amount, transaction);
-            transaction.commit();
-            return success;
-        }
+        return this.extractExact(amount, null);
     }
 
     default boolean insertExact(long amount) {
-        try (Transaction transaction = Transaction.openOuter()) {
-            boolean success = this.insertExact(amount, transaction);
-            transaction.commit();
-            return success;
-        }
-    }
-
-    default boolean extractExact(long amount, @NotNull TransactionContext context) {
-        return this.extract(amount, context) == amount;
-    }
-
-    default boolean insertExact(long amount, @NotNull TransactionContext context) {
-        return this.insert(amount, context) == amount;
+        return this.insertExact(amount, null);
     }
 
     /**

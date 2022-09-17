@@ -36,10 +36,8 @@ import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,14 +49,15 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
-public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStorage<Fluid, FluidVariant> {
-    INSTANCE;
-
+public final class EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStorage<Fluid, FluidVariant> {
+    public static final MachineFluidStorage INSTANCE = new EmptyMachineFluidStorage();
     private static final SlotGroup[] NO_SLOTS = new SlotGroup[0];
+
+    private EmptyMachineFluidStorage() {}
 
     @Override
     public boolean allowsGases(int slot) {
-        return false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -76,73 +75,23 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public @NotNull FluidStack getStack(int slot) {
-        return FluidStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull FluidVariant getVariant(int slot) {
-        return FluidVariant.blank();
-    }
-
-    @Override
-    public @NotNull FluidVariant getResource(int slot) {
-        return FluidVariant.blank();
-    }
-
-    @Override
     public long getAmount(int slot) {
-        return 0;
-    }
-
-    @Override
-    public long getCapacity(int slot) {
-        return 0;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public boolean canExposedExtract(int slot) {
-        return false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public boolean canExposedInsert(int slot) {
-        return false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public boolean canPlayerInsert(int slot) {
-        return false;
-    }
-
-    @Override
-    public @NotNull FluidStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        return FluidStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull FluidStack extract(int slot, @NotNull TagKey<Fluid> tag, long amount, @Nullable TransactionContext context) {
-        return FluidStack.EMPTY;
-    }
-
-    @Override
-    public long extract(int slot, @NotNull Fluid resource, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long extract(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long getMaxCount(int slot) {
-        return 0;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -156,33 +105,13 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public long getSlotModCount(int slot) {
-        return 0;
-    }
-
-    @Override
-    public long getSlotModCountUnsafe(int slot) {
-        return 0;
-    }
-
-    @Override
-    public boolean isFull(int slot) {
-        return true;
-    }
-
-    @Override
-    public boolean isEmpty(int slot) {
-        return true;
-    }
-
-    @Override
     public @NotNull StorageSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
-        throw new IndexOutOfBoundsException("No slots!");
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public @NotNull Predicate<FluidVariant> getFilter(int slot) {
-        return v -> false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -192,7 +121,7 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
 
     @Override
     public boolean canAccept(int slot, @NotNull FluidVariant variant) {
-        return false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -224,12 +153,23 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public void setSlotUnsafe(int slot, FluidVariant variant, long amount, boolean markDirty) {
+    public void setSlot(int slot, FluidVariant variant, long amount) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public Storage<FluidVariant> getExposedStorage(@Nullable StorageSelection either, @NotNull ResourceFlow flow) {
         return this;
+    }
+
+    @Override
+    public @NotNull FluidVariant getResource(int slot) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -248,18 +188,8 @@ public enum EmptyMachineFluidStorage implements MachineFluidStorage, ExposedStor
     }
 
     @Override
-    public long insert(@NotNull FluidVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
-        return 0;
-    }
-
-    @Override
     public boolean supportsExtraction() {
         return false;
-    }
-
-    @Override
-    public long extract(@NotNull FluidVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
-        return 0;
     }
 
     @Override

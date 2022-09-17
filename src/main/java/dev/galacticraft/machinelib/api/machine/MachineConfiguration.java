@@ -99,7 +99,7 @@ public interface MachineConfiguration {
      * @return The NBT compound.
      */
     @Contract(mutates = "param1", value = "_, _ -> param1")
-    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @NotNull [] groups);
+    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
 
     /**
      * Deserializes the machine configuration from NBT.

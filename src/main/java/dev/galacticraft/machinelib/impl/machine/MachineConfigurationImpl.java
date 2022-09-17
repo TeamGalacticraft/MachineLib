@@ -70,7 +70,7 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @NotNull [] groups) {
+    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
         nbt.put(Constant.Nbt.SECURITY, this.getSecurity().toNbt());
         nbt.put(Constant.Nbt.CONFIGURATION, this.getIOConfiguration().writeNbt(groups));
         nbt.put(Constant.Nbt.REDSTONE_ACTIVATION, this.getRedstoneActivation().writeNbt());

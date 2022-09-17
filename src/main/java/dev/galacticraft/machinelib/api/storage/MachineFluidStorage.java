@@ -51,7 +51,7 @@ import java.util.function.Predicate;
 
 /**
  * Simple fluid storage for machines.
- * The flow and types of fluids are not restricted by this storage.
+ * The flow of fluid is not restricted by this storage.
  * If you need to expose a storage that restricts fluid flow/types see {@link ResourceStorage#getExposedStorage(StorageSelection, ResourceFlow)}
  *
  * @see ResourceStorage

@@ -41,7 +41,7 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull MachineIOFaceConfig bottom = MachineIOFaceConfig.blank();
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull [] groups) {
+    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups) {
         CompoundTag nbt = new CompoundTag();
         nbt.put("Front", this.front.writeNbt(groups));
         nbt.put("Back", this.back.writeNbt(groups));

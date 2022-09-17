@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
-import dev.galacticraft.machinelib.api.transfer.GenericStorageUtil;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -146,7 +146,7 @@ public final class TankImpl implements Tank {
                         storedResource = this.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericStorageUtil.move(storedResource, storage, this.storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, storage, this.storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
@@ -157,7 +157,7 @@ public final class TankImpl implements Tank {
                 FluidVariant storedResource = this.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericStorageUtil.move(storedResource, this.storage, storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, this.storage, storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }

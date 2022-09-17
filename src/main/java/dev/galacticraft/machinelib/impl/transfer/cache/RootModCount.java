@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.impl.transfer.cache;
 
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
@@ -53,8 +54,8 @@ public final class RootModCount extends SnapshotParticipant<Long> implements Mod
     }
 
     @Override
-    public void incrementUnsafe() {
-        assert !Transaction.isOpen();
+    public void increment() {
+        GenericApiUtil.noTransaction();
         this.count += 1;
     }
 

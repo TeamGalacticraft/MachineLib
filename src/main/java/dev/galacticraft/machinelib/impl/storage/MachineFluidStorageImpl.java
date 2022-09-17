@@ -31,6 +31,7 @@ import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.fluid.FluidStack;
@@ -38,20 +39,15 @@ import dev.galacticraft.machinelib.impl.storage.slot.FluidSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlot;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
-import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -97,16 +93,6 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public long getSlotModCount(int slot) {
-        return this.getSlot(slot).getModCount();
-    }
-
-    @Override
-    public long getSlotModCountUnsafe(int slot) {
-        return this.getSlot(slot).getModCountUnsafe();
-    }
-
-    @Override
     public @NotNull ResourceSlot<Fluid, FluidVariant, FluidStack> getSlot(int slot) {
         return this.inventory[slot];
     }
@@ -139,44 +125,6 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
     @Override
     public Iterator<StorageView<FluidVariant>> iterator() {
         return Iterators.forArray(this.inventory); // we do not need to iterate over the inner slots' iterator as there's only one slot.
-    }
-
-    @Override
-    public @NotNull FluidStack extract(int slot, @NotNull TagKey<Fluid> tag, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-
-        if (this.getSlot(slot).getResource().getFluid().builtInRegistryHolder().is(tag)) {
-            return this.extract(slot, amount, context);
-        } else {
-            return FluidStack.EMPTY;
-        }
-    }
-
-    @Override
-    public long insert(int slot, @NotNull FluidVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
-        if (!this.canAccept(slot, variant) || amount == 0) return 0;
-        ResourceSlot<Fluid, FluidVariant, FluidStack> invSlot = this.getSlot(slot);
-        if (invSlot.isResourceBlank()) {
-            amount = Math.min(amount, invSlot.getCapacity(variant));
-            try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.setStack(variant, amount, transaction);
-                transaction.commit();
-                return amount;
-            }
-        } else if (variant.equals(invSlot.getResource())) {
-            try (Transaction transaction = Transaction.openNested(context)) {
-                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
-                if (inserted > 0) {
-                    invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
-                    transaction.commit();
-                    return inserted;
-                }
-                return 0;
-            }
-        } else {
-            return 0;
-        }
     }
 
     @Override
@@ -243,23 +191,22 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
         if (nbt instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag compound = list.getCompound(i);
-                this.inventory[i].setStackUnsafe(FluidVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
+                this.inventory[i].setStack(FluidVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT));
             }
         }
     }
 
     @Override
     public void clearContent() {
-        assert !Transaction.isOpen();
+        GenericApiUtil.noTransaction();
         for (FluidSlot fluidSlot : this.inventory) {
-            fluidSlot.setStackUnsafe(FluidVariant.blank(), 0, true);
+            fluidSlot.setStack(FluidVariant.blank(), 0);
         }
     }
 
     @Override
-    public void setSlotUnsafe(int slot, FluidVariant variant, long amount, boolean markDirty) {
-        assert !Transaction.isOpen();
-        this.inventory[slot].setStackUnsafe(variant, amount, markDirty);
+    public void setSlot(int slot, FluidVariant variant, long amount) {
+        this.inventory[slot].setStack(variant, amount);
     }
 
     @Override
@@ -294,7 +241,7 @@ public final class MachineFluidStorageImpl implements MachineFluidStorage {
             @Override
             public void read(@NotNull FriendlyByteBuf buf) {
                 for (FluidSlot slot : MachineFluidStorageImpl.this.inventory) {
-                    slot.setStackUnsafe(FluidVariant.fromPacket(buf), buf.readVarLong(), false);
+                    slot.setStack(FluidVariant.fromPacket(buf), buf.readVarLong()); //todo: does modcount matter?
                 }
             }
         };

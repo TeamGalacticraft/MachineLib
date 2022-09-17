@@ -35,10 +35,8 @@ import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
@@ -54,11 +52,13 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
-public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorage<Item, ItemVariant> {
-    INSTANCE;
+public final class EmptyMachineItemStorage implements MachineItemStorage, ExposedStorage<Item, ItemVariant> {
+    public static final MachineItemStorage INSTANCE = new EmptyMachineItemStorage();
 
     private static final Container EMPTY_INVENTORY = new SimpleContainer(0);
     private static final SlotGroup[] NO_SLOTS = new SlotGroup[0];
+
+    private EmptyMachineItemStorage() {}
 
     @Override
     public int size() {
@@ -71,28 +71,18 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull ItemStack getStack(int slot) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ItemVariant getVariant(int slot) {
-        return ItemVariant.blank();
-    }
-
-    @Override
     public @NotNull ItemVariant getResource(int slot) {
-        return ItemVariant.blank();
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public long getAmount(int slot) {
-        return 0;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public long getCapacity(int slot) {
-        return 0;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -111,36 +101,6 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public @NotNull ItemStack extract(int slot, long amount, @Nullable TransactionContext context) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ItemStack extract(int slot, @NotNull TagKey<Item> tag, long amount, @Nullable TransactionContext context) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public long extract(int slot, @NotNull Item resource, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long extract(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        return 0;
-    }
-
-    @Override
-    public long getMaxCount(int slot) {
-        return 0;
-    }
-
-    @Override
     public long getModCount() {
         return 0;
     }
@@ -151,43 +111,13 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public long getSlotModCount(int slot) {
-        return 0;
-    }
-
-    @Override
-    public long getSlotModCountUnsafe(int slot) {
-        return 0;
-    }
-
-    @Override
-    public boolean isFull(int slot) {
-        return true;
-    }
-
-    @Override
-    public boolean isEmpty(int slot) {
-        return true;
-    }
-
-    @Override
     public @NotNull StorageSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
-        throw new IndexOutOfBoundsException("No slots!");
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public @NotNull Predicate<ItemVariant> getFilter(int slot) {
-        return v -> false;
-    }
-
-    @Override
-    public boolean canAccess(@NotNull Player player) {
-        return false;
-    }
-
-    @Override
-    public boolean canAccept(int slot, @NotNull ItemVariant variant) {
-        return false;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -206,6 +136,16 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
+    public boolean canAccess(@NotNull Player player) {
+        return false;
+    }
+
+    @Override
+    public boolean canAccept(int slot, @NotNull ItemVariant variant) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Override
     public @NotNull Tag writeNbt() {
         return ByteTag.ZERO;
     }
@@ -219,7 +159,8 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public void setSlotUnsafe(int slot, ItemVariant variant, long amount, boolean markDirty) {
+    public void setSlot(int slot, ItemVariant variant, long amount) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
@@ -243,18 +184,8 @@ public enum EmptyMachineItemStorage implements MachineItemStorage, ExposedStorag
     }
 
     @Override
-    public long insert(@NotNull ItemVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
-        return 0;
-    }
-
-    @Override
     public boolean supportsExtraction() {
         return false;
-    }
-
-    @Override
-    public long extract(@NotNull ItemVariant resource, long maxAmount, @NotNull TransactionContext transaction) {
-        return 0;
     }
 
     @Override

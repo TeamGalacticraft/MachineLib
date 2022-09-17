@@ -22,51 +22,23 @@
 
 package dev.galacticraft.machinelib.api.storage.exposed;
 
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import dev.galacticraft.machinelib.impl.storage.exposed.ExposedEnergyStorageImpl;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
  * An {@link EnergyStorage} that can be configured to restrict input and output.
- *
- * @param parent The parent {@link EnergyStorage}
- * @param insertion Whether this {@link EnergyStorage} can accept energy
- * @param extraction Whether this {@link EnergyStorage} can extract energy
  */
-public record ExposedEnergyStorage(@NotNull EnergyStorage parent, boolean insertion, boolean extraction) implements EnergyStorage {
-    @Override
-    public boolean supportsInsertion() {
-        return this.insertion;
+public interface ExposedEnergyStorage extends EnergyStorage {
+    @Contract("_, _, _ -> new")
+    static @NotNull ExposedEnergyStorage create(@NotNull EnergyStorage parent, boolean insertion, boolean extraction) {
+        return new ExposedEnergyStorageImpl(parent, insertion, extraction);
     }
 
-    @Override
-    public long insert(long maxAmount, TransactionContext transaction) {
-        if (this.supportsInsertion()) {
-            return this.parent.insert(maxAmount, transaction);
-        }
-        return 0;
-    }
+    EnergyStorage parent();
 
-    @Override
-    public boolean supportsExtraction() {
-        return this.extraction;
-    }
+    boolean insertion();
 
-    @Override
-    public long extract(long maxAmount, TransactionContext transaction) {
-        if (this.supportsExtraction()) {
-            return this.parent.extract(maxAmount, transaction);
-        }
-        return 0;
-    }
-
-    @Override
-    public long getAmount() {
-        return this.parent.getAmount();
-    }
-
-    @Override
-    public long getCapacity() {
-        return this.parent.getCapacity();
-    }
+    boolean extraction();
 }

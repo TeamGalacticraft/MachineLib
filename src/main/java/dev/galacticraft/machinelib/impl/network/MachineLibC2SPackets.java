@@ -34,7 +34,7 @@ import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.transfer.GenericStorageUtil;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -236,7 +236,7 @@ public final class MachineLibC2SPackets {
                         storedResource = tank.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericStorageUtil.move(storedResource, storage, slot, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, storage, slot, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
@@ -247,7 +247,7 @@ public final class MachineLibC2SPackets {
                 FluidVariant storedResource = tank.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericStorageUtil.move(storedResource, slot, storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, slot, storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }

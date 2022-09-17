@@ -30,28 +30,24 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.compat.ReadOnlySubInv;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.VanillaWrappedItemSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -98,16 +94,6 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public long getSlotModCount(int slot) {
-        return this.getSlot(slot).getModCount();
-    }
-
-    @Override
-    public long getSlotModCountUnsafe(int slot) {
-        return this.getSlot(slot).getModCountUnsafe();
-    }
-
-    @Override
     public @NotNull ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
         return this.inventory[slot];
     }
@@ -140,44 +126,6 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
     @Override
     public @NotNull Iterator<StorageView<ItemVariant>> iterator() {
         return Iterators.forArray(this.inventory); // we do not need to iterate over the inner slots' iterator as there's only one slot.
-    }
-
-    @Override
-    public @NotNull ItemStack extract(int slot, @NotNull TagKey<Item> tag, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notNegative(amount);
-
-        if (this.getSlot(slot).getResource().getItem().builtInRegistryHolder().is(tag)) {
-            return this.extract(slot, amount, context);
-        } else {
-            return ItemStack.EMPTY;
-        }
-    }
-
-    @Override
-    public long insert(int slot, @NotNull ItemVariant variant, long amount, @Nullable TransactionContext context) {
-        StoragePreconditions.notBlankNotNegative(variant, amount);
-        if (!this.canAccept(slot, variant) || amount == 0) return 0;
-        ResourceSlot<Item, ItemVariant, ItemStack> invSlot = this.getSlot(slot);
-        if (invSlot.isResourceBlank()) {
-            amount = Math.min(amount, invSlot.getCapacity(variant));
-            try (Transaction transaction = Transaction.openNested(context)) {
-                invSlot.setStack(variant, amount, transaction);
-                transaction.commit();
-                return amount;
-            }
-        } else if (variant.equals(invSlot.getResource())) {
-            try (Transaction transaction = Transaction.openNested(context)) {
-                long inserted = Math.min(amount, invSlot.getCapacity(variant) - invSlot.getAmount());
-                if (inserted > 0) {
-                    invSlot.setAmount(invSlot.getAmount() + inserted, transaction);
-                    transaction.commit();
-                    return inserted;
-                }
-                return 0;
-            }
-        } else {
-            return 0;
-        }
     }
 
     @Override
@@ -260,22 +208,22 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
         if (nbt instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag compound = list.getCompound(i);
-                this.getSlot(i).setStackUnsafe(ItemVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT), true);
+                this.getSlot(i).setStack(ItemVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT));
             }
         }
     }
 
     @Override
     public void clearContent() {
-        assert !Transaction.isOpen();
+        GenericApiUtil.noTransaction();
         for (ItemSlot itemSlot : this.inventory) {
-            itemSlot.setStackUnsafe(ItemVariant.blank(), 0, true);
+            itemSlot.setStack(ItemVariant.blank(), 0);
         }
     }
 
     @Override
-    public void setSlotUnsafe(int slot, ItemVariant variant, long amount, boolean markDirty) {
-        this.getSlot(slot).setStackUnsafe(variant, amount, markDirty);
+    public void setSlot(int slot, ItemVariant variant, long amount) {
+        this.getSlot(slot).setStack(variant, amount);
     }
 
     @Override
@@ -310,7 +258,7 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
             @Override
             public void read(@NotNull FriendlyByteBuf buf) {
                 for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.setStackUnsafe(ItemVariant.fromPacket(buf), buf.readVarLong(), false);
+                    slot.setStack(ItemVariant.fromPacket(buf), buf.readVarLong());
                 }
             }
         };
@@ -318,6 +266,6 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
 
     @ApiStatus.Internal
     public void incrementModCountUnsafe() {
-        this.modCount.incrementUnsafe();
+        this.modCount.increment();
     }
 }

@@ -165,7 +165,7 @@ public interface MachineIOFaceConfig {
      * @param groups The available slot groups.
      * @return The nbt compound that was written to.
      */
-    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @NotNull[] groups);
+    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups);
 
     /**
      * Read the configuration from the given nbt compound.

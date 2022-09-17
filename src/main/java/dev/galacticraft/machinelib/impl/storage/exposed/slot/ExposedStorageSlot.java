@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.impl.storage.exposed.slot;
 
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
+import dev.galacticraft.machinelib.api.storage.slot.StorageSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.UnmodifiableStorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
@@ -38,7 +39,7 @@ import java.util.function.Predicate;
 @ApiStatus.Internal
 public final class ExposedStorageSlot<T, V extends TransferVariant<T>> implements ExposedSlot<T, V> {
     private final @NotNull ResourceStorage<T, V, ?> storage;
-    private final @NotNull StorageView<V> slot;
+    private final @NotNull StorageSlot<T, V, ?> slot;
     private final int index;
     private final boolean insertion;
     private final boolean extraction;
@@ -59,7 +60,7 @@ public final class ExposedStorageSlot<T, V extends TransferVariant<T>> implement
     @Override
     public long insert(V resource, long maxAmount, TransactionContext transaction) {
         if (this.supportsInsertion()) {
-            if (this.storage.canAccept(this.index, resource)) {
+            if (this.slot.canAccept(resource)) {
                 return this.storage.insert(this.index, resource, maxAmount, transaction);
             }
         }
@@ -127,6 +128,11 @@ public final class ExposedStorageSlot<T, V extends TransferVariant<T>> implement
     @Override
     public long getVersion() {
         return this.storage.getVersion();
+    }
+
+    @Override
+    public StorageView<V> getUnderlyingView() {
+        return this.slot;
     }
 
     private class ExtractionLimitingIterator implements Iterator<StorageView<V>> {

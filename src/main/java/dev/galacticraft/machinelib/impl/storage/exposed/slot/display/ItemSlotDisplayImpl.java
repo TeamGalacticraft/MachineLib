@@ -20,32 +20,19 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.storage.slot.display;
+package dev.galacticraft.machinelib.impl.storage.exposed.slot.display;
 
 import com.mojang.datafixers.util.Pair;
-import dev.galacticraft.machinelib.impl.storage.exposed.slot.display.ItemSlotDisplayImpl;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Display information for an item slot.
+ *
+ * @param x The x position of the slot.
+ * @param y The y position of the slot.
+ * @param icon The icon to display in the slot.
  */
-public interface ItemSlotDisplay {
-    @Contract("_, _ -> new")
-    static @NotNull ItemSlotDisplay create(int x, int y) {
-        return create(x, y, null);
-    }
-
-    @Contract("_, _, _ -> new")
-    static @NotNull ItemSlotDisplay create(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
-        return new ItemSlotDisplayImpl(x, y, icon);
-    }
-
-    int x();
-
-    int y();
-
-    @Nullable Pair<ResourceLocation, ResourceLocation> icon();
+public record ItemSlotDisplayImpl(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) implements ItemSlotDisplay {
 }

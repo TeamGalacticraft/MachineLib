@@ -77,7 +77,7 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public void set(ItemStack stack) {
-        this.slot.setStackUnsafe(ItemVariant.of(stack), stack.getCount(), true);
+        this.slot.setStack(ItemVariant.of(stack), stack.getCount());
     }
 
     @Override

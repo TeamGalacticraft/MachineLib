@@ -24,9 +24,10 @@ package dev.galacticraft.machinelib.api.storage.slot;
 
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
@@ -47,10 +48,103 @@ public interface StorageSlot<T, V extends TransferVariant<T>, S> extends SingleS
 
     @NotNull S copyStack();
 
-    @TestOnly
-    void setStackUnsafe(@NotNull V variant, long amount, boolean markDirty);
+    void setStack(@NotNull V variant, long amount);
 
     void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context);
 
-    S extract(long amount, @NotNull TransactionContext transaction);
+
+
+    @Override
+    long insert(V resource, long amount, @NotNull TransactionContext context);
+
+    long insert(V resource, long amount);
+
+    default long simulateInsert(V resource, long amount) {
+        return this.simulateInsert(resource, amount, null);
+    }
+
+    @Override
+    long extract(V resource, long amount, @NotNull TransactionContext context);
+
+    long extract(V resource, long amount);
+
+    default long simulateExtract(V resource, long amount) {
+        return this.simulateExtract(resource, amount, null);
+    }
+
+    default S simulateExtract(long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extract(amount, transaction);
+        }
+    }
+
+    default S simulateExtract(long amount) {
+        return this.simulateExtract(amount, null);
+    }
+
+    long extractType(T resource, long amount, @NotNull TransactionContext context);
+
+    long extractType(T resource, long amount);
+
+    default long simulateExtractType(T resource, long amount) {
+        return this.simulateExtractType(resource, amount, null);
+    }
+
+    default long simulateExtractType(T resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extractType(resource, amount, transaction);
+        }
+    }
+
+    default boolean extractExact(V resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            if (this.extract(resource, amount, transaction) == amount) {
+                transaction.commit();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    default boolean extractExact(V resource, long amount) {
+        return this.extractExact(resource, amount, null);
+    }
+
+    default boolean simulateExtractExact(V resource, long amount) {
+        return this.simulateExtractExact(resource, amount, null);
+    }
+
+    default boolean simulateExtractExact(V resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extractExact(resource, amount, transaction);
+        }
+    }
+
+    default boolean extractExact(T resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            if (this.extractType(resource, amount, transaction) == amount) {
+                transaction.commit();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    default boolean extractExact(T resource, long amount) {
+        return this.extractExact(resource, amount, null);
+    }
+
+    default boolean simulateExtractExact(T resource, long amount) {
+        return this.simulateExtractExact(resource, amount, null);
+    }
+
+    default boolean simulateExtractExact(T resource, long amount, @Nullable TransactionContext context) {
+        try (Transaction transaction = Transaction.openNested(context)) {
+            return this.extractExact(resource, amount, transaction);
+        }
+    }
+
+    S extract(long amount, @NotNull TransactionContext context);
+
+    S extract(long amount);
 }

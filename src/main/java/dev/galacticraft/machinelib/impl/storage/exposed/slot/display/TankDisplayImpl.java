@@ -20,32 +20,16 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.storage.slot.display;
+package dev.galacticraft.machinelib.impl.storage.exposed.slot.display;
 
-import com.mojang.datafixers.util.Pair;
-import dev.galacticraft.machinelib.impl.storage.exposed.slot.display.ItemSlotDisplayImpl;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 
 /**
- * Display information for an item slot.
+ * Display information for a tank.
+ *
+ * @param x The x position of the tank.
+ * @param y The y position of the tank.
+ * @param height The height of the tank.
  */
-public interface ItemSlotDisplay {
-    @Contract("_, _ -> new")
-    static @NotNull ItemSlotDisplay create(int x, int y) {
-        return create(x, y, null);
-    }
-
-    @Contract("_, _, _ -> new")
-    static @NotNull ItemSlotDisplay create(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
-        return new ItemSlotDisplayImpl(x, y, icon);
-    }
-
-    int x();
-
-    int y();
-
-    @Nullable Pair<ResourceLocation, ResourceLocation> icon();
+public record TankDisplayImpl(int x, int y, int height) implements TankDisplay {
 }
