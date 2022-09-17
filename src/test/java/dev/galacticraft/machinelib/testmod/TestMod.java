@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.testmod;
 
+import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.screen.SimpleMachineScreenHandler;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
@@ -89,6 +90,8 @@ public class TestMod implements ModInitializer {
         Registry.register(Registry.ITEM, id("battery"), INFINITE_BATTERY);
         Registry.register(Registry.BLOCK_ENTITY_TYPE, id(SIMPLE_MACHINE), SIMPLE_MACHINE_BE_TYPE);
         Registry.register(Registry.MENU, id(SIMPLE_MACHINE), SIMPLE_MACHINE_SH_TYPE);
+
+        MachineBlockEntity.registerComponents(SIMPLE_MACHINE_BLOCK);
     }
 
     @Contract("_ -> new")

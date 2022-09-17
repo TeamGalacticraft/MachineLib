@@ -43,6 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 @ApiStatus.Internal
 public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
     /**
@@ -65,7 +68,7 @@ public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
     /**
      * The cached exposed storage of this face.
      */
-    private @Nullable Object storage = null;
+    private final @NotNull Map<ResourceType, Object> storage = new IdentityHashMap<>(3);
 
     public MachineIOFaceConfigImpl(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         this.type = type;
@@ -77,13 +80,13 @@ public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
         this.type = type;
         this.flow = flow;
         this.selection = null;
-        this.storage = null;
+        this.storage.clear();
     }
 
     @Override
     public void setSelection(@Nullable StorageSelection selection) {
         this.selection = selection;
-        this.storage = null;
+        this.storage.clear();
     }
 
     @Override
@@ -103,18 +106,27 @@ public final class MachineIOFaceConfigImpl implements MachineIOFaceConfig {
 
     @Override
     public <T, V extends TransferVariant<T>> @Nullable ExposedStorage<T, V> getExposedStorage(@NotNull ResourceStorage<T, V, ?> storage) {
-        if (this.getType().willAcceptResource(storage.getResource())) {
-            if (this.storage == null) this.storage = storage.getExposedStorage(this.selection, this.flow);
-            return (ExposedStorage<T, V>) this.storage;
+        ResourceType resource = storage.getResource();
+        if (this.getType().willAcceptResource(resource)) {
+            Object exposed = this.storage.get(resource);
+            if (exposed == null) {
+                exposed = storage.getExposedStorage(this.selection, this.flow);
+                this.storage.put(resource, exposed);
+            }
+            return (ExposedStorage<T, V>) exposed;
         }
         return null;
     }
 
     @Override
-    public EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage) {
+    public @Nullable EnergyStorage getExposedStorage(@NotNull MachineEnergyStorage storage) {
         if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.selection == null) {
-            if (this.storage == null) this.storage = storage.getExposedStorage(this.flow);
-            return (EnergyStorage) this.storage;
+            Object exposed = this.storage.get(ResourceType.ENERGY);
+            if (exposed == null) {
+                exposed = storage.getExposedStorage(this.flow);
+                this.storage.put(ResourceType.ENERGY, exposed);
+            }
+            return (EnergyStorage) exposed;
         }
         return null;
     }

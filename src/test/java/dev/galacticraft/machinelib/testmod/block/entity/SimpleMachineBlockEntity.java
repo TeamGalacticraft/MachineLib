@@ -55,7 +55,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     protected @NotNull MachineItemStorage createItemStorage() {
         return MachineItemStorage.builder()
                 .addSlot(TestMod.CHARGE_SLOT, TestMod.ANY_ITEM, true, ItemSlotDisplay.create(32, 32))
-                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(32, 32))
+                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(64, 64))
                 .build();
     }
 
