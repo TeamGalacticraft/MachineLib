@@ -65,8 +65,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
@@ -866,7 +868,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
                 int fluidColor = FluidVariantRendering.getColor(resource);
 
-                if (sprite == null) {
+                if (sprite == null || sprite.getName().equals(MissingTextureAtlasSprite.getLocation())) {
                     sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
                     fluidColor = -1;
                     if (sprite == null) throw new IllegalStateException("Water sprite is null");
