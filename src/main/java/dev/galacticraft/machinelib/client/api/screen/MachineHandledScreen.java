@@ -1270,22 +1270,25 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
             SlotGroup[] groups = machine.itemStorage().getGroups();
 
-            List<ResourceFlow> list = new ArrayList<>(3);
+            List<ResourceFlow> list = new ArrayList<>();
             for (int i = 0; i < groups.length; i++) {
                 if (machine.itemStorage().canExposedExtract(i)) {
                     if (machine.itemStorage().canExposedInsert(i)) {
                         map.put(ResourceType.ITEM, ResourceFlow.VALUES);
-                        list.clear();
                         break;
                     } else {
-                        list.add(ResourceFlow.OUTPUT);
+                        if (!list.contains(ResourceFlow.OUTPUT)) {
+                            list.add(ResourceFlow.OUTPUT);
+                        }
                     }
                 } else {
-                    list.add(ResourceFlow.INPUT);
+                    if (!list.contains(ResourceFlow.INPUT)) {
+                        list.add(ResourceFlow.INPUT);
+                    }
                 }
                 if (list.size() == 2) {
                     map.put(ResourceType.ITEM, ResourceFlow.VALUES);
-                    list.clear();
+                    break;
                 }
             }
             if (!list.isEmpty()) {
@@ -1299,17 +1302,20 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
                 if (machine.fluidStorage().canExposedExtract(i)) {
                     if (machine.fluidStorage().canExposedInsert(i)) {
                         map.put(ResourceType.FLUID, ResourceFlow.VALUES);
-                        list.clear();
                         break;
                     } else {
-                        list.add(ResourceFlow.OUTPUT);
+                        if (!list.contains(ResourceFlow.OUTPUT)) {
+                            list.add(ResourceFlow.OUTPUT);
+                        }
                     }
                 } else {
-                    list.add(ResourceFlow.INPUT);
+                    if (!list.contains(ResourceFlow.INPUT)) {
+                        list.add(ResourceFlow.INPUT);
+                    }
                 }
                 if (list.size() == 2) {
                     map.put(ResourceType.FLUID, ResourceFlow.VALUES);
-                    list.clear();
+                    break;
                 }
             }
             if (!list.isEmpty()) {
@@ -1318,7 +1324,31 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
             list.clear();
 
             if (!map.isEmpty()) {
-                map.put(ResourceType.ANY, ResourceFlow.VALUES);
+                byte in = 0;
+                byte out = 0;
+                for (List<ResourceFlow> list1 : map.values()) {
+                    if (list1.size() == 3) {
+                        ++in;
+                        ++out;
+                    } else {
+                        if (list1.contains(ResourceFlow.INPUT)) {
+                            in++;
+                        } else if (list1.contains(ResourceFlow.OUTPUT)) {
+                            out++;
+                        }
+                    }
+                    if (in >= 2 && out >= 2) break;
+                }
+
+                if (in >= 2) {
+                    if (out >= 2) {
+                        map.put(ResourceType.ANY, ResourceFlow.VALUES);
+                    } else {
+                        map.put(ResourceType.ANY, Collections.singletonList(ResourceFlow.INPUT));
+                    }
+                } else if (out >= 2) {
+                    map.put(ResourceType.ANY, Collections.singletonList(ResourceFlow.OUTPUT));
+                }
             } else {
                 sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                 sideOption.setSelection(null);

@@ -44,7 +44,9 @@ public class VanillaWrappedItemSlot extends Slot {
     private final @Nullable Pair<ResourceLocation, ResourceLocation> icon;
     private final @NotNull ResourceSlot<Item, ItemVariant, ItemStack> slot;
     private final boolean insert;
-    private final UUID uuid;
+    private final @NotNull UUID uuid;
+    private @Nullable ItemStack watchedStack = null;
+    private long watchModCount = Long.MIN_VALUE;
 
     public VanillaWrappedItemSlot(@NotNull MachineItemStorageImpl storage, int index, @NotNull ItemSlotDisplay display, @NotNull Player player) {
         super(storage.playerInventory(), index, display.x(), display.y());
@@ -67,7 +69,11 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public ItemStack getItem() {
-        return this.slot.copyStack();
+        if (this.watchModCount != this.slot.getModCount()) {
+            this.watchModCount = this.slot.getModCount();
+            this.watchedStack = this.slot.copyStack();
+        }
+        return this.watchedStack;
     }
 
     @Override
@@ -82,7 +88,16 @@ public class VanillaWrappedItemSlot extends Slot {
 
     @Override
     public void setChanged() {
-        this.slot.incrementModCountUnsafe();
+        if (this.watchModCount == this.slot.getModCount()) {
+            assert this.watchedStack != null;
+            this.watchModCount = Long.MIN_VALUE;
+            if (this.watchedStack.getCount() != this.slot.getAmount()
+                    || this.slot.getResource().matches(this.watchedStack)
+            ) {
+                this.set(this.watchedStack);
+            }
+            this.watchedStack = null;
+        }
     }
 
     @Override

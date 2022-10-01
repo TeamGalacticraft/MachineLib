@@ -272,11 +272,6 @@ public abstract class ResourceSlot<T, V extends TransferVariant<T>, S> extends S
         return Math.min(this.getVariantCapacity(variant), this.capacity);
     }
 
-    @ApiStatus.Internal
-    public void incrementModCountUnsafe() {
-        this.modCount.increment();
-    }
-
     @Override
     public long getVersion() {
         return this.getModCount();
