@@ -37,6 +37,8 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
+import io.netty.buffer.ByteBufAllocator;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -44,9 +46,14 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class MachineLibC2SPackets {
@@ -54,17 +61,25 @@ public final class MachineLibC2SPackets {
 
     public static void register() {
         ServerPlayNetworking.registerGlobalReceiver(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
-            byte b = buf.readByte();
+            byte f = buf.readByte();
             boolean type = buf.readBoolean();
 
-            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length) {
-                BlockFace face = Constant.Cache.BLOCK_FACES[b];
+            if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
-                            if (type) machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                            if (type) {
+                                machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                                FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 1)
+                                        .writeLong(machine.getBlockPos().asLong()).writeByte(f)
+                                );
+                                for (ServerPlayer tracking : PlayerLookup.tracking((ServerLevel) Objects.requireNonNull(machine.getLevel()), machine.getBlockPos())) {
+                                    ServerPlayNetworking.send(tracking, Constant.id("reset_face"), buffer);
+                                }
+                            }
                             machineFace.setSelection(null);
                         }
                     }
@@ -73,15 +88,15 @@ public final class MachineLibC2SPackets {
         });
 
         ServerPlayNetworking.registerGlobalReceiver(Constant.id("face_type"), (server, player, handler, buf, responseSender) -> {
-            byte b = buf.readByte();
+            byte f = buf.readByte();
             byte type = buf.readByte();
             byte flow = buf.readByte();
 
-            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length
+            if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length
                     && type >= 0 && type < Constant.Cache.RESOURCE_TYPES.length
                     && flow >= 0 && flow < ResourceFlow.VALUES.size()
             ) {
-                BlockFace face = Constant.Cache.BLOCK_FACES[b];
+                BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
@@ -89,6 +104,12 @@ public final class MachineLibC2SPackets {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES.get(flow));
                             machineFace.setSelection(null);
+                            FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 3)
+                                    .writeLong(machine.getBlockPos().asLong()).writeByte(f).writeByte(type).writeByte(flow)
+                            );
+                            for (ServerPlayer tracking : PlayerLookup.tracking((ServerLevel) Objects.requireNonNull(machine.getLevel()), machine.getBlockPos())) {
+                                ServerPlayNetworking.send(tracking, Constant.id("face_type"), buffer);
+                            }
                         }
                     }
                 });

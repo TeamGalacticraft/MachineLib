@@ -23,9 +23,13 @@
 package dev.galacticraft.machinelib.client.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.machinelib.api.block.face.BlockFace;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
+import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -55,6 +59,49 @@ public final class MachineLibS2CPackets {
                 }
             });
         });
+
+        ClientPlayNetworking.registerGlobalReceiver(Constant.id("reset_face"), (client, handler, buf, responseSender) -> {
+            BlockPos pos = BlockPos.of(buf.readLong());
+            byte f = buf.readByte();
+
+            if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[f];
+                client.execute(() -> {
+                    if (client.level != null && client.level.isLoaded(pos)) {
+                        if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                            client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
+                        }
+                    }
+                });
+            }
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Constant.id("face_type"), (client, handler, buf, responseSender) -> {
+            BlockPos pos = BlockPos.of(buf.readLong());
+            byte f = buf.readByte();
+            byte type = buf.readByte();
+            byte flow = buf.readByte();
+
+            if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length
+                    && type >= 0 && type < Constant.Cache.RESOURCE_TYPES.length
+                    && flow >= 0 && flow < ResourceFlow.VALUES.size()
+            ) {
+                BlockFace face = Constant.Cache.BLOCK_FACES[f];
+                client.execute(() -> {
+                    if (client.level != null && client.level.isLoaded(pos)) {
+                        if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES.get(flow));
+                            machineFace.setSelection(null);
+                            client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
+                        }
+                    }
+                });
+            }
+        });
+
         ClientPlayNetworking.registerGlobalReceiver(Constant.id("security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
             BlockPos pos = buf.readBlockPos();
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
