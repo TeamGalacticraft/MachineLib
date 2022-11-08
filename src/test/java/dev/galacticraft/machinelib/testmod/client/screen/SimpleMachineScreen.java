@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.testmod.client.screen;
 
-import dev.galacticraft.machinelib.api.screen.SimpleMachineScreenHandler;
-import dev.galacticraft.machinelib.client.api.screen.MachineHandledScreen;
+import dev.galacticraft.machinelib.api.screen.SimpleMachineMenu;
+import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.testmod.TestMod;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.network.chat.Component;
@@ -31,10 +31,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleMachineScreen extends MachineHandledScreen<SimpleMachineBlockEntity, SimpleMachineScreenHandler<SimpleMachineBlockEntity>> {
+public class SimpleMachineScreen extends MachineScreen<SimpleMachineBlockEntity, SimpleMachineMenu<SimpleMachineBlockEntity>> {
     private static final ResourceLocation TEXTURE = TestMod.id("tex.png");
 
-    public SimpleMachineScreen(@NotNull SimpleMachineScreenHandler<SimpleMachineBlockEntity> handler, @NotNull Inventory inv, @NotNull Component title) {
+    public SimpleMachineScreen(@NotNull SimpleMachineMenu<SimpleMachineBlockEntity> handler, @NotNull Inventory inv, @NotNull Component title) {
         super(handler, inv, title, TEXTURE);
         this.capacitorX = 8;
         this.capacitorY = 8;

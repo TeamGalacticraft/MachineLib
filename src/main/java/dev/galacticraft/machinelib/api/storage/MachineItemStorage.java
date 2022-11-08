@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.api.storage;
 
 import com.google.common.base.Preconditions;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
@@ -62,7 +62,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemVariant, I
      * @param handler The screen handler to add slots to.
      * @param <M> The type of machine.
      */
-    <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler);
+    <M extends MachineBlockEntity> void addSlots(@NotNull MachineMenu<M> handler);
 
     /**
      * Player-exposed inventory for screen handlers.

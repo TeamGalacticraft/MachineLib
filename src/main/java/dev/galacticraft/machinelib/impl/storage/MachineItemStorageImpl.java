@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.storage;
 
 import com.google.common.collect.Iterators;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
@@ -176,7 +176,7 @@ public final class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler) {
+    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineMenu<M> handler) {
         for (int i = 0; i < this.displays.length; i++) {
             handler.addSlot(new VanillaWrappedItemSlot(this, i, this.displays[i], handler.player));
         }

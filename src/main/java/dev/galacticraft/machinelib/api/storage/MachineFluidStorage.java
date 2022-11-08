@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.api.storage;
 
 import com.google.common.base.Preconditions;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
@@ -71,7 +71,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidVariant
      * @param handler The screen handler to add tanks to.
      * @param <M> The type of machine.
      */
-    <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler);
+    <M extends MachineBlockEntity> void addTanks(MachineMenu<M> handler);
 
     @Override
     @NotNull

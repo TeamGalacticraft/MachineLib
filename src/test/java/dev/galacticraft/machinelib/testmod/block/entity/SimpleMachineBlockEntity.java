@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.testmod.block.entity;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
-import dev.galacticraft.machinelib.api.screen.SimpleMachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.SimpleMachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
@@ -85,7 +85,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
-        return SimpleMachineScreenHandler.create(syncId, player, this, TestMod.SIMPLE_MACHINE_SH_TYPE);
+        return SimpleMachineMenu.create(syncId, player, this, TestMod.SIMPLE_MACHINE_SH_TYPE);
     }
 
     @Override

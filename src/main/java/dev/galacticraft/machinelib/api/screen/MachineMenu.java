@@ -44,37 +44,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Base screen handler for machines.
+ * Base container menu for machines.
  *
- * @param <M> The type of machine block entity this screen handler is linked to.
+ * @param <M> The type of machine block entity this menu is linked to.
  */
-public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends AbstractContainerMenu {
+public abstract class MachineMenu<M extends MachineBlockEntity> extends AbstractContainerMenu {
     /**
-     * The player who is currently interacting with this screen handler.
+     * The player who is currently interacting with this menu.
      */
     public final Player player;
     /**
-     * The machine this screen handler is for.
+     * The machine this menu is for.
      */
     public final M machine;
     /**
-     * The storage sync handlers for this screen handler.
+     * The storage sync handlers for this menu.
      */
     protected final List<StorageSyncHandler> syncHandlers = new ArrayList<>(4);
     /**
-     * The tanks contained in this screen handler.
+     * The tanks contained in this menu.
      */
     public final List<Tank> tanks = new ArrayList<>();
 
     /**
-     * Constructs a new screen handler for a machine.
+     * Constructs a new menu for a machine.
      *
-     * @param syncId The sync id for this screen handler.
-     * @param player The player who is interacting with this screen handler.
-     * @param machine The machine this screen handler is for.
-     * @param type The type of screen handler this is.
+     * @param syncId The sync id for this menu.
+     * @param player The player who is interacting with this menu.
+     * @param machine The machine this menu is for.
+     * @param type The type of menu this is.
      */
-    protected MachineScreenHandler(int syncId, @NotNull Player player, @NotNull M machine, @Nullable MenuType<? extends MachineScreenHandler<M>> type) {
+    protected MachineMenu(int syncId, @NotNull Player player, @NotNull M machine, @Nullable MenuType<? extends MachineMenu<M>> type) {
         super(type, syncId);
         this.player = player;
         this.machine = machine;
@@ -90,14 +90,14 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     }
 
     /**
-     * Constructs a new screen handler for a machine.
+     * Constructs a new menu for a machine.
      *
-     * @param syncId The sync id for this screen handler.
+     * @param syncId The sync id for this menu.
      * @param buf The synchronization buffer from the server. Should contain exactly one block pos.
-     * @param inventory The inventory of the player interacting with this screen handler.
-     * @param type The type of screen handler this is.
+     * @param inventory The inventory of the player interacting with this menu.
+     * @param type The type of menu this is.
      */
-    protected MachineScreenHandler(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @Nullable MenuType<? extends MachineScreenHandler<M>> type) {
+    protected MachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @Nullable MenuType<? extends MachineMenu<M>> type) {
         this(syncId, inventory.player, (M) inventory.player.level.getBlockEntity(buf.readBlockPos()), type);
     }
 
@@ -166,7 +166,7 @@ public abstract class MachineScreenHandler<M extends MachineBlockEntity> extends
     }
 
     /**
-     * Syncs the storages in this screen handler.
+     * Syncs the storages in this menu.
      */
     @ApiStatus.Internal
     private void syncStorages() {

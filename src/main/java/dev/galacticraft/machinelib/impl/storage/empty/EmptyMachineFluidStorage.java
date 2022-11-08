@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.storage.empty;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedStorage;
@@ -61,7 +61,7 @@ public final class EmptyMachineFluidStorage implements MachineFluidStorage, Expo
     }
 
     @Override
-    public <M extends MachineBlockEntity> void addTanks(MachineScreenHandler<M> handler) {
+    public <M extends MachineBlockEntity> void addTanks(MachineMenu<M> handler) {
     }
 
     @Override

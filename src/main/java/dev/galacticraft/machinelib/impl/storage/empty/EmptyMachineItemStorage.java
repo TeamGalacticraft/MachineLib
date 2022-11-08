@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.storage.empty;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedStorage;
@@ -194,7 +194,7 @@ public final class EmptyMachineItemStorage implements MachineItemStorage, Expose
     }
 
     @Override
-    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineScreenHandler<M> handler) {
+    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineMenu<M> handler) {
     }
 
     @Contract(pure = true)

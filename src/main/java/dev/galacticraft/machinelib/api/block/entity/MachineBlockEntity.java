@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.api.block.entity;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.machine.*;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
@@ -36,7 +36,7 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.transfer.CachingItemApiProvider;
 import dev.galacticraft.machinelib.api.transfer.cache.AdjacentBlockApiCache;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
-import dev.galacticraft.machinelib.client.api.screen.MachineHandledScreen;
+import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
@@ -83,8 +83,8 @@ import java.util.*;
  * {@link MachineEnergyStorage energy}, {@link MachineItemStorage item} and {@link MachineFluidStorage fluid} storage.
  *
  * @see MachineBlock
- * @see MachineScreenHandler
- * @see MachineHandledScreen
+ * @see MachineMenu
+ * @see MachineScreen
  */
 public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider, RenderAttachmentBlockEntity {
     /**

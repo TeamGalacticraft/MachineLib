@@ -35,54 +35,54 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 /**
- * A simple screen handler that keeps track of recipe progress
+ * A simple menu that keeps track of recipe progress
  *
  * @param <M> The type of machine block entity
  * @param <R> The type of recipe the machine processes
  * @param <C> The type of storage the recipe uses
- * @see MachineScreenHandler
+ * @see MachineMenu
  */
-public class RecipeMachineScreenHandler<C extends Container, R extends Recipe<C>, M extends RecipeMachineBlockEntity<C, R>> extends MachineScreenHandler<M> {
+public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, M extends RecipeMachineBlockEntity<C, R>> extends MachineMenu<M> {
     /**
-     * Constructs a new recipe screen handler.
-     * @param syncId The sync id for this screen handler.
-     * @param player The player who is interacting with this screen handler.
-     * @param machine The machine this screen handler is for.
-     * @param type The type of screen handler this is.
+     * Constructs a new recipe menu.
+     * @param syncId The sync id for this menu.
+     * @param player The player who is interacting with this menu.
+     * @param machine The machine this menu is for.
+     * @param type The type of menu this is.
      * @param invX The leftmost x position of the player inventory.
      * @param invY The topmost y position of the player inventory.
      */
-    protected RecipeMachineScreenHandler(int syncId, Player player, M machine, MenuType<? extends RecipeMachineScreenHandler<C, R, M>> type, int invX, int invY) {
+    protected RecipeMachineMenu(int syncId, Player player, M machine, MenuType<? extends RecipeMachineMenu<C, R, M>> type, int invX, int invY) {
         super(syncId, player, machine, type);
         this.addDataSlot(new DirectDataSlot(this.machine::getProgress, this.machine::setProgress));
         this.addDataSlot(new DirectDataSlot(this.machine::getMaxProgress, this.machine::setMaxProgress));
         this.addPlayerInventorySlots(invX, invY);
     }
 
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineMenu<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineMenu<C, R, T>>> handlerType) {
         return createFactory(handlerType, 8, 84);
     }
 
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineMenu<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineMenu<C, R, T>>> handlerType, int invY) {
         return createFactory(handlerType, 8, invY);
     }
 
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineScreenHandler<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineScreenHandler<C, R, T>>> handlerType, int invX, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> ExtendedScreenHandlerType.@NotNull ExtendedFactory<RecipeMachineMenu<C, R, T>> createFactory(Supplier<MenuType<? extends RecipeMachineMenu<C, R, T>>> handlerType, int invX, int invY) {
         return (syncId, inventory, buf) -> create(syncId, inventory.player, (T)inventory.player.level.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
     }
 
     @Contract("_, _, _, _ -> new")
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineMenu<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineMenu<C, R, T>> handlerType) {
         return create(syncId, playerEntity, machine, handlerType, 8, 84);
     }
 
     @Contract("_, _, _, _, _ -> new")
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invY) {
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineMenu<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineMenu<C, R, T>> handlerType, int invY) {
         return create(syncId, playerEntity, machine, handlerType, 8, invY);
     }
 
     @Contract("_, _, _, _, _, _ -> new")
-    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineScreenHandler<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineScreenHandler<C, R, T>> handlerType, int invX, int invY) {
-        return new RecipeMachineScreenHandler<>(syncId, playerEntity, machine, handlerType, invX, invY);
+    public static <C extends Container, R extends Recipe<C>, T extends RecipeMachineBlockEntity<C, R>> @NotNull RecipeMachineMenu<C, R, T> create(int syncId, Player playerEntity, T machine, MenuType<? extends RecipeMachineMenu<C, R, T>> handlerType, int invX, int invY) {
+        return new RecipeMachineMenu<>(syncId, playerEntity, machine, handlerType, invX, invY);
     }
 }

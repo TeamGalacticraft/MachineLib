@@ -27,7 +27,7 @@ import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -52,7 +52,7 @@ public final class MachineLibS2CPackets {
         ClientPlayNetworking.registerGlobalReceiver(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
             FriendlyByteBuf packet = PacketByteBufs.copy(buf);
             client.execute(() -> {
-                if (client.player.containerMenu instanceof MachineScreenHandler<?> machineHandler) {
+                if (client.player.containerMenu instanceof MachineMenu<?> machineHandler) {
                     if (machineHandler.containerId == packet.readByte()) {
                         machineHandler.receiveState(packet);
                     }

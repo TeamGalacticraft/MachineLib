@@ -34,7 +34,7 @@ import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
@@ -68,7 +68,6 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
@@ -98,7 +97,7 @@ import java.util.*;
  * Handles the rendering of tanks, configuration panels and capacitors.
  */
 @Environment(EnvType.CLIENT)
-public abstract class MachineHandledScreen<M extends MachineBlockEntity, H extends MachineScreenHandler<M>> extends AbstractContainerScreen<H> {
+public abstract class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M>> extends AbstractContainerScreen<H> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
     private static final ItemStack GUNPOWDER = new ItemStack(Items.GUNPOWDER);
     private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "unlit_torch")));
@@ -227,7 +226,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
      * @param title The title of the screen.
      * @param texture The texture of the background screen.
      */
-    protected MachineHandledScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
+    protected MachineScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
         super(handler, inv, title);
         this.pos = this.menu.machine.getBlockPos();
         this.level = inv.player.level;
@@ -238,7 +237,7 @@ public abstract class MachineHandledScreen<M extends MachineBlockEntity, H exten
 
         Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.machine.getSecurity().getOwner(), this.machine.getSecurity().getUsername()), (type, identifier, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && identifier != null) {
-                MachineHandledScreen.this.ownerSkin = identifier;
+                MachineScreen.this.ownerSkin = identifier;
             }
         }, true);
     }

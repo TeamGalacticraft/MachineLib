@@ -27,7 +27,7 @@ import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineScreenHandler;
+import dev.galacticraft.machinelib.api.screen.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
@@ -67,7 +67,7 @@ public final class MachineLibC2SPackets {
             if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
@@ -98,7 +98,7 @@ public final class MachineLibC2SPackets {
             ) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
@@ -123,7 +123,7 @@ public final class MachineLibC2SPackets {
             if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && slot >= 0) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
@@ -191,7 +191,7 @@ public final class MachineLibC2SPackets {
             if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && group >= 0) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[b];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
@@ -210,7 +210,7 @@ public final class MachineLibC2SPackets {
         ServerPlayNetworking.registerGlobalReceiver(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().hasAccess(player)) {
                         machine.setRedstone(redstoneActivation);
@@ -222,7 +222,7 @@ public final class MachineLibC2SPackets {
         ServerPlayNetworking.registerGlobalReceiver(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().isOwner(player)) {
                         machine.getSecurity().setAccessLevel(accessLevel);
@@ -235,7 +235,7 @@ public final class MachineLibC2SPackets {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineScreenHandler<?> sHandler) {
+                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                     if (sHandler.containerId == syncId) {
                         acceptStack(sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
                     }
