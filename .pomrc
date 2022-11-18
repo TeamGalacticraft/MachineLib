@@ -1,0 +1,22 @@
+{ 
+  "url": "https://github.com/TeamGalacticraft/MachineLib",
+  "organization": {
+    "name": "Team Galacticraft",
+    "url": "https://github.com/TeamGalacticraft"
+  },
+  "licenses": [
+    {
+      "name": "MIT",
+      "url": "https://github.com/TeamGalacticraft/MachineLib/blob/main/LICENSE"
+    }
+  ],
+  "issueManagement": {
+    "system": "github",
+    "url": "https://github.com/TeamGalacticraft/MachineLib/issues"
+  },
+  "scm": {
+    "connection": "scm:git:git://github.com/TeamGalacticraft/MachineLib.git",
+    "developerConnection": "scm:git:git@github.com:TeamGalacticraft/MachineLib.git",
+    "url": "https://github.com/TeamGalacticraft/MachineLib"
+  }
+}

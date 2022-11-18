@@ -24,11 +24,11 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 plugins {
-    `maven-publish`
     id("fabric-loom") version ("1.0-SNAPSHOT")
     id("io.github.juuxel.loom-quiltflower") version ("1.7.3")
     id("org.cadixdev.licenser") version ("0.6.1")
     id("org.ajoberstar.grgit") version("5.0.0")
+    id("net.galacticraft.internal.maven") version ("1.0.0")
 }
 
 val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
@@ -72,9 +72,9 @@ version = buildString {
 base.archivesName.set(modName)
 
 java {
-    targetCompatibility = JavaVersion.VERSION_17
-    sourceCompatibility = JavaVersion.VERSION_17
-
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
     withSourcesJar()
     withJavadocJar()
 }
@@ -172,58 +172,29 @@ tasks.withType<Jar>() {
     }
 }
 
-
 tasks.javadoc {
     options.apply {
+        encoding = "UTF-8"
+        memberLevel = JavadocMemberLevel.PUBLIC
         title = "MachineLib ${project.version} API"
     }
+
+    (options as? StandardJavadocDocletOptions)?.let { opt ->
+        // Adds search bar
+        opt.addBooleanOption("html5", true)
+        // Java 13 changed accessibility rules.
+        // remove "no comment" warnings.
+        opt.addBooleanOption("Xdoclint:all,-missing", true)
+    }
+
     exclude("**/impl/**")
 }
 
-publishing {
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId = group.toString()
-            artifactId = modName
-            version = project.version.toString()
+maven {
+    // -- This must be the property name --
+    // Entering username and password directly will not work
+    // And is designed that way on purpose
 
-            from(components["java"])
-
-            pom {
-                organization {
-                    name.set("Team Galacticraft")
-                    url.set("https://github.com/TeamGalacticraft")
-                }
-
-                scm {
-                    url.set("https://github.com/TeamGalacticraft/MachineLib")
-                    connection.set("scm:git:git://github.com/TeamGalacticraft/MachineLib.git")
-                    developerConnection.set("scm:git:git@github.com:TeamGalacticraft/MachineLib.git")
-                }
-
-                issueManagement {
-                    system.set("github")
-                    url.set("https://github.com/TeamGalacticraft/MachineLib/issues")
-                }
-
-                licenses {
-                    license {
-                        name.set("MIT")
-                        url.set("https://github.com/TeamGalacticraft/MachineLib/blob/main/LICENSE")
-                    }
-                }
-            }
-        }
-    }
-
-    repositories {
-        if (System.getenv().containsKey("NEXUS_REPOSITORY_URL")) {
-            maven(System.getenv("NEXUS_REPOSITORY_URL")!!) {
-                credentials {
-                    username = System.getenv("NEXUS_USER")
-                    password = System.getenv("NEXUS_PASSWORD")
-                }
-            }
-        }
-    }
+    //username("USERNAME_PROPERTY")
+    //password("PASSWORD_PROPERTY")
 }
