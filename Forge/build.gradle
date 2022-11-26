@@ -28,6 +28,8 @@ configurations {
 
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
+    include "lol.bai:badpackets:forge-${rootProject.badpackets_version}"
+    modRuntimeOnly "lol.bai:badpackets:forge-${rootProject.badpackets_version}"
 
     Common(project(path: ":Common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":Common", configuration: "transformProductionForge")) { transitive = false }

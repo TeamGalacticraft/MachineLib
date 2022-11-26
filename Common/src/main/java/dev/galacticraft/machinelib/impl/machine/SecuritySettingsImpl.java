@@ -25,8 +25,8 @@ package dev.galacticraft.machinelib.impl.machine;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.SecuritySettings;
 import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import io.netty.buffer.Unpooled;
+import lol.bai.badpackets.api.PacketSender;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -232,7 +232,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
     @Override
     public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
         assert this.owner != null;
-        FriendlyByteBuf buf = PacketByteBufs.create();
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
         buf.writeByte(this.accessLevel.ordinal());
         buf.writeUUID(this.owner);
@@ -254,6 +254,6 @@ public final class SecuritySettingsImpl implements SecuritySettings {
         } else {
             buf.writeBoolean(false);
         }
-        ServerPlayNetworking.send(player, Constant.id("security_update"), buf);
+        PacketSender.s2c(player).send(Constant.id("security_update"), buf);
     }
 }

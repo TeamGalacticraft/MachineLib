@@ -23,6 +23,8 @@ dependencies {
     }) {
         exclude(group: "net.fabricmc.fabric-api")
     }
+    include "lol.bai:badpackets:fabric-${rootProject.badpackets_version}"
+    modImplementation "lol.bai:badpackets:fabric-${rootProject.badpackets_version}"
 
     Common(project(path: ":Common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":Common", configuration: "transformProductionFabric")) { transitive false }

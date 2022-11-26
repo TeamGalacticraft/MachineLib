@@ -39,9 +39,7 @@ allprojects {
                 includeGroup("dev.galacticraft")
             }
         }
-        maven{
-            url "https://maven.bai.lol"
-        }
+        maven { url "https://maven.bai.lol" }
     }
 
     tasks.withType(JavaCompile) {

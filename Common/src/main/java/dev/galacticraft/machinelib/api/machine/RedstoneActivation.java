@@ -23,8 +23,8 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import io.netty.buffer.Unpooled;
+import lol.bai.badpackets.api.PacketSender;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -88,10 +88,10 @@ public enum RedstoneActivation implements StringRepresentable {
      * @param player The player to send the packet to.
      */
     public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
-        FriendlyByteBuf buf = PacketByteBufs.create();
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
         buf.writeByte(this.ordinal());
-        ServerPlayNetworking.send(player, Constant.id("redstone_update"), buf);
+        PacketSender.s2c(player).send(Constant.id("redstone_update"), buf);
     }
 
     /**
