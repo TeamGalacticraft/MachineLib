@@ -1,7 +1,7 @@
 modLoader="javafml"
 loaderVersion="[43,)"
 issueTrackerURL = "https://github.com/TeamGalacticraft/MachineLib/issues/"
-license="All rights reserved"
+license="MIT"
 
 [[mods]]
 modId = "machinelib"

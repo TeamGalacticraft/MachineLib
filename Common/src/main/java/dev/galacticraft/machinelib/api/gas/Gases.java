@@ -171,23 +171,4 @@ public final class Gases {
 
     @Contract(pure = true)
     public static void init() {}
-
-    static {
-        Registry.register(Registry.FLUID, HYDROGEN_ID, HYDROGEN);
-        Registry.register(Registry.FLUID, NITROGEN_ID, NITROGEN);
-        Registry.register(Registry.FLUID, OXYGEN_ID, OXYGEN);
-        Registry.register(Registry.FLUID, CARBON_DIOXIDE_ID, CARBON_DIOXIDE);
-        Registry.register(Registry.FLUID, WATER_VAPOR_ID, WATER_VAPOR);
-        Registry.register(Registry.FLUID, METHANE_ID, METHANE);
-        Registry.register(Registry.FLUID, HELIUM_ID, HELIUM);
-        Registry.register(Registry.FLUID, ARGON_ID, ARGON);
-        Registry.register(Registry.FLUID, NEON_ID, NEON);
-        Registry.register(Registry.FLUID, KRYPTON_ID, KRYPTON);
-        Registry.register(Registry.FLUID, NITROUS_OXIDE_ID, NITROUS_OXIDE);
-        Registry.register(Registry.FLUID, CARBON_MONOXIDE_ID, CARBON_MONOXIDE);
-        Registry.register(Registry.FLUID, XENON_ID, XENON);
-        Registry.register(Registry.FLUID, OZONE_ID, OZONE);
-        Registry.register(Registry.FLUID, NITROUS_DIOXIDE_ID, NITROUS_DIOXIDE);
-        Registry.register(Registry.FLUID, IODINE_ID, IODINE);
-    }
 }
