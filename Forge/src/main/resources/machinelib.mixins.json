@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "dev.galacticraft.machinelib.forge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+  ],
+  "mixins": [
+    "RegistryAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

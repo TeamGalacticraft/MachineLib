@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "machinelib",
+  "version": "${version}",
+
+  "name": "MachineLib",
+  "icon": "assets/machinelib/icon.png",
+  "description": "Machine Library for Galacticraft.",
+  "license": "MIT",
+  "contact": {
+    "homepage": "https://galacticraft.dev/",
+    "sources": "https://github.com/TeamGalacticraft/MachineLib/",
+    "issues": "https://github.com/TeamGalacticraft/MachineLib/issues/"
+  },
+  "authors": [
+    {
+      "name": "Team Galacticraft",
+      "contact": {
+        "homepage": "https://github.com/TeamGalacticraft/",
+        "discord": "https://discord.gg/n3QqhMYyFK"
+      }
+    }
+  ],
+  "contributors": [
+    {
+      "name": "marcus8448",
+      "contact": {
+        "homepage": "https://github.com/marcus8448"
+      }
+    }
+  ],
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "dev.galacticraft.machinelib.client.impl.MachineLibClient"
+    ],
+    "main": [
+      "dev.galacticraft.machinelib.impl.MachineLib"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.13.3",
+    "minecraft": ">=1.18.2",
+    "fabric-api-base": "*",
+    "fabric-api-lookup-api-v1": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-networking-api-v1": "*",
+    "fabric-registry-sync-v0": "*",
+    "fabric-resource-loader-v0": "*",
+    "fabric-screen-handler-api-v1": "*",
+    "fabric-transfer-api-v1": "*",
+    "fabric-transitive-access-wideners-v1": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [ "library" ],
+      "parent": "galacticraft-api"
+    }
+  }
+}

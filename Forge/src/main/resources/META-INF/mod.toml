@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[43,)"
+issueTrackerURL = "https://github.com/TeamGalacticraft/MachineLib/issues/"
+license="All rights reserved"
+
+[[mods]]
+modId = "machinelib"
+version = "${version}"
+displayName = "MachineLib"
+authors = "Team Galacticraft"
+description = '''
+Machine Library for Galacticraft.
+'''
+#logoFile = ""
+
+[[dependencies.machinelib]]
+modId = "forge"
+mandatory = true
+versionRange = "[43,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.machinelib]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.19.2,)"
+ordering = "NONE"
+side = "BOTH"

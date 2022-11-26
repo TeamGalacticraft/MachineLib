@@ -1,0 +1,29 @@
+pluginManagement {
+    repositories {
+        maven {
+            url "https://maven.fabricmc.net/"
+            name = "Fabric"
+            content {
+                includeGroup("net.fabricmc")
+                includeGroup("net.fabricmc.fabric-api")
+                includeGroup("fabric-loom")
+            }
+        }
+        maven {
+            url"https://server.bbkr.space/artifactory/libs-release/"
+            name = "Cotton"
+            content {
+                includeGroup("io.github.juuxel.loom-quiltflower")
+                includeGroup("io.github.juuxel")
+            }
+        }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://maven.minecraftforge.net/" }
+        gradlePluginPortal()
+    }
+}
+include("Common")
+include("Fabric")
+include("Forge")
+
+rootProject.name = "MachineLib"
