@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.storage;
 import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.impl.storage.EnergyContainer;
 import dev.galacticraft.machinelib.impl.storage.MachineEnergyStorageImpl;
 import dev.galacticraft.machinelib.impl.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
@@ -44,7 +45,7 @@ import team.reborn.energy.api.EnergyStorage;
  * @see dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage
  * @see team.reborn.energy.api.EnergyStorage
  */
-public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
+public interface MachineEnergyStorage extends EnergyContainer, ConfiguredStorage {
     SlotGroup[] NO_SLOTS = new SlotGroup[0];
 
     @Contract("_, _, _, _, _ -> new")
@@ -59,37 +60,25 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     long insert(long amount);
 
     @Override
-    long extract(long amount, @NotNull TransactionContext transaction);
+    long extract(long amount, boolean simulate);
 
     @Override
-    long insert(long amount, @NotNull TransactionContext transaction);
-
-    default boolean extractExact(long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            if (this.extract(amount, transaction) == amount) {
-                transaction.commit();
-                return true;
-            }
-            return false;
-        }
-    }
-
-    default boolean insertExact(long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            if (this.insert(amount, transaction) == amount) {
-                transaction.commit();
-                return true;
-            }
-            return false;
-        }
-    }
+    long insert(long amount, boolean simulate);
 
     default boolean extractExact(long amount) {
-        return this.extractExact(amount, null);
+        if (this.extract(amount, true) == amount) {
+            this.extract(amount, false);
+            return true;
+        }
+        return false;
     }
 
     default boolean insertExact(long amount) {
-        return this.insertExact(amount, null);
+        if (this.insert(amount, true) == amount) {
+            this.insert(amount, false);
+            return true;
+        }
+        return false;
     }
 
     /**

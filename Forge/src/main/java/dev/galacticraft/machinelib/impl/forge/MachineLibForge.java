@@ -2,11 +2,20 @@ package dev.galacticraft.machinelib.impl.forge;
 
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.impl.Constant;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.galacticraft.machinelib.api.gas.Gases.*;
 
@@ -17,6 +26,16 @@ public class MachineLibForge {
 
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(MachineLibForge::registerFluids);
+        MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, MachineLibForge::registerStorages);
+    }
+
+    public static void registerStorages(AttachCapabilitiesEvent<BlockEntity> event) {
+        event.addCapability(Constant.id("energy"), new ICapabilityProvider() {
+            @Override
+            public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+                return null;
+            }
+        });
     }
 
     public static void registerFluids(RegisterEvent event) {
