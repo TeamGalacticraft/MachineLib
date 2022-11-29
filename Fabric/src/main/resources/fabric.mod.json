@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "icon": "${mod_id}.png",
+  "description": "${mod_description}",
+  "license": "MIT",
+  "contact": {
+    "homepage": "https://galacticraft.dev/",
+    "sources": "https://github.com/TeamGalacticraft/MachineLib/",
+    "issues": "https://github.com/TeamGalacticraft/MachineLib/issues/"
+  },
+  "authors": [
+    {
+      "name": "Team Galacticraft",
+      "contact": {
+        "homepage": "https://github.com/TeamGalacticraft/",
+        "discord": "https://discord.gg/n3QqhMYyFK"
+      }
+    }
+  ],
+  "contributors": [
+    {
+      "name": "marcus8448",
+      "contact": {
+        "homepage": "https://github.com/marcus8448"
+      }
+    }
+  ],
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.galacticraft.machinelib.impl.fabric.MachineLibFabric"
+    ],
+    "client": [
+      "dev.galacticraft.machinelib.impl.fabric.client.MachineLibClientFabric"
+    ]
+  },
+  "mixins": [
+    "${mod_id}.mixins.json",
+    "${mod_id}.fabric.mixins.json"
+  ],
+  "accessWidener": "${mod_id}.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.14",
+    "minecraft": "1.19.x",
+    "badpackets": ">=0.2.0"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ],
+      "parent": "galacticraft-api"
+    },
+    "loom:inject_interfaces": {
+      "net/minecraft/server/MinecraftServer": [
+        "dev/galacticraft/machinelib/api/DynamicDimensionRegistry"
+      ]
+    }
+  }
+}
