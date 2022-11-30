@@ -172,7 +172,6 @@ public final class Assertions {
 
     @Contract(value = "_ -> fail", pure = true)
     public static void failure(String value) {
-        MachineLibGametest.resetLock();
         throw new GameTestAssertException(value);
     }
 }

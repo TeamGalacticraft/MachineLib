@@ -3,6 +3,7 @@
   "package": "dev.galacticraft.machinelib.impl.forge.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "RegistryAccessor"
   ],
   "minVersion": "0.8.0",
   "injectors": {

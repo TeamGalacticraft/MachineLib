@@ -20,19 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl;
+package dev.galacticraft.machinelib.impl.storage.io;
 
-import dev.galacticraft.machinelib.impl.config.DynamicDimensionsConfig;
-import dev.galacticraft.machinelib.impl.platform.Services;
-import net.minecraft.resources.ResourceLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-public interface Constants {
-	String MOD_ID = "machinelib";
-	Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	DynamicDimensionsConfig CONFIG = Services.PLATFORM.getConfig();
+@ApiStatus.Internal
+public record GroupStorageSelection(@NotNull SlotGroup group) implements StorageSelection {
+    @Override
+    public boolean isSlot() {
+        return false;
+    }
 
-	ResourceLocation CREATE_WORLD_PACKET = new ResourceLocation(MOD_ID, "create_world");
-	ResourceLocation DELETE_WORLD_PACKET = new ResourceLocation(MOD_ID, "delete_world");
+    @Override
+    public int getSlot() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGroup() {
+        return true;
+    }
+
+    @Override
+    public @NotNull SlotGroup getGroup() {
+        return this.group;
+    }
 }

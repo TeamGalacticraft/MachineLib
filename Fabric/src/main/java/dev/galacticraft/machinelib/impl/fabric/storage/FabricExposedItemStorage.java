@@ -1,9 +1,9 @@
 package dev.galacticraft.machinelib.impl.fabric.storage;
 
 import com.google.common.collect.Iterators;
-import dev.galacticraft.machinelib.api.storage.ItemStorage;
 import dev.galacticraft.machinelib.impl.fabric.storage.slot.FabricExposedItemSlot;
-import dev.galacticraft.machinelib.impl.storage.InternalItemStorage;
+import dev.galacticraft.machinelib.impl.storage.InternalSlottedItemStorage;
+import dev.galacticraft.machinelib.impl.storage.slot.InternalChangeTracking;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -14,23 +14,23 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 
 public class FabricExposedItemStorage extends SnapshotParticipant<Long> implements Storage<ItemVariant> {
-    private final ItemStorage storage;
+    private final InternalChangeTracking storage;
     private final int size;
     private final FabricExposedItemSlot[] slots;
     private final boolean insertion;
     private final boolean extraction;
 
-    public FabricExposedItemStorage(ItemStorage storage) {
+    public FabricExposedItemStorage(InternalSlottedItemStorage storage, int[] slots, boolean insertion, boolean extraction) {
         this.storage = storage;
-        this.size = storage.size();
-        this.slots = new FabricExposedItemSlot[this.size];
-        boolean insertion = false;
-        boolean extraction = false;
-        for (int i = 0; i < this.slots.length; i++) {
-            this.slots[i] = new FabricExposedItemSlot(this, storage.getSlot(i), storage.getFilter(i), insertion |= storage.canPlayerInsert(i), extraction |= storage.canExternalExtract(i));
+        this.size = slots.length;
+        this.slots = new FabricExposedItemSlot[slots.length];
+        boolean insert = false;
+        boolean extract = false;
+        for (int i = 0; i < slots.length; i++) {
+            this.slots[i] = new FabricExposedItemSlot(this, storage.getSlot(i), storage.getFilter(i), insert |= (insertion && storage.canExternalInsert(i)), extract |= (extraction && storage.canExternalExtract(i)));
         }
-        this.insertion = insertion;
-        this.extraction = extraction;
+        this.insertion = insert;
+        this.extraction = extract;
     }
 
     @Override
@@ -91,6 +91,6 @@ public class FabricExposedItemStorage extends SnapshotParticipant<Long> implemen
 
     @Override
     protected void readSnapshot(Long snapshot) {
-        ((InternalItemStorage) this.storage).setModCount(snapshot);
+        this.storage.setModCount(snapshot);
     }
 }

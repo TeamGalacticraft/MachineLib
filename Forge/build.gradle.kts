@@ -34,7 +34,7 @@ mixin {
 minecraft {
     mappings("official", minecraft)
 
-    // accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
+     accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
 
     runs {
         create("client") {

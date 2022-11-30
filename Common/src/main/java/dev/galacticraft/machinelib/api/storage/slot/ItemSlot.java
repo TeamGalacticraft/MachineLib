@@ -1,10 +1,11 @@
 package dev.galacticraft.machinelib.api.storage.slot;
 
+import dev.galacticraft.machinelib.api.storage.ChangeTracking;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public interface ItemSlot {
+public interface ItemSlot extends ChangeTracking {
     // do not store this stack on the assertion that it will reflect the future inventory
     // try not to modify the stack. if you do, you must call markDirty()
     ItemStack getStack();
@@ -75,12 +76,6 @@ public interface ItemSlot {
 
     boolean isEmpty();
 
+    @Override
     long getModCount();
-    void markDirty();
-
-//    record Variant(@NotNull Item item, @Nullable CompoundTag tag) {
-//        public Variant {
-//            Preconditions.checkNotNull(item);
-//        }
-//    }
 }

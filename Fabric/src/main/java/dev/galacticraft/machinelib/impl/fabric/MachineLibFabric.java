@@ -22,11 +22,14 @@
 
 package dev.galacticraft.machinelib.impl.fabric;
 
+import dev.galacticraft.machinelib.impl.MachineLib;
 import net.fabricmc.api.ModInitializer;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class MachineLibFabric implements ModInitializer {
     @Override
-    public void onInitialize() {}
+    public void onInitialize() {
+        MachineLib.initialize();
+    }
 }

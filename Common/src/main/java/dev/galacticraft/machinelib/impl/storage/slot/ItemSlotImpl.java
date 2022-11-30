@@ -1,6 +1,6 @@
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.impl.storage.InternalItemStorage;
+import dev.galacticraft.machinelib.impl.storage.InternalSlottedItemStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -8,12 +8,12 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Objects;
 
 public class ItemSlotImpl implements InternalItemSlot {
-    private final InternalItemStorage storage;
+    private final InternalSlottedItemStorage storage;
     private final int capacity;
     private ItemStack stack;
     private long modCount;
 
-    public ItemSlotImpl(InternalItemStorage storage, int capacity) {
+    public ItemSlotImpl(InternalSlottedItemStorage storage, int capacity) {
         this.storage = storage;
         this.capacity = capacity;
     }
@@ -100,21 +100,6 @@ public class ItemSlotImpl implements InternalItemSlot {
         return 0;
     }
 
-    private int clampSize(Item item, int amount) {
-        return Math.min(this.capacity, Math.min(item.getMaxStackSize(), amount));
-    }
-
-    private int calcGrowth(Item item, int amount) {
-        return Math.max(0, this.stack.getCount() - clampSize(item, this.stack.getCount() + amount));
-    }
-
-    private int growStack(Item item, int amount) {
-        amount = calcGrowth(item, amount);
-        this.stack.grow(amount);
-        this.markDirty();
-        return amount;
-    }
-
     @Override
     public int simulateInsert(Item item, int amount) {
         if (this.stack.isEmpty()) {
@@ -184,17 +169,6 @@ public class ItemSlotImpl implements InternalItemSlot {
         return 0;
     }
 
-    private int clampShrink(int amount) {
-        return Math.min(amount, this.stack.getCount());
-    }
-
-    private int shrinkStack(int amount) {
-        amount = this.clampShrink(amount);
-        this.stack.shrink(amount);
-        this.markDirty();
-        return amount;
-    }
-
     @Override
     public boolean simulateExtract(Item item) {
         if (this.stack.isEmpty()) return false;
@@ -250,7 +224,33 @@ public class ItemSlotImpl implements InternalItemSlot {
     }
 
     @Override
-    public void setModCount(long value) {
-        this.modCount = value;
+    public void setModCount(long modCount) {
+        this.modCount = modCount;
+    }
+
+    private int clampSize(Item item, int amount) {
+        return Math.min(this.capacity, Math.min(item.getMaxStackSize(), amount));
+    }
+
+    private int calcGrowth(Item item, int amount) {
+        return Math.max(0, this.stack.getCount() - clampSize(item, this.stack.getCount() + amount));
+    }
+
+    private int growStack(Item item, int amount) {
+        amount = calcGrowth(item, amount);
+        this.stack.grow(amount);
+        this.markDirty();
+        return amount;
+    }
+
+    private int clampShrink(int amount) {
+        return Math.min(amount, this.stack.getCount());
+    }
+
+    private int shrinkStack(int amount) {
+        amount = this.clampShrink(amount);
+        this.stack.shrink(amount);
+        this.markDirty();
+        return amount;
     }
 }

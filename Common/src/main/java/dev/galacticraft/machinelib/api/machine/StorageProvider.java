@@ -20,22 +20,25 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.fabric.platform.services;
+package dev.galacticraft.machinelib.api.machine;
 
-import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import org.jetbrains.annotations.ApiStatus;
+import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
+import dev.galacticraft.machinelib.api.storage.io.ResourceType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class FabricPlatformHelper implements PlatformHelper {
-    @Override
-    public Registry<MachineStatus> _createStatusRegistry() {
-        return FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
-    }
+/**
+ * Exposes storages for use in the transfer system.
+ */
+public interface StorageProvider {
+    /**
+     * Returns a storage for the given resource type.
+     *
+     * @param type The type of resource to get a storage for.
+     * @return The storage for the given resource type.
+     */
+    @Contract(pure = true)
+    @Nullable
+    ConfiguredStorage getStorage(@NotNull ResourceType type);
 }

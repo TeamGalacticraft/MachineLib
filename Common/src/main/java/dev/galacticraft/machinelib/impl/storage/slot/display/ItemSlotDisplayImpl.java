@@ -20,22 +20,19 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.fabric.platform.services;
+package dev.galacticraft.machinelib.impl.storage.slot.display;
 
-import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import org.jetbrains.annotations.ApiStatus;
+import com.mojang.datafixers.util.Pair;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class FabricPlatformHelper implements PlatformHelper {
-    @Override
-    public Registry<MachineStatus> _createStatusRegistry() {
-        return FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
-    }
+/**
+ * Display information for an item slot.
+ *
+ * @param x The x position of the slot.
+ * @param y The y position of the slot.
+ * @param icon The icon to display in the slot.
+ */
+public record ItemSlotDisplayImpl(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) implements ItemSlotDisplay {
 }

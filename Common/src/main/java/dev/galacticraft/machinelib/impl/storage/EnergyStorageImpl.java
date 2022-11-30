@@ -1,8 +1,6 @@
 package dev.galacticraft.machinelib.impl.storage;
 
-import dev.galacticraft.machinelib.api.storage.EnergyStorage;
-
-public class EnergyStorageImpl implements EnergyStorage {
+public class EnergyStorageImpl implements InternalEnergyStorage {
     private final long capacity;
     private long amount;
 
@@ -42,5 +40,10 @@ public class EnergyStorageImpl implements EnergyStorage {
     @Override
     public long getCapacity() {
         return this.capacity;
+    }
+
+    @Override
+    public void setAmount(long amount) {
+        this.amount = amount;
     }
 }

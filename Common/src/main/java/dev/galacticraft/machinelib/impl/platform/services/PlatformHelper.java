@@ -22,5 +22,14 @@
 
 package dev.galacticraft.machinelib.impl.platform.services;
 
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.impl.platform.Services;
+import net.minecraft.core.Registry;
+
 public interface PlatformHelper {
+    Registry<MachineStatus> _createStatusRegistry();
+
+    static Registry<MachineStatus> createStatusRegistry() {
+        return Services.PLATFORM._createStatusRegistry();
+    }
 }

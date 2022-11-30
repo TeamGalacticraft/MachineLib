@@ -20,22 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.fabric.platform.services;
+package dev.galacticraft.machinelib.api.storage.slot.display;
 
-import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import org.jetbrains.annotations.ApiStatus;
+import com.mojang.datafixers.util.Pair;
+import dev.galacticraft.machinelib.impl.storage.slot.display.ItemSlotDisplayImpl;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class FabricPlatformHelper implements PlatformHelper {
-    @Override
-    public Registry<MachineStatus> _createStatusRegistry() {
-        return FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+/**
+ * Display information for an item slot.
+ */
+public interface ItemSlotDisplay {
+    @Contract("_, _ -> new")
+    static @NotNull ItemSlotDisplay create(int x, int y) {
+        return create(x, y, null);
     }
+
+    @Contract("_, _, _ -> new")
+    static @NotNull ItemSlotDisplay create(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
+        return new ItemSlotDisplayImpl(x, y, icon);
+    }
+
+    int x();
+
+    int y();
+
+    @Nullable Pair<ResourceLocation, ResourceLocation> icon();
 }

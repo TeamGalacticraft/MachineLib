@@ -22,16 +22,18 @@
 
 package dev.galacticraft.machinelib.impl.forge;
 
-import dev.galacticraft.machinelib.impl.Constants;
+import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.forge.client.MachineLibClientForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-@Mod(Constants.MOD_ID)
+@Mod(Constant.MOD_ID)
 public final class MachineLibForge {
     public MachineLibForge() {
+        MachineLib.initialize();
         if (FMLEnvironment.dist.isClient()) {
             MachineLibClientForge.initialize();
         }

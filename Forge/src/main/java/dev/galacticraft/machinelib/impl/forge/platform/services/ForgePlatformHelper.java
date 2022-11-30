@@ -22,9 +22,20 @@
 
 package dev.galacticraft.machinelib.impl.forge.platform.services;
 
+import com.mojang.serialization.Lifecycle;
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.forge.mixin.RegistryAccessor;
 import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class ForgePlatformHelper implements PlatformHelper {
+
+    @Override
+    public Registry<MachineStatus> _createStatusRegistry() {
+        return RegistryAccessor.callRegisterDefaulted(ResourceKey.createRegistryKey(Constant.id("machine_status")), "machinelib:invalid", Lifecycle.stable(), null);
+    }
 }

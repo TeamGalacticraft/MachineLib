@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.platform;
 
 import dev.galacticraft.machinelib.api.component.ComponentTypes;
-import dev.galacticraft.machinelib.impl.Constants;
+import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public final class Services {
     public static <T> @NotNull T service(Class<T> clazz) {
         final T service = ServiceLoader.load(clazz).findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        Constants.LOGGER.debug("Loaded {} for service {}", service.getClass().getName(), clazz);
+        Constant.LOGGER.debug("Loaded {} for service {}", service.getClass().getName(), clazz);
         return service;
     }
 }

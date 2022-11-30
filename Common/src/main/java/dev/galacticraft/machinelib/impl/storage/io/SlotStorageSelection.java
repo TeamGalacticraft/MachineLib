@@ -20,22 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.fabric.platform.services;
+package dev.galacticraft.machinelib.impl.storage.io;
 
-import com.mojang.serialization.Lifecycle;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
+import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public final class FabricPlatformHelper implements PlatformHelper {
+public record SlotStorageSelection(int slot) implements StorageSelection {
     @Override
-    public Registry<MachineStatus> _createStatusRegistry() {
-        return FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
+    public boolean isSlot() {
+        return true;
+    }
+
+    @Override
+    public int getSlot() {
+        return this.slot;
+    }
+
+    @Override
+    public boolean isGroup() {
+        return false;
+    }
+
+    @Override
+    public @NotNull SlotGroup getGroup() {
+        throw new UnsupportedOperationException();
     }
 }

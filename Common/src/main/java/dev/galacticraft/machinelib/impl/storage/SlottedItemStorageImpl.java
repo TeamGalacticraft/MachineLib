@@ -1,6 +1,9 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.storage.slot.ItemSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.impl.storage.slot.InternalItemSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemSlotImpl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
@@ -8,22 +11,24 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
 
-public class ItemStorageImpl implements InternalItemStorage {
+public class SlottedItemStorageImpl implements InternalSlottedItemStorage {
     private final int size;
-    private final ItemSlot[] slots;
+    private final InternalItemSlot[] slots;
+    private final SlotGroup[] groups;
     private final ResourceFilter<Item>[] filters;
+    private final ItemSlotDisplay[] displays;
     private final boolean[] playerInsertion;
-    private final boolean[] externalExtraction;
     private long modCount = 0;
 
-    public ItemStorageImpl(int size, ResourceFilter<Item>[] filters, int[] capacity, boolean[] playerInsertion, boolean[] externalExtraction) {
+    public SlottedItemStorageImpl(int size, SlotGroup[] groups, int[] capacity, ResourceFilter<Item>[] filters, ItemSlotDisplay[] displays, boolean[] playerInsertion) {
         assert filters.length == size;
         this.size = size;
+        this.slots = new InternalItemSlot[size];
+        this.groups = groups;
         this.filters = filters;
+        this.displays = displays;
         this.playerInsertion = playerInsertion;
-        this.externalExtraction = externalExtraction;
 
-        this.slots = new ItemSlot[size];
         for (int i = 0; i < this.slots.length; i++) {
             this.slots[i] = new ItemSlotImpl(this, capacity[i]);
         }
@@ -35,8 +40,13 @@ public class ItemStorageImpl implements InternalItemStorage {
     }
 
     @Override
-    public ItemSlot getSlot(int slot) {
+    public InternalItemSlot getSlot(int slot) {
         return this.slots[slot];
+    }
+
+    @Override
+    public SlotGroup getGroup(int slot) {
+        return this.groups[slot];
     }
 
     @Override
@@ -50,8 +60,13 @@ public class ItemStorageImpl implements InternalItemStorage {
     }
 
     @Override
+    public boolean canExternalInsert(int slot) {
+        return this.playerInsertion[slot] && this.groups[slot].isAutomatable();
+    }
+
+    @Override
     public boolean canExternalExtract(int slot) {
-        return this.externalExtraction[slot];
+        return !this.playerInsertion[slot] && this.groups[slot].isAutomatable();
     }
 
     @Override

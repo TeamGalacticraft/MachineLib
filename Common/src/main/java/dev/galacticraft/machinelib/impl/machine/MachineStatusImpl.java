@@ -20,22 +20,11 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.fabric.platform.services;
+package dev.galacticraft.machinelib.impl.machine;
 
-import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import org.jetbrains.annotations.ApiStatus;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class FabricPlatformHelper implements PlatformHelper {
-    @Override
-    public Registry<MachineStatus> _createStatusRegistry() {
-        return FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
-    }
+public record MachineStatusImpl(@NotNull Component name, @NotNull MachineStatus.Type type) implements MachineStatus {
 }
