@@ -1,9 +1,9 @@
 package dev.galacticraft.machinelib.impl.fabric.storage.slot;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.machinelib.api.storage.slot.MachineItemSlot;
 import dev.galacticraft.machinelib.impl.fabric.storage.FabricExposedItemStorage;
 import dev.galacticraft.machinelib.impl.storage.ResourceFilter;
-import dev.galacticraft.machinelib.impl.storage.slot.InternalItemSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
@@ -16,12 +16,12 @@ import java.util.Iterator;
 
 public class FabricExposedItemSlot extends SnapshotParticipant<FabricExposedItemSlot.SlotSnapshot> implements Storage<ItemVariant>, StorageView<ItemVariant> {
     private final FabricExposedItemStorage storage;
-    private final InternalItemSlot slot;
+    private final MachineItemSlot slot;
     private final ResourceFilter<Item> filter;
     private final boolean insertion;
     private final boolean extraction;
 
-    public FabricExposedItemSlot(FabricExposedItemStorage storage, InternalItemSlot slot, ResourceFilter<Item> filter, boolean insertion, boolean extraction) {
+    public FabricExposedItemSlot(FabricExposedItemStorage storage, MachineItemSlot slot, ResourceFilter<Item> filter, boolean insertion, boolean extraction) {
         this.storage = storage;
         this.slot = slot;
         this.filter = filter;

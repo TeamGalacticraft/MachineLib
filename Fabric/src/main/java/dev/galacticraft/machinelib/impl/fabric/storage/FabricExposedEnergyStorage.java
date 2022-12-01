@@ -1,16 +1,16 @@
 package dev.galacticraft.machinelib.impl.fabric.storage;
 
-import dev.galacticraft.machinelib.impl.storage.InternalEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import team.reborn.energy.api.EnergyStorage;
 
 public class FabricExposedEnergyStorage extends SnapshotParticipant<Long> implements EnergyStorage {
-    private final InternalEnergyStorage storage;
+    private final MachineEnergyStorage storage;
     private final long maxInsertion;
     private final long maxExtraction;
 
-    public FabricExposedEnergyStorage(InternalEnergyStorage storage, long maxInsertion, long maxExtraction) {
+    public FabricExposedEnergyStorage(MachineEnergyStorage storage, long maxInsertion, long maxExtraction) {
         this.storage = storage;
         this.maxInsertion = maxInsertion;
         this.maxExtraction = maxExtraction;

@@ -5,7 +5,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public interface ItemStorage extends ChangeTracking {
-
     default int insert(Item item, int amount, boolean simulate) {
         return simulate ? this.simulateInsert(item, amount) : this.insert(item, amount);
     }

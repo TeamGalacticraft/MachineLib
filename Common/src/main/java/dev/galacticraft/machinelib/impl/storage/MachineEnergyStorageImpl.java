@@ -1,11 +1,17 @@
 package dev.galacticraft.machinelib.impl.storage;
 
-public class EnergyStorageImpl implements InternalEnergyStorage {
+import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
+
+public class MachineEnergyStorageImpl implements MachineEnergyStorage {
     private final long capacity;
+    private final long maxInsert;
+    private final long maxExtract;
     private long amount;
 
-    public EnergyStorageImpl(long capacity) {
+    public MachineEnergyStorageImpl(long capacity, long maxInsert, long maxExtract) {
         this.capacity = capacity;
+        this.maxInsert = maxInsert;
+        this.maxExtract = maxExtract;
     }
 
     @Override
@@ -15,7 +21,7 @@ public class EnergyStorageImpl implements InternalEnergyStorage {
 
     @Override
     public long insert(long amount, boolean simulate) {
-        amount = Math.min(amount, this.capacity - this.amount);
+        amount = Math.min(Math.min(this.maxInsert, amount), this.capacity - this.amount);
         this.amount += amount;
         return amount;
     }
@@ -27,7 +33,7 @@ public class EnergyStorageImpl implements InternalEnergyStorage {
 
     @Override
     public long extract(long amount, boolean simulate) {
-        amount = Math.min(this.amount, amount);
+        amount = Math.min(this.amount, Math.min(this.maxExtract, amount));
         this.amount -= amount;
         return amount;
     }
@@ -44,6 +50,6 @@ public class EnergyStorageImpl implements InternalEnergyStorage {
 
     @Override
     public void setAmount(long amount) {
-        this.amount = amount;
+        this.amount = Math.min(this.capacity, amount);
     }
 }

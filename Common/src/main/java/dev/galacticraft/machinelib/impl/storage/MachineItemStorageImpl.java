@@ -1,36 +1,37 @@
 package dev.galacticraft.machinelib.impl.storage;
 
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemSlot;
+import dev.galacticraft.machinelib.api.storage.slot.MachineItemSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
-import dev.galacticraft.machinelib.impl.storage.slot.InternalItemSlot;
-import dev.galacticraft.machinelib.impl.storage.slot.ItemSlotImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.MachineItemSlotImpl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
 
-public class SlottedItemStorageImpl implements InternalSlottedItemStorage {
+public class MachineItemStorageImpl implements MachineItemStorage {
     private final int size;
-    private final InternalItemSlot[] slots;
+    private final MachineItemSlot[] slots;
     private final SlotGroup[] groups;
     private final ResourceFilter<Item>[] filters;
     private final ItemSlotDisplay[] displays;
     private final boolean[] playerInsertion;
     private long modCount = 0;
 
-    public SlottedItemStorageImpl(int size, SlotGroup[] groups, int[] capacity, ResourceFilter<Item>[] filters, ItemSlotDisplay[] displays, boolean[] playerInsertion) {
+    public MachineItemStorageImpl(int size, SlotGroup[] groups, int[] capacity, ResourceFilter<Item>[] filters, ItemSlotDisplay[] displays, boolean[] playerInsertion) {
         assert filters.length == size;
         this.size = size;
-        this.slots = new InternalItemSlot[size];
+        this.slots = new MachineItemSlot[size];
         this.groups = groups;
         this.filters = filters;
         this.displays = displays;
         this.playerInsertion = playerInsertion;
 
         for (int i = 0; i < this.slots.length; i++) {
-            this.slots[i] = new ItemSlotImpl(this, capacity[i]);
+            this.slots[i] = new MachineItemSlotImpl(this, capacity[i]);
         }
     }
 
@@ -40,7 +41,7 @@ public class SlottedItemStorageImpl implements InternalSlottedItemStorage {
     }
 
     @Override
-    public InternalItemSlot getSlot(int slot) {
+    public MachineItemSlot getSlot(int slot) {
         return this.slots[slot];
     }
 

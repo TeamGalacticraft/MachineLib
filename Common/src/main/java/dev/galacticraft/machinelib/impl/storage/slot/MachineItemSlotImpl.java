@@ -1,19 +1,20 @@
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.impl.storage.InternalSlottedItemStorage;
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.MachineItemSlot;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
 
-public class ItemSlotImpl implements InternalItemSlot {
-    private final InternalSlottedItemStorage storage;
+public class MachineItemSlotImpl implements MachineItemSlot {
+    private final MachineItemStorage storage;
     private final int capacity;
     private ItemStack stack;
     private long modCount;
 
-    public ItemSlotImpl(InternalSlottedItemStorage storage, int capacity) {
+    public MachineItemSlotImpl(MachineItemStorage storage, int capacity) {
         this.storage = storage;
         this.capacity = capacity;
     }
