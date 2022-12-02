@@ -23,17 +23,19 @@
 package dev.galacticraft.machinelib.impl.platform;
 
 import dev.galacticraft.machinelib.api.component.ComponentTypes;
+import dev.galacticraft.machinelib.api.component.ItemContexts;
 import dev.galacticraft.machinelib.api.util.FluidUnits;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
+import dev.galacticraft.machinelib.impl.util.PlatformUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ServiceLoader;
 
 public final class Services {
-    public static final PlatformHelper PLATFORM = service(PlatformHelper.class);
+    public static final PlatformUtil PLATFORM = service(PlatformUtil.class);
     public static final ComponentTypes COMPONENT_TYPES = service(ComponentTypes.class);
     public static final FluidUnits FLUID_UNITS = service(FluidUnits.class);
+    public static final ItemContexts ITEM_CONTEXTS = service(ItemContexts.class);
 
     public static <T> @NotNull T service(Class<T> clazz) {
         final T service = ServiceLoader.load(clazz).findFirst()

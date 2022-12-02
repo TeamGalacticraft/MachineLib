@@ -85,7 +85,7 @@ public class FabricExposedItemStorage extends SnapshotParticipant<Long> implemen
     }
 
     @Override
-    public Long createSnapshot() {
+    protected Long createSnapshot() {
         return this.storage.getModCount();
     }
 

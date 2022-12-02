@@ -55,6 +55,11 @@ public class MachineItemSlotImpl implements MachineItemSlot {
     }
 
     @Override
+    public MachineItemStorage getBackingStorage() {
+        return this.storage;
+    }
+
+    @Override
     public void setStack(ItemStack stack) {
         this.stack = stack;
         this.markDirty();

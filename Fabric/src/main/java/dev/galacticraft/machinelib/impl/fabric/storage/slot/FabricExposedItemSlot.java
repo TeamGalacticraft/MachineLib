@@ -2,6 +2,7 @@ package dev.galacticraft.machinelib.impl.fabric.storage.slot;
 
 import com.google.common.collect.Iterators;
 import dev.galacticraft.machinelib.api.storage.slot.MachineItemSlot;
+import dev.galacticraft.machinelib.api.util.Maths;
 import dev.galacticraft.machinelib.impl.fabric.storage.FabricExposedItemStorage;
 import dev.galacticraft.machinelib.impl.storage.ResourceFilter;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -32,8 +33,9 @@ public class FabricExposedItemSlot extends SnapshotParticipant<FabricExposedItem
     @Override
     public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
         if (this.insertion && this.filter.matches(resource.getItem(), resource.getNbt())) {
-            this.createSnapshot();
-            return this.slot.insertCopyNbt(resource.getItem(), resource.getNbt(), (int)(maxAmount > Integer.MAX_VALUE ? Integer.MAX_VALUE : maxAmount));
+            this.updateSnapshots(transaction);
+            this.storage.updateSnapshots(transaction);
+            return this.slot.insertCopyNbt(resource.getItem(), resource.getNbt(), Maths.floorLong(maxAmount));
         }
         return 0;
     }
@@ -41,8 +43,9 @@ public class FabricExposedItemSlot extends SnapshotParticipant<FabricExposedItem
     @Override
     public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
         if (this.extraction) {
-            this.createSnapshot();
-            return this.slot.extract(resource.getItem(), resource.getNbt(), (int) (maxAmount > Integer.MAX_VALUE ? Integer.MAX_VALUE : maxAmount));
+            this.updateSnapshots(transaction);
+            this.storage.updateSnapshots(transaction);
+            return this.slot.extract(resource.getItem(), resource.getNbt(), Maths.floorLong(maxAmount));
         }
         return 0;
     }
@@ -91,7 +94,6 @@ public class FabricExposedItemSlot extends SnapshotParticipant<FabricExposedItem
     protected SlotSnapshot createSnapshot() {
         SlotSnapshot slotSnapshot = new SlotSnapshot(this.slot.getStack(), this.slot.getModCount());
         this.slot.silentSetStack(this.slot.copyStack()); // set stack to a copy
-        this.storage.createSnapshot();
         return slotSnapshot;
     }
 

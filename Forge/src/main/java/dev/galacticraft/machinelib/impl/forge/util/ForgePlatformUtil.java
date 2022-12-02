@@ -20,19 +20,19 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.forge.platform.services;
+package dev.galacticraft.machinelib.impl.forge.util;
 
 import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.forge.mixin.RegistryAccessor;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
+import dev.galacticraft.machinelib.impl.util.PlatformUtil;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public final class ForgePlatformHelper implements PlatformHelper {
+public final class ForgePlatformUtil implements PlatformUtil {
 
     @Override
     public Registry<MachineStatus> _createStatusRegistry() {

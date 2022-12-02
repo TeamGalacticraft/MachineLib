@@ -5,7 +5,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.jetbrains.annotations.ApiStatus;
 
 public interface ComponentType<A> {
     // direction from searching block -> searched block
@@ -23,7 +22,7 @@ public interface ComponentType<A> {
     A getInWorld(BlockEntity blockEntity, Direction direction);
 
     A getFromItemReadOnly(ItemStack stack);
-    @ApiStatus.Experimental
-    A getFromItemMutable(ItemStack stack); //todo: is this safe?
-    A getFromItem(BasicSlot slot);
+//    @ApiStatus.Experimental
+//    A getFromItemMutable(ItemStack stack); //todo: is this safe?
+    A getFromItem(ItemContext slot);
 }

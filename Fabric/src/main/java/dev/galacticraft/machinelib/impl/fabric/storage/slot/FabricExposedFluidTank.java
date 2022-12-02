@@ -32,7 +32,8 @@ public class FabricExposedFluidTank extends SnapshotParticipant<FabricExposedFlu
     @Override
     public long insert(FluidVariant resource, long maxAmount, TransactionContext transaction) {
         if (this.insertion && this.filter.matches(resource.getFluid(), resource.getNbt())) {
-            this.createSnapshot();
+            this.updateSnapshots(transaction);
+            this.storage.updateSnapshots(transaction);
             return this.tank.insertCopyNbt(resource.getFluid(), resource.getNbt(), maxAmount);
         }
         return 0;
@@ -41,7 +42,8 @@ public class FabricExposedFluidTank extends SnapshotParticipant<FabricExposedFlu
     @Override
     public long extract(FluidVariant resource, long maxAmount, TransactionContext transaction) {
         if (this.extraction) {
-            this.createSnapshot();
+            this.updateSnapshots(transaction);
+            this.storage.updateSnapshots(transaction);
             return this.tank.extract(resource.getFluid(), resource.getNbt(), maxAmount);
         }
         return 0;
@@ -94,7 +96,6 @@ public class FabricExposedFluidTank extends SnapshotParticipant<FabricExposedFlu
     protected TankSnapshot createSnapshot() {
         TankSnapshot tankSnapshot = new TankSnapshot(this.tank.getStack(), this.tank.getModCount());
         this.tank.silentSetStack(this.tank.copyStack()); // set stack to a copy
-        this.storage.createSnapshot();
         return tankSnapshot;
     }
 

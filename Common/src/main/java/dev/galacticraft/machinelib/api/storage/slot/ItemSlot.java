@@ -57,7 +57,7 @@ public interface ItemSlot extends ChangeTracking {
         return simulate ? this.simulateExtract(item, amount) : this.extract(item, amount);
     }
     default int extract(Item item, CompoundTag tag, int amount, boolean simulate) {
-        return simulate ? this.simulateExtract(item, amount) : this.extract(item, amount);
+        return simulate ? this.simulateExtract(item, tag, amount) : this.extract(item, tag, amount);
     }
 
     boolean extract(Item item);

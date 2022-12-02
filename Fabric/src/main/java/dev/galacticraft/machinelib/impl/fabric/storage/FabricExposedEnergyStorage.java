@@ -24,7 +24,7 @@ public class FabricExposedEnergyStorage extends SnapshotParticipant<Long> implem
     @Override
     public long insert(long maxAmount, TransactionContext transaction) {
         maxAmount = Math.min(maxAmount, this.maxInsertion);
-        this.createSnapshot();
+        this.updateSnapshots(transaction);
         return this.storage.insert(maxAmount, false);
     }
 
@@ -36,7 +36,7 @@ public class FabricExposedEnergyStorage extends SnapshotParticipant<Long> implem
     @Override
     public long extract(long maxAmount, TransactionContext transaction) {
         maxAmount = Math.min(maxAmount, this.maxExtraction);
-        this.createSnapshot();
+        this.updateSnapshots(transaction);
         return this.storage.extract(maxAmount, false);
     }
 

@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;
-import dev.galacticraft.machinelib.impl.platform.services.PlatformHelper;
+import dev.galacticraft.machinelib.impl.util.PlatformUtil;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -39,7 +39,7 @@ public interface MachineStatus {
      * Registry for machine statuses.
      * All machine statuses should be registered in this registry before being used.
      */
-    Registry<MachineStatus> REGISTRY = PlatformHelper.createStatusRegistry();
+    Registry<MachineStatus> REGISTRY = PlatformUtil.createStatusRegistry();
     /**
      * Default machine status.
      */
