@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,10 @@ package dev.galacticraft.machinelib.client.impl.model;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
-import com.mojang.math.Vector3f;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
@@ -50,7 +49,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -65,6 +64,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.function.Function;
@@ -94,7 +94,13 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final ResourceLocation MACHINE_ANY_IN = Constant.id("block/machine_any_input");
     public static final ResourceLocation MACHINE_ANY_OUT = Constant.id("block/machine_any_output");
     public static final ResourceLocation MACHINE_ANY_BOTH = Constant.id("block/machine_any_both");
-
+    @ApiStatus.Internal
+    public static final CachingSpriteAtlas CACHING_SPRITE_ATLAS = new CachingSpriteAtlas(null);
+    @ApiStatus.Internal
+    public static final Map<Block, MachineModelRegistry.SpriteProvider> SPRITE_PROVIDERS = new IdentityHashMap<>();
+    @ApiStatus.Internal
+    public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
+    public static final List<ResourceLocation> TEXTURE_DEPENDENCIES = new ArrayList<>();
     private static final ItemTransforms ITEM_TRANSFORMATION = new ItemTransforms(
             new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
             new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
@@ -105,24 +111,42 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
             new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0.2f, 0), new Vector3f(0.25f, 0.25f, 0.25f)),
             new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new Vector3f(0.5f, 0.5f, 0.5f))
     );
-
-    @ApiStatus.Internal
-    public static final CachingSpriteAtlas CACHING_SPRITE_ATLAS = new CachingSpriteAtlas(null);
-    @ApiStatus.Internal
-    public static final Map<Block, MachineModelRegistry.SpriteProvider> SPRITE_PROVIDERS = new IdentityHashMap<>();
-    @ApiStatus.Internal
-    public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
-    public static final Set<ResourceLocation> TEXTURE_DEPENDENCIES = new HashSet<>();
     private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
 
-    private MachineBakedModel() {}
+    static {
+        TEXTURE_DEPENDENCIES.add(MachineModelRegistry.MACHINE);
+        TEXTURE_DEPENDENCIES.add(MachineModelRegistry.MACHINE_SIDE);
+
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_IN);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_OUT);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_BOTH);
+
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_IN);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_OUT);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_BOTH);
+
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_IN);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_OUT);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_BOTH);
+
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_IN);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_OUT);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_BOTH);
+
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_IN);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_OUT);
+        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_BOTH);
+    }
+
+    private MachineBakedModel() {
+    }
 
     public static void register(@NotNull Block block, @NotNull MachineModelRegistry.SpriteProvider provider) {
         Preconditions.checkNotNull(block);
         Preconditions.checkNotNull(provider);
 
         SPRITE_PROVIDERS.put(block, provider);
-        ResourceLocation id = Registry.BLOCK.getKey(block);
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
         IDENTIFIERS.computeIfAbsent(id.getNamespace(), s -> new HashSet<>());
         IDENTIFIERS.get(id.getNamespace()).add(id.getPath());
     }
@@ -132,77 +156,9 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         CACHING_SPRITE_ATLAS.setAtlas(function);
     }
 
-    @Override
-    public boolean isVanillaAdapter() {
-        return false;
-    }
-
-    @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-        // TODO: block entity can be null when loading the world, I don't think that's suppose to happen
-        if (blockView instanceof RenderAttachedBlockView renderAttachedBlockView && renderAttachedBlockView.getBlockEntityRenderAttachment(pos) instanceof MachineIOConfig ioConfig) {
-            context.pushTransform(quad -> transform(ioConfig, (MachineBlockEntity) blockView.getBlockEntity(pos), state, quad));
-            for (Direction direction : Constant.Cache.DIRECTIONS) {
-                context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
-            }
-            context.popTransform();
-        }
-    }
-
-    @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
-        assert stack.getItem() instanceof BlockItem;
-        assert ((BlockItem) stack.getItem()).getBlock() instanceof MachineBlock;
-        context.pushTransform(quad -> transformItem(stack, quad));
-        for (Direction direction : Constant.Cache.DIRECTIONS) {
-            context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
-        }
-        context.popTransform();
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public boolean useAmbientOcclusion() {
-        return true;
-    }
-
-    @Override
-    public boolean isGui3d() {
-        return false;
-    }
-
-    @Override
-    public boolean usesBlockLight() {
-        return true;
-    }
-
-    @Override
-    public boolean isCustomRenderer() {
-        return false;
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon() {
-        return CACHING_SPRITE_ATLAS.apply(MachineModelRegistry.MACHINE);
-    }
-
-    @Override
-    public ItemTransforms getTransforms() {
-        return ITEM_TRANSFORMATION;
-    }
-
-    @Override
-    public ItemOverrides getOverrides() {
-        return ItemOverrides.EMPTY;
-    }
-
     public static boolean transform(@NotNull MachineIOConfig ioConfig, @Nullable MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
-        MachineIOFaceConfig machineFace = ioConfig.get(face);
+        MachineIOFace machineFace = ioConfig.get(face);
         quad.spriteBake(0,
                 getSprite(face,
                         machine,
@@ -217,8 +173,8 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, Tag.TAG_COMPOUND)) {
-            CONFIGURATION.readNbt(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG), null);
-            MachineIOFaceConfig machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
+            CONFIGURATION.readTag(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG).getCompound(Constant.Nbt.CONFIGURATION));
+            MachineIOFace machineFace = CONFIGURATION.getIOConfiguration().get(BlockFace.toFace(Direction.NORTH, quad.nominalFace()));
             quad.spriteBake(0,
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),
                             null,
@@ -271,6 +227,74 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
             }
         }
         return provider.getSpritesForState(machine, stack, face, CACHING_SPRITE_ATLAS);
+    }
+
+    @Override
+    public boolean isVanillaAdapter() {
+        return false;
+    }
+
+    @Override
+    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
+        // TODO: block entity can be null when loading the world, I don't think that's suppose to happen
+        if (blockView instanceof RenderAttachedBlockView renderAttachedBlockView && renderAttachedBlockView.getBlockEntityRenderAttachment(pos) instanceof MachineIOConfig ioConfig) {
+            context.pushTransform(quad -> transform(ioConfig, (MachineBlockEntity) blockView.getBlockEntity(pos), state, quad));
+            for (Direction direction : Constant.Cache.DIRECTIONS) {
+                context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
+            }
+            context.popTransform();
+        }
+    }
+
+    @Override
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
+        assert stack.getItem() instanceof BlockItem;
+        assert ((BlockItem) stack.getItem()).getBlock() instanceof MachineBlock;
+        context.pushTransform(quad -> transformItem(stack, quad));
+        for (Direction direction : Constant.Cache.DIRECTIONS) {
+            context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();
+        }
+        context.popTransform();
+    }
+
+    @Override
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean useAmbientOcclusion() {
+        return true;
+    }
+
+    @Override
+    public boolean isGui3d() {
+        return false;
+    }
+
+    @Override
+    public boolean usesBlockLight() {
+        return true;
+    }
+
+    @Override
+    public boolean isCustomRenderer() {
+        return false;
+    }
+
+    @Override
+    public @NotNull TextureAtlasSprite getParticleIcon() {
+        return CACHING_SPRITE_ATLAS.apply(MachineModelRegistry.MACHINE);
+    }
+
+    @Override
+    public @NotNull ItemTransforms getTransforms() {
+        return ITEM_TRANSFORMATION;
+    }
+
+    @Override
+    public @NotNull ItemOverrides getOverrides() {
+        return ItemOverrides.EMPTY;
     }
 
     public static class FrontFaceSpriteProvider implements MachineModelRegistry.SpriteProvider {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,13 +28,15 @@ import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
@@ -48,6 +50,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -73,6 +76,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The base block for all machines.
@@ -114,12 +118,12 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.setPlacedBy(world, pos, state, placer, itemStack);
         if (!world.isClientSide && placer instanceof Player player) {
-            ((MachineBlockEntity) world.getBlockEntity(pos)).getSecurity().setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
+            ((MachineBlockEntity) Objects.requireNonNull(world.getBlockEntity(pos))).getSecurity().setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
         }
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
+    public @NotNull RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
@@ -151,7 +155,8 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
         if (stack != null && stack.getTag() != null && stack.getTag().contains(Constant.Nbt.BLOCK_ENTITY_TAG)) {
             CompoundTag nbt = stack.getTag().getCompound(Constant.Nbt.BLOCK_ENTITY_TAG);
             tooltip.add(Component.empty());
-            if (nbt.contains(Constant.Nbt.ENERGY, Tag.TAG_INT)) tooltip.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, Component.literal(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+            if (nbt.contains(Constant.Nbt.ENERGY, Tag.TAG_INT))
+                tooltip.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, Component.literal(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
             if (nbt.contains(Constant.Nbt.SECURITY, Tag.TAG_COMPOUND)) {
                 CompoundTag security = nbt.getCompound(Constant.Nbt.SECURITY);
                 if (security.contains(Constant.Nbt.OWNER, Tag.TAG_COMPOUND)) {
@@ -169,24 +174,25 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
                 }
             }
 
-            if (nbt.contains(Constant.Nbt.REDSTONE_ACTIVATION)){
-                tooltip.add(Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readNbt(nbt.get(Constant.Nbt.REDSTONE_ACTIVATION)).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
+            if (nbt.contains(Constant.Nbt.REDSTONE_ACTIVATION, Tag.TAG_BYTE)) {
+                tooltip.add(Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readTag((ByteTag) Objects.requireNonNull(nbt.get(Constant.Nbt.REDSTONE_ACTIVATION))).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
             }
         }
     }
 
     @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
+    public @NotNull PushReaction getPistonPushReaction(BlockState state) {
         return PushReaction.BLOCK;
     }
 
     @Override
-    public final InteractionResult use(BlockState state, @NotNull Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public final @NotNull InteractionResult use(BlockState state, @NotNull Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!world.isClientSide) {
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getSecurity();
-                if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
+                if (security.getOwner() == null)
+                    security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
                 if (security.isOwner(player)) {
                     MenuProvider factory = state.getMenuProvider(world, pos);
 
@@ -210,12 +216,12 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
         if (entity instanceof MachineBlockEntity machine) {
             MachineItemStorage inv = machine.itemStorage();
             List<ItemEntity> entities = new ArrayList<>();
-            try (Transaction transaction = Transaction.openOuter()) {
-                inv.iterator().forEachRemaining(view -> {
-                    if (!view.isResourceBlank())
-                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), view.getResource().toStack(Math.toIntExact(view.extract(view.getResource(), view.getAmount(), transaction)))));
-                });
-                transaction.commit();
+            for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : inv) {
+                for (ItemResourceSlot slot : group) {
+                    if (!slot.isEmpty()) {
+                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
+                    }
+                }
             }
             for (ItemEntity itemEntity : entities) {
                 world.addFreshEntity(itemEntity);
@@ -224,7 +230,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     }
 
     @Override
-    public List<ItemStack> getDrops(BlockState state, LootContext.@NotNull Builder builder) {
+    public @NotNull List<ItemStack> getDrops(BlockState state, LootContext.@NotNull Builder builder) {
         BlockEntity entity = builder.getParameter(LootContextParams.BLOCK_ENTITY);
         if (entity instanceof MachineBlockEntity machine) {
             if (machine.areDropsDisabled()) return Collections.emptyList();
@@ -233,7 +239,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter view, BlockPos pos, BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(BlockGetter view, BlockPos pos, BlockState state) {
         ItemStack stack = super.getCloneItemStack(view, pos, state);
 
         BlockEntity blockEntity = view.getBlockEntity(pos);
@@ -253,8 +259,8 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     /**
      * Returns this machine's description for the tooltip when left shift is pressed.
      *
-     * @param stack The item stack (the contained item is this block).
-     * @param view The world.
+     * @param stack    The item stack (the contained item is this block).
+     * @param view     The world.
      * @param advanced Whether advanced tooltips are enabled.
      * @return This machine's description.
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.gas;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
@@ -32,14 +33,12 @@ import org.jetbrains.annotations.Contract;
 
 /**
  * Defines some common gases for convenience.
+ *
+ * @see Gas
  */
 @ApiStatus.Experimental
+@Deprecated
 public final class Gases {
-    @Contract(value = " -> fail", pure = true)
-    private Gases() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
-    }
-
     public static final ResourceLocation HYDROGEN_ID = Constant.id("hydrogen");
     /**
      * Hydrogen gas.
@@ -169,25 +168,31 @@ public final class Gases {
             Constant.id("gas/iodine"), "I2"
     );
 
-    @Contract(pure = true)
-    public static void init() {}
-
     static {
-        Registry.register(Registry.FLUID, HYDROGEN_ID, HYDROGEN);
-        Registry.register(Registry.FLUID, NITROGEN_ID, NITROGEN);
-        Registry.register(Registry.FLUID, OXYGEN_ID, OXYGEN);
-        Registry.register(Registry.FLUID, CARBON_DIOXIDE_ID, CARBON_DIOXIDE);
-        Registry.register(Registry.FLUID, WATER_VAPOR_ID, WATER_VAPOR);
-        Registry.register(Registry.FLUID, METHANE_ID, METHANE);
-        Registry.register(Registry.FLUID, HELIUM_ID, HELIUM);
-        Registry.register(Registry.FLUID, ARGON_ID, ARGON);
-        Registry.register(Registry.FLUID, NEON_ID, NEON);
-        Registry.register(Registry.FLUID, KRYPTON_ID, KRYPTON);
-        Registry.register(Registry.FLUID, NITROUS_OXIDE_ID, NITROUS_OXIDE);
-        Registry.register(Registry.FLUID, CARBON_MONOXIDE_ID, CARBON_MONOXIDE);
-        Registry.register(Registry.FLUID, XENON_ID, XENON);
-        Registry.register(Registry.FLUID, OZONE_ID, OZONE);
-        Registry.register(Registry.FLUID, NITROUS_DIOXIDE_ID, NITROUS_DIOXIDE);
-        Registry.register(Registry.FLUID, IODINE_ID, IODINE);
+        Registry.register(BuiltInRegistries.FLUID, HYDROGEN_ID, HYDROGEN);
+        Registry.register(BuiltInRegistries.FLUID, NITROGEN_ID, NITROGEN);
+        Registry.register(BuiltInRegistries.FLUID, OXYGEN_ID, OXYGEN);
+        Registry.register(BuiltInRegistries.FLUID, CARBON_DIOXIDE_ID, CARBON_DIOXIDE);
+        Registry.register(BuiltInRegistries.FLUID, WATER_VAPOR_ID, WATER_VAPOR);
+        Registry.register(BuiltInRegistries.FLUID, METHANE_ID, METHANE);
+        Registry.register(BuiltInRegistries.FLUID, HELIUM_ID, HELIUM);
+        Registry.register(BuiltInRegistries.FLUID, ARGON_ID, ARGON);
+        Registry.register(BuiltInRegistries.FLUID, NEON_ID, NEON);
+        Registry.register(BuiltInRegistries.FLUID, KRYPTON_ID, KRYPTON);
+        Registry.register(BuiltInRegistries.FLUID, NITROUS_OXIDE_ID, NITROUS_OXIDE);
+        Registry.register(BuiltInRegistries.FLUID, CARBON_MONOXIDE_ID, CARBON_MONOXIDE);
+        Registry.register(BuiltInRegistries.FLUID, XENON_ID, XENON);
+        Registry.register(BuiltInRegistries.FLUID, OZONE_ID, OZONE);
+        Registry.register(BuiltInRegistries.FLUID, NITROUS_DIOXIDE_ID, NITROUS_DIOXIDE);
+        Registry.register(BuiltInRegistries.FLUID, IODINE_ID, IODINE);
+    }
+
+    @Contract(value = " -> fail", pure = true)
+    private Gases() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
+    @Contract(pure = true)
+    public static void init() {
     }
 }

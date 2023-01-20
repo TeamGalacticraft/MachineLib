@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @see Gas
+ */
 @ApiStatus.Experimental
+@Deprecated
 public final class GasFluid extends Fluid implements FluidVariantAttributeHandler, Gas {
     @ApiStatus.Internal
     public static final List<GasFluid> GAS_FLUIDS = new ArrayList<>(); // used for registering client hooks
@@ -66,6 +70,29 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     private final @NotNull Object2IntFunction<FluidVariant> viscosity;
     private final @NotNull Optional<SoundEvent> fillSound;
     private final @NotNull Optional<SoundEvent> emptySound;
+
+    private GasFluid(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
+        this.name = name;
+        this.symbol = symbol.replaceAll("0", "₀")
+                .replaceAll("1", "₁")
+                .replaceAll("2", "₂")
+                .replaceAll("3", "₃")
+                .replaceAll("4", "₄")
+                .replaceAll("5", "₅")
+                .replaceAll("6", "₆")
+                .replaceAll("7", "₇")
+                .replaceAll("8", "₈")
+                .replaceAll("9", "₉");
+        this.texture = texture;
+        this.tint = tint;
+        this.luminance = luminance;
+        this.viscosity = viscosity;
+        this.fillSound = fillSound;
+        this.emptySound = emptySound;
+
+        GAS_FLUIDS.add(this);
+        FluidVariantAttributes.register(this, this);
+    }
 
     @Contract("_, _, _ -> new")
     public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol) {
@@ -86,7 +113,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
         return create(name, texture, symbol, 0xFFFFFFFF, luminance, viscosity, fillSound, emptySound);
     }
-    
+
     @Contract("_, _, _, _ -> new")
     public static @NotNull GasFluid create(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint) {
         return create(name, texture, symbol, tint, v -> 0);
@@ -115,31 +142,8 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
         return new GasFluid(name, texture, symbol, tint, luminance, viscosity, fillSound, emptySound);
     }
 
-    private GasFluid(@NotNull Component name, @NotNull ResourceLocation texture, @NotNull String symbol, int tint, @NotNull Object2IntFunction<FluidVariant> luminance, @NotNull Object2IntFunction<FluidVariant> viscosity, @NotNull Optional<SoundEvent> fillSound, @NotNull Optional<SoundEvent> emptySound) {
-        this.name = name;
-        this.symbol = symbol.replaceAll("0", "₀")
-                .replaceAll("1", "₁")
-                .replaceAll("2", "₂")
-                .replaceAll("3", "₃")
-                .replaceAll("4", "₄")
-                .replaceAll("5", "₅")
-                .replaceAll("6", "₆")
-                .replaceAll("7", "₇")
-                .replaceAll("8", "₈")
-                .replaceAll("9", "₉");
-        this.texture = texture;
-        this.tint = tint;
-        this.luminance = luminance;
-        this.viscosity = viscosity;
-        this.fillSound = fillSound;
-        this.emptySound = emptySound;
-
-        GAS_FLUIDS.add(this);
-        FluidVariantAttributes.register(this, this);
-    }
-
     @Override
-    public Item getBucket() {
+    public @NotNull Item getBucket() {
         return Items.AIR;
     }
 
@@ -149,7 +153,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    protected Vec3 getFlow(BlockGetter world, BlockPos pos, FluidState state) {
+    protected @NotNull Vec3 getFlow(BlockGetter world, BlockPos pos, FluidState state) {
         return Vec3.ZERO;
     }
 
@@ -174,7 +178,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    protected BlockState createLegacyBlock(FluidState state) {
+    protected @NotNull BlockState createLegacyBlock(FluidState state) {
         return Blocks.AIR.defaultBlockState();
     }
 
@@ -189,7 +193,7 @@ public final class GasFluid extends Fluid implements FluidVariantAttributeHandle
     }
 
     @Override
-    public VoxelShape getShape(FluidState state, BlockGetter world, BlockPos pos) {
+    public @NotNull VoxelShape getShape(FluidState state, BlockGetter world, BlockPos pos) {
         return Shapes.empty();
     }
 

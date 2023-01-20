@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,19 @@
 
 package dev.galacticraft.machinelib.api.storage.io;
 
+import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.machinelib.api.storage.ResourceStorage;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Defines the types of resources that can be stored in a {@link ConfiguredStorage}.
@@ -71,6 +78,24 @@ public enum ResourceType {
     }
 
     /**
+     * Returns the resource type with the given ID.
+     *
+     * @param id The ID of the resource type.
+     * @return The resource type with the given ID.
+     */
+    @Contract(pure = true)
+    public static ResourceType getFromOrdinal(byte id) {
+        return switch (id) {
+            case 0 -> NONE;
+            case 1 -> ENERGY;
+            case 2 -> ITEM;
+            case 3 -> FLUID;
+            case 4 -> ANY;
+            default -> throw new IllegalStateException("Unexpected id: " + id);
+        };
+    }
+
+    /**
      * Returns the name of the resource type.
      *
      * @return The name of the resource type.
@@ -100,22 +125,28 @@ public enum ResourceType {
         return this != NONE && this != ENERGY;
     }
 
-    /**
-     * Returns the resource type with the given ID.
-     *
-     * @param id The ID of the resource type.
-     * @return The resource type with the given ID.
-     */
-    @Contract(pure = true)
-    public static ResourceType getFromOrdinal(byte id) {
-        return switch (id) {
-            case 0 -> NONE;
-            case 1 -> ENERGY;
-            case 2 -> ITEM;
-            case 3 -> FLUID;
-            case 4 -> ANY;
-            default -> throw new IllegalStateException("Unexpected id: " + id);
-        };
+    public @Nullable List<@NotNull SlotGroupType> getStorageGroups(@NotNull MachineBlockEntity machine) {
+        switch (this) {
+            case ITEM, FLUID -> {
+                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(this);
+                assert storage != null;
+                return Arrays.asList(storage.getTypes());
+            }
+            case ANY -> {
+                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(ResourceType.ITEM);
+                assert storage != null;
+                List<SlotGroupType> list = Arrays.asList(storage.getTypes());
+                storage = machine.getResourceStorage(ResourceType.FLUID);
+                assert storage != null;
+                for (SlotGroupType group : storage.getTypes()) {
+                    if (!list.contains(group)) list.add(group);
+                }
+                return list;
+            }
+            default -> {
+                return null;
+            }
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,12 @@
 
 package dev.galacticraft.machinelib.api.storage.io;
 
-import com.google.common.collect.ImmutableList;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.List;
 
 /**
  * A resource flow is a way to describe how a resource can be transferred between two storages.
@@ -51,9 +47,9 @@ public enum ResourceFlow {
     BOTH(Component.translatable(Constant.TranslationKey.BOTH).setStyle(Style.EMPTY.withColor(ChatFormatting.BLUE)));
 
     /**
-     * An immutable list of all possible resource flows.
+     * do not mutate.
      */
-    public static final @Unmodifiable List<ResourceFlow> VALUES = ImmutableList.copyOf(ResourceFlow.values());
+    public static final ResourceFlow[] VALUES = ResourceFlow.values();
 
     /**
      * The name of the flow direction.
@@ -68,6 +64,10 @@ public enum ResourceFlow {
     @Contract(pure = true)
     ResourceFlow(@NotNull Component name) {
         this.name = name;
+    }
+
+    public static ResourceFlow getFromOrdinal(byte ordinal) {
+        return VALUES[ordinal];
     }
 
     /**

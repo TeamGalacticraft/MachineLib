@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,7 @@ public enum ItemType {
 
     /**
      * WARNING: May change between calls, do not use NONE as type
+     *
      * @return
      */
     public @NotNull ItemVariant generateVariant() {
@@ -67,11 +68,12 @@ public enum ItemType {
 
     /**
      * WARNING: May change between calls, do not use NONE as type
+     *
      * @return
      */
     public @NotNull ItemVariant generateVariant(int id) {
         if (this.items == null) throw new NullPointerException();
         if (id >= this.items.length) throw new AssertionError();
-        return ItemVariant.of(this.items[id], this.hasTag ? Util.generateNbt(): null);
+        return ItemVariant.of(this.items[id], this.hasTag ? Util.generateNbt() : null);
     }
 }

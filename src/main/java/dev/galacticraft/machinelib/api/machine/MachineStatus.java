@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,11 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
-import com.mojang.serialization.Lifecycle;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,28 +36,25 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface MachineStatus {
     /**
-     * Registry for machine statuses.
-     * All machine statuses should be registered in this registry before being used.
-     */
-    Registry<MachineStatus> REGISTRY = FabricRegistryBuilder.from(new DefaultedRegistry<>("machinelib:invalid", ResourceKey.<MachineStatus>createRegistryKey(Constant.id("machine_status")), Lifecycle.stable(), null)).buildAndRegister();
-    /**
      * Default machine status.
      */
     MachineStatus INVALID = createAndRegister(Constant.id("invalid"), Component.translatable(Constant.TranslationKey.STATUS_INVALID), Type.OTHER);
 
     /**
      * Creates a new machine status and registers it in the registry.
-     * @param id The ID of the machine status.
+     *
+     * @param id   The ID of the machine status.
      * @param name The name of the machine status.
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */
     static @NotNull MachineStatus createAndRegister(@NotNull ResourceLocation id, @NotNull Component name, @NotNull MachineStatus.Type type) {
-        return Registry.register(REGISTRY, id, create(name, type));
+        return Registry.register(MachineLib.MACHINE_STATUS_REGISTRY, id, create(name, type));
     }
 
     /**
      * Creates a new machine status.
+     *
      * @param name The name of the machine status.
      * @param type The type of the machine status.
      * @return The newly created machine status.
@@ -72,12 +66,14 @@ public interface MachineStatus {
 
     /**
      * Returns the name of the machine status.
+     *
      * @return The name of the machine status.
      */
     @NotNull Component name();
 
     /**
      * Returns the type of the machine status.
+     *
      * @return The type of the machine status.
      */
     @NotNull MachineStatus.Type type();
@@ -133,6 +129,7 @@ public interface MachineStatus {
 
         /**
          * Returns whether the machine should be considered to be generating resources.
+         *
          * @return whether the machine should be considered to be generating resources.
          */
         @Contract(pure = true)

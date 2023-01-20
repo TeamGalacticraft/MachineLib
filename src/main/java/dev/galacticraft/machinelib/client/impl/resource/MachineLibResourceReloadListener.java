@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,8 @@ public final class MachineLibResourceReloadListener implements SimpleSynchronous
     private static final ResourceLocation ID = Constant.id("reload_listener");
 
     @Contract(pure = true)
-    private MachineLibResourceReloadListener() {}
+    private MachineLibResourceReloadListener() {
+    }
 
     @Override
     public ResourceLocation getFabricId() {

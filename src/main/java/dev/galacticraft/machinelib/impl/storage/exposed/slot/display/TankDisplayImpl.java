@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 /**
  * Display information for a tank.
  *
- * @param x The x position of the tank.
- * @param y The y position of the tank.
+ * @param x      The x position of the tank.
+ * @param y      The y position of the tank.
  * @param height The height of the tank.
  */
 public record TankDisplayImpl(int x, int y, int height) implements TankDisplay {

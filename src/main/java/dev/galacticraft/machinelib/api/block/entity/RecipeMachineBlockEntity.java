@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -89,9 +89,9 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Constructs a new machine block entity that processes recipes.
      *
-     * @param type The type of block entity.
-     * @param pos The position of the machine in the level.
-     * @param state The block state of the machine.
+     * @param type       The type of block entity.
+     * @param pos        The position of the machine in the level.
+     * @param state      The block state of the machine.
      * @param recipeType The type of recipe to be processed.
      */
     protected RecipeMachineBlockEntity(@NotNull BlockEntityType<? extends RecipeMachineBlockEntity<C, R>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
@@ -112,7 +112,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Inserts the recipe's output into the machine's inventory.
      *
-     * @param recipe The recipe to output.
+     * @param recipe  The recipe to output.
      * @param context The current transaction.
      * @return Whether the recipe was successfully output.
      */
@@ -121,7 +121,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Extracts the recipe's input from the machine's inventory.
      *
-     * @param recipe The recipe to extract.
+     * @param recipe  The recipe to extract.
      * @param context The current transaction.
      * @return Whether the recipe was successfully extracted.
      */
@@ -175,21 +175,23 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                 profiler.pop();
             }
         } else {
-            if (this.getStatus() == MachineStatuses.OUTPUT_FULL) return MachineStatuses.OUTPUT_FULL; //preserve full state
+            if (this.getStatus() == MachineStatuses.OUTPUT_FULL)
+                return MachineStatuses.OUTPUT_FULL; //preserve full state
             return MachineStatuses.INVALID_RECIPE;
         }
     }
 
     /**
      * Updates the currently active recipe if the inventory has changed.
-     * @param world The world.
+     *
+     * @param world    The world.
      * @param profiler The world profiler.
      * @return {@code null} if the machine can have a recipe, or a {@link MachineStatus machine status} describing why it cannot.
      */
     @Nullable
     protected MachineStatus testInventoryRecipe(@NotNull ServerLevel world, @NotNull ProfilerFiller profiler) {
-        if (this.inventoryModCount != this.itemStorage().getModCount()) { // includes output slots
-            this.inventoryModCount = this.itemStorage().getModCount();
+        if (this.inventoryModCount != this.itemStorage().getModifications()) { // includes output slots
+            this.inventoryModCount = this.itemStorage().getModifications();
             profiler.push("find_recipe");
             Optional<R> optional = this.findValidRecipe(world);
             profiler.pop();
@@ -233,8 +235,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * Crafts the given recipe.
      *
      * @param profiler The world profiler.
-     * @param recipe The recipe to craft.
-     * @param context The current transaction.
+     * @param recipe   The recipe to craft.
+     * @param context  The current transaction.
      */
     protected void craft(@NotNull ProfilerFiller profiler, @NotNull R recipe, @Nullable TransactionContext context) {
         profiler.push("extract_materials");
@@ -297,26 +299,6 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected abstract int getProcessTime(@NotNull R recipe);
 
     /**
-     * Sets and returns the crafting progress of the machine.
-     *
-     * @param progress The progress to set.
-     */
-    @Contract(mutates = "this")
-    public void setProgress(int progress) {
-        this.progress = progress;
-    }
-
-    /**
-     * Sets the maximum progress of the machine.
-     *
-     * @param maxProgress The maximum progress to set.
-     */
-    @Contract(mutates = "this")
-    public void setMaxProgress(int maxProgress) {
-        this.maxProgress = maxProgress;
-    }
-
-    /**
      * Returns the progress of the machine.
      *
      * @return The progress of the machine.
@@ -324,6 +306,16 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     @Contract(pure = true)
     public int getProgress() {
         return this.progress;
+    }
+
+    /**
+     * Sets and returns the crafting progress of the machine.
+     *
+     * @param progress The progress to set.
+     */
+    @Contract(mutates = "this")
+    public void setProgress(int progress) {
+        this.progress = progress;
     }
 
     /**
@@ -355,6 +347,16 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     @Contract(pure = true)
     public int getMaxProgress() {
         return this.maxProgress;
+    }
+
+    /**
+     * Sets the maximum progress of the machine.
+     *
+     * @param maxProgress The maximum progress to set.
+     */
+    @Contract(mutates = "this")
+    public void setMaxProgress(int maxProgress) {
+        this.maxProgress = maxProgress;
     }
 
     @Override

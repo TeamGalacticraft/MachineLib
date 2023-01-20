@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
+import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.SecuritySettingsImpl;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -38,11 +39,11 @@ import java.util.UUID;
 /**
  * Represents a security setting of a machine.
  */
-public interface SecuritySettings {
+public interface SecuritySettings extends Deserializable<CompoundTag> {
     /**
      * Constructs a new security settings storage with no owner attached.
      *
-     * @return  a new security settings storage.
+     * @return a new security settings storage.
      */
     @Contract(" -> new")
     static @NotNull SecuritySettings create() {
@@ -138,7 +139,7 @@ public interface SecuritySettings {
      * Sets the game profile of the owner of the linked machine.
      *
      * @param owner The uuid of the owner.
-     * @param name The name of the owner.
+     * @param name  The name of the owner.
      */
     @Contract(mutates = "this")
     void setOwner(@NotNull UUID owner, String name);
@@ -151,29 +152,17 @@ public interface SecuritySettings {
     @Nullable ResourceLocation getTeam();
 
     /**
-     * Serializes the security settings to nbt.
-     *
-     * @return The serialized security settings.
-     */
-    @NotNull CompoundTag toNbt();
-
-    /**
-     * Deserializes the security settings from nbt.
-     *
-     * @param nbt The nbt to deserialize from.
-     */
-    void fromNbt(@NotNull CompoundTag nbt);
-
-    /**
      * Sends the security settings to the client.
      *
-     * @param pos The position of the machine.
+     * @param pos    The position of the machine.
      * @param player The player to send the settings to.
      */
+    @Deprecated(forRemoval = true)
     void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player);
 
     /**
      * Sets the team linked to these security settings
+     *
      * @param team the team to be granted access to the linked machine can be {@code null}.
      * @param name the name of the team to be granted access to the linked machine.
      */

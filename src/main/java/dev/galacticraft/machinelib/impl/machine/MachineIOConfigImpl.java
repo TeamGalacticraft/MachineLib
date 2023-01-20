@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,47 +23,24 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class MachineIOConfigImpl implements MachineIOConfig {
-    private final @NotNull MachineIOFaceConfig front = MachineIOFaceConfig.blank();
-    private final @NotNull MachineIOFaceConfig back = MachineIOFaceConfig.blank();
-    private final @NotNull MachineIOFaceConfig left = MachineIOFaceConfig.blank();
-    private final @NotNull MachineIOFaceConfig right = MachineIOFaceConfig.blank();
-    private final @NotNull MachineIOFaceConfig top = MachineIOFaceConfig.blank();
-    private final @NotNull MachineIOFaceConfig bottom = MachineIOFaceConfig.blank();
+    private final @NotNull MachineIOFace front = MachineIOFace.blank();
+    private final @NotNull MachineIOFace back = MachineIOFace.blank();
+    private final @NotNull MachineIOFace left = MachineIOFace.blank();
+    private final @NotNull MachineIOFace right = MachineIOFace.blank();
+    private final @NotNull MachineIOFace top = MachineIOFace.blank();
+    private final @NotNull MachineIOFace bottom = MachineIOFace.blank();
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups) {
-        CompoundTag nbt = new CompoundTag();
-        nbt.put("Front", this.front.writeNbt(groups));
-        nbt.put("Back", this.back.writeNbt(groups));
-        nbt.put("Left", this.left.writeNbt(groups));
-        nbt.put("Right", this.right.writeNbt(groups));
-        nbt.put("Top", this.top.writeNbt(groups));
-        nbt.put("Bottom", this.bottom.writeNbt(groups));
-        return nbt;
-    }
-
-    @Override
-    public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
-        this.front.readNbt(nbt.getCompound("Front"), groups);
-        this.back.readNbt(nbt.getCompound("Back"), groups);
-        this.left.readNbt(nbt.getCompound("Left"), groups);
-        this.right.readNbt(nbt.getCompound("Right"), groups);
-        this.top.readNbt(nbt.getCompound("Top"), groups);
-        this.bottom.readNbt(nbt.getCompound("Bottom"), groups);
-    }
-
-    @Override
-    public @NotNull MachineIOFaceConfig get(@NotNull BlockFace face) {
+    public @NotNull MachineIOFace get(@NotNull BlockFace face) {
         return switch (face) {
             case FRONT -> this.front;
             case TOP -> this.top;
@@ -72,5 +49,47 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
             case LEFT -> this.left;
             case BOTTOM -> this.bottom;
         };
+    }
+
+    @Override
+    public @NotNull CompoundTag createTag() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("Front", this.front.createTag());
+        nbt.put("Back", this.back.createTag());
+        nbt.put("Left", this.left.createTag());
+        nbt.put("Right", this.right.createTag());
+        nbt.put("Top", this.top.createTag());
+        nbt.put("Bottom", this.bottom.createTag());
+        return nbt;
+    }
+
+    @Override
+    public void readTag(@NotNull CompoundTag tag) {
+        this.front.readTag(tag.getCompound("Front"));
+        this.back.readTag(tag.getCompound("Back"));
+        this.left.readTag(tag.getCompound("Left"));
+        this.right.readTag(tag.getCompound("Right"));
+        this.top.readTag(tag.getCompound("Top"));
+        this.bottom.readTag(tag.getCompound("Bottom"));
+    }
+
+    @Override
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        this.front.writePacket(buf);
+        this.back.writePacket(buf);
+        this.left.writePacket(buf);
+        this.right.writePacket(buf);
+        this.top.writePacket(buf);
+        this.bottom.writePacket(buf);
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+        this.front.readPacket(buf);
+        this.back.readPacket(buf);
+        this.left.readPacket(buf);
+        this.right.readPacket(buf);
+        this.top.readPacket(buf);
+        this.bottom.readPacket(buf);
     }
 }

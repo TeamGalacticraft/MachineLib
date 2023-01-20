@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,16 +75,8 @@ public enum BlockFace {
     }
 
     /**
-     * The name of this face.
-     * @return The name of this face.
-     */
-    @Contract(pure = true)
-    public Component getName() {
-        return name;
-    }
-
-    /**
      * Gets the face corresponding to the given direction and rotation.
+     *
      * @param facing The rotation to get the face for.
      * @param target The direction to get the face for.
      * @return The face corresponding to the given direction and rotation.
@@ -133,7 +125,18 @@ public enum BlockFace {
     }
 
     /**
+     * The name of this face.
+     *
+     * @return The name of this face.
+     */
+    @Contract(pure = true)
+    public Component getName() {
+        return name;
+    }
+
+    /**
      * Converts this face to the corresponding direction, based on the rotation of the block.
+     *
      * @param facing The rotation of the block.
      * @return The corresponding direction.
      */
@@ -182,6 +185,7 @@ public enum BlockFace {
 
     /**
      * Returns the opposite face.
+     *
      * @return The opposite face.
      */
     @Contract(pure = true)
@@ -198,6 +202,7 @@ public enum BlockFace {
 
     /**
      * Returns whether this face is the side of a block.
+     *
      * @return whether this face is the side of a block.
      */
     @Contract(pure = true)
@@ -207,6 +212,7 @@ public enum BlockFace {
 
     /**
      * Returns whether this face is the top or bottom of a block.
+     *
      * @return Whether this face is the top or bottom of a block.
      */
     @Contract(pure = true)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ModCount {
     /**
      * Constructs a new mod count.
+     *
      * @return a new mod count.
      */
     @Contract(value = " -> new", pure = true)
@@ -43,6 +44,7 @@ public interface ModCount {
 
     /**
      * Constructs a new mod count that modifies its parent when modified.
+     *
      * @param parent the parent mod count.
      * @return a new mod count
      */
@@ -53,6 +55,7 @@ public interface ModCount {
 
     /**
      * Warning: Do not call during a transaction.
+     *
      * @return the modification count of this storage.
      */
     long getModCount();
@@ -68,6 +71,7 @@ public interface ModCount {
     /**
      * Warning: modification count CAN GO DOWN if a transaction is cancelled.
      * Do not trust that an equal mod count is representative of the inventory's state if you are unsure about the transaction status of the current thread.
+     *
      * @return the modification count of this storage.
      */
     long getModCountUnsafe();

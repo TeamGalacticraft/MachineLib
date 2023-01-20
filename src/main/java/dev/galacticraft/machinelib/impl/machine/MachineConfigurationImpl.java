@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,31 +23,21 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.*;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.Constant;
+import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 @ApiStatus.Internal
 public final class MachineConfigurationImpl implements MachineConfiguration {
-    private MachineStatus status = MachineStatus.INVALID;
-    private RedstoneActivation redstone = RedstoneActivation.IGNORE;
     private final MachineIOConfig configuration = MachineIOConfig.create();
     private final SecuritySettings security = new SecuritySettingsImpl();
-
-    @Override
-    public void setStatus(@NotNull MachineStatus status) {
-        this.status = status;
-    }
-
-    @Override
-    public void setRedstoneActivation(@NotNull RedstoneActivation redstone) {
-        this.redstone = redstone;
-    }
+    private MachineStatus status = MachineStatus.INVALID;
+    private RedstoneActivation redstone = RedstoneActivation.IGNORE;
 
     @Override
     public @NotNull MachineIOConfig getIOConfiguration() {
@@ -65,22 +55,47 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
+    public void setStatus(@NotNull MachineStatus status) {
+        this.status = status;
+    }
+
+    @Override
     public @NotNull RedstoneActivation getRedstoneActivation() {
         return this.redstone;
     }
 
     @Override
-    public @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
-        nbt.put(Constant.Nbt.SECURITY, this.getSecurity().toNbt());
-        nbt.put(Constant.Nbt.CONFIGURATION, this.getIOConfiguration().writeNbt(groups));
-        nbt.put(Constant.Nbt.REDSTONE_ACTIVATION, this.getRedstoneActivation().writeNbt());
-        return nbt;
+    public void setRedstoneActivation(@NotNull RedstoneActivation redstone) {
+        this.redstone = redstone;
     }
 
     @Override
-    public void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups) {
-        this.getSecurity().fromNbt(nbt.getCompound(Constant.Nbt.SECURITY));
-        this.getIOConfiguration().readNbt(nbt.getCompound(Constant.Nbt.CONFIGURATION), groups);
-        this.setRedstoneActivation(RedstoneActivation.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.REDSTONE_ACTIVATION))));
+    public @NotNull CompoundTag createTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.put(Constant.Nbt.SECURITY, this.security.createTag());
+        tag.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
+        tag.put(Constant.Nbt.REDSTONE_ACTIVATION, this.redstone.createTag());
+        return tag;
+    }
+
+    @Override
+    public void readTag(@NotNull CompoundTag tag) {
+        this.security.readTag(tag.getCompound(Constant.Nbt.SECURITY));
+        this.configuration.readTag(tag.getCompound(Constant.Nbt.CONFIGURATION));
+        this.redstone = RedstoneActivation.readTag(Objects.requireNonNull((ByteTag) tag.get(Constant.Nbt.REDSTONE_ACTIVATION)));
+    }
+
+    @Override
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        this.security.writePacket(buf);
+        this.configuration.writePacket(buf);
+        this.redstone.writePacket(buf);
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+        this.security.readPacket(buf);
+        this.configuration.readPacket(buf);
+        this.redstone = RedstoneActivation.readPacket(buf);
     }
 }

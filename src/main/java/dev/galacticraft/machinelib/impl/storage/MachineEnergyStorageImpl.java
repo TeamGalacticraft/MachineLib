@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,14 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
-import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,39 +52,6 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
         this.maxOutput = maxOutput;
         this.insert = insert;
         this.extract = extract;
-    }
-
-    @Override
-    public boolean canExposedExtract(int slot) {
-        return false;
-    }
-
-    @Override
-    public boolean canExposedInsert(int slot) {
-        return false;
-    }
-
-    @Override
-    public @NotNull StorageSyncHandler createSyncHandler() {
-        return new StorageSyncHandler() {
-            private long modCount = -1;
-
-            @Override
-            public boolean needsSyncing() {
-                return MachineEnergyStorageImpl.this.modCount.getModCount() != this.modCount;
-            }
-
-            @Override
-            public void sync(@NotNull FriendlyByteBuf buf) {
-                this.modCount = MachineEnergyStorageImpl.this.modCount.getModCount();
-                buf.writeLong(MachineEnergyStorageImpl.this.amount);
-            }
-
-            @Override
-            public void read(@NotNull FriendlyByteBuf buf) {
-                MachineEnergyStorageImpl.this.amount = buf.readLong();
-            }
-        };
     }
 
     @Override
@@ -213,14 +178,22 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public @NotNull Tag writeNbt() {
+    public @NotNull LongTag createTag() {
         return LongTag.valueOf(this.amount);
     }
 
     @Override
-    public void readNbt(@NotNull Tag nbt) {
-        if (nbt.getId() == Tag.TAG_LONG) {
-            this.amount = ((LongTag)nbt).getAsLong();
-        }
+    public void readTag(@NotNull LongTag tag) {
+        this.amount = tag.getAsLong();
+    }
+
+    @Override
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        buf.writeLong(this.amount);
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+        this.amount = buf.readLong();
     }
 }

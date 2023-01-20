@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Caches apis available in adjacent blocks.
+ *
  * @param <A> the api type
  */
 public interface AdjacentBlockApiCache<A> {
@@ -59,7 +60,7 @@ public interface AdjacentBlockApiCache<A> {
      * Attempt to retrieve an API from an adjacent block.
      *
      * @param direction the direction to search in.
-     * @param state The block state at the target position, or null if unknown.
+     * @param state     The block state at the target position, or null if unknown.
      * @return The retrieved API, or {@code null} if no API was found.
      */
     @Contract(mutates = "this")
@@ -72,6 +73,7 @@ public interface AdjacentBlockApiCache<A> {
      * <p>
      * This is the most efficient way to query the block entity at the target position repeatedly:
      * unless the block entity has been loaded or unloaded since the last query, the result will be cached.
+     *
      * @return the block entity in the given direction.
      */
     @Contract(mutates = "this")

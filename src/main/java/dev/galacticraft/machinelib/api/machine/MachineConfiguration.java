@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,42 +22,26 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineConfigurationImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A class that holds the configuration of a machine.
  * Can be used to save and load the configuration of a machine.
  */
-public interface MachineConfiguration {
+public interface MachineConfiguration extends Deserializable<CompoundTag> {
     /**
      * Creates a new configuration.
+     *
      * @return a new configuration.
      */
     @Contract(" -> new")
     static @NotNull MachineConfiguration create() {
         return new MachineConfigurationImpl();
     }
-
-    /**
-     * Sets the status of the machine.
-     *
-     * @param status The status of the machine.
-     */
-    @Contract(mutates = "this")
-    void setStatus(@NotNull MachineStatus status);
-
-    /**
-     * Sets the redstone activation of the machine.
-     *
-     * @param redstone The redstone activation of the machine.
-     */
-    @Contract(mutates = "this")
-    void setRedstoneActivation(@NotNull RedstoneActivation redstone);
 
     /**
      * Returns the I/O configuration of the machine.
@@ -84,6 +68,14 @@ public interface MachineConfiguration {
     @NotNull MachineStatus getStatus();
 
     /**
+     * Sets the status of the machine.
+     *
+     * @param status The status of the machine.
+     */
+    @Contract(mutates = "this")
+    void setStatus(@NotNull MachineStatus status);
+
+    /**
      * Returns the redstone activation of the machine.
      *
      * @return The redstone activation of the machine.
@@ -92,20 +84,10 @@ public interface MachineConfiguration {
     @NotNull RedstoneActivation getRedstoneActivation();
 
     /**
-     * Serializes the machine configuration to NBT.
+     * Sets the redstone activation of the machine.
      *
-     * @param nbt    The NBT compound to serialize to.
-     * @param groups The available slot groups.
-     * @return The NBT compound.
+     * @param redstone The redstone activation of the machine.
      */
-    @Contract(mutates = "param1", value = "_, _ -> param1")
-    @NotNull CompoundTag writeNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
-
-    /**
-     * Deserializes the machine configuration from NBT.
-     *
-     * @param nbt    The NBT compound to deserialize from.
-     * @param groups The available slot groups.
-     */
-    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable [] groups);
+    @Contract(mutates = "this")
+    void setRedstoneActivation(@NotNull RedstoneActivation redstone);
 }

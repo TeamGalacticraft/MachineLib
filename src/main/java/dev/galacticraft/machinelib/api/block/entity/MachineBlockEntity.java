@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,22 +25,21 @@ package dev.galacticraft.machinelib.api.block.entity;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.machine.*;
-import dev.galacticraft.machinelib.api.screen.MachineMenu;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.exposed.ExposedStorage;
-import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
+import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.transfer.CachingItemApiProvider;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.cache.AdjacentBlockApiCache;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.MachineLib;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
@@ -50,6 +49,8 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -74,7 +75,7 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
-import java.util.*;
+import java.util.Objects;
 
 /**
  * A block entity that represents a machine.
@@ -86,7 +87,7 @@ import java.util.*;
  * @see MachineMenu
  * @see MachineScreen
  */
-public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, StorageProvider, RenderAttachmentBlockEntity {
+public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderAttachmentBlockEntity {
     /**
      * The configuration for this machine.
      * This is used to store the {@link #getRedstoneActivation() redstone activation}, {@link #getIOConfig() I/O configuration},
@@ -119,13 +120,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #fluidStorage()
      */
     private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();
-
+    /**
+     * The name of the machine, to be passed to the screen handler factory for display.
+     * <p>
+     * By default, this is the name of the block.
+     */
+    @ApiStatus.Internal
+    private final @NotNull Component name;
     /**
      * Caches energy storages available from adjacent blocks.
      */
     @ApiStatus.Internal
     private @Nullable AdjacentBlockApiCache<EnergyStorage> energyCache = null;
-
     /**
      * Caches fluid storages available from adjacent blocks.
      */
@@ -136,7 +142,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable AdjacentBlockApiCache<Storage<ItemVariant>> itemCache = null;
-
     /**
      * Whether the machine will not drop items when broken.
      * <p>
@@ -149,30 +154,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     private boolean disableDrops = false;
 
     /**
-     * The name of the machine, to be passed to the screen handler factory for display.
-     * <p>
-     * By default, this is the name of the block.
-     */
-    @ApiStatus.Internal
-    private final @NotNull Component name;
-
-    /**
-     * De-duplicated and sorted array of the slot groups of internal storages.
-     * <p>
-     * Should never be mutated.
-     * @see ConfiguredStorage
-     */
-    @ApiStatus.Internal
-    @ApiStatus.Experimental
-    private final SlotGroup[] groups;
-
-    /**
      * Constructs a new machine block entity with the name automatically derived from the passed {@link BlockState}.
      *
-     * @param type The type of block entity.
-     * @param pos The position of the machine in the level.
+     * @param type  The type of block entity.
+     * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
-     *
      * @see MachineBlockEntity#MachineBlockEntity(BlockEntityType, BlockPos, BlockState, Component)
      */
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state) {
@@ -182,18 +168,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Constructs a new machine block entity.
      *
-     * @param type The type of block entity.
-     * @param pos The position of the machine in the level.
+     * @param type  The type of block entity.
+     * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
-     * @param name The name of the machine, to be passed to the screen handler.
-     *
+     * @param name  The name of the machine, to be passed to the screen handler.
      * @see #createItemStorage()
      * @see #createFluidStorage()
      */
     protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
         super(type, pos, state);
         this.name = name;
-        this.groups = this.cacheGroups(); // must be called after storage init
     }
 
     /**
@@ -207,19 +191,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     public static void registerComponents(@NotNull Block... blocks) {
         EnergyStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
             if (blockEntity != null) {
-                return ((MachineBlockEntity)blockEntity).getExposedEnergyStorage(state, context);
+                return ((MachineBlockEntity) blockEntity).getExposedEnergyStorage(state, context);
             }
             return null;
         }, blocks);
-        ItemStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
             if (blockEntity != null) {
-                return ((MachineBlockEntity)blockEntity).getExposedItemStorage(state, context);
+                return ((MachineBlockEntity) blockEntity).getExposedItemStorage(state, context);
             }
             return null;
         }, blocks);
-        FluidStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+        net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
             if (blockEntity != null) {
-                return ((MachineBlockEntity)blockEntity).getExposedFluidStorage(state, context);
+                return ((MachineBlockEntity) blockEntity).getExposedFluidStorage(state, context);
             }
             return null;
         }, blocks);
@@ -240,25 +224,25 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
      *
-     * @see #attemptDrainPowerToStack(int)
-     * @see #getEnergyItemExtractionRate()
      * @return The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
+     * @see #attemptDrainPowerToStack(SlotGroupType, int)
+     * @see #getEnergyItemExtractionRate()
      */
     @Contract(pure = true)
     public long getEnergyItemInsertionRate() {
-        return (long)(this.getEnergyCapacity() / 160.0);
+        return (long) (this.getEnergyCapacity() / 160.0);
     }
 
     /**
      * The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
      *
-     * @see #attemptChargeFromStack(int)
-     * @see #getEnergyItemInsertionRate()
      * @return The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
+     * @see #attemptChargeFromStack(SlotGroupType, int)
+     * @see #getEnergyItemInsertionRate()
      */
     @Contract(pure = true)
     public long getEnergyItemExtractionRate() {
-        return (long)(this.getEnergyCapacity() / 160.0);
+        return (long) (this.getEnergyCapacity() / 160.0);
     }
 
     /**
@@ -271,7 +255,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyInsertionRate() {
-        return (long)(this.getEnergyCapacity() / 120.0);
+        return (long) (this.getEnergyCapacity() / 120.0);
     }
 
     /**
@@ -284,7 +268,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyExtractionRate() {
-        return (long)(this.getEnergyCapacity() / 120.0);
+        return (long) (this.getEnergyCapacity() / 120.0);
     }
 
     /**
@@ -310,9 +294,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns whether this machine is currently running.
      *
+     * @return Whether this machine is currently running.
      * @see #getStatus() for the status of this machine.
      * @see MachineStatus.Type for the different types of statuses.
-     * @return Whether this machine is currently running.
      */
     @Contract(pure = true)
     protected boolean isActive() {
@@ -358,8 +342,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)},
      * but may be modified manually by calling {@link #setStatus(MachineStatus)}.
      *
-     * @see MachineConfiguration
      * @return the status of this machine.
+     * @see MachineConfiguration
      */
     public @NotNull MachineStatus getStatus() {
         return this.configuration.getStatus();
@@ -384,8 +368,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns the energy storage of this machine.
      *
-     * @see MachineEnergyStorage
      * @return The energy storage of this machine.
+     * @see MachineEnergyStorage
      */
     @Contract(pure = true)
     public final @NotNull MachineEnergyStorage energyStorage() {
@@ -395,8 +379,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns the item storage of this machine.
      *
-     * @see MachineItemStorage
      * @return The item storage of this machine.
+     * @see MachineItemStorage
      */
     @Contract(pure = true)
     public final @NotNull MachineItemStorage itemStorage() {
@@ -406,8 +390,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns the fluid storage of this machine.
      *
-     * @see MachineFluidStorage
      * @return the fluid storage of this machine.
+     * @see MachineFluidStorage
      */
     @Contract(pure = true)
     public final @NotNull MachineFluidStorage fluidStorage() {
@@ -418,8 +402,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns the security settings of this machine.
      * Used to determine who can interact with this machine.
      *
-     * @see MachineConfiguration
      * @return the security settings of this machine.
+     * @see MachineConfiguration
      */
     @Contract(pure = true)
     public final @NotNull SecuritySettings getSecurity() {
@@ -427,22 +411,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Returns a de-duplicated and sorted array of the slot groups of internal storages.
-     * @return a de-duplicated and sorted array of the slot groups of internal storages.
-     */
-    @Contract(pure = true)
-    @ApiStatus.Experimental
-    public final @NotNull SlotGroup @NotNull [] getGroups() {
-        return this.groups;
-    }
-
-    /**
      * Returns how the machine reacts when it interacts with redstone.
      * Dictates how this machine should react to redstone.
      *
+     * @return how the machine reacts when it interacts with redstone.
      * @see RedstoneActivation
      * @see #setRedstone(RedstoneActivation)
-     * @return how the machine reacts when it interacts with redstone.
      */
     @Contract(pure = true)
     public final @NotNull RedstoneActivation getRedstoneActivation() {
@@ -451,6 +425,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Returns the IO configuration of this machine.
+     *
      * @return the IO configuration of this machine.
      */
     @Contract(pure = true)
@@ -464,6 +439,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Returns whether this machine will drop items when broken.
+     *
      * @return whether this machine will drop items when broken.
      */
     @Contract(pure = true)
@@ -478,11 +454,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param type The type of resource to get a storage for.
      * @return the relevant storage.
      */
-    @Override
     @Contract(pure = true)
-    public @Nullable ConfiguredStorage getStorage(@NotNull ResourceType type) {
+    public @Nullable ResourceStorage<?, ?, ?, ?> getResourceStorage(@NotNull ResourceType type) {
         return switch (type) {
-            case ENERGY -> this.energyStorage();
             case ITEM -> this.itemStorage();
             case FLUID -> this.fluidStorage();
             default -> null;
@@ -493,9 +467,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns whether the current machine is enabled.
      *
      * @param world the world this machine is in.
+     * @return whether the current machine is enabled.
      * @see RedstoneActivation
      * @see #getRedstoneActivation()
-     * @return whether the current machine is enabled.
      */
     public boolean isDisabled(@NotNull Level world) {
         return switch (this.getRedstoneActivation()) {
@@ -547,7 +521,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {}
+    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    }
 
     /**
      * Called every tick, when the machine is explicitly disabled (by redstone, for example).
@@ -560,17 +535,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {}
+    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    }
 
     /**
      * Called every tick on the client.
      *
      * @param world the world.
-     * @param pos the position of this machine.
+     * @param pos   the position of this machine.
      * @param state the block state of this machine.
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickClient(@NotNull /*Client*/Level world, @NotNull BlockPos pos, @NotNull BlockState state) {} //todo: client/server split? what is this used for?
+    protected void tickClient(@NotNull /*Client*/Level world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    } //todo: client/server split? what is this used for?
 
     /**
      * Called every tick on the server, when the machine is active.
@@ -591,8 +568,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns a controlled/throttled energy storage to expose to adjacent blocks.
      *
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedEnergyStorage(Direction, Direction)
      * @return a controlled/throttled energy storage to expose to adjacent blocks.
+     * @see #getExposedEnergyStorage(Direction, Direction)
      */
     @ApiStatus.Internal
     private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockState state, @NotNull Direction direction) {
@@ -602,10 +579,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns a controlled/throttled energy storage to expose to adjacent blocks.
      *
-     * @param facing the direction this machine is facing.
+     * @param facing    the direction this machine is facing.
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedEnergyStorage(BlockFace)
      * @return a controlled/throttled energy storage to expose to adjacent blocks.
+     * @see #getExposedEnergyStorage(BlockFace)
      */
     @ApiStatus.Internal
     private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction facing, @NotNull Direction direction) {
@@ -620,15 +597,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockFace face) {
-        return this.getIOConfig().get(face).getExposedStorage(this.energyStorage);
+        return this.getIOConfig().get(face).getExposedEnergyStorage(this.energyStorage);
     }
 
     /**
      * Returns a controlled/throttled item storage to expose to adjacent blocks.
      *
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedItemStorage(Direction, Direction)
      * @return a controlled/throttled item storage to expose to adjacent blocks.
+     * @see #getExposedItemStorage(Direction, Direction)
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockState state, @NotNull Direction direction) {
@@ -638,10 +615,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns a controlled/throttled item storage to expose to adjacent blocks.
      *
-     * @param facing the direction this machine is facing.
+     * @param facing    the direction this machine is facing.
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedItemStorage(BlockFace)
      * @return a controlled/throttled item storage to expose to adjacent blocks.
+     * @see #getExposedItemStorage(BlockFace)
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction facing, @NotNull Direction direction) {
@@ -656,15 +633,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
-        return this.getIOConfig().get(face).getExposedStorage(this.itemStorage);
+        return this.getIOConfig().get(face).getExposedItemStorage(this.itemStorage);
     }
 
     /**
      * Returns a controlled/throttled fluid storage to expose to adjacent blocks.
      *
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedFluidStorage(Direction, Direction)
      * @return a controlled/throttled fluid storage to expose to adjacent blocks.
+     * @see #getExposedFluidStorage(Direction, Direction)
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @NotNull Direction direction) {
@@ -674,10 +651,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns a controlled/throttled fluid storage to expose to adjacent blocks.
      *
-     * @param facing the direction this machine is facing.
+     * @param facing    the direction this machine is facing.
      * @param direction the direction the adjacent block is in.
-     * @see #getExposedFluidStorage(BlockFace)
      * @return a controlled/throttled fluid storage to expose to adjacent blocks.
+     * @see #getExposedFluidStorage(BlockFace)
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @NotNull Direction direction) {
@@ -692,34 +669,39 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockFace face) {
-        return this.getIOConfig().get(face).getExposedStorage(this.fluidStorage);
+        return this.getIOConfig().get(face).getExposedFluidStorage(this.fluidStorage);
     }
 
     /**
      * Serializes the machine's state to nbt.
+     *
      * @param nbt the nbt to serialize to.
      */
     @Override
     protected void saveAdditional(CompoundTag nbt) {
         super.saveAdditional(nbt);
-        nbt.put(Constant.Nbt.ENERGY_STORAGE, this.energyStorage.writeNbt());
-        nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.writeNbt());
-        nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.writeNbt());
-        this.configuration.writeNbt(nbt, this.groups);
+        nbt.put(Constant.Nbt.ENERGY_STORAGE, this.energyStorage.createTag());
+        nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.createTag());
+        nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.createTag());
+        nbt.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
         nbt.putBoolean(Constant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
     /**
      * Deserializes the machine's state from nbt.
+     *
      * @param nbt the nbt to deserialize from.
      */
     @Override
     public void load(CompoundTag nbt) {
         super.load(nbt);
-        if (nbt.contains(Constant.Nbt.ENERGY_STORAGE)) this.energyStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ENERGY_STORAGE)));
-        if (nbt.contains(Constant.Nbt.ITEM_STORAGE)) this.itemStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.ITEM_STORAGE)));
-        if (nbt.contains(Constant.Nbt.FLUID_STORAGE)) this.fluidStorage.readNbt(Objects.requireNonNull(nbt.get(Constant.Nbt.FLUID_STORAGE)));
-        this.configuration.readNbt(nbt, this.groups);
+        if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
+            this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
+        if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
+            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_COMPOUND)));
+        if (nbt.contains(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST))
+            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_COMPOUND)));
+        this.configuration.readTag(nbt);
         this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
 
         if (level != null && level.isClientSide()) {
@@ -791,81 +773,37 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * Tries to charge this machine from the item in the given slot in this {@link #itemStorage()}.
-     * It is recommended to use {@link #attemptChargeFromStack(CachingItemApiProvider)} instead to avoid
-     * testing for an energy storage when the inventory has not changed.
      *
      * @param slot the slot to charge from.
      */
-    protected void attemptChargeFromStack(int slot) {
+    protected void attemptChargeFromStack(SlotGroupType type, int slot) {
         if (this.energyStorage().isFull()) return;
 
-        EnergyStorage energyStorage = ContainerItemContext.ofSingleSlot(this.itemStorage().getSlot(slot)).find(EnergyStorage.ITEM);
-        if (energyStorage != null) {
-            if (energyStorage.supportsExtraction()) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
-                    transaction.commit();
-                }
+        EnergyStorage energyStorage = this.itemStorage().getGroup(type).getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsExtraction()) {
+            try (Transaction transaction = Transaction.openOuter()) {
+                EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
+                transaction.commit();
             }
         }
     }
 
     /**
      * Tries to drain some of this machine's power into the item in the given slot in this {@link #itemStorage}.
-     * It is recommended to use {@link #attemptDrainPowerToStack(CachingItemApiProvider)} instead to avoid
-     * testing for an energy storage when the inventory has not changed.
      *
      * @param slot The slot id of the item
      */
-    protected void attemptDrainPowerToStack(int slot) {
+    protected void attemptDrainPowerToStack(SlotGroupType type, int slot) {
         if (this.energyStorage().isEmpty()) return;
-        EnergyStorage energyStorage = ContainerItemContext.ofSingleSlot(this.itemStorage().getSlot(slot)).find(EnergyStorage.ITEM);
-        if (energyStorage != null) {
-            if (energyStorage.supportsInsertion()) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
-                    transaction.commit();
-                }
+        EnergyStorage energyStorage = this.itemStorage().getGroup(type).getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsInsertion()) {
+            try (Transaction transaction = Transaction.openOuter()) {
+                EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
+                transaction.commit();
             }
         }
     }
 
-    /**
-     * Tries to charge this machine from the item in the given slot in this {@link #itemStorage()}.
-     *
-     * @param provider The storage provider
-     */
-    protected void attemptChargeFromStack(@NotNull CachingItemApiProvider<EnergyStorage> provider) {
-        if (this.energyStorage().isFull()) return;
-
-        EnergyStorage energyStorage = provider.getApi();
-        if (energyStorage != null) {
-            if (energyStorage.supportsExtraction()) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), transaction);
-                    transaction.commit();
-                }
-            }
-        }
-    }
-
-    /**
-     * Tries to drain some of this machine's power into the item in the given slot in this {@link #itemStorage()}.
-     *
-     * @param provider The storage provider
-     */
-    protected void attemptDrainPowerToStack(@NotNull CachingItemApiProvider<EnergyStorage> provider) {
-        if (this.energyStorage().isEmpty()) return;
-        EnergyStorage energyStorage = provider.getApi();
-        if (energyStorage != null) {
-            if (energyStorage.supportsInsertion()) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), transaction);
-                    transaction.commit();
-                }
-            }
-        }
-    }
 
     /**
      * Returns whether the given face can be configured for input or output.
@@ -877,29 +815,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return false;
     }
 
-    /**
-     * Returns a de-duplicated and sorted array of the slot groups of internal storages.
-     * @return a de-duplicated and sorted array of the slot groups of internal storages.
-     */
-    @Contract(pure = true, value = " -> new")
-    @ApiStatus.Internal
-    private @NotNull SlotGroup @NotNull [] cacheGroups() {
-        Set<SlotGroup> groups = new HashSet<>(this.itemStorage().size() + this.fluidStorage.size());
-        Collections.addAll(groups, this.itemStorage().getGroups());
-        Collections.addAll(groups, this.fluidStorage().getGroups());
-        Collections.addAll(groups, this.energyStorage().getGroups());
-        SlotGroup[] array = groups.toArray(new SlotGroup[0]);
-        Arrays.sort(array, Comparator.comparingInt(g -> g.getColor().getValue())); //todo: how to sort?
-        return array;
+    @Override
+    public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
+        if (!this.getSecurity().hasAccess(player)) {
+            MachineLib.LOGGER.error("Player {} has illegally accessed machine at {}", player.getStringUUID(), this.worldPosition);
+        }
+        buf.writeBlockPos(this.getBlockPos());
     }
 
     @Override
-    public void writeScreenOpeningData(ServerPlayer serverPlayerEntity, @NotNull FriendlyByteBuf packetByteBuf) {
-        packetByteBuf.writeBlockPos(this.getBlockPos());
-    }
-
-    @Override
-    public Component getDisplayName() {
+    public @NotNull Component getDisplayName() {
         return this.name;
     }
 
@@ -909,7 +834,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
+    public @NotNull CompoundTag getUpdateTag() {
         return this.saveWithoutMetadata();
     }
 

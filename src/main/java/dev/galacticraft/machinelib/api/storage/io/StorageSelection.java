@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.api.storage.io;
 
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.storage.io.GroupStorageSelection;
 import dev.galacticraft.machinelib.impl.storage.io.SlotStorageSelection;
 import org.jetbrains.annotations.Contract;
@@ -39,10 +39,10 @@ public interface StorageSelection {
      * @param slot the slot to filter for
      * @return a new storage selection that filters for a single slot.
      */
-    @Contract("_ -> new")
-    static @NotNull StorageSelection createSlot(int slot) {
+    @Contract("_, _ -> new")
+    static @NotNull StorageSelection create(@NotNull SlotGroupType group, int slot) {
         if (slot < 0) throw new IndexOutOfBoundsException();
-        return new SlotStorageSelection(slot);
+        return new SlotStorageSelection(group, slot);
     }
 
     /**
@@ -52,7 +52,7 @@ public interface StorageSelection {
      * @return a new storage selection that filters for a group of slots.
      */
     @Contract("_ -> new")
-    static @NotNull StorageSelection createGroup(@NotNull SlotGroup group) {
+    static @NotNull StorageSelection create(@NotNull SlotGroupType group) {
         return new GroupStorageSelection(group);
     }
 
@@ -68,27 +68,18 @@ public interface StorageSelection {
     /**
      * Returns the slot to filter for.
      *
-     * @throws UnsupportedOperationException if this selection does not filter for a slot
      * @return the slot to filter for.
+     * @throws UnsupportedOperationException if this selection does not filter for a slot
      */
     @Contract(pure = true)
     int getSlot();
 
     /**
-     * Returns whether this selection filters for a group.
-     * If this method returns {@code false} it can be assumed that this selection is for a slot.
-     *
-     * @return whether this selection filters for a group.
-     */
-    @Contract(pure = true)
-    boolean isGroup();
-
-    /**
      * Returns the group to filter for.
      *
-     * @throws UnsupportedOperationException if this selection does not filter for a
      * @return the group to filter for.
+     * @throws UnsupportedOperationException if this selection does not filter for a
      */
     @Contract(pure = true)
-    @NotNull SlotGroup getGroup();
+    @NotNull SlotGroupType getGroup();
 }

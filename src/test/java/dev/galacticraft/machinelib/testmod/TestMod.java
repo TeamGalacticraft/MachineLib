@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@ package dev.galacticraft.machinelib.testmod;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.screen.SimpleMachineMenu;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.testmod.block.SimpleMachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.fabricmc.api.ModInitializer;
@@ -62,9 +62,9 @@ public class TestMod implements ModInitializer {
     public static final String MOD_ID = "machinelib-test";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final SlotGroup CHARGE_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), false);
-    public static final SlotGroup NO_DIAMOND_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), true);
-    public static final SlotGroup ANY_FLUID_SLOT = SlotGroup.create(TextColor.fromLegacyFormat(ChatFormatting.BLACK), Component.translatable("machinelib.testmod.fluids"), true);
+    public static final SlotGroupType CHARGE_SLOT = SlotGroupType.create(TextColor.fromLegacyFormat(ChatFormatting.YELLOW), Component.translatable("machinelib.testmod.charge_slot"), false);
+    public static final SlotGroupType NO_DIAMOND_SLOT = SlotGroupType.create(TextColor.fromLegacyFormat(ChatFormatting.RED), Component.translatable("machinelib.testmod.no_diamond_slot"), true);
+    public static final SlotGroupType ANY_FLUID_SLOT = SlotGroupType.create(TextColor.fromLegacyFormat(ChatFormatting.BLACK), Component.translatable("machinelib.testmod.fluids"), true);
 
     public static final Predicate<ItemVariant> NO_DIAMONDS = v -> v.getItem() != Items.DIAMOND;
     public static final Predicate<ItemVariant> ANY_ITEM = v -> true;
@@ -75,8 +75,11 @@ public class TestMod implements ModInitializer {
     public static final Block SIMPLE_MACHINE_BLOCK = new SimpleMachineBlock(FabricBlockSettings.of(Material.METAL));
     public static final Item SIMPLE_MACHINE_ITEM = new BlockItem(SIMPLE_MACHINE_BLOCK, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
     public static final Item INFINITE_BATTERY = new Item(new Item.Properties().tab(CreativeModeTab.TAB_MISC));
-    public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE_BE_TYPE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, SIMPLE_MACHINE_BLOCK).build();
-    public static final MenuType<SimpleMachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE_SH_TYPE = new ExtendedScreenHandlerType<>(SimpleMachineMenu.createFactory(() -> TestMod.SIMPLE_MACHINE_SH_TYPE));
+
+    @Contract("_ -> new")
+    public static @NotNull ResourceLocation id(@NotNull String id) {
+        return new ResourceLocation(MOD_ID, id);
+    }    public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE_BE_TYPE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, SIMPLE_MACHINE_BLOCK).build();
 
     @Override
     public void onInitialize() {
@@ -92,10 +95,9 @@ public class TestMod implements ModInitializer {
         Registry.register(Registry.MENU, id(SIMPLE_MACHINE), SIMPLE_MACHINE_SH_TYPE);
 
         MachineBlockEntity.registerComponents(SIMPLE_MACHINE_BLOCK);
-    }
+    }    public static final MenuType<SimpleMachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE_SH_TYPE = new ExtendedScreenHandlerType<>(SimpleMachineMenu.createFactory(() -> TestMod.SIMPLE_MACHINE_SH_TYPE));
 
-    @Contract("_ -> new")
-    public static @NotNull ResourceLocation id(@NotNull String id) {
-        return new ResourceLocation(MOD_ID, id);
-    }
+
+
+
 }

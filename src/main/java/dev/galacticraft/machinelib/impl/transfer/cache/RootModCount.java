@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public final class RootModCount extends SnapshotParticipant<Long> implements ModCount {
     private long count = 0;
 
-    public RootModCount() {}
+    public RootModCount() {
+    }
 
     @Override
     public long getModCount() {

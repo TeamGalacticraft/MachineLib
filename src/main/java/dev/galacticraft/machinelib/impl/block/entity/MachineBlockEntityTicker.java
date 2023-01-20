@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,8 @@ import org.jetbrains.annotations.NotNull;
 public final class MachineBlockEntityTicker<T extends BlockEntity> implements BlockEntityTicker<T> {
     private static final MachineBlockEntityTicker<? extends MachineBlockEntity> INSTANCE = new MachineBlockEntityTicker<>();
 
-    private MachineBlockEntityTicker() {}
+    private MachineBlockEntityTicker() {
+    }
 
     @Contract(pure = true)
     public static <T extends BlockEntity> @NotNull MachineBlockEntityTicker<T> getInstance() {

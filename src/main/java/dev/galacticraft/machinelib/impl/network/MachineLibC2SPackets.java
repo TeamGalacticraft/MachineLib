@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,17 @@ package dev.galacticraft.machinelib.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
-import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -44,7 +45,6 @@ import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -53,11 +53,13 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
 public final class MachineLibC2SPackets {
-    private MachineLibC2SPackets() {}
+    private MachineLibC2SPackets() {
+    }
 
     public static void register() {
         ServerPlayNetworking.registerGlobalReceiver(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
@@ -70,7 +72,7 @@ public final class MachineLibC2SPackets {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
                             if (type) {
                                 machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                                 FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 1)
@@ -94,15 +96,15 @@ public final class MachineLibC2SPackets {
 
             if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length
                     && type >= 0 && type < Constant.Cache.RESOURCE_TYPES.length
-                    && flow >= 0 && flow < ResourceFlow.VALUES.size()
+                    && flow >= 0 && flow < ResourceFlow.VALUES.length
             ) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
-                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES.get(flow));
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
                             machineFace.setSelection(null);
                             FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 3)
                                     .writeLong(machine.getBlockPos().asLong()).writeByte(f).writeByte(type).writeByte(flow)
@@ -126,55 +128,15 @@ public final class MachineLibC2SPackets {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
-                            if (machineFace.getType().matchesSlots()) {
-                                machineFace.setSelection(null);
-                                ConfiguredStorage storage = machine.getStorage(machineFace.getType());
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
+                            if (machineFace.getType().matchesSlots() && machineFace.getSelection() != null) {
+                                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(machineFace.getType());
                                 if (storage != null) {
-                                    int[] matching = machineFace.getMatching(storage);
-                                    if (matching.length == 0) {
-                                        return;
-                                    }
-
-                                    int count = 0;
-                                    for (int j : matching) {
-                                        ResourceFlow flow;
-                                        if (storage.canExposedInsert(j)) {
-                                            if (storage.canExposedExtract(j)) {
-                                                flow = ResourceFlow.BOTH;
-                                            } else {
-                                                flow = ResourceFlow.INPUT;
-                                            }
-                                        } else if (storage.canExposedExtract(j)) {
-                                            flow = ResourceFlow.OUTPUT;
-                                        } else {
-                                            continue;
-                                        }
-                                        if (flow.canFlowIn(machineFace.getFlow())) count++;
-                                    }
-                                    if (count == 0) return;
-                                    int[] tmp = new int[count];
-
-                                    int c = 0;
-                                    for (int j : matching) {
-                                        ResourceFlow flow;
-                                        if (storage.canExposedInsert(j)) {
-                                            if (storage.canExposedExtract(j)) {
-                                                flow = ResourceFlow.BOTH;
-                                            } else {
-                                                flow = ResourceFlow.INPUT;
-                                            }
-                                        } else if (storage.canExposedExtract(j)) {
-                                            flow = ResourceFlow.OUTPUT;
-                                        } else {
-                                            continue;
-                                        }
-                                        if (flow.canFlowIn(machineFace.getFlow())) tmp[c++] = j;
-                                    }
-                                    matching = tmp;
-
-                                    if (slot < matching.length) {
-                                        machineFace.setSelection(StorageSelection.createSlot(matching[slot]));
+                                    SlotGroup<?, ?, ?> group = storage.getGroup(machineFace.getSelection().getGroup());
+                                    if (slot < group.size()) {
+                                        machineFace.setSelection(StorageSelection.create(group.getType(), slot));
+                                    } else if (slot == group.size()) {
+                                        machineFace.setSelection(StorageSelection.create(group.getType()));
                                     }
                                 }
                             }
@@ -194,11 +156,11 @@ public final class MachineLibC2SPackets {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
                             if (machineFace.getType().matchesGroups()) {
-                                SlotGroup[] groups = machineFace.getMatchingGroups(machine);
-                                if (group < groups.length) {
-                                    machineFace.setSelection(StorageSelection.createGroup(groups[group]));
+                                List<SlotGroupType> groups = machineFace.getFlowMatchingGroups(machine);
+                                if (group < groups.size()) {
+                                    machineFace.setSelection(StorageSelection.create(groups.get(group)));
                                 }
                             }
                         }
@@ -247,12 +209,13 @@ public final class MachineLibC2SPackets {
     private static boolean acceptStack(@NotNull Tank tank, @NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            ExposedSlot<Fluid, FluidVariant> slot = tank.getStorage();
+            ExposedSlot<Fluid, FluidVariant> slot = tank.getSlot();
             if (storage.supportsExtraction() && slot.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (tank.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, slot.getFilter(tank.getIndex()));
+//                        storedResource = StorageUtil.findStoredResource(storage, slot.getFilter());
+                        storedResource = null; //FIXME
                     } else {
                         storedResource = tank.getResource();
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@ public final class DirectDataSlot extends DataSlot { //todo: look into sync to S
         this.getter = getter;
         this.setter = setter;
     }
+
     @Override
     public int get() {
         return this.getter.getAsInt();

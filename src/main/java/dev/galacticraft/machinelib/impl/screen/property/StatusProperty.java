@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.screen.property;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.impl.MachineLib;
 import net.minecraft.world.inventory.DataSlot;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -37,11 +37,11 @@ public class StatusProperty extends DataSlot {
 
     @Override
     public int get() {
-        return MachineStatus.REGISTRY.getId(this.machine.getStatus());
+        return MachineLib.MACHINE_STATUS_REGISTRY.getId(this.machine.getStatus());
     }
 
     @Override
     public void set(int value) {
-        this.machine.setStatus(MachineStatus.REGISTRY.byIdOrThrow(value));
+        this.machine.setStatus(MachineLib.MACHINE_STATUS_REGISTRY.byIdOrThrow(value));
     }
 }

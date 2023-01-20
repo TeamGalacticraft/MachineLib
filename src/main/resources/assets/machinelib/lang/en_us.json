@@ -7,10 +7,8 @@
   "status.machinelib.capacitor_full": "Capacitor Full",
   "status.machinelib.active": "Active",
   "status.machinelib.idle": "Idle",
-
   "ui.machinelib.machine.current_energy": "Energy: %s",
   "ui.machinelib.machine.max_energy": "Max Energy: %s",
-
   "ui.machinelib.machine.security": "Security",
   "ui.machinelib.machine.security.access": "Access Level: %s",
   "ui.machinelib.machine.security.access.public": "Public",
@@ -18,7 +16,6 @@
   "ui.machinelib.machine.security.access.private": "Private",
   "ui.machinelib.machine.security.access_denied": "Access Denied",
   "ui.machinelib.machine.security.owner": "Owner: %s",
-
   "ui.machinelib.machine.redstone_activation": "Redstone Activation",
   "ui.machinelib.machine.redstone_activation.ignore": "Ignore",
   "ui.machinelib.machine.redstone_activation.low": "Low",
@@ -27,35 +24,27 @@
   "ui.machinelib.machine.redstone_activation.status": "Redstone Status: ",
   "ui.machinelib.machine.redstone_activation.status.enabled": "Enabled",
   "ui.machinelib.machine.redstone_activation.status.disabled": "Disabled",
-
   "ui.machinelib.machine.configuration": "I/O Configuration",
   "ui.machinelib.machine.configuration.matches": "Matches: %s",
-
   "ui.machinelib.machine.statistics": "Statistics",
-
   "ui.machinelib.face.front": "Front",
   "ui.machinelib.face.right": "Right",
   "ui.machinelib.face.back": "Back",
   "ui.machinelib.face.left": "Left",
   "ui.machinelib.face.top": "Top",
   "ui.machinelib.face.bottom": "Bottom",
-
   "ui.machinelib.resource.flow.in": "In",
   "ui.machinelib.resource.flow.out": "Out",
   "ui.machinelib.resource.flow.both": "Both",
-
   "ui.machinelib.resource.type.none": "None",
   "ui.machinelib.resource.type.any": "Any",
   "ui.machinelib.resource.type.energy": "Energy",
   "ui.machinelib.resource.type.item": "Item",
   "ui.machinelib.resource.type.fluid": "Fluid",
-
   "ui.machinelib.machine.tank.contents": "Contents: ",
   "ui.machinelib.machine.tank.contents.amount": "Amount: ",
   "ui.machinelib.machine.tank.contents.empty": "Empty",
-
   "slot_type.machinelib.invalid": "Invalid",
-
   "gas.machinelib.hydrogen": "Hydrogen",
   "gas.machinelib.nitrogen": "Nitrogen",
   "gas.machinelib.oxygen": "Oxygen",
@@ -72,7 +61,6 @@
   "gas.machinelib.ozone": "Ozone",
   "gas.machinelib.nitrous_dioxide": "Nitrous Dioxide",
   "gas.machinelib.iodine": "Iodine",
-
   "tooltip.machinelib.gas": "Gas",
   "tooltip.machinelib.machine.unknown": "Unknown",
   "tooltip.machinelib.press_shift": "Press LSHIFT for more information."

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Returns whether the player is the owner of the linked machine.
+     *
      * @param player The player to check.
      * @return Whether the player is the owner of the linked machine.
      */
@@ -73,6 +74,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Returns whether the game profile is the owner of the linked machine.
+     *
      * @param uuid The uuid to check.
      * @return Whether the game profile is the owner of the linked machine.
      */
@@ -98,6 +100,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Whether the player is allowed to access the linked machine.
+     *
      * @param uuid The uuid to check.
      * @return Whether the uuid is allowed to access the linked machine.
      */
@@ -113,6 +116,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Returns the access level of the linked machine.
+     *
      * @return The access level of the linked machine.
      */
     @Override
@@ -122,6 +126,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Sets the access level of the linked machine.
+     *
      * @param accessLevel The access level to set.
      */
     @Override
@@ -141,6 +146,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Sets the player who owns the linked machine.
+     *
      * @param player The player to set.
      */
     @Override
@@ -164,57 +170,12 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Returns the team of the owner of the linked machine.
+     *
      * @return The team of the owner of the linked machine.
      */
     @Override
     public @Nullable ResourceLocation getTeam() {
         return team;
-    }
-
-    /**
-     * Serializes the security settings to nbt.
-     * @return The serialized security settings.
-     */
-    @Override
-    public @NotNull CompoundTag toNbt() {
-        CompoundTag nbt = new CompoundTag();
-        if (this.getOwner() != null) {
-            nbt.putUUID(Constant.Nbt.OWNER, this.getOwner());
-            if (this.getUsername() != null) {
-                nbt.putString(Constant.Nbt.USERNAME, this.getUsername());
-            }
-        }
-        nbt.putString(Constant.Nbt.ACCESS_LEVEL, this.accessLevel.getSerializedName());
-        if (this.getTeam() != null) {
-            nbt.putString(Constant.Nbt.TEAM, this.getTeam().toString());
-            if (this.getTeamName() != null) {
-                nbt.putString(Constant.Nbt.TEAM_NAME, this.getTeamName());
-            }
-        }
-        return nbt;
-    }
-
-    /**
-     * Deserializes the security settings from nbt.
-     * @param nbt The nbt to deserialize from.
-     */
-    @Override
-    public void fromNbt(@NotNull CompoundTag nbt) {
-        if (nbt.contains(Constant.Nbt.OWNER)) {
-            this.owner = nbt.getUUID(Constant.Nbt.OWNER);
-        }
-        if (nbt.contains(Constant.Nbt.USERNAME)) {
-            this.username = nbt.getString(Constant.Nbt.USERNAME);
-        }
-
-        if (nbt.contains(Constant.Nbt.TEAM)) {
-            this.team = new ResourceLocation(nbt.getString(Constant.Nbt.TEAM));
-            if (nbt.contains(Constant.Nbt.TEAM_NAME)) {
-                this.teamName = nbt.getString(Constant.Nbt.TEAM_NAME);
-            }
-        }
-
-        this.accessLevel = AccessLevel.fromString(nbt.getString(Constant.Nbt.ACCESS_LEVEL));
     }
 
     @Override
@@ -226,7 +187,8 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     /**
      * Sends the security settings to the client.
-     * @param pos The position of the machine.
+     *
+     * @param pos    The position of the machine.
      * @param player The player to send the settings to.
      */
     @Override
@@ -255,5 +217,81 @@ public final class SecuritySettingsImpl implements SecuritySettings {
             buf.writeBoolean(false);
         }
         ServerPlayNetworking.send(player, Constant.id("security_update"), buf);
+    }
+
+    @Override
+    public @NotNull CompoundTag createTag() {
+        CompoundTag nbt = new CompoundTag();
+        if (this.getOwner() != null) {
+            nbt.putUUID(Constant.Nbt.OWNER, this.getOwner());
+            if (this.getUsername() != null) {
+                nbt.putString(Constant.Nbt.USERNAME, this.getUsername());
+            }
+        }
+        nbt.putString(Constant.Nbt.ACCESS_LEVEL, this.accessLevel.getSerializedName());
+        if (this.getTeam() != null) {
+            nbt.putString(Constant.Nbt.TEAM, this.getTeam().toString());
+            if (this.getTeamName() != null) {
+                nbt.putString(Constant.Nbt.TEAM_NAME, this.getTeamName());
+            }
+        }
+        return nbt;
+    }
+
+    @Override
+    public void readTag(@NotNull CompoundTag tag) {
+        if (tag.contains(Constant.Nbt.OWNER)) {
+            this.owner = tag.getUUID(Constant.Nbt.OWNER);
+        }
+        if (tag.contains(Constant.Nbt.USERNAME)) {
+            this.username = tag.getString(Constant.Nbt.USERNAME);
+        }
+
+        if (tag.contains(Constant.Nbt.TEAM)) {
+            this.team = new ResourceLocation(tag.getString(Constant.Nbt.TEAM));
+            if (tag.contains(Constant.Nbt.TEAM_NAME)) {
+                this.teamName = tag.getString(Constant.Nbt.TEAM_NAME);
+            }
+        }
+
+        this.accessLevel = AccessLevel.fromString(tag.getString(Constant.Nbt.ACCESS_LEVEL));
+    }
+
+    @Override
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        buf.writeByte(this.accessLevel.ordinal());
+        byte bits = 0b0000;
+        if (this.owner != null) bits |= 0b0001;
+        if (this.username != null) bits |= 0b0010;
+        if (this.team != null) bits |= 0b0100;
+        if (this.teamName != null) bits |= 0b1000;
+
+        if (this.owner == null) {
+            buf.writeByte(0b0000);
+        } else {
+            buf.writeByte(bits);
+            buf.writeUUID(this.owner);
+            if (this.username != null) buf.writeUtf(this.username);
+            if (this.team != null) buf.writeResourceLocation(this.team);
+            if (this.teamName != null) buf.writeUtf(this.teamName);
+        }
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+        this.accessLevel = AccessLevel.getByOrdinal(buf.readByte());
+        byte bits = buf.readByte();
+
+        if (bits == 0b0000) {
+            this.owner = null;
+            this.username = null;
+            this.team = null;
+            this.teamName = null;
+        } else {
+            this.owner = buf.readUUID();
+            if ((bits & 0b0010) != 0) this.username = buf.readUtf();
+            if ((bits & 0b0100) != 0) this.team = buf.readResourceLocation();
+            if ((bits & 0b1000) != 0) this.teamName = buf.readUtf();
+        }
     }
 }

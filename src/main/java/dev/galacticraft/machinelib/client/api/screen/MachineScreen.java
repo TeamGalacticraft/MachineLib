@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.client.api.screen;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.platform.Lighting;
@@ -30,25 +29,23 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.VanillaWrappedItemSlot;
+import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
+import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -61,7 +58,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -71,7 +67,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -79,7 +75,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -90,7 +85,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles most of the boilerplate code for machine screens.
@@ -115,7 +111,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     private static final int REDSTONE_IGNORE_X = 18;
     private static final int REDSTONE_IGNORE_Y = 30;
-    
+
     private static final int REDSTONE_LOW_X = 43;
     private static final int REDSTONE_LOW_Y = 30;
 
@@ -161,6 +157,9 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     private static final int SECURITY_STATE_TEXT_X = 11;
     private static final int SECURITY_STATE_TEXT_Y = 53;
 
+    private static final int MACHINE_FACE_SIZE = 16;
+    private static final int BUTTON_SIZE = 16;
+
     /**
      * An array used for ordering tooltip text to avoid re-allocating multiple times per frame.
      * Not thread safe.
@@ -182,12 +181,30 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * The machine this screen is attached to.
      */
     protected final M machine;
-
+    /**
+     * The sprite provider for the machine block. Used to render the machine on the IO configuration panel.
+     */
+    private final MachineModelRegistry.SpriteProvider spriteProvider;
+    /**
+     * The texture of the background screen.
+     */
+    private final @NotNull ResourceLocation texture;
     /**
      * The tank that is currently hovered over.
      */
     protected @Nullable Tank focusedTank = null;
-
+    /**
+     * The x-position of the capacitor.
+     */
+    protected int capacitorX = 8;
+    /**
+     * The y-position of the capacitor.
+     */
+    protected int capacitorY = 8;
+    /**
+     * The height of the capacitor.
+     */
+    protected int capacitorHeight = 48;
     /**
      * The skin of the owner of this machine.
      * Defaults to steve if the skin cannot be found.
@@ -195,35 +212,11 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     private @NotNull ResourceLocation ownerSkin = new ResourceLocation("textures/entity/steve.png");
 
     /**
-     * The sprite provider for the machine block. Used to render the machine on the IO configuration panel.
-     */
-    private final MachineModelRegistry.SpriteProvider spriteProvider;
-
-    /**
-     * The texture of the background screen.
-     */
-    private final @NotNull ResourceLocation texture;
-
-    /**
-     * The x-position of the capacitor.
-     */
-    protected int capacitorX = 8;
-
-    /**
-     * The y-position of the capacitor.
-     */
-    protected int capacitorY = 8;
-
-    /**
-     * The height of the capacitor.
-     */
-    protected int capacitorHeight = 48;
-
-    /**
      * Creates a new screen from the given screen handler.
+     *
      * @param handler The screen handler to create the screen from.
-     * @param inv The inventory of the machine.
-     * @param title The title of the screen.
+     * @param inv     The inventory of the machine.
+     * @param title   The title of the screen.
      * @param texture The texture of the background screen.
      */
     protected MachineScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
@@ -242,6 +235,16 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         }, true);
     }
 
+    /**
+     * Returns the requested item based on the id, or defaults to a barrier if nto found.
+     *
+     * @param id the id of the item
+     * @return the item stack
+     */
+    private static Item getOptionalItem(ResourceLocation id) {
+        return BuiltInRegistries.ITEM.getOptional(id).orElse(Items.BARRIER);
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -250,6 +253,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Appends additional information to the capacitor's tooltip.
+     *
      * @param list The list to append to.
      */
     public void appendEnergyTooltip(List<Component> list) {
@@ -257,10 +261,11 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Draws the configuration panels and their contents.
+     *
      * @param matrices The matrix stack.
-     * @param mouseX The mouse's x-position.
-     * @param mouseY The mouse's y-position.
-     * @param delta The delta time.
+     * @param mouseX   The mouse's x-position.
+     * @param mouseY   The mouse's y-position.
+     * @param delta    The delta time.
      */
     protected void drawConfigurationPanels(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
@@ -293,8 +298,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
                         machine.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
                 this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                        !machine.isDisabled(this.level) ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
-                                : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
+                                !machine.isDisabled(this.level) ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
+                                        : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                         .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
                 matrices.popPose();
@@ -366,6 +371,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Draws the title of the machine.
+     *
      * @param matrices the matrix stack
      * @see #titleLabelX
      * @see #titleLabelY
@@ -376,23 +382,25 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Draws the sprite of a given machine face.
+     *
      * @param matrices the matrix stack
-     * @param x the x position to draw at
-     * @param y the y position to draw at
-     * @param machine the machine to draw
-     * @param face the face to draw
+     * @param x        the x position to draw at
+     * @param y        the y position to draw at
+     * @param machine  the machine to draw
+     * @param face     the face to draw
      */
     private void drawMachineFace(@NotNull PoseStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
-        MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
-        blit(matrices, x, y, 0, 16, 16, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
+        MachineIOFace machineFace = machine.getIOConfig().get(face);
+        blit(matrices, x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
     /**
      * Renders the icon of the given item, without any extra effects.
+     *
      * @param matrices the matrix stack
-     * @param x the x position to draw at
-     * @param y the y position to draw at
-     * @param stack the item to render
+     * @param x        the x position to draw at
+     * @param y        the y position to draw at
+     * @param stack    the item to render
      */
     private void renderItemIcon(@NotNull PoseStack matrices, int x, int y, @NotNull ItemStack stack) {
         assert this.minecraft != null;
@@ -419,13 +427,14 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     /**
      * Draws a 16x16 button at the given position.
      * The button will be highlighted if the mouse is hovering over it.
+     *
      * @param matrices the matrix stack
-     * @param x the x-position to draw at
-     * @param y the y-position to draw at
-     * @param mouseX the mouse's x-position
-     * @param mouseY the mouse's y-position
-     * @param delta the delta time
-     * @param pressed whether the button is pressed
+     * @param x        the x-position to draw at
+     * @param y        the y-position to draw at
+     * @param mouseX   the mouse's x-position
+     * @param mouseY   the mouse's y-position
+     * @param delta    the delta time
+     * @param pressed  whether the button is pressed
      */
     public void drawButton(PoseStack matrices, int x, int y, double mouseX, double mouseY, float delta, boolean pressed) {
         assert this.minecraft != null;
@@ -443,6 +452,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Handles mouse input for the configuration panels.
+     *
      * @param mouseX the mouse's x-position
      * @param mouseY the mouse's y-position
      * @param button the button code that was pressed
@@ -502,34 +512,23 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 return true;
             }
             if (button >= GLFW.GLFW_MOUSE_BUTTON_LEFT && button <= GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
-                if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.TOP, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.TOP);
                     return true;
-                }
-                if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.LEFT, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                } else if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.LEFT);
                     return true;
-                }
-                if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.FRONT, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                } else if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.FRONT);
                     return true;
-                }
-                if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.RIGHT, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                } else if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.RIGHT);
                     return true;
-                }
-                if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.BACK, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                } else if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.BACK);
                     return true;
-                }
-                if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16)) {
-                    SideConfigurationAction.VALUES[button].update(this.minecraft.player, machine, BlockFace.BOTTOM, Screen.hasShiftDown(), Screen.hasControlDown());
-                    this.playButtonSound();
+                } else if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
+                    this.modifyFace(button, BlockFace.BOTTOM);
                     return true;
                 }
             }
@@ -602,6 +601,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Sets the accessibility of the machine and syncs it to the server.
+     *
      * @param accessLevel The accessibility to set.
      */
     protected void setAccessibility(@NotNull AccessLevel accessLevel) {
@@ -611,6 +611,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Sets the redstone mode of the machine and syncs it to the server.
+     *
      * @param redstone The redstone mode to set.
      */
     protected void setRedstone(@NotNull RedstoneActivation redstone) {
@@ -620,9 +621,10 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Draws the tooltips of the configuration panel.
+     *
      * @param matrices The matrices to use.
-     * @param mouseX The mouse's x-position.
-     * @param mouseY The mouse's y-position.
+     * @param mouseX   The mouse's x-position.
+     * @param mouseY   The mouse's y-position.
      */
     protected void drawConfigurationPanelTooltips(PoseStack matrices, int mouseX, int mouseY) {
         final MachineBlockEntity machine = this.machine;
@@ -653,22 +655,22 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.TOP, mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.LEFT, mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.FRONT, mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.RIGHT, mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.BACK, mX, mY);
             }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16)) {
+            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
                 this.renderFaceTooltip(matrices, BlockFace.BOTTOM, mX, mY);
             }
         } else {
@@ -716,8 +718,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 }
             } else {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
-                    || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
+                        || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
+                        || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
@@ -736,14 +738,15 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Renders the tooltip for the given face.
+     *
      * @param matrices The matrix stack
-     * @param face The face to render the tooltip for
-     * @param mouseX The mouse's x-position
-     * @param mouseY The mouse's y-position
+     * @param face     The face to render the tooltip for
+     * @param mouseX   The mouse's x-position
+     * @param mouseY   The mouse's y-position
      */
     protected void renderFaceTooltip(PoseStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
-        MachineIOFaceConfig configuredFace = this.machine.getIOConfig().get(face);
+        MachineIOFace configuredFace = this.machine.getIOConfig().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
@@ -751,8 +754,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             if (configuredFace.getSelection().isSlot()) {
                 TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.MATCHES, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
             } else {
-                assert configuredFace.getSelection().isGroup();
-                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.MATCHES, configuredFace.getSelection().getGroup().getName()).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.MATCHES, configuredFace.getSelection().getGroup().name()).setStyle(Constant.Text.GRAY_STYLE));
             }
         }
         this.renderComponentTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -776,10 +778,11 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Renders the foreground of the screen.
+     *
      * @param matrices The matrix stack
-     * @param mouseX The mouse's x-position
-     * @param mouseY The mouse's y-position
-     * @param delta The delta time
+     * @param mouseX   The mouse's x-position
+     * @param mouseY   The mouse's y-position
+     * @param delta    The delta time
      */
     protected void renderForeground(PoseStack matrices, int mouseX, int mouseY, float delta) {
     }
@@ -796,16 +799,17 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
         this.drawTanks(matrices, mouseX, mouseY, delta);
         this.drawCapacitor(matrices, mouseX, mouseY, delta);
-        this.handleSlotHighlight(matrices, mouseX, mouseY, delta);
+        this.handleSlotHighlight(matrices, mouseX, mouseY);
     }
 
     /**
      * Draws the capacitor of this machine.
      * If the machine has no capacitor, this method does nothing.
+     *
      * @param matrices The matrix stack
-     * @param mouseX The mouse's x-position
-     * @param mouseY The mouse's y-position
-     * @param delta The delta time
+     * @param mouseX   The mouse's x-position
+     * @param mouseY   The mouse's y-position
+     * @param delta    The delta time
      */
     protected void drawCapacitor(PoseStack matrices, int mouseX, int mouseY, float delta) {
         if (this.machine.energyStorage().getCapacity() > 0) {
@@ -837,26 +841,25 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Draws the background of this machine.
+     *
      * @param matrices The matrix stack
-     * @param mouseX The mouse's x-position
-     * @param mouseY The mouse's y-position
-     * @param delta The delta time
+     * @param mouseX   The mouse's x-position
+     * @param mouseY   The mouse's y-position
+     * @param delta    The delta time
      */
     protected void renderBackground(PoseStack matrices, int mouseX, int mouseY, float delta) {
     }
 
     /**
      * Draws the (fluid and gas) tanks of this machine.
+     *
      * @param matrices The matrix stack
-     * @param mouseX The mouse's x-position
-     * @param mouseY The mouse's y-position
-     * @param delta The delta time
+     * @param mouseX   The mouse's x-position
+     * @param mouseY   The mouse's y-position
+     * @param delta    The delta time
      */
     protected void drawTanks(PoseStack matrices, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
-        Int2IntArrayMap color = getTankColor(mouseX, mouseY);
-        color.defaultReturnValue(0xFFFFFFFF);
-
         this.focusedTank = null;
         for (Tank tank : this.menu.tanks) {
             fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
@@ -867,12 +870,12 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
                 int fluidColor = FluidVariantRendering.getColor(resource);
 
-                if (sprite == null || sprite.getName().equals(MissingTextureAtlasSprite.getLocation())) {
+                if (sprite == null || sprite.atlasLocation().equals(MissingTextureAtlasSprite.getLocation())) {
                     sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
                     fluidColor = -1;
                     if (sprite == null) throw new IllegalStateException("Water sprite is null");
                 }
-                RenderSystem.setShaderTexture(0, sprite.atlas().location());
+                RenderSystem.setShaderTexture(0, sprite.atlasLocation());
                 RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
                 double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
                 if (!fillFromTop) {
@@ -899,175 +902,59 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         for (Tank tank : this.menu.tanks) {
             tank.drawTooltip(matrices, this.minecraft, this.leftPos, this.topPos, mouseX, mouseY);
         }
+    }
 
-        color = getItemColor(mouseX, mouseY);
-        color.defaultReturnValue(-1);
-        for (Slot slot : this.menu.slots) {
-            if (slot instanceof VanillaWrappedItemSlot) {
-                int index = slot.getContainerSlot();
-                if (color.get(index) != -1) {
-                    RenderSystem.disableDepthTest();
-                    int c = color.get(index);
-                    c |= (255 << 24);
-                    RenderSystem.colorMask(true, true, true, false);
-                    fillGradient(matrices, this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, c, c);
-                    RenderSystem.colorMask(true, true, true, true);
-                    RenderSystem.enableDepthTest();
+    @ApiStatus.Internal
+    private void handleSlotHighlight(PoseStack matrices, int mouseX, int mouseY) {
+        if (Tab.CONFIGURATION.isOpen()) {
+            mouseX -= Constant.TextureCoordinate.PANEL_WIDTH + this.leftPos;
+            mouseY -= this.topPos + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+            MachineIOFace config = null;
+            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.TOP);
+            } else if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.LEFT);
+            } else if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.FRONT);
+            } else if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.RIGHT);
+            } else if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.BACK);
+            } else if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
+                config = this.machine.getIOConfig().get(BlockFace.BOTTOM);
+            }
+            if (config != null && config.getType().willAcceptResource(ResourceType.ITEM)) {
+                if (config.getSelection() != null) {
+                    if (config.getSelection().isSlot()) {
+                        assert config.getType() == ResourceType.ITEM;
+                        AutomatableSlot slot = this.menu.machineSlots[config.getSelection().getSlot()];
+                        int color = slot.getSlot().getGroup().getType().color().getValue();
+                        this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                        this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                    } else {
+                        SlotGroupType group = config.getSelection().getGroup();
+                        int color = group.color().getValue();
+                        for (AutomatableSlot slot : this.menu.slotMap.get(group)) {
+                            this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                        }
+                    }
+                } else {
+                    for (AutomatableSlot slot : this.menu.machineSlots) {
+                        int color = slot.getSlot().getGroup().getType().color().getValue();
+                        this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                        this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                    }
                 }
             }
         }
     }
 
     /**
-     * Returns a map of the tank slot colors highlighted for the hovered configuration.
-     * @param mouseX The mouse's x-position.
-     * @param mouseY The mouse's y-position.
-     * @return A map of the tank slot colors highlighted for the hovered configuration.
-     */
-    @ApiStatus.Internal
-    private @NotNull Int2IntArrayMap getTankColor(int mouseX, int mouseY) {
-        if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.leftPos - Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= this.topPos + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
-            Int2IntArrayMap out = new Int2IntArrayMap();
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.fluidStorage()));
-                groupFluid(out, list);
-            }
-            return out;
-        }
-        return new Int2IntArrayMap();
-    }
-
-    /**
-     * Returns a map of the item slot colors highlighted for the hovered configuration.
-     * @param mouseX The mouse's x-position.
-     * @param mouseY The mouse's y-position.
-     * @return A map of the item slot colors highlighted for the hovered configuration.
-     */
-    @ApiStatus.Internal
-    protected Int2IntArrayMap getItemColor(int mouseX, int mouseY) {
-        if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= this.leftPos - Constant.TextureCoordinate.PANEL_WIDTH;
-            mouseY -= this.topPos + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
-            Int2IntArrayMap out = new Int2IntArrayMap();
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.TOP).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.LEFT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.FRONT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.RIGHT).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BACK).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16) && this.machine.getIOConfig().get(BlockFace.BOTTOM).getSelection() != null) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.itemStorage()));
-                groupItem(out, list);
-            }
-            return out;
-        }
-        return new Int2IntArrayMap();
-    }
-
-    @ApiStatus.Internal
-    private void groupFluid(Int2IntMap out, IntList list) {
-        for (Tank tank : this.menu.tanks) {
-            if (list.contains(tank.getIndex())) {
-                out.put(tank.getIndex(), this.machine.fluidStorage().getGroups()[tank.getIndex()].getColor().getValue());
-            }
-        }
-    }
-
-    @ApiStatus.Internal
-    private void groupItem(Int2IntMap out, IntList list) {
-        for (Slot slot : this.menu.slots) {
-            int index = slot.getContainerSlot();
-            if (list.contains(index)) {
-                out.put(index, this.machine.itemStorage().getGroups()[index].getColor().getValue());
-            }
-        }
-    }
-
-    @ApiStatus.Internal
-    private void handleSlotHighlight(PoseStack matrices, int mouseX, int mouseY, float delta) {
-        if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= Constant.TextureCoordinate.PANEL_WIDTH + this.leftPos;
-            mouseY -= this.topPos + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
-            if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.TOP).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.LEFT).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.FRONT).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.RIGHT).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BACK).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-            if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, 16, 16)) {
-                IntList list = new IntArrayList(this.machine.getIOConfig().get(BlockFace.BOTTOM).getMatching(this.machine.itemStorage()));
-                groupStack(matrices, list);
-            }
-        }
-    }
-
-    @ApiStatus.Internal
-    private void groupStack(PoseStack matrices, IntList list) {
-        for (Slot slot : this.menu.slots) {
-            int index = slot.getContainerSlot();
-            if (list.contains(index)) {
-                drawSlotOverlay(matrices, slot);
-            }
-        }
-    }
-
-    /**
      * Draws a coloured box around the slot, based on the slot's type.
+     *
      * @param matrices the matrix stack
-     * @param slot the slot to box
      */
-    protected void drawSlotOverlay(@NotNull PoseStack matrices, @NotNull Slot slot) {
-        int index = slot.getContainerSlot();
+    protected void drawSlotOutline(@NotNull PoseStack matrices, int x, int y, int color) {
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         RenderSystem.disableTexture();
@@ -1075,33 +962,44 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         BufferBuilder bufferBuilder = tesselator.getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         fillGradient(matrices.last().pose(), bufferBuilder,
-                slot.x - 1, slot.y - 1,
-                slot.x - 1, slot.y + 17,
+                x - 1, y - 1,
+                x - 1, y + 17,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue());
+                color,
+                color);
         fillGradient(matrices.last().pose(), bufferBuilder,
-                slot.x - 1, slot.y + 17,
-                slot.x + 17, slot.y - 1,
+                x - 1, y + 17,
+                x + 17, y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue());
+                color,
+                color);
         fillGradient(matrices.last().pose(), bufferBuilder,
-                slot.x + 17, slot.y + 17,
-                slot.x + 17, slot.y - 1,
+                x + 17, y + 17,
+                x + 17, y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue());
+                color,
+                color);
         fillGradient(matrices.last().pose(), bufferBuilder,
-                slot.x + 17, slot.y - 1,
-                slot.x - 1, slot.y - 1,
+                x + 17, y - 1,
+                x - 1, y - 1,
                 this.getBlitOffset(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue(),
-                this.machine.itemStorage().getGroups()[index].getColor().getValue());
+                color,
+                color);
         tesselator.end();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
         RenderSystem.enableTexture();
+    }
+
+    protected void drawSlotOverlay(@NotNull PoseStack matrices, int x, int y, int color) {
+        RenderSystem.disableDepthTest();
+        RenderSystem.colorMask(true, true, true, false);
+
+        RenderSystem.disableDepthTest();
+        color |= (255 << 24);
+        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
+        RenderSystem.colorMask(true, true, true, true);
+        RenderSystem.enableDepthTest();
     }
 
     @Override
@@ -1132,6 +1030,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Returns whether the player has access to the machine.
+     *
      * @return whether the player has access to the machine
      */
     public boolean hasAccess() {
@@ -1156,6 +1055,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Returns the x offset of the screen.
+     *
      * @return the x offset of the screen
      */
     public int getX() {
@@ -1164,6 +1064,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Returns the y offset of the screen.
+     *
      * @return the y offset of the screen
      */
     public int getY() {
@@ -1172,6 +1073,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Returns the width of the background image.
+     *
      * @return the width of the screen
      */
     public int getImageWidth() {
@@ -1180,20 +1082,241 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
     /**
      * Returns the height of the background image.
+     *
      * @return the height of the screen
      */
     public int getImageHeight() {
         return this.imageHeight;
     }
 
-    /**
-     * Returns the requested item based on the id, or defaults to a barrier if nto found.
-     * @param id the id of the item
-     * @return the item stack
-     */
-    private static Item getOptionalItem(ResourceLocation id) {
-        return Registry.ITEM.getOptional(id).orElse(Items.BARRIER);
+    private void modifyFace(int button, BlockFace face) {
+        switch (button) {
+            case 0 -> cycleFace(face, Screen.hasShiftDown(), Screen.hasControlDown());
+            case 1 -> cycleGroup(face, Screen.hasShiftDown(), Screen.hasControlDown());
+            case 2 -> cycleSlot(face, Screen.hasShiftDown(), Screen.hasControlDown());
+        }
+        this.playButtonSound();
     }
+
+    private void cycleFace(BlockFace face, boolean reverse, boolean reset) {
+        MachineIOFace option = this.machine.getIOConfig().get(face);
+        if (reset) {
+            option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+            option.setSelection(null);
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(true)
+                    )
+            );
+            return;
+        }
+
+        // Format: NONE, any [any][out][in], fluid [any][out][in], item [any][out][in], energy [any][out][in]
+        short bits = 0b0_000_000_000_000;
+
+        for (SlotGroupType groupType : this.machine.fluidStorage().getTypes()) {
+            InputType inputType = groupType.inputType();
+            if (inputType.externalInsertion()) bits |= 0b001;
+            if (inputType.externalExtraction()) bits |= 0b010;
+            if ((bits & 0b011) == 0b011) break;
+        }
+        if ((bits & 0b011) == 0b011) bits |= 0b100;
+        bits <<= 3;
+
+        for (SlotGroupType groupType : this.machine.itemStorage().getTypes()) {
+            InputType inputType = groupType.inputType();
+            if (inputType.externalInsertion()) bits |= 0b001;
+            if (inputType.externalExtraction()) bits |= 0b010;
+            if ((bits & 0b011) == 0b011) break;
+        }
+        if ((bits & 0b011) == 0b011) bits |= 0b100;
+        bits <<= 3;
+
+        if (this.machine.energyStorage().canExposedInsert()) bits |= 0b001;
+        if (this.machine.energyStorage().canExposedExtract()) bits |= 0b010;
+        if ((bits & 0b011) == 0b011) bits |= 0b100;
+
+        if (Integer.bitCount(bits & 0b000_001_001_001) > 1) {
+            bits |= 0b001_000_000_000;
+        }
+        if (Integer.bitCount(bits & 0b000_010_010_010) > 1) {
+            bits |= 0b010_000_000_000;
+        }
+        if (Integer.bitCount(bits & 0b000_100_100_100) > 1) {
+            bits |= 0b100_000_000_000;
+        }
+
+        bits |= 0b1_000_000_000_000; //set NONE bit
+
+        if (bits != 0b1_000_000_000_000) {
+            ResourceType type = option.getType();
+            ResourceFlow flow = option.getFlow();
+            int index = switch (type) {
+                case NONE -> 13;
+                case ENERGY, ITEM, FLUID, ANY -> (type.ordinal() - 1) * 3 + flow.ordinal();
+            };
+            if (type == ResourceType.NONE) {
+                int i = index + (reverse ? -1 : 1);
+                while (i != index) {
+                    if (i == -1) {
+                        i = 13;
+                    } else if (i == 14) {
+                        i = 0;
+                    }
+
+                    if ((bits >>> i & 0b1) != 0) {
+                        break;
+                    }
+                    if (reverse) {
+                        i--;
+                    } else {
+                        i++;
+                    }
+                }
+                if (i == 13) {
+                    option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                    option.setSelection(null);
+                    ClientPlayNetworking.send(Constant.id("reset_face"),
+                            new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                    .writeByte(face.ordinal())
+                                    .writeBoolean(true)
+                            )
+                    );
+                } else {
+                    byte iflow = (byte) (i % 3);
+                    byte itype = (byte) ((i - iflow) / 3);
+                    type = ResourceType.getFromOrdinal(itype);
+                    flow = ResourceFlow.getFromOrdinal(iflow);
+                    option.setOption(type, flow);
+                    option.setSelection(null);
+                    ClientPlayNetworking.send(Constant.id("face_type"),
+                            new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
+                                    .writeByte(face.ordinal())
+                                    .writeByte(itype)
+                                    .writeByte(iflow)
+                            )
+                    );
+                }
+            }
+        } else {
+            option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+            option.setSelection(null);
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(true)
+                    )
+            );
+        }
+    }
+
+    private void cycleGroup(BlockFace face, boolean back, boolean reset) {
+        MachineIOFace sideOption = this.machine.getIOConfig().get(face);
+        if (!sideOption.getType().matchesGroups()) return;
+        if (reset) {
+            sideOption.setSelection(null);
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(false)
+                    )
+            );
+            return;
+        }
+
+        List<SlotGroupType> groups = sideOption.getFlowMatchingGroups(this.machine);
+        if (groups == null) return;
+
+        int index;
+        if (sideOption.getSelection() != null) {
+            index = groups.indexOf(sideOption.getSelection().getGroup());
+        } else {
+            index = groups.size();
+        }
+
+        if (back) {
+            index--;
+            if (index == -1) {
+                index = groups.size(); // no selection
+            }
+        } else {
+            index++;
+            if (index == groups.size() + 1) {
+                index = 0;
+            }
+        }
+
+        if (index == groups.size()) {
+            sideOption.setSelection(null);
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(false)
+                    )
+            );
+        } else {
+            sideOption.setSelection(StorageSelection.create(groups.get(index)));
+
+            ClientPlayNetworking.send(Constant.id("match_group"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
+                            .writeByte(face.ordinal())
+                            .writeInt(index))
+            );
+        }
+    }
+
+    private void cycleSlot(BlockFace face, boolean back, boolean reset) {
+        MachineIOFace sideOption = machine.getIOConfig().get(face);
+        if (!sideOption.getType().matchesSlots()) return;
+        if (reset) {
+            sideOption.setSelection(null);
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(false)
+                    )
+            );
+            return;
+        }
+
+        StorageSelection selection = sideOption.getSelection();
+        if (selection == null) return;
+
+        SlotGroupType type = selection.getGroup();
+        ResourceStorage<?, ?, ?, ?> storage = this.machine.getResourceStorage(sideOption.getType());
+        assert storage != null;
+        SlotGroup<?, ?, ?> group = storage.getGroup(type);
+        int index = selection.isSlot() ? selection.getSlot() : group.size();
+        if (back) {
+            if (index-- == 0) {
+                index = group.size();
+            }
+        } else {
+            if (index++ == group.size()) {
+                index = 0;
+            }
+        }
+
+        if (index == group.size()) {
+            sideOption.setSelection(StorageSelection.create(type));
+            ClientPlayNetworking.send(Constant.id("reset_face"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                            .writeByte(face.ordinal())
+                            .writeBoolean(false)
+                    )
+            );
+        } else {
+            sideOption.setSelection(StorageSelection.create(type, index));
+
+            ClientPlayNetworking.send(Constant.id("match_slot"),
+                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
+                            .writeByte(face.ordinal())
+                            .writeInt(index))
+            );
+        }
+    }
+
 
     /**
      * The four different types of configuration panel.
@@ -1240,323 +1363,6 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             if (this.open) {
                 Tab.values()[this.ordinal() + 1 - this.ordinal() % 2 * 2].open = false;
             }
-        }
-    }
-
-    private enum SideConfigurationAction {
-        CHANGE_TYPE((player, machine, face, back, reset) -> {
-            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
-            if (reset) {
-                sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-                sideOption.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                .writeByte(face.ordinal())
-                                .writeBoolean(true)
-                        )
-                );
-                return;
-            }
-            Map<ResourceType, List<ResourceFlow>> map = new EnumMap<>(ResourceType.class);
-
-            if (machine.energyStorage().canExposedExtract()) {
-                if (machine.energyStorage().canExposedInsert()) {
-                    map.put(ResourceType.ENERGY, ResourceFlow.VALUES);
-                } else {
-                    map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.OUTPUT));
-                }
-            } else if (machine.energyStorage().canExposedInsert()) {
-                map.put(ResourceType.ENERGY, Collections.singletonList(ResourceFlow.INPUT));
-            }
-
-            SlotGroup[] groups = machine.itemStorage().getGroups();
-
-            List<ResourceFlow> list = new ArrayList<>();
-            for (int i = 0; i < groups.length; i++) {
-                if (machine.itemStorage().canExposedExtract(i)) {
-                    if (machine.itemStorage().canExposedInsert(i)) {
-                        map.put(ResourceType.ITEM, ResourceFlow.VALUES);
-                        break;
-                    } else {
-                        if (!list.contains(ResourceFlow.OUTPUT)) {
-                            list.add(ResourceFlow.OUTPUT);
-                        }
-                    }
-                } else {
-                    if (!list.contains(ResourceFlow.INPUT)) {
-                        list.add(ResourceFlow.INPUT);
-                    }
-                }
-                if (list.size() == 2) {
-                    map.put(ResourceType.ITEM, ResourceFlow.VALUES);
-                    break;
-                }
-            }
-            if (!list.isEmpty()) {
-                map.putIfAbsent(ResourceType.ITEM, ImmutableList.sortedCopyOf(list));
-            }
-            list.clear();
-
-            groups = machine.fluidStorage().getGroups();
-
-            for (int i = 0; i < groups.length; i++) {
-                if (machine.fluidStorage().canExposedExtract(i)) {
-                    if (machine.fluidStorage().canExposedInsert(i)) {
-                        map.put(ResourceType.FLUID, ResourceFlow.VALUES);
-                        break;
-                    } else {
-                        if (!list.contains(ResourceFlow.OUTPUT)) {
-                            list.add(ResourceFlow.OUTPUT);
-                        }
-                    }
-                } else {
-                    if (!list.contains(ResourceFlow.INPUT)) {
-                        list.add(ResourceFlow.INPUT);
-                    }
-                }
-                if (list.size() == 2) {
-                    map.put(ResourceType.FLUID, ResourceFlow.VALUES);
-                    break;
-                }
-            }
-            if (!list.isEmpty()) {
-                map.putIfAbsent(ResourceType.FLUID, ImmutableList.sortedCopyOf(list));
-            }
-            list.clear();
-
-            if (!map.isEmpty()) {
-                byte in = 0;
-                byte out = 0;
-                for (List<ResourceFlow> list1 : map.values()) {
-                    if (list1.size() == 3) {
-                        ++in;
-                        ++out;
-                    } else {
-                        if (list1.contains(ResourceFlow.INPUT)) {
-                            in++;
-                        } else if (list1.contains(ResourceFlow.OUTPUT)) {
-                            out++;
-                        }
-                    }
-                    if (in >= 2 && out >= 2) break;
-                }
-
-                if (in >= 2) {
-                    if (out >= 2) {
-                        map.put(ResourceType.ANY, ResourceFlow.VALUES);
-                    } else {
-                        map.put(ResourceType.ANY, Collections.singletonList(ResourceFlow.INPUT));
-                    }
-                } else if (out >= 2) {
-                    map.put(ResourceType.ANY, Collections.singletonList(ResourceFlow.OUTPUT));
-                }
-            } else {
-                sideOption.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-                sideOption.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                .writeByte(face.ordinal())
-                                .writeBoolean(true)
-                        )
-                );
-
-                return; // there are no types available
-            }
-
-            ResourceType[] types = new ResourceType[map.size()];
-            int idx = 0;
-            for (Map.Entry<ResourceType, List<ResourceFlow>> entry : map.entrySet()) {
-                types[idx++] = entry.getKey();
-            }
-            Arrays.sort(types);
-
-            ResourceType outType;
-            ResourceFlow outFlow;
-
-            if (sideOption.getType() == ResourceType.NONE) {
-                if (back) {
-                    outType = types[types.length - 1];
-                    List<ResourceFlow> resourceFlows = map.get(types[types.length - 1]);
-                    outFlow = resourceFlows.get(resourceFlows.size() - 1);
-                } else {
-                    outType = types[0];
-                    outFlow = map.get(types[0]).get(0);
-                }
-            } else {
-                int index = Arrays.binarySearch(types, sideOption.getType()); //sorted array
-                List<ResourceFlow> flows = map.get(sideOption.getType());
-                int sectionIndex = flows.indexOf(sideOption.getFlow());
-                assert index != -1;
-                int nextSection = sectionIndex + (back ? -1 : 1);
-                if (nextSection == -1) {
-                    int nextIndex = index - 1;
-                    if (nextIndex == -1) { // met beginning of loop
-                        outType = ResourceType.NONE;
-                        outFlow = ResourceFlow.BOTH;
-                    } else {
-                        ResourceType type = types[nextIndex];
-                        List<ResourceFlow> prevFlows = map.get(type);
-
-                        outType = type;
-                        outFlow = prevFlows.get(prevFlows.size() - 1);
-                    }
-                } else if (nextSection == flows.size()) {
-                    int nextIndex = index + 1;
-                    if (nextIndex == types.length) { // met end of loop
-                        outType = ResourceType.NONE;
-                        outFlow = ResourceFlow.BOTH;
-                    } else {
-                        ResourceType type = types[nextIndex];
-                        List<ResourceFlow> nextFlows = map.get(type);
-
-                        outType = type;
-                        outFlow = nextFlows.get(0);
-                    }
-                } else {
-                    outType = sideOption.getType();
-                    outFlow = flows.get(nextSection);
-                }
-            }
-
-            sideOption.setOption(outType, outFlow);
-            sideOption.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("face_type"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
-                            .writeByte(face.ordinal())
-                            .writeByte(sideOption.getType().ordinal())
-                            .writeByte(sideOption.getFlow().ordinal()))
-            );
-        }), //LEFT
-        CHANGE_MATCH((player, machine, face, back, reset) -> {
-            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
-            if (!sideOption.getType().matchesGroups()) return;
-            if (reset) {
-                sideOption.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                .writeByte(face.ordinal())
-                                .writeBoolean(false)
-                        )
-                );
-                return;
-            }
-
-            SlotGroup[] groups = sideOption.getMatchingGroups(machine);
-
-            int next;
-            if (sideOption.getSelection() != null && sideOption.getSelection().isGroup()) {
-                next = Arrays.binarySearch(groups, sideOption.getSelection().getGroup(), Comparator.comparingInt(g -> g.getColor().getValue())) + (back ? -1 : 1); //todo proper sorting
-                if (next == groups.length) {
-                    next = -1;
-                }
-            } else {
-                if (back) {
-                    next = groups.length - 1;
-                } else {
-                    next = 0;
-                }
-            }
-
-            if (next == -1) {
-                sideOption.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                .writeByte(face.ordinal())
-                                .writeBoolean(false)
-                        )
-                );
-            } else {
-                sideOption.setSelection(StorageSelection.createGroup(groups[next]));
-
-                ClientPlayNetworking.send(Constant.id("match_group"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
-                                .writeByte(face.ordinal())
-                                .writeInt(next))
-                );
-            }
-        }), //RIGHT
-        CHANGE_MATCH_SLOT((player, machine, face, back, reset) -> {
-            MachineIOFaceConfig sideOption = machine.getIOConfig().get(face);
-            if (!sideOption.getType().matchesSlots()) return;
-            if (reset) {
-                sideOption.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
-                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                .writeByte(face.ordinal())
-                                .writeBoolean(false)
-                        )
-                );
-                return;
-            }
-
-            ConfiguredStorage storage = machine.getStorage(sideOption.getType());
-            assert storage != null; // matchesSlots
-            int[] matching = sideOption.getMatchingWild(storage);
-            int i = -1;
-            if (sideOption.getSelection() != null && sideOption.getSelection().isSlot()) {
-                i = sideOption.getSelection().getSlot();
-            }
-            if (matching.length == 0) {
-                return;
-            }
-            if (i == -1) {
-                if (back) {
-                    i = matching.length - 1;
-                } else {
-                    i = 0;
-                }
-            } else {
-                i = Arrays.binarySearch(matching, i);
-                if (back) {
-                    i--;
-                    if (i == -1) {
-                        sideOption.setSelection(null);
-                        ClientPlayNetworking.send(Constant.id("reset_face"),
-                                new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                        .writeByte(face.ordinal())
-                                        .writeBoolean(false)
-                                )
-                        );
-                        return;
-                    }
-                } else {
-                    i++;
-                    if (i == matching.length) {
-                        sideOption.setSelection(null);
-                        ClientPlayNetworking.send(Constant.id("reset_face"),
-                                new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                        .writeByte(face.ordinal())
-                                        .writeBoolean(false)
-                                )
-                        );
-                        return;
-                    }
-                }
-            }
-            sideOption.setSelection(StorageSelection.createSlot(matching[i]));
-
-            ClientPlayNetworking.send(Constant.id("match_slot"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
-                            .writeByte(face.ordinal())
-                            .writeInt(i))
-            );
-        }); //MID
-
-
-        static final SideConfigurationAction[] VALUES = SideConfigurationAction.values();
-        private final IOConfigUpdater updater;
-
-        SideConfigurationAction(IOConfigUpdater updater) {
-            this.updater = updater;
-        }
-
-        void update(LocalPlayer player, MachineBlockEntity machine, BlockFace face, boolean back, boolean reset) {
-            updater.update(player, machine, face, back, reset);
-        }
-
-        @FunctionalInterface
-        interface IOConfigUpdater {
-            void update(LocalPlayer player, MachineBlockEntity machine, BlockFace face, boolean back, boolean reset);
         }
     }
 }

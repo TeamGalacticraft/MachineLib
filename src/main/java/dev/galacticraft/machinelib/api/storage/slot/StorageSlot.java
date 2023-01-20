@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,6 @@ public interface StorageSlot<T, V extends TransferVariant<T>, S> extends SingleS
     void setStack(@NotNull V variant, long amount);
 
     void setStack(@NotNull V variant, long amount, @NotNull TransactionContext context);
-
 
 
     @Override

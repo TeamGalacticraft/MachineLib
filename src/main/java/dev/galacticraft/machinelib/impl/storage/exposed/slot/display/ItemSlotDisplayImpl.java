@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Display information for an item slot.
  *
- * @param x The x position of the slot.
- * @param y The y position of the slot.
+ * @param x    The x position of the slot.
+ * @param y    The y position of the slot.
  * @param icon The icon to display in the slot.
  */
-public record ItemSlotDisplayImpl(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) implements ItemSlotDisplay {
+public record ItemSlotDisplayImpl(int x, int y,
+                                  @Nullable Pair<ResourceLocation, ResourceLocation> icon) implements ItemSlotDisplay {
 }

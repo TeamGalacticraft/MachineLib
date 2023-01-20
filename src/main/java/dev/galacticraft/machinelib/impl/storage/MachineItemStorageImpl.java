@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,249 +23,124 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import com.google.common.collect.Iterators;
-import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.screen.MachineMenu;
-import dev.galacticraft.machinelib.api.screen.StorageSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
-import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.compat.ReadOnlySubInv;
-import dev.galacticraft.machinelib.impl.storage.slot.ItemSlot;
-import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.impl.storage.slot.VanillaWrappedItemSlot;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.minecraft.nbt.CompoundTag;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.function.Predicate;
+import java.util.Map;
 
-@ApiStatus.Internal
-public final class MachineItemStorageImpl implements MachineItemStorage {
-    private final int size;
-    private final @NotNull ItemSlotDisplay[] displays;
-    private final @NotNull ItemSlot[] inventory;
-    private final @NotNull SlotGroup[] types;
-    private final boolean @NotNull [] playerInsertion;
+public class MachineItemStorageImpl implements MachineItemStorage {
+    private final SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups;
+    private final SlotGroupType[] types;
+    private final Map<SlotGroupType, SlotGroup<Item, ItemStack, ItemResourceSlot>> typeToGroup;
+    private final ResourceSlot<Item, ItemStack>[] clumpedSlots;
+    private long modifications = 0;
 
-    private final ModCount modCount = ModCount.root();
-    private final Container playerInventory;
-
-    public MachineItemStorageImpl(int size, SlotGroup[] types, Predicate<ItemVariant> @NotNull [] filters, boolean @NotNull [] playerInsertion, int[] counts, ItemSlotDisplay[] displays) {
-        this.size = size;
-        this.displays = displays;
-        this.inventory = new ItemSlot[this.size];
-        this.playerInsertion = playerInsertion;
-        this.types = types;
-
-        for (int i = 0; i < this.inventory.length; i++) {
-            this.inventory[i] = new ItemSlot(counts[i], filters[i], this.modCount);
+    public MachineItemStorageImpl(SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
+        this.groups = groups;
+        this.typeToGroup = new HashMap<>(this.groups.length);
+        this.types = new SlotGroupType[this.groups.length];
+        int slots = 0;
+        for (int i = 0; i < this.groups.length; i++) {
+            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.groups[i];
+            this.typeToGroup.put(group.getType(), group);
+            this.types[i] = group.getType();
+            slots += group.getSlots().length;
         }
+        this.clumpedSlots = new ResourceSlot[slots];
+        slots = 0;
+        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
+            for (ResourceSlot<Item, ItemStack> slot : group.getSlots()) {
+                this.clumpedSlots[slots++] = slot;
+            }
+        }
+    }
 
-        this.playerInventory = new PlayerExposedVanillaInventory(this);
+    @Override
+    public long getModifications() {
+        return this.modifications;
     }
 
     @Override
     public int size() {
-        return this.size;
+        return this.groups.length;
     }
 
     @Override
-    public long getModCount() {
-        return this.modCount.getModCount();
+    public @NotNull SlotGroup<Item, ItemStack, ItemResourceSlot> getGroup(@NotNull SlotGroupType type) {
+        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.typeToGroup.get(type);
+        assert group != null;
+        return group;
     }
 
     @Override
-    public long getModCountUnsafe() {
-        return this.modCount.getModCountUnsafe();
-    }
-
-    @Override
-    public @NotNull ResourceSlot<Item, ItemVariant, ItemStack> getSlot(int slot) {
-        return this.inventory[slot];
-    }
-
-    @Override
-    public boolean isEmpty() {
-        for (ItemSlot itemSlot : this.inventory) {
-            if (!itemSlot.isResourceBlank()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean canExposedExtract(int slot) {
-        return this.types[slot].isAutomatable();
-    }
-
-    @Override
-    public boolean canExposedInsert(int slot) {
-        return this.canPlayerInsert(slot) && this.types[slot].isAutomatable();
-    }
-
-    @Override
-    public boolean canPlayerInsert(int slot) {
-        return this.playerInsertion[slot];
-    }
-
-    @Override
-    public @NotNull Iterator<StorageView<ItemVariant>> iterator() {
-        return Iterators.forArray(this.inventory); // we do not need to iterate over the inner slots' iterator as there's only one slot.
-    }
-
-    @Override
-    public boolean canAccess(@NotNull Player player) {
-        return true;
-    }
-
-    @Override
-    public boolean canAccept(int slot, @NotNull ItemVariant variant) {
-        return this.getSlot(slot).canAccept(variant);
-    }
-
-    @Override
-    public Predicate<ItemVariant> getFilter(int slot) {
-        return this.getSlot(slot).getFilter();
-    }
-
-    @Override
-    public long count(@NotNull Item item) {
-        long count = 0;
-        for (ItemSlot itemSlot : this.inventory) {
-            if (itemSlot.getResource().getItem() == item) {
-                count += itemSlot.getAmount();
-            }
-        }
-        return count;
-    }
-
-    @Override
-    public long count(@NotNull ItemVariant item) {
-        long count = 0;
-        for (ItemSlot itemSlot : this.inventory) {
-            if (itemSlot.getResource().equals(item)) {
-                count += itemSlot.getAmount();
-            }
-        }
-        return count;
-    }
-
-    @Override
-    public boolean containsAny(@NotNull Collection<Item> items) {
-        for (ItemSlot itemSlot : this.inventory) {
-            if (items.contains(itemSlot.getResource().getItem())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public <M extends MachineBlockEntity> void addSlots(@NotNull MachineMenu<M> handler) {
-        for (int i = 0; i < this.displays.length; i++) {
-            handler.addSlot(new VanillaWrappedItemSlot(this, i, this.displays[i], handler.player));
-        }
-    }
-
-    @Override
-    public @NotNull Container playerInventory() {
-        return this.playerInventory;
-    }
-
-    @Override
-    public @NotNull Container subInv(int start, int size) {
-        return new ReadOnlySubInv(this, start, size);
-    }
-
-    @Override
-    public @NotNull Tag writeNbt() {
-        ListTag list = new ListTag();
-        for (ItemSlot itemSlot : this.inventory) {
-            CompoundTag compound = itemSlot.getResource().toNbt();
-            compound.putLong(Constant.Nbt.AMOUNT, itemSlot.getAmount());
-            list.add(compound);
-        }
-        return list;
-    }
-
-    @Override
-    public void readNbt(@NotNull Tag nbt) {
-        if (nbt instanceof ListTag list) {
-            for (int i = 0; i < list.size(); i++) {
-                CompoundTag compound = list.getCompound(i);
-                this.getSlot(i).setStack(ItemVariant.fromNbt(compound), compound.getLong(Constant.Nbt.AMOUNT));
-            }
-        }
-    }
-
-    @Override
-    public void clearContent() {
-        GenericApiUtil.noTransaction();
-        for (ItemSlot itemSlot : this.inventory) {
-            itemSlot.setStack(ItemVariant.blank(), 0);
-        }
-    }
-
-    @Override
-    public void setSlot(int slot, ItemVariant variant, long amount) {
-        this.getSlot(slot).setStack(variant, amount);
-    }
-
-    @Override
-    public long getCapacity(int slot) {
-        return this.getSlot(slot).getCapacity();
-    }
-
-    @Override
-    public @NotNull SlotGroup @NotNull [] getGroups() {
+    public @NotNull SlotGroupType @NotNull [] getTypes() {
         return this.types;
     }
 
     @Override
-    public @NotNull StorageSyncHandler createSyncHandler() {
-        return new StorageSyncHandler() {
-            private long modCount = -1;
-
-            @Override
-            public boolean needsSyncing() {
-                return MachineItemStorageImpl.this.getModCount() != this.modCount;
-            }
-
-            @Override
-            public void sync(@NotNull FriendlyByteBuf buf) {
-                this.modCount = MachineItemStorageImpl.this.modCount.getModCount();
-                for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.getResource().toPacket(buf);
-                    buf.writeVarLong(slot.getAmount());
-                }
-            }
-
-            @Override
-            public void read(@NotNull FriendlyByteBuf buf) {
-                for (ItemSlot slot : MachineItemStorageImpl.this.inventory) {
-                    slot.setStack(ItemVariant.fromPacket(buf), buf.readVarLong());
-                }
-            }
-        };
+    public ResourceSlot<Item, ItemStack>[] getSlots() {
+        return this.clumpedSlots;
     }
 
-    @ApiStatus.Internal
-    public void incrementModCountUnsafe() {
-        this.modCount.increment();
+    @NotNull
+    @Override
+    public Iterator<SlotGroup<Item, ItemStack, ItemResourceSlot>> iterator() {
+        return Iterators.forArray(this.groups);
+    }
+
+    @Override
+    public void revertModification() {
+        this.modifications--;
+    }
+
+    @Override
+    public void markModified() {
+        this.modifications++;
+    }
+
+    @Override
+    public @NotNull ListTag createTag() {
+        ListTag tag = new ListTag();
+        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
+            tag.add(group.createTag());
+        }
+        return tag;
+    }
+
+    @Override
+    public void readTag(@NotNull ListTag tag) {
+        for (int i = 0; i < tag.size(); i++) {
+            this.groups[i].readTag(tag.getList(i));
+        }
+    }
+
+    @Override
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
+            group.writePacket(buf);
+        }
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
+            group.readPacket(buf);
+        }
+    }
+
+    @Override
+    public @NotNull Container getCraftingView(@NotNull SlotGroupType type) {
+        return ((Container) this.getGroup(type));
     }
 }

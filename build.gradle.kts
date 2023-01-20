@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter
 plugins {
     `maven-publish`
     id("fabric-loom") version ("1.0-SNAPSHOT")
-    id("io.github.juuxel.loom-quiltflower") version ("1.7.3")
+    id("io.github.juuxel.loom-quiltflower") version ("1.8.0")
     id("org.cadixdev.licenser") version ("0.6.1")
     id("org.ajoberstar.grgit") version("5.0.0")
 }
@@ -125,7 +125,7 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric")
 }
 
-tasks.withType<ProcessResources>() {
+tasks.withType<ProcessResources> {
     inputs.property("version", project.version)
 
     filesMatching("fabric.mod.json") {
@@ -155,7 +155,7 @@ tasks.withType<JavaCompile> {
     options.release.set(17)
 }
 
-tasks.withType<Jar>() {
+tasks.withType<Jar> {
     from("LICENSE")
     manifest {
         attributes(

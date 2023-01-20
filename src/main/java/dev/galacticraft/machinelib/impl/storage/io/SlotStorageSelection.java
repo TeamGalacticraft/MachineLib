@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,12 @@
 package dev.galacticraft.machinelib.impl.storage.io;
 
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public record SlotStorageSelection(int slot) implements StorageSelection {
+public record SlotStorageSelection(@NotNull SlotGroupType group, int slot) implements StorageSelection {
     @Override
     public boolean isSlot() {
         return true;
@@ -40,12 +40,7 @@ public record SlotStorageSelection(int slot) implements StorageSelection {
     }
 
     @Override
-    public boolean isGroup() {
-        return false;
-    }
-
-    @Override
-    public @NotNull SlotGroup getGroup() {
-        throw new UnsupportedOperationException();
+    public @NotNull SlotGroupType getGroup() {
+        return group;
     }
 }

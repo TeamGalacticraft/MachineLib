@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,7 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ByteTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,6 +53,8 @@ public enum RedstoneActivation implements StringRepresentable {
      */
     HIGH(Component.translatable(Constant.TranslationKey.HIGH_REDSTONE).setStyle(Constant.Text.RED_STYLE));
 
+    public static final RedstoneActivation[] VALUES = RedstoneActivation.values();
+
     /**
      * The name of the redstone activation state.
      */
@@ -61,6 +62,7 @@ public enum RedstoneActivation implements StringRepresentable {
 
     /**
      * Constructs a redstone activation type with the given name.
+     *
      * @param name the name of the interaction.
      */
     @Contract(pure = true)
@@ -68,23 +70,18 @@ public enum RedstoneActivation implements StringRepresentable {
         this.name = name;
     }
 
-    /**
-     * Returns the redstone activation state from the given string identifier.
-     * @param string The string identifier.
-     * @return The redstone activation state.
-     */
-    @Contract(pure = true)
-    public static @NotNull RedstoneActivation fromString(@NotNull String string) {
-        return switch (string) {
-            case "low" -> LOW;
-            case "high" -> HIGH;
-            default -> IGNORE;
-        };
+    public static @NotNull RedstoneActivation readTag(@NotNull ByteTag tag) {
+        return VALUES[tag.getAsByte()];
+    }
+
+    public static @NotNull RedstoneActivation readPacket(@NotNull FriendlyByteBuf buf) {
+        return VALUES[buf.readByte()];
     }
 
     /**
      * Sends a packet to the client to update the redstone activation state.
-     * @param pos The position of the machine.
+     *
+     * @param pos    The position of the machine.
      * @param player The player to send the packet to.
      */
     public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
@@ -96,6 +93,7 @@ public enum RedstoneActivation implements StringRepresentable {
 
     /**
      * Returns the name of the redstone activation state.
+     *
      * @return The name of the redstone activation state.
      */
     @Contract(pure = true)
@@ -113,24 +111,11 @@ public enum RedstoneActivation implements StringRepresentable {
         };
     }
 
-    /**
-     * Serializes the redstone activation state to NBT.
-     * @return The NBT element.
-     */
-    public @NotNull Tag writeNbt() {
-        return StringTag.valueOf(this.getSerializedName());
+    public @NotNull ByteTag createTag() {
+        return ByteTag.valueOf((byte) this.ordinal());
     }
 
-    /**
-     * Deserializes the redstone activation state from NBT.
-     * @param nbt The NBT element.
-     * @return The redstone activation state.
-     */
-    public static @NotNull RedstoneActivation readNbt(@NotNull Tag nbt) {
-        if (nbt.getId() == Tag.TAG_STRING) {
-            return fromString(nbt.getAsString());
-        } else {
-            throw new IllegalArgumentException("Expected a string, got " + nbt.getId());
-        }
+    public void writePacket(@NotNull FriendlyByteBuf buf) {
+        buf.writeByte(this.ordinal());
     }
 }

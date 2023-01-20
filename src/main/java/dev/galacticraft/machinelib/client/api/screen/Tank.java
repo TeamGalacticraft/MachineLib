@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@ package dev.galacticraft.machinelib.client.api.screen;
 
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.impl.screen.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -50,30 +50,35 @@ public interface Tank {
 
     /**
      * Returns the resource that is currently in this tank.
+     *
      * @return The resource that is currently in this tank.
      */
     @NotNull FluidVariant getResource();
 
     /**
      * Returns the index of this tank in the storage.
+     *
      * @return The index of this tank in the storage.
      */
     int getIndex();
 
     /**
      * Returns the x-position of this tank.
+     *
      * @return The x-position of this tank.
      */
     int getX();
 
     /**
      * Returns the y-position of this tank.
+     *
      * @return The y-position of this tank.
      */
     int getY();
 
     /**
      * Returns the height of this tank.
+     *
      * @return The height of this tank.
      */
     int getHeight();
@@ -81,18 +86,21 @@ public interface Tank {
     /**
      * Returns the width of this tank.
      * Currently, always returns {@code 16}.
+     *
      * @return The width of this tank.
      */
     int getWidth();
 
     /**
      * Returns the id of this tank (the index of the tank in the screen).
+     *
      * @return The id of this tank.
      */
     int getId();
 
     /**
      * Sets the id of this tank.
+     *
      * @param id The id of this tank.
      */
     @ApiStatus.Internal
@@ -102,7 +110,8 @@ public interface Tank {
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 
-    @ApiStatus.Internal ExposedSlot<Fluid, FluidVariant> getStorage();
+    @ApiStatus.Internal
+    ExposedSlot<Fluid, FluidVariant> getSlot();
 
     long getAmount();
 

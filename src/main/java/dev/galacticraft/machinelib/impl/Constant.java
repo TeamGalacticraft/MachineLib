@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ import java.util.function.Predicate;
 @ApiStatus.Internal
 public interface Constant {
     String MOD_ID = "machinelib";
+    String MOD_NAME = "MachineLib";
 
     @Contract(pure = true, value = "_ -> new")
     static @NotNull ResourceLocation id(@NotNull String s) {
@@ -80,6 +81,8 @@ public interface Constant {
         String FLUID_STORAGE = "FluidStorage";
         String USERNAME = "Username";
         String TEAM_NAME = "TeamName";
+        String GROUP = "Group";
+        String SLOT = "Slot";
     }
 
     interface Property {
@@ -182,7 +185,7 @@ public interface Constant {
         String PRIVATE_ACCESS = "ui.machinelib.machine.security.access.private";
         String ACCESS_DENIED = "ui.machinelib.machine.security.access_denied";
         String OWNER = "ui.machinelib.machine.security.owner";
-        
+
         String REDSTONE_ACTIVATION = "ui.machinelib.machine.redstone_activation";
         String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_activation.ignore";
         String LOW_REDSTONE = "ui.machinelib.machine.redstone_activation.low";
@@ -191,12 +194,12 @@ public interface Constant {
         String REDSTONE_STATUS = "ui.machinelib.machine.redstone_activation.status";
         String REDSTONE_ACTIVE = "ui.machinelib.machine.redstone_activation.status.enabled";
         String REDSTONE_DISABLED = "ui.machinelib.machine.redstone_activation.status.disabled";
-        
+
         String CONFIGURATION = "ui.machinelib.machine.configuration";
         String MATCHES = "ui.machinelib.machine.configuration.matches";
-        
+
         String STATISTICS = "ui.machinelib.machine.statistics";
-        
+
         String FRONT = "ui.machinelib.face.front";
         String RIGHT = "ui.machinelib.face.right";
         String BACK = "ui.machinelib.face.back";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,14 @@
 
 package dev.galacticraft.machinelib.api.storage;
 
-import dev.galacticraft.machinelib.api.storage.io.ConfiguredStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
+import dev.galacticraft.machinelib.impl.storage.EmptyMachineEnergyStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineEnergyStorageImpl;
-import dev.galacticraft.machinelib.impl.storage.empty.EmptyMachineEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.LongTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,12 +40,10 @@ import team.reborn.energy.api.EnergyStorage;
  * A simple energy storage implementation.
  * The flow of energy is not restricted here, use {@link #getExposedStorage(ResourceFlow)} if you need filtering.
  *
- * @see dev.galacticraft.machinelib.api.storage.exposed.ExposedEnergyStorage
+ * @see ExposedEnergyStorage
  * @see team.reborn.energy.api.EnergyStorage
  */
-public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
-    SlotGroup[] NO_SLOTS = new SlotGroup[0];
-
+public interface MachineEnergyStorage extends EnergyStorage, Deserializable<LongTag> {
     @Contract("_, _, _, _, _ -> new")
     static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean insert, boolean extract) {
         StoragePreconditions.notNegative(energyCapacity);
@@ -95,6 +92,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     /**
      * Returns whether the energy storage is full (cannot insert more energy).
      * An energy storage can be both full and empty at the same time.
+     *
      * @return Whether the energy storage is full
      */
     boolean isFull();
@@ -102,13 +100,15 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     /**
      * Returns whether the energy storage is empty (contains no energy).
      * An energy storage can be both full and empty at the same time.
+     *
      * @return Whether the energy storage is empty
      */
     boolean isEmpty();
 
     /**
      * Sets the energy stored to the given amount.
-     * @param amount The amount of energy to set the energy stored to
+     *
+     * @param amount  The amount of energy to set the energy stored to
      * @param context The transaction context
      */
     void setEnergy(long amount, @NotNull TransactionContext context);
@@ -117,6 +117,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
      * Sets the energy stored to the given amount, without using a transaction.
      * Used for syncing the energy stored between client and server.
      * Use at your own risk.
+     *
      * @param amount The amount of energy to set the energy stored to
      */
     @TestOnly
@@ -124,6 +125,7 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
 
     /**
      * Returns an exposed energy storage that has restricted input and output.
+     *
      * @param flow The resource flow
      * @return The exposed energy storage
      */
@@ -132,21 +134,4 @@ public interface MachineEnergyStorage extends EnergyStorage, ConfiguredStorage {
     boolean canExposedInsert();
 
     boolean canExposedExtract();
-
-    /**
-     * Serializes the energy storage to NBT.
-     * @return The serialized NBT
-     */
-    @NotNull Tag writeNbt();
-
-    /**
-     * Deserializes the energy storage from NBT.
-     * @param nbt The NBT to deserialize from
-     */
-    void readNbt(@NotNull Tag nbt);
-
-    @Override
-    default @NotNull SlotGroup @NotNull [] getGroups() {
-        return NO_SLOTS;
-    }
 }

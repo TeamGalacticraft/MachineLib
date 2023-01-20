@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,14 +43,15 @@ public final class GenericApiUtil {
 
     /**
      * Moves an amount of a variant from one storage to another.
-     * @param variant the variant to be moved.
-     * @param from the storage to extract from.
-     * @param to the storage to insert into.
+     *
+     * @param variant   the variant to be moved.
+     * @param from      the storage to extract from.
+     * @param to        the storage to insert into.
      * @param maxAmount the maximum amount to transfer.
-     * @param context the transaction context.
+     * @param context   the transaction context.
+     * @param <T>       the transfer variant type
+     * @param <S>       the storage type
      * @return the amount of the variant that was moved.
-     * @param <T> the transfer variant type
-     * @param <S> the storage type
      */
     public static <T, S extends Storage<T>> long move(T variant, @Nullable S from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null) return 0;
@@ -75,12 +76,13 @@ public final class GenericApiUtil {
 
     /**
      * Naively moves as many resources as possible from one storage to another.
-     * @param from the storage to extract from.
-     * @param to the storage to insert into.
+     *
+     * @param from              the storage to extract from.
+     * @param to                the storage to insert into.
      * @param maxPerTransaction the maximum amount of a resource to move per transaction.
-     * @param context the transaction context.
-     * @param <T> the transfer variant type
-     * @param <S> the storage type
+     * @param context           the transaction context.
+     * @param <T>               the transfer variant type
+     * @param <S>               the storage type
      */
     public static <T, S extends Storage<T>> void moveAll(@Nullable S from, @Nullable S to, long maxPerTransaction, @Nullable TransactionContext context) {
         if (from == null || to == null || !from.supportsExtraction() || !to.supportsInsertion()) return;

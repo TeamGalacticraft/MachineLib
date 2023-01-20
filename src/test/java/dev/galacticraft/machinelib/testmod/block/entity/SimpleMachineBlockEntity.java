@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.testmod.block.entity;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
-import dev.galacticraft.machinelib.api.screen.SimpleMachineMenu;
+import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
@@ -53,7 +53,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
 
     @Override
     protected @NotNull MachineItemStorage createItemStorage() {
-        return MachineItemStorage.builder()
+        return MachineItemStorage.create()
                 .addSlot(TestMod.CHARGE_SLOT, TestMod.ANY_ITEM, true, ItemSlotDisplay.create(32, 32))
                 .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(64, 64))
                 .build();
@@ -61,7 +61,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
 
     @Override
     protected @NotNull MachineFluidStorage createFluidStorage() {
-        return MachineFluidStorage.builder()
+        return MachineFluidStorage.create()
                 .addTank(TestMod.ANY_FLUID_SLOT, FluidConstants.BUCKET, TestMod.ANY_FLUID, true, TankDisplay.create(12, 8), false)
                 .build();
     }
@@ -93,7 +93,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
         if (ticks > 0 && world.getBlockState(pos.above()).isAir()) {
             ticks--;
             profiler.push("transaction");
-            try (Transaction transaction = Transaction.openOuter()){
+            try (Transaction transaction = Transaction.openOuter()) {
                 if (this.energyStorage().extract(100, transaction) == 100) {
                     transaction.commit();
                     if (ticks == 0) {
@@ -109,7 +109,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
             }
         } else {
             if (!this.energyStorage().isEmpty() && world.getBlockState(pos.above()).isAir()) {
-                ticks = 20*20;
+                ticks = 20 * 20;
                 return TestMod.WORKING;
             } else {
                 return MachineStatuses.NOT_ENOUGH_ENERGY;

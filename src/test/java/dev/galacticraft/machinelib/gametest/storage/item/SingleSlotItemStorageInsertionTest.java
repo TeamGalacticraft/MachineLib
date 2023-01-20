@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.annotation.SingleSlotItemStorage;
 import dev.galacticraft.machinelib.gametest.misc.ItemType;
 import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
-import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupTypeImpl;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.ChatFormatting;
@@ -53,8 +53,8 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
         if (gameTest == null) throw new AssertionError("Test method without gametest annotation?!");
         if (gameTest.timeoutTicks() == 0 && test != null) {
             method.setAccessible(true);
-            MachineItemStorageImpl impl = (MachineItemStorageImpl) MachineItemStorage.builder().addSlot(
-                    new SlotGroupImpl(Objects.requireNonNull(TextColor.fromLegacyFormat(ChatFormatting.WHITE)),
+            MachineItemStorageImpl impl = (MachineItemStorageImpl) MachineItemStorage.create().addSlot(
+                    new SlotGroupTypeImpl(Objects.requireNonNull(TextColor.fromLegacyFormat(ChatFormatting.WHITE)),
                             Component.empty().copy(),
 
                             true), v -> {
@@ -71,26 +71,26 @@ public final class SingleSlotItemStorageInsertionTest implements MachineLibGamet
             if (test.amount() > 0) {
                 impl.setSlot(0, test.type().generateVariant(0), test.amount());
             }
-                context.succeedWhen(() -> {
-                    try {
-                        method.invoke(this, impl, test.type());
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        if (e.getTargetException() instanceof RuntimeException ex) {
-                            if (PRINT_ERRORS) {
-                                if (PRINT_STACKTRACE) {
-                                    MachineLibGametest.LOGGER.error("", ex);
-                                } else {
-                                    MachineLibGametest.LOGGER.error(ex.getMessage());
-                                }
+            context.succeedWhen(() -> {
+                try {
+                    method.invoke(this, impl, test.type());
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                } catch (InvocationTargetException e) {
+                    if (e.getTargetException() instanceof RuntimeException ex) {
+                        if (PRINT_ERRORS) {
+                            if (PRINT_STACKTRACE) {
+                                MachineLibGametest.LOGGER.error("", ex);
+                            } else {
+                                MachineLibGametest.LOGGER.error(ex.getMessage());
                             }
-                            throw ex;
-                        } else {
-                            throw new RuntimeException(e);
                         }
+                        throw ex;
+                    } else {
+                        throw new RuntimeException(e);
                     }
-                });
+                }
+            });
         } else {
             MachineLibGametest.super.invokeTestMethod(context, method);
         }

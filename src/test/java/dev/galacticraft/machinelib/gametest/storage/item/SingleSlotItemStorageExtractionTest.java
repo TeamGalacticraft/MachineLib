@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,12 +36,19 @@ import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.galacticraft.machinelib.gametest.Assertions.assertEquals;
 import static net.minecraft.world.item.Items.GOLD_INGOT;
 import static net.minecraft.world.item.Items.IRON_INGOT;
 
 public final class SingleSlotItemStorageExtractionTest implements MachineLibGametest {
-    private MachineItemStorageImpl storage;
+    private MachineItemStorage storage;
+
+    private static @NotNull ItemVariant variant(@NotNull Item item, @Nullable CompoundTag nbt) {
+        return ItemVariant.of(item, nbt);
+    }
+
+    private static @NotNull ItemVariant variant(@NotNull Item item) {
+        return ItemVariant.of(item);
+    }
 
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
@@ -115,13 +122,5 @@ public final class SingleSlotItemStorageExtractionTest implements MachineLibGame
         try (Transaction transaction = Transaction.openOuter()) {
             assertEquals(5, this.storage.extract(variant(GOLD_INGOT), 10, transaction));
         }
-    }
-
-    private static @NotNull ItemVariant variant(@NotNull Item item, @Nullable CompoundTag nbt) {
-        return ItemVariant.of(item, nbt);
-    }
-    
-    private static @NotNull ItemVariant variant(@NotNull Item item) {
-        return ItemVariant.of(item);
     }
 }

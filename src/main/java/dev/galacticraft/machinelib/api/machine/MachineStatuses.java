@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,6 @@ import org.jetbrains.annotations.Contract;
  * Default builtin machine statuses.
  */
 public final class MachineStatuses {
-    @Contract(value = " -> fail", pure = true)
-    private MachineStatuses() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
-    }
-
     /**
      * The machine does not have enough energy to run.
      */
@@ -61,6 +56,10 @@ public final class MachineStatuses {
      * The machine is running.
      */
     public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(Constant.id("active"), Component.translatable(Constant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)), MachineStatus.Type.WORKING);
+    @Contract(value = " -> fail", pure = true)
+    private MachineStatuses() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
 
     /**
      * Utility method to initialize the class

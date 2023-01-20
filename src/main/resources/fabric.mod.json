@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "$modid",
   "version": "$version",
-
   "name": "$mod_name",
   "icon": "assets/${modid}/icon.png",
   "description": "Machine Library for the FabricMC port of Galacticraft.",
@@ -39,8 +38,8 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.13.3",
-    "minecraft": ">=1.18.2",
+    "fabricloader": ">=0.14.12",
+    "minecraft": "1.19.3",
     "fabric-api-base": "*",
     "fabric-api-lookup-api-v1": "*",
     "fabric-lifecycle-events-v1": "*",
@@ -53,7 +52,9 @@
   },
   "custom": {
     "modmenu": {
-      "badges": [ "library" ],
+      "badges": [
+        "library"
+      ],
       "parent": "galacticraft-api"
     }
   }

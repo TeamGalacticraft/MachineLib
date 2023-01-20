@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "machinelib-test",
   "version": "0.0.0",
-
   "name": "MachineLib Test Mod",
   "description": "Test mod and GameTests for MachineLib.",
   "license": "MIT",

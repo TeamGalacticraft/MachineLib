@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,10 +39,11 @@ import org.jetbrains.annotations.Nullable;
 public interface CachingItemApiProvider<A> {
     /**
      * Constructs a new caching api provider
-     * @param slot the slot to check.
+     *
+     * @param slot   the slot to check.
      * @param lookup the api lookup.
+     * @param <A>    the api to search for.
      * @return a new caching api provider.
-     * @param <A> the api to search for.
      */
     @Contract("_, _ -> new")
     static <A> @NotNull CachingItemApiProvider<A> create(@NotNull SingleSlotStorage<ItemVariant> slot, @NotNull ItemApiLookup<A, ContainerItemContext> lookup) {
@@ -51,6 +52,7 @@ public interface CachingItemApiProvider<A> {
 
     /**
      * Returns the api of the item in this slot.
+     *
      * @return the api of the item in this slot.
      */
     @Nullable A getApi();

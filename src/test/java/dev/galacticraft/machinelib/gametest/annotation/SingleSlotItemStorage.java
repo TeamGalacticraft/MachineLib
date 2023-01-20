@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,14 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SingleSlotItemStorage {
     ItemType block() default ItemType.NONE;
+
     boolean blockNbt() default false;
 
     ItemType type() default ItemType.STACK_64;
+
     int amount() default 0;
 
     int maxCount() default 64;
+
     ResourceFlow flow() default ResourceFlow.BOTH;
 }

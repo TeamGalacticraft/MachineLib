@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,22 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
+import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineIOConfigImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Stores the configuration of a machine's I/O for all six faces.
  */
-public interface MachineIOConfig {
+public interface MachineIOConfig extends Deserializable<CompoundTag> {
     /**
      * Constructs a new machine i/o configuration.
-     * @see MachineIOConfigImpl the default implementation
+     *
      * @return a new {@link MachineIOConfig}
+     * @see MachineIOConfigImpl the default implementation
      */
     @Contract(" -> new")
     static @NotNull MachineIOConfig create() {
@@ -47,23 +47,9 @@ public interface MachineIOConfig {
 
     /**
      * Returns the I/O configuration for the given face.
+     *
      * @param face the block face to pull the option from
      * @return the I/O configuration for the given face.
      */
-    @NotNull MachineIOFaceConfig get(@NotNull BlockFace face);
-
-    /**
-     * Serializes the {@link MachineIOConfig} to NBT.
-     * @param groups The available slot groups.
-     * @return a NBT compound containing the serialized {@link MachineIOConfig}
-     */
-    @NotNull CompoundTag writeNbt(@NotNull SlotGroup @Nullable[] groups);
-
-    /**
-     * Deserializes the {@link MachineIOConfig} from NBT.
-     *
-     * @param nbt    the nbt compound to deserialize.
-     * @param groups The available slot groups.
-     */
-    void readNbt(@NotNull CompoundTag nbt, @NotNull SlotGroup @Nullable[] groups);
+    @NotNull MachineIOFace get(@NotNull BlockFace face);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.storage.exposed.ExposedSlot;
+import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
@@ -53,15 +53,15 @@ import java.util.List;
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public final class TankImpl implements Tank {
-    public final ExposedSlot<Fluid, FluidVariant> storage;
+    public final ExposedSlot<Fluid, FluidVariant> slot;
     private final int index;
-    public int id = -1;
     private final int x;
     private final int y;
     private final int height;
+    public int id = -1;
 
-    public TankImpl(ExposedSlot<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
-        this.storage = storage;
+    public TankImpl(ExposedSlot<Fluid, FluidVariant> slot, int index, int x, int y, int height) {
+        this.slot = slot;
         this.index = index;
         this.x = x;
         this.y = y;
@@ -70,7 +70,7 @@ public final class TankImpl implements Tank {
 
     @Override
     public @NotNull FluidVariant getResource() {
-        return this.storage.getResource();
+        return this.slot.getResource();
     }
 
     @Override
@@ -137,27 +137,27 @@ public final class TankImpl implements Tank {
     public boolean acceptStack(@NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            if (storage.supportsExtraction() && this.storage.supportsInsertion()) {
+            if (storage.supportsExtraction() && this.slot.supportsInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (this.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, v -> this.storage.simulateInsert(v, FluidConstants.BUCKET, null) != 0);
+                        storedResource = StorageUtil.findStoredResource(storage, v -> this.slot.simulateInsert(v, FluidConstants.BUCKET, null) != 0);
                     } else {
                         storedResource = this.getResource();
                     }
                     if (storedResource != null) {
-                        if (GenericApiUtil.move(storedResource, storage, this.storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && this.storage.supportsExtraction()) {
+            } else if (storage.supportsInsertion() && this.slot.supportsExtraction()) {
                 FluidVariant storedResource = this.getResource();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericApiUtil.move(storedResource, this.storage, storage, Long.MAX_VALUE, transaction) != 0) {
+                        if (GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
                         }
@@ -170,17 +170,17 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public ExposedSlot<Fluid, FluidVariant> getStorage() {
-        return this.storage;
+    public ExposedSlot<Fluid, FluidVariant> getSlot() {
+        return this.slot;
     }
 
     @Override
     public long getAmount() {
-        return this.storage.getAmount(this.index);
+        return this.slot.getAmount();
     }
 
     @Override
     public long getCapacity() {
-        return this.storage.getCapacity(this.index);
+        return this.slot.getCapacity();
     }
 }

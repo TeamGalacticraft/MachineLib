@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,10 @@ package dev.galacticraft.machinelib.client.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFaceConfig;
+import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.screen.MachineMenu;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -46,7 +46,8 @@ import java.util.UUID;
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
 public final class MachineLibS2CPackets {
-    private MachineLibS2CPackets() {}
+    private MachineLibS2CPackets() {
+    }
 
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
@@ -69,7 +70,7 @@ public final class MachineLibS2CPackets {
                 client.execute(() -> {
                     if (client.level != null && client.level.isLoaded(pos)) {
                         if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                             client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
                         }
@@ -86,14 +87,14 @@ public final class MachineLibS2CPackets {
 
             if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length
                     && type >= 0 && type < Constant.Cache.RESOURCE_TYPES.length
-                    && flow >= 0 && flow < ResourceFlow.VALUES.size()
+                    && flow >= 0 && flow < ResourceFlow.VALUES.length
             ) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 client.execute(() -> {
                     if (client.level != null && client.level.isLoaded(pos)) {
                         if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                            MachineIOFaceConfig machineFace = machine.getIOConfig().get(face);
-                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES.get(flow));
+                            MachineIOFace machineFace = machine.getIOConfig().get(face);
+                            machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
                             machineFace.setSelection(null);
                             client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
                         }

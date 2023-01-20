@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.gametest.storage.item;
 
-import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.testmod.TestMod;
@@ -30,7 +29,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import org.jetbrains.annotations.NotNull;
 
-import static dev.galacticraft.machinelib.gametest.Assertions.assertEquals;
 import static dev.galacticraft.machinelib.gametest.Assertions.assertThrows;
 
 public final class ItemStorageBuilderTest implements MachineLibGametest {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.client.impl.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Matrix4f;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -35,12 +34,14 @@ import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
 public final class DrawableUtil {
-    private DrawableUtil() {}
-    
+    private DrawableUtil() {
+    }
+
     public static void drawCenteredStringWithoutShadow(PoseStack matrices, Font textRenderer, Component text, int x, int y, int color) {
         textRenderer.draw(matrices, text.getVisualOrderText(), (float) (x - textRenderer.width(text) / 2), (float) y, color);
     }
@@ -94,16 +95,16 @@ public final class DrawableUtil {
     }
 
     public static void drawTextureColor(PoseStack matrices, int x0, int x1, int y0, int y1, int z, int regionWidth, int regionHeight, float u, float v, int textureWidth, int textureHeight, int red, int green, int blue, int alpha) {
-        drawTexturedQuadColor(matrices.last().pose(), x0, x1, y0, y1, z, (u + 0.0F) / (float)textureWidth, (u + (float)regionWidth) / (float)textureWidth, (v + 0.0F) / (float)textureHeight, (v + (float)regionHeight) / (float)textureHeight, red, green, blue, alpha);
+        drawTexturedQuadColor(matrices.last().pose(), x0, x1, y0, y1, z, (u + 0.0F) / (float) textureWidth, (u + (float) regionWidth) / (float) textureWidth, (v + 0.0F) / (float) textureHeight, (v + (float) regionHeight) / (float) textureHeight, red, green, blue, alpha);
     }
 
     public static void drawTexturedQuadColor(Matrix4f matrices, int x0, int x1, int y0, int y1, int z, float u0, float u1, float v0, float v1, int red, int green, int blue, int alpha) {
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        bufferBuilder.vertex(matrices, (float)x0, (float)y1, (float)z).color(red, green, blue, alpha).uv(u0, v1).endVertex();
-        bufferBuilder.vertex(matrices, (float)x1, (float)y1, (float)z).color(red, green, blue, alpha).uv(u1, v1).endVertex();
-        bufferBuilder.vertex(matrices, (float)x1, (float)y0, (float)z).color(red, green, blue, alpha).uv(u1, v0).endVertex();
-        bufferBuilder.vertex(matrices, (float)x0, (float)y0, (float)z).color(red, green, blue, alpha).uv(u0, v0).endVertex();
+        bufferBuilder.vertex(matrices, (float) x0, (float) y1, (float) z).color(red, green, blue, alpha).uv(u0, v1).endVertex();
+        bufferBuilder.vertex(matrices, (float) x1, (float) y1, (float) z).color(red, green, blue, alpha).uv(u1, v1).endVertex();
+        bufferBuilder.vertex(matrices, (float) x1, (float) y0, (float) z).color(red, green, blue, alpha).uv(u1, v0).endVertex();
+        bufferBuilder.vertex(matrices, (float) x0, (float) y0, (float) z).color(red, green, blue, alpha).uv(u0, v0).endVertex();
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 

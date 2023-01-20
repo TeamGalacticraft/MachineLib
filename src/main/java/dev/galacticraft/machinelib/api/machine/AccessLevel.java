@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,8 @@ public enum AccessLevel implements StringRepresentable {
      */
     PRIVATE(Component.translatable(Constant.TranslationKey.PRIVATE_ACCESS));
 
+    public static final AccessLevel[] VALUES = AccessLevel.values();
+
     /**
      * The name of the access level.
      */
@@ -57,9 +59,10 @@ public enum AccessLevel implements StringRepresentable {
 
     /**
      * Deserializes an access level from a string
+     *
      * @param value the string to deserialize
-     * @see #getSerializedName()
      * @return the deserialized access level
+     * @see #getSerializedName()
      */
     @Contract(pure = true)
     public static @NotNull AccessLevel fromString(@NotNull String value) {
@@ -69,6 +72,10 @@ public enum AccessLevel implements StringRepresentable {
             case "private" -> PRIVATE;
             default -> throw new IllegalArgumentException("Invalid access level: " + value);
         };
+    }
+
+    public static @NotNull AccessLevel getByOrdinal(byte ordinal) {
+        return VALUES[ordinal];
     }
 
     /**
