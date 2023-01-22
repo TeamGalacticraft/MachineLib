@@ -88,6 +88,7 @@ import java.util.Objects;
  * @see MachineScreen
  */
 public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderAttachmentBlockEntity {
+    private final MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type;
     /**
      * The configuration for this machine.
      * This is used to store the {@link #getRedstoneActivation() redstone activation}, {@link #getIOConfig() I/O configuration},
@@ -101,25 +102,22 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * The energy storage for this machine.
      *
      * @see #energyStorage()
-     * @see #getEnergyCapacity()
      */
-    private final @NotNull MachineEnergyStorage energyStorage = MachineEnergyStorage.of(this.getEnergyCapacity(), this.getEnergyInsertionRate(), this.getEnergyExtractionRate(), this.canExposedInsertEnergy(), this.canExposedExtractEnergy());
+    private final @NotNull MachineEnergyStorage energyStorage;
 
     /**
      * The item storage for this machine.
      *
-     * @see #createItemStorage()
      * @see #itemStorage()
      */
-    private final @NotNull MachineItemStorage itemStorage = this.createItemStorage();
+    private final @NotNull MachineItemStorage itemStorage;
 
     /**
      * The fluid storage for this machine.
      *
-     * @see #createFluidStorage()
      * @see #fluidStorage()
      */
-    private final @NotNull MachineFluidStorage fluidStorage = this.createFluidStorage();
+    private final @NotNull MachineFluidStorage fluidStorage;
     /**
      * The name of the machine, to be passed to the screen handler factory for display.
      * <p>
@@ -159,9 +157,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param type  The type of block entity.
      * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
-     * @see MachineBlockEntity#MachineBlockEntity(BlockEntityType, BlockPos, BlockState, Component)
+     * @see MachineBlockEntity#MachineBlockEntity(MachineType, BlockPos, BlockState, Component)
      */
-    protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state) {
+    protected MachineBlockEntity(@NotNull MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type, @NotNull BlockPos pos, BlockState state) {
         this(type, pos, state, state.getBlock().getName().setStyle(Constant.Text.DARK_GRAY_STYLE));
     }
 
@@ -172,12 +170,22 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
      * @param name  The name of the machine, to be passed to the screen handler.
-     * @see #createItemStorage()
-     * @see #createFluidStorage()
      */
-    protected MachineBlockEntity(@NotNull BlockEntityType<? extends MachineBlockEntity> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
-        super(type, pos, state);
+    protected MachineBlockEntity(@NotNull MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
+        super(type.getBlockEntityType(), pos, state);
+        this.type = type;
         this.name = name;
+
+        this.energyStorage = type.createEnergyStorage();
+        this.energyStorage.setListener(this::setChanged);
+        this.itemStorage = type.createItemStorage();
+        this.itemStorage.setListener(this::setChanged);
+        this.fluidStorage = type.createFluidStorage();
+        this.fluidStorage.setListener(this::setChanged);
+    }
+
+    public MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> getMachineType() {
+        return this.type;
     }
 
     /**
@@ -195,30 +203,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             }
             return null;
         }, blocks);
-        net.fabricmc.fabric.api.transfer.v1.item.ItemStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+        ItemStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
             if (blockEntity != null) {
                 return ((MachineBlockEntity) blockEntity).getExposedItemStorage(state, context);
             }
             return null;
         }, blocks);
-        net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
+        FluidStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> {
             if (blockEntity != null) {
                 return ((MachineBlockEntity) blockEntity).getExposedFluidStorage(state, context);
             }
             return null;
         }, blocks);
-    }
-
-    /**
-     * The maximum amount of energy that this machine can hold.
-     * <p>
-     * This is called once during the construction of this machine and should return a constant value for each block entity type.
-     *
-     * @return Energy capacity of this machine.
-     */
-    @Contract(pure = true)
-    public long getEnergyCapacity() {
-        return 0;
     }
 
     /**
@@ -230,7 +226,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyItemInsertionRate() {
-        return (long) (this.getEnergyCapacity() / 160.0);
+        return (long) (this.energyStorage.getCapacity() / 160.0);
     }
 
     /**
@@ -242,53 +238,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     public long getEnergyItemExtractionRate() {
-        return (long) (this.getEnergyCapacity() / 160.0);
-    }
-
-    /**
-     * The maximum amount of energy that the machine can intake per transaction.
-     * If adjacent machines should not be able to insert energy, return zero.
-     * <p>
-     * Should always be greater than {@link #getEnergyItemInsertionRate() the item insertion rate}.
-     *
-     * @return The maximum amount of energy that the machine can intake per transaction.
-     */
-    @Contract(pure = true)
-    public long getEnergyInsertionRate() {
-        return (long) (this.getEnergyCapacity() / 120.0);
-    }
-
-    /**
-     * The maximum amount of energy that the machine can extract per transaction.
-     * If adjacent machines should not be able to extract energy, return zero.
-     * <p>
-     * Should always be greater than {@link #getEnergyItemExtractionRate()} the item extraction rate}.
-     *
-     * @return The maximum amount of energy that the machine can eject per transaction.
-     */
-    @Contract(pure = true)
-    public long getEnergyExtractionRate() {
-        return (long) (this.getEnergyCapacity() / 120.0);
-    }
-
-    /**
-     * Returns whether adjacent wires/machines can insert energy into this machine.
-     *
-     * @return whether adjacent wires/machines can insert energy into this machine.
-     */
-    @Contract(pure = true)
-    public boolean canExposedInsertEnergy() {
-        return false;
-    }
-
-    /**
-     * Returns whether adjacent wires/machines can extract energy into this machine.
-     *
-     * @return whether adjacent wires/machines can extract energy into this machine.
-     */
-    @Contract(pure = true)
-    public boolean canExposedExtractEnergy() {
-        return false;
+        return (long) (this.energyStorage.getCapacity() / 160.0);
     }
 
     /**
@@ -301,30 +251,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Contract(pure = true)
     protected boolean isActive() {
         return this.getStatus().type().isActive();
-    }
-
-    /**
-     * Creates an item storage for this machine.
-     * <p>
-     * This is called once during the construction of this machine and should return a constant value for each block entity type.
-     *
-     * @return An item storage configured for this machine.
-     */
-    @Contract(pure = true)
-    protected @NotNull MachineItemStorage createItemStorage() {
-        return MachineItemStorage.empty();
-    }
-
-    /**
-     * Creates a fluid storage for this machine.
-     * <p>
-     * This is called once during the construction of this machine and should return a constant value for each block entity type.
-     *
-     * @return A fluid storage configured for this machine.
-     */
-    @Contract(pure = true)
-    protected @NotNull MachineFluidStorage createFluidStorage() {
-        return MachineFluidStorage.empty();
     }
 
     /**
@@ -695,13 +621,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void load(CompoundTag nbt) {
         super.load(nbt);
+        if (nbt.contains(Constant.Nbt.CONFIGURATION, Tag.TAG_COMPOUND))
+            this.configuration.readTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
             this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
-            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_COMPOUND)));
+            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST)));
         if (nbt.contains(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST))
-            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_COMPOUND)));
-        this.configuration.readTag(nbt);
+            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST)));
         this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
 
         if (level != null && level.isClientSide()) {
@@ -712,9 +639,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Override
     public void setChanged() {
         super.setChanged();
-
-        if (!(level instanceof ServerLevel serverLevel)) return;
-        serverLevel.getChunkSource().blockChanged(worldPosition);
     }
 
     /**
@@ -820,7 +744,17 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (!this.getSecurity().hasAccess(player)) {
             MachineLib.LOGGER.error("Player {} has illegally accessed machine at {}", player.getStringUUID(), this.worldPosition);
         }
+
         buf.writeBlockPos(this.getBlockPos());
+        this.getConfiguration().writePacket(buf);
+        this.energyStorage.writePacket(buf);
+        this.itemStorage.writePacket(buf);
+        this.fluidStorage.writePacket(buf);
+    }
+
+    @Override
+    public @NotNull BlockEntityType<? extends MachineBlockEntity> getType() {
+        return (BlockEntityType<? extends MachineBlockEntity>) super.getType();
     }
 
     @Override
@@ -830,12 +764,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     @Override
     public Object getRenderAttachmentData() {
-        return getIOConfig();
+        return this.getIOConfig();
     }
 
     @Override
     public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
+        tag.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
+        return tag;
     }
 
     @Nullable

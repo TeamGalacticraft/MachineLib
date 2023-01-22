@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.api.storage.Deserializable;
+import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.impl.machine.SecuritySettingsImpl;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -39,7 +40,7 @@ import java.util.UUID;
 /**
  * Represents a security setting of a machine.
  */
-public interface SecuritySettings extends Deserializable<CompoundTag> {
+public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynchronizable {
     /**
      * Constructs a new security settings storage with no owner attached.
      *
@@ -133,7 +134,7 @@ public interface SecuritySettings extends Deserializable<CompoundTag> {
      * @param owner The player to set.
      */
     @Contract(mutates = "this")
-    void setOwner(@NotNull Player owner);
+    void setOwner(@Nullable Player owner);
 
     /**
      * Sets the game profile of the owner of the linked machine.
@@ -142,7 +143,7 @@ public interface SecuritySettings extends Deserializable<CompoundTag> {
      * @param name  The name of the owner.
      */
     @Contract(mutates = "this")
-    void setOwner(@NotNull UUID owner, String name);
+    void setOwner(@Nullable UUID owner, String name);
 
     /**
      * Returns the team of the owner of the linked machine.
@@ -169,4 +170,6 @@ public interface SecuritySettings extends Deserializable<CompoundTag> {
     @ApiStatus.Experimental
     @Contract(mutates = "this", value = "null, !null -> fail")
     void setTeam(@Nullable ResourceLocation team, @Nullable String name);
+
+    void setUsername(@Nullable String username);
 }

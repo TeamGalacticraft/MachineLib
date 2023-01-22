@@ -36,7 +36,7 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     // FILTER DOES NOT INCLUDE NULL/EMPTY
     @NotNull ResourceFilter<Resource> getFilter();
 
-    @NotNull ResourceFilter<Resource> getExternalFilter();
+    @NotNull ResourceFilter<Resource> getStrictFilter();
 
     @NotNull SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> getGroup();
 
@@ -64,6 +64,14 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     // tag can be mutated
     @NotNull Stack copyStack();
 
+    boolean canInsertOne(@NotNull Resource resource);
+
+    boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canInsert(@NotNull Resource resource, long amount);
+
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
     default boolean insertOne(@NotNull Resource resource) {
         return this.insertOne(resource, (TransactionContext) null);
     }
@@ -83,7 +91,7 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     long insert(@NotNull Resource resource, long amount, @Nullable TransactionContext context);
 
     default long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.insert(resource, amount, null);
+        return this.insert(resource, tag, amount, null);
     }
 
     long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
@@ -127,6 +135,10 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     boolean contains(@NotNull Resource resource);
 
     boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean contains(@NotNull Resource resource, long amount);
+
+    boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
 

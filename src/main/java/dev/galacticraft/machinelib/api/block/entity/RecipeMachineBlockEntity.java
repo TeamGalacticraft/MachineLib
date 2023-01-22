@@ -24,18 +24,21 @@ package dev.galacticraft.machinelib.api.block.entity;
 
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
+import dev.galacticraft.machinelib.api.machine.MachineType;
+import dev.galacticraft.machinelib.api.menu.RecipeMachineMenu;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -94,7 +97,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param state      The block state of the machine.
      * @param recipeType The type of recipe to be processed.
      */
-    protected RecipeMachineBlockEntity(@NotNull BlockEntityType<? extends RecipeMachineBlockEntity<C, R>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
+    protected RecipeMachineBlockEntity(@NotNull MachineType<? extends RecipeMachineBlockEntity<C, R>, ? extends RecipeMachineMenu<C, R, ? extends RecipeMachineBlockEntity<C, R>>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
         super(type, pos, state);
         this.recipeType = recipeType;
     }
@@ -287,6 +290,13 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
             }
         }
         return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world);
+    }
+
+    @Override
+    public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
+        super.writeScreenOpeningData(player, buf);
+        buf.writeInt(this.progress);
+        buf.writeInt(this.maxProgress);
     }
 
     /**

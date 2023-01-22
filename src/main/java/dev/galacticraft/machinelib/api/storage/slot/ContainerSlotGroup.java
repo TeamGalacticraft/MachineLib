@@ -20,21 +20,11 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.menu.sync;
+package dev.galacticraft.machinelib.api.storage.slot;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
-public interface MenuSynced {
-    void initialWrite(FriendlyByteBuf buf);
-
-    void initialRead(FriendlyByteBuf buf);
-
-    void write(FriendlyByteBuf buf);
-
-    void read(FriendlyByteBuf buf);
-
-    boolean hasChanged();
-
-    ResourceLocation id();
+public interface ContainerSlotGroup<Slot extends ResourceSlot<Item, ItemStack>> extends SlotGroup<Item, ItemStack, Slot>, Container {
 }

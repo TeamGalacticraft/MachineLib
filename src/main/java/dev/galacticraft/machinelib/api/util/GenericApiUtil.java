@@ -22,11 +22,14 @@
 
 package dev.galacticraft.machinelib.api.util;
 
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.Contract;
@@ -64,6 +67,91 @@ public final class GenericApiUtil {
 
         try (Transaction moveTransaction = Transaction.openNested(context)) {
             long accepted = to.insert(variant, maxExtracted, moveTransaction);
+
+            if (from.extract(variant, accepted, moveTransaction) == accepted) {
+                moveTransaction.commit();
+                return accepted;
+            }
+        }
+
+        return 0;
+    }
+
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable SlotGroup<Resource, ?, ?> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+        if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
+        StoragePreconditions.notNegative(maxAmount);
+
+        long maxExtracted;
+        try (Transaction test = Transaction.openNested(context)) {
+            maxExtracted = from.extract(variant.getObject(), variant.getNbt(), maxAmount, test);
+        }
+
+        try (Transaction moveTransaction = Transaction.openNested(context)) {
+            long accepted = to.insert(variant, maxExtracted, moveTransaction);
+
+            if (from.extract(variant.getObject(), variant.getNbt(), accepted, moveTransaction) == accepted) {
+                moveTransaction.commit();
+                return accepted;
+            }
+        }
+
+        return 0;
+    }
+
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable SlotGroup<Resource, ?, ?> to, long maxAmount, @Nullable TransactionContext context) {
+        if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
+        StoragePreconditions.notNegative(maxAmount);
+
+        long maxExtracted;
+        try (Transaction test = Transaction.openNested(context)) {
+            maxExtracted = from.extract(variant, maxAmount, test);
+        }
+
+        try (Transaction moveTransaction = Transaction.openNested(context)) {
+            long accepted = to.insert(variant.getObject(), variant.getNbt(), maxExtracted, moveTransaction);
+
+            if (from.extract(variant, accepted, moveTransaction) == accepted) {
+                moveTransaction.commit();
+                return accepted;
+            }
+        }
+
+        return 0;
+    }
+
+
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable ResourceSlot<Resource, ?> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+        if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
+        StoragePreconditions.notNegative(maxAmount);
+
+        long maxExtracted;
+        try (Transaction test = Transaction.openNested(context)) {
+            maxExtracted = from.extract(variant.getObject(), variant.getNbt(), maxAmount, test);
+        }
+
+        try (Transaction moveTransaction = Transaction.openNested(context)) {
+            long accepted = to.insert(variant, maxExtracted, moveTransaction);
+
+            if (from.extract(variant.getObject(), variant.getNbt(), accepted, moveTransaction) == accepted) {
+                moveTransaction.commit();
+                return accepted;
+            }
+        }
+
+        return 0;
+    }
+
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable ResourceSlot<Resource, ?> to, long maxAmount, @Nullable TransactionContext context) {
+        if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
+        StoragePreconditions.notNegative(maxAmount);
+
+        long maxExtracted;
+        try (Transaction test = Transaction.openNested(context)) {
+            maxExtracted = from.extract(variant, maxAmount, test);
+        }
+
+        try (Transaction moveTransaction = Transaction.openNested(context)) {
+            long accepted = to.insert(variant.getObject(), variant.getNbt(), maxExtracted, moveTransaction);
 
             if (from.extract(variant, accepted, moveTransaction) == accepted) {
                 moveTransaction.commit();

@@ -20,16 +20,17 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.screen;
+package dev.galacticraft.machinelib.impl.menu;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -39,11 +40,13 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,14 +56,14 @@ import java.util.List;
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public final class TankImpl implements Tank {
-    public final ExposedSlot<Fluid, FluidVariant> slot;
+    public final ResourceSlot<Fluid, FluidStack> slot;
     private final int index;
     private final int x;
     private final int y;
     private final int height;
     public int id = -1;
 
-    public TankImpl(ExposedSlot<Fluid, FluidVariant> slot, int index, int x, int y, int height) {
+    public TankImpl(ResourceSlot<Fluid, FluidStack> slot, int index, int x, int y, int height) {
         this.slot = slot;
         this.index = index;
         this.x = x;
@@ -69,8 +72,38 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public @NotNull FluidVariant getResource() {
+    public @Nullable Fluid getFluid() {
         return this.slot.getResource();
+    }
+
+    @Override
+    public @Nullable CompoundTag getTag() {
+        return this.slot.getTag();
+    }
+
+    @Override
+    public @Nullable CompoundTag copyTag() {
+        return this.slot.copyTag();
+    }
+
+    @Override
+    public long getAmount() {
+        return this.slot.getAmount();
+    }
+
+    @Override
+    public long getCapacity() {
+        return this.slot.getCapacity();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.slot.isEmpty();
+    }
+
+    @Override
+    public FluidVariant getVariant() {
+        return this.getFluid() == null ? FluidVariant.blank() : FluidVariant.of(this.getFluid(), this.getTag());
     }
 
     @Override
@@ -114,7 +147,7 @@ public final class TankImpl implements Tank {
         if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Component> lines = new ArrayList<>(2);
             assert client.screen != null;
-            if (this.getResource().isBlank()) {
+            if (this.isEmpty()) {
                 client.screen.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
@@ -126,7 +159,7 @@ public final class TankImpl implements Tank {
             MutableComponent translatableText;
             translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
 
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getResource())).setStyle(Constant.Text.BLUE_STYLE));
+            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getVariant())).setStyle(Constant.Text.BLUE_STYLE));
             lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
             client.screen.renderComponentTooltip(matrices, lines, mouseX, mouseY);
         }
@@ -137,15 +170,16 @@ public final class TankImpl implements Tank {
     public boolean acceptStack(@NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            if (storage.supportsExtraction() && this.slot.supportsInsertion()) {
+            InputType type = this.slot.getGroup().getType().inputType();
+            if (storage.supportsExtraction() && type.playerInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
-                    if (this.getResource().isBlank()) {
-                        storedResource = StorageUtil.findStoredResource(storage, v -> this.slot.simulateInsert(v, FluidConstants.BUCKET, null) != 0);
+                    if (this.isEmpty()) {
+                        storedResource = StorageUtil.findStoredResource(storage, variant -> this.slot.getFilter().test(variant.getFluid(), variant.getNbt()));
                     } else {
-                        storedResource = this.getResource();
+                        storedResource = this.getVariant();
                     }
-                    if (storedResource != null) {
+                    if (storedResource != null && !storedResource.isBlank()) {
                         if (GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, transaction) != 0) {
                             transaction.commit();
                             return true;
@@ -153,8 +187,8 @@ public final class TankImpl implements Tank {
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && this.slot.supportsExtraction()) {
-                FluidVariant storedResource = this.getResource();
+            } else if (storage.supportsInsertion() && type.playerExtraction()) {
+                FluidVariant storedResource = this.getVariant();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
                         if (GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, transaction) != 0) {
@@ -170,17 +204,7 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public ExposedSlot<Fluid, FluidVariant> getSlot() {
+    public ResourceSlot<Fluid, FluidStack> getSlot() {
         return this.slot;
-    }
-
-    @Override
-    public long getAmount() {
-        return this.slot.getAmount();
-    }
-
-    @Override
-    public long getCapacity() {
-        return this.slot.getCapacity();
     }
 }

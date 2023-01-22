@@ -83,4 +83,7 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         }
         return new ExposedStorageImpl<>(storage, slots);
     }
+
+    @Override
+    long getVersion();
 }

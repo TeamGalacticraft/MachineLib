@@ -23,15 +23,17 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -52,11 +54,20 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
+    public void markModified(@Nullable TransactionContext context) {
+    }
+
+    @Override
     public void markModified() {
     }
 
     @Override
-    public int size() {
+    public void setListener(Runnable listener) {
+
+    }
+
+    @Override
+    public int groups() {
         return 0;
     }
 
@@ -88,13 +99,18 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
-    public ResourceSlot<Fluid, FluidStack>[] getSlots() {
-        return new ResourceSlot[0];
+    public FluidResourceSlot[] getSlots() {
+        return new FluidResourceSlot[0];
     }
 
     @NotNull
     @Override
     public Iterator<SlotGroup<Fluid, FluidStack, FluidResourceSlot>> iterator() {
         return Collections.emptyIterator();
+    }
+
+    @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return null;
     }
 }

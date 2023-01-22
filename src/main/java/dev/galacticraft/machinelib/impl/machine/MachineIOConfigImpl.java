@@ -25,9 +25,12 @@ package dev.galacticraft.machinelib.impl.machine;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
+import dev.galacticraft.machinelib.impl.menu.sync.MachineIOConfigSyncHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
@@ -91,5 +94,11 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
         this.right.readPacket(buf);
         this.top.readPacket(buf);
         this.bottom.readPacket(buf);
+    }
+
+    @Contract(" -> new")
+    @Override
+    public @NotNull MenuSyncHandler createSyncHandler() {
+        return new MachineIOConfigSyncHandler(this);
     }
 }

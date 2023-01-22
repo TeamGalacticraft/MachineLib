@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.menu;
+package dev.galacticraft.machinelib.api.menu.sync;
 
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Contract;
@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handles syncing of storage contents between the server and client.
  */
-public interface StorageSyncHandler {
-    StorageSyncHandler DEFAULT = new StorageSyncHandler() {
+public interface MenuSyncHandler {
+    MenuSyncHandler DEFAULT = new MenuSyncHandler() {
         @Override
         public boolean needsSyncing() {
             return false;

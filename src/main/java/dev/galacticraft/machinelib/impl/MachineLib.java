@@ -26,6 +26,7 @@ import dev.galacticraft.machinelib.api.gas.Gases;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
 import dev.galacticraft.machinelib.impl.network.MachineLibC2SPackets;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
@@ -51,6 +52,7 @@ public final class MachineLib implements ModInitializer {
     public void onInitialize() {
         Gases.init();
         MachineLibC2SPackets.register();
-        MachineStatuses.init();
+        MachineStatuses.initialize();
+        SlotGroupTypes.initialize();
     }
 }

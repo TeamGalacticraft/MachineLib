@@ -174,6 +174,7 @@ public interface Constant {
         String STATUS_CAPACITOR_FULL = "status.machinelib.capacitor_full";
         String STATUS_ACTIVE = "status.machinelib.active";
         String STATUS_IDLE = "status.machinelib.idle";
+        String STATUS_OFF = "status.machinelib.off";
 
         String CURRENT_ENERGY = "ui.machinelib.machine.current_energy";
         String MAX_ENERGY = "ui.machinelib.machine.max_energy";
@@ -196,7 +197,8 @@ public interface Constant {
         String REDSTONE_DISABLED = "ui.machinelib.machine.redstone_activation.status.disabled";
 
         String CONFIGURATION = "ui.machinelib.machine.configuration";
-        String MATCHES = "ui.machinelib.machine.configuration.matches";
+        String GROUP = "ui.machinelib.machine.configuration.group";
+        String SLOT = "ui.machinelib.machine.configuration.slot";
 
         String STATISTICS = "ui.machinelib.machine.statistics";
 

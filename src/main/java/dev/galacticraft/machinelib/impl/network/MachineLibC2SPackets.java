@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.network;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
@@ -32,12 +33,13 @@ import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -45,16 +47,19 @@ import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public final class MachineLibC2SPackets {
@@ -73,16 +78,23 @@ public final class MachineLibC2SPackets {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
+                            ServerLevel level = (ServerLevel) machine.getLevel();
+                            assert level != null;
+
+                            BlockPos pos = machine.getBlockPos();
                             if (type) {
                                 machineFace.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                                 FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 1)
-                                        .writeLong(machine.getBlockPos().asLong()).writeByte(f)
+                                        .writeLong(pos.asLong()).writeByte(f)
                                 );
-                                for (ServerPlayer tracking : PlayerLookup.tracking((ServerLevel) Objects.requireNonNull(machine.getLevel()), machine.getBlockPos())) {
+                                for (ServerPlayer tracking : PlayerLookup.tracking(level, pos)) {
                                     ServerPlayNetworking.send(tracking, Constant.id("reset_face"), buffer);
                                 }
                             }
                             machineFace.setSelection(null);
+                            machine.setChanged();
+                            BlockState state = level.getBlockState(pos);
+                            level.neighborChanged(pos.relative(face.toDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING))), state.getBlock(), pos);
                         }
                     }
                 });
@@ -103,13 +115,21 @@ public final class MachineLibC2SPackets {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
                         if (machine.getSecurity().hasAccess(player)) {
+                            ServerLevel level = (ServerLevel) machine.getLevel();
+                            BlockPos pos = machine.getBlockPos();
+                            assert level != null;
+
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
                             machineFace.setSelection(null);
+                            machine.setChanged();
+                            BlockState state = level.getBlockState(pos);
+                            level.neighborChanged(pos.relative(face.toDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING))), state.getBlock(), pos);
+
                             FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 3)
-                                    .writeLong(machine.getBlockPos().asLong()).writeByte(f).writeByte(type).writeByte(flow)
+                                    .writeLong(pos.asLong()).writeByte(f).writeByte(type).writeByte(flow)
                             );
-                            for (ServerPlayer tracking : PlayerLookup.tracking((ServerLevel) Objects.requireNonNull(machine.getLevel()), machine.getBlockPos())) {
+                            for (ServerPlayer tracking : PlayerLookup.tracking(level, machine.getBlockPos())) {
                                 ServerPlayNetworking.send(tracking, Constant.id("face_type"), buffer);
                             }
                         }
@@ -135,8 +155,10 @@ public final class MachineLibC2SPackets {
                                     SlotGroup<?, ?, ?> group = storage.getGroup(machineFace.getSelection().getGroup());
                                     if (slot < group.size()) {
                                         machineFace.setSelection(StorageSelection.create(group.getType(), slot));
+                                        machine.setChanged();
                                     } else if (slot == group.size()) {
                                         machineFace.setSelection(StorageSelection.create(group.getType()));
+                                        machine.setChanged();
                                     }
                                 }
                             }
@@ -161,6 +183,7 @@ public final class MachineLibC2SPackets {
                                 List<SlotGroupType> groups = machineFace.getFlowMatchingGroups(machine);
                                 if (group < groups.size()) {
                                     machineFace.setSelection(StorageSelection.create(groups.get(group)));
+                                    machine.setChanged();
                                 }
                             }
                         }
@@ -176,6 +199,7 @@ public final class MachineLibC2SPackets {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().hasAccess(player)) {
                         machine.setRedstone(redstoneActivation);
+                        machine.setChanged();
                     }
                 }
             });
@@ -188,6 +212,7 @@ public final class MachineLibC2SPackets {
                     MachineBlockEntity machine = sHandler.machine;
                     if (machine.getSecurity().isOwner(player)) {
                         machine.getSecurity().setAccessLevel(accessLevel);
+                        machine.setChanged();
                     }
                 }
             });
@@ -209,15 +234,15 @@ public final class MachineLibC2SPackets {
     private static boolean acceptStack(@NotNull Tank tank, @NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            ExposedSlot<Fluid, FluidVariant> slot = tank.getSlot();
-            if (storage.supportsExtraction() && slot.supportsInsertion()) {
+            ResourceSlot<Fluid, FluidStack> slot = tank.getSlot();
+            InputType type = slot.getGroup().getType().inputType();
+            if (storage.supportsExtraction() && type.playerInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
-                    if (tank.getResource().isBlank()) {
-//                        storedResource = StorageUtil.findStoredResource(storage, slot.getFilter());
-                        storedResource = null; //FIXME
+                    if (tank.isEmpty()) {
+                        storedResource = StorageUtil.findStoredResource(storage, variant -> slot.getFilter().test(variant.getFluid(), variant.getNbt()));
                     } else {
-                        storedResource = tank.getResource();
+                        storedResource = tank.getVariant();
                     }
                     if (storedResource != null) {
                         if (GenericApiUtil.move(storedResource, storage, slot, Long.MAX_VALUE, transaction) != 0) {
@@ -227,8 +252,8 @@ public final class MachineLibC2SPackets {
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && slot.supportsExtraction()) {
-                FluidVariant storedResource = tank.getResource();
+            } else if (storage.supportsInsertion() && type.playerExtraction()) {
+                FluidVariant storedResource = tank.getVariant();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
                         if (GenericApiUtil.move(storedResource, slot, storage, Long.MAX_VALUE, transaction) != 0) {

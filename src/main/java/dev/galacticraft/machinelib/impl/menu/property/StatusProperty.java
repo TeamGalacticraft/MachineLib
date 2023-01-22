@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.screen.property;
+package dev.galacticraft.machinelib.impl.menu.property;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.impl.MachineLib;

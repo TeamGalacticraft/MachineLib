@@ -22,11 +22,14 @@
 
 package dev.galacticraft.machinelib.api.storage;
 
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public interface MutableModifiable extends Modifiable {
     void revertModification();
 
+    void markModified(@Nullable TransactionContext context);
     void markModified();
 }

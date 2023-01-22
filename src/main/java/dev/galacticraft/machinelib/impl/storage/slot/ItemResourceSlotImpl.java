@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.impl.storage.slot;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -43,13 +44,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> implements ItemResourceSlot {
+    private final @NotNull ItemSlotDisplay display;
     private long cachedExpiry = -1;
     private SingleSlotStorage<ItemVariant> cachedStorage = null;
     private ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
     private Object cachedApi = null;
 
-    public ItemResourceSlotImpl(@NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
+    public ItemResourceSlotImpl(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
         super(filter, externalFilter, capacity);
+        this.display = display;
         assert capacity > 0 && capacity <= 64;
     }
 
@@ -72,6 +75,11 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
         ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
         stack.setTag(this.copyTag());
         return stack;
+    }
+
+    @Override
+    public @NotNull ItemSlotDisplay getDisplay() {
+        return this.display;
     }
 
     @Override

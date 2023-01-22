@@ -22,12 +22,15 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
+import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupTypeImpl;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +50,11 @@ public interface SlotGroupType {
     @Contract("_, _, _ -> new")
     static @NotNull SlotGroupType create(@NotNull TextColor color, @NotNull MutableComponent name, @NotNull InputType inputType) {
         return new SlotGroupTypeImpl(color, name.setStyle(Style.EMPTY.withColor(color)), inputType);
+    }
+
+    @Contract("_, _, _ -> new")
+    static @NotNull SlotGroupType createAndRegister(@NotNull ResourceLocation id, @NotNull TextColor color, @NotNull InputType inputType) {
+        return Registry.register(MachineLib.SLOT_GROUP_TYPE_REGISTRY, id, new SlotGroupTypeImpl(color, Component.translatable(id.getNamespace() + ".slot_group." + id.getPath()).setStyle(Style.EMPTY.withColor(color)), inputType));
     }
 
     /**

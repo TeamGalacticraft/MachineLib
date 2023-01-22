@@ -30,13 +30,14 @@ import dev.galacticraft.machinelib.impl.storage.MachineFluidStorageImpl;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, FluidResourceSlot, SlotGroup<Fluid, FluidStack, FluidResourceSlot>> {
+public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, FluidResourceSlot, SlotGroup<Fluid, FluidStack, FluidResourceSlot>>, MenuSynchronizable {
     @Contract(value = " -> new", pure = true)
-    static @NotNull Builder create() {
+    static @NotNull Builder builder() {
         return new Builder();
     }
 
@@ -51,7 +52,8 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, 
         private Builder() {
         }
 
-        public @NotNull MachineFluidStorage.Builder addGroup(SlotGroup<Fluid, FluidStack, FluidResourceSlot> group) {
+        public @NotNull MachineFluidStorage.Builder addGroup(@Nullable SlotGroup<Fluid, FluidStack, FluidResourceSlot> group) {
+            if (group == null || group.isEmpty()) return this;
             for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group1 : this.groups) {
                 if (group1.getType() == group.getType()) {
                     throw new UnsupportedOperationException("duplicate group");

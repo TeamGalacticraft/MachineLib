@@ -28,10 +28,12 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 
-public interface ResourceStorage<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>, Group extends SlotGroup<Resource, Stack, Slot>> extends Iterable<Group>, MutableModifiable, SlotProvider<Resource, Stack>, Deserializable<ListTag> {
-    int size();
+public interface ResourceStorage<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>, Group extends SlotGroup<Resource, Stack, Slot>> extends Iterable<Group>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
+    int groups();
 
     @NotNull Group getGroup(@NotNull SlotGroupType type);
 
     @NotNull SlotGroupType @NotNull [] getTypes();
+
+    void setListener(Runnable listener);
 }

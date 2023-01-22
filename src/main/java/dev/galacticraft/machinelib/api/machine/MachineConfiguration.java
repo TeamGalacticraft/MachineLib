@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.api.storage.Deserializable;
+import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.impl.machine.MachineConfigurationImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * A class that holds the configuration of a machine.
  * Can be used to save and load the configuration of a machine.
  */
-public interface MachineConfiguration extends Deserializable<CompoundTag> {
+public interface MachineConfiguration extends Deserializable<CompoundTag>, MenuSynchronizable {
     /**
      * Creates a new configuration.
      *

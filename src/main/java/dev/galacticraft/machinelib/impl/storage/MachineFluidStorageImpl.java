@@ -24,15 +24,18 @@ package dev.galacticraft.machinelib.impl.storage;
 
 import com.google.common.collect.Iterators;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,8 +45,10 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final SlotGroup<Fluid, FluidStack, FluidResourceSlot>[] groups;
     private final SlotGroupType[] types;
     private final Map<SlotGroupType, SlotGroup<Fluid, FluidStack, FluidResourceSlot>> typeToGroup;
-    private final ResourceSlot<Fluid, FluidStack>[] clumpedSlots;
+    private final FluidResourceSlot[] clumpedSlots;
+    private TransactionContext cachedTransaction = null;
     private long modifications = 0;
+    private Runnable listener;
 
     public MachineFluidStorageImpl(SlotGroup<Fluid, FluidStack, FluidResourceSlot>[] groups) {
         this.groups = groups;
@@ -52,14 +57,15 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         int slots = 0;
         for (int i = 0; i < this.groups.length; i++) {
             SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.groups[i];
+            group._setParent(this);
             this.typeToGroup.put(group.getType(), group);
             this.types[i] = group.getType();
             slots += group.getSlots().length;
         }
-        this.clumpedSlots = new ResourceSlot[slots];
+        this.clumpedSlots = new FluidResourceSlot[slots];
         slots = 0;
         for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.groups) {
-            for (ResourceSlot<Fluid, FluidStack> slot : group.getSlots()) {
+            for (FluidResourceSlot slot : group.getSlots()) {
                 this.clumpedSlots[slots++] = slot;
             }
         }
@@ -71,7 +77,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public int size() {
+    public int groups() {
         return this.groups.length;
     }
 
@@ -88,7 +94,12 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
-    public ResourceSlot<Fluid, FluidStack>[] getSlots() {
+    public void setListener(Runnable listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public FluidResourceSlot[] getSlots() {
         return this.clumpedSlots;
     }
 
@@ -104,8 +115,33 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
+    public void markModified(@Nullable TransactionContext context) {
+        if (context != null) {
+            this.modifications++;
+            context.addCloseCallback((context1, result) -> {
+                if (result.wasAborted()) {
+                    this.modifications--;
+                } else {
+                    if (this.listener != null) {
+                        TransactionContext outer = context1.nestingDepth() != 0 ? context1.getOpenTransaction(0) : context1;
+                        if (this.cachedTransaction != outer) {
+                            this.cachedTransaction = outer;
+                            context.addOuterCloseCallback((result1) -> {
+                                if (result1.wasCommitted()) this.listener.run();
+                            });
+                        }
+                    }
+                }
+            });
+        } else {
+            this.markModified();
+        }
+    }
+
+    @Override
     public void markModified() {
         this.modifications++;
+        if (this.listener != null) this.listener.run();
     }
 
     @Override
@@ -136,5 +172,10 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.groups) {
             group.readPacket(buf);
         }
+    }
+
+    @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return new ResourceStorageSyncHandler<>(this);
     }
 }

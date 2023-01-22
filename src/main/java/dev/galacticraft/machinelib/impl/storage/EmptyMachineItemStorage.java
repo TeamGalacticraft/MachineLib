@@ -22,17 +22,19 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -49,7 +51,7 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
-    public int size() {
+    public int groups() {
         return 0;
     }
 
@@ -64,8 +66,8 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
-    public ResourceSlot<Item, ItemStack>[] getSlots() {
-        return new ResourceSlot[0];
+    public ItemResourceSlot[] getSlots() {
+        return new ItemResourceSlot[0];
     }
 
     @NotNull
@@ -79,7 +81,16 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
+    public void markModified(@Nullable TransactionContext context) {
+    }
+
+    @Override
     public void markModified() {
+    }
+
+    @Override
+    public void setListener(Runnable listener) {
+
     }
 
     @Override
@@ -102,5 +113,10 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
+    }
+
+    @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return null;
     }
 }

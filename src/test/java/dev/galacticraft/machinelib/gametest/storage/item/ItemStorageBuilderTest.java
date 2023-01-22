@@ -22,33 +22,63 @@
 
 package dev.galacticraft.machinelib.gametest.storage.item;
 
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
-import dev.galacticraft.machinelib.testmod.TestMod;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import static dev.galacticraft.machinelib.gametest.Assertions.assertThrows;
+import static dev.galacticraft.machinelib.gametest.Assertions.*;
 
 public final class ItemStorageBuilderTest implements MachineLibGametest {
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
-    void size(@NotNull GameTestHelper context) {
-        assertEquals(0, MachineItemStorage.empty().size());
-        assertEquals(1, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().size());
-        assertEquals(2, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().size());
-    }
-
-    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void create_empty(@NotNull GameTestHelper context) {
-        assertEquals(MachineItemStorage.empty(), MachineItemStorage.Builder.create().build());
+        assertEquals(0, MachineItemStorage.empty().groups());
+        assertEquals(0, MachineItemStorage.builder().addGroup(null).build().groups());
+        assertEquals(0, MachineItemStorage.builder().addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE).build()).build().groups());
+
+        assertIdentityEquals(MachineItemStorage.empty(), MachineItemStorage.builder().build());
+        assertIdentityEquals(MachineItemStorage.empty(), MachineItemStorage.builder().addGroup(null).build());
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void create_slot_size(@NotNull GameTestHelper context) {
-        assertEquals(64, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(0, 0)).build().getCapacity(0));
-        assertEquals(16, MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 16, ItemSlotDisplay.create(0, 0)).build().getCapacity(0));
-        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, 5000, ItemSlotDisplay.create(0, 0)));
-        assertThrows(() -> MachineItemStorage.Builder.create().addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, -1, ItemSlotDisplay.create(0, 0)));
+        assertEquals(1, MachineItemStorage.builder()
+                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
+                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
+                        .build()
+                )
+                .build().groups()
+        );
+        assertEquals(1, MachineItemStorage.builder()
+                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
+                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
+                        .build()
+                )
+                .addGroup(null)
+                .build().groups()
+        );
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
+    void fail_duplicate(@NotNull GameTestHelper context) {
+        assertThrows(() -> MachineItemStorage.builder()
+                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
+                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
+                        .build()
+                )
+                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE) // duplicate group
+                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
+                        .build()
+                )
+                .build().groups()
+        );
     }
 }

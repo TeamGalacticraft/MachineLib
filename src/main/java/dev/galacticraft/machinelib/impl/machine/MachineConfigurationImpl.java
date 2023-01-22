@@ -23,7 +23,9 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.*;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.menu.sync.MachineConfigurationSyncHandler;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -35,7 +37,7 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class MachineConfigurationImpl implements MachineConfiguration {
     private final MachineIOConfig configuration = MachineIOConfig.create();
-    private final SecuritySettings security = new SecuritySettingsImpl();
+    private final SecuritySettings security = SecuritySettings.create();
     private MachineStatus status = MachineStatus.INVALID;
     private RedstoneActivation redstone = RedstoneActivation.IGNORE;
 
@@ -90,6 +92,7 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         this.security.writePacket(buf);
         this.configuration.writePacket(buf);
         this.redstone.writePacket(buf);
+        this.status.writePacket(buf);
     }
 
     @Override
@@ -97,5 +100,11 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         this.security.readPacket(buf);
         this.configuration.readPacket(buf);
         this.redstone = RedstoneActivation.readPacket(buf);
+        this.status = MachineStatus.readPacket(buf);
+    }
+
+    @Override
+    public @NotNull MenuSyncHandler createSyncHandler() {
+        return new MachineConfigurationSyncHandler(this);
     }
 }

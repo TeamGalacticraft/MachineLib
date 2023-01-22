@@ -22,10 +22,13 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
+import dev.galacticraft.machinelib.api.storage.Serializable;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;
 import net.minecraft.core.Registry;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the status of a machine.
  */
-public interface MachineStatus {
+public interface MachineStatus extends Serializable<StringTag> {
     /**
      * Default machine status.
      */
@@ -62,6 +65,10 @@ public interface MachineStatus {
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull MachineStatus create(@NotNull Component name, @NotNull MachineStatus.Type type) {
         return new MachineStatusImpl(name, type);
+    }
+
+    static @NotNull MachineStatus readPacket(@NotNull FriendlyByteBuf buf) {
+        return MachineStatusImpl.readPacket(buf);
     }
 
     /**

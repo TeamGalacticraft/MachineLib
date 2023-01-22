@@ -22,11 +22,12 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
-import dev.galacticraft.machinelib.api.transfer.cache.ModCount;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.impl.menu.sync.MachineEnergyStorageSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.nbt.LongTag;
@@ -42,9 +43,9 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     private final long maxOutput;
     private final boolean insert;
     private final boolean extract;
-    private final ModCount modCount = ModCount.root();
 
     public long amount = 0;
+    private Runnable listener;
 
     public MachineEnergyStorageImpl(long capacity, long maxInput, long maxOutput, boolean insert, boolean extract) {
         this.capacity = capacity;
@@ -74,7 +75,6 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
         long inserted = Math.min(Math.min(amount, maxInput), capacity - amount);
 
         if (inserted > 0) {
-            this.modCount.increment();
             this.amount += inserted;
             return inserted;
         }
@@ -88,7 +88,6 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
         if (inserted > 0) {
             this.updateSnapshots(transaction);
-            this.modCount.increment(transaction);
             this.amount += inserted;
             return inserted;
         }
@@ -106,7 +105,6 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
         long extracted = Math.min(this.amount, Math.min(amount, this.maxOutput));
 
         if (extracted > 0) {
-            this.modCount.increment();
             this.amount -= extracted;
             return extracted;
         }
@@ -120,7 +118,6 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
         if (extracted > 0) {
             this.updateSnapshots(transaction);
-            this.modCount.increment(transaction);
             this.amount -= extracted;
             return extracted;
         }
@@ -151,14 +148,12 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     @Override
     public void setEnergy(long amount, @NotNull TransactionContext context) {
         this.updateSnapshots(context);
-        this.modCount.increment(context);
         this.amount = amount;
     }
 
     @Override
     public void setEnergyUnsafe(long amount) {
         GenericApiUtil.noTransaction();
-        this.modCount.increment();
         this.amount = amount;
     }
 
@@ -175,6 +170,11 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     @Override
     public boolean canExposedExtract() {
         return this.extract;
+    }
+
+    @Override
+    public void setListener(Runnable listener) {
+        this.listener = listener;
     }
 
     @Override
@@ -195,5 +195,16 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
         this.amount = buf.readLong();
+    }
+
+    @Override
+    protected void onFinalCommit() {
+        super.onFinalCommit();
+        if (this.listener != null) this.listener.run();
+    }
+
+    @Override
+    public @NotNull MenuSyncHandler createSyncHandler() {
+        return new MachineEnergyStorageSyncHandler(this);
     }
 }

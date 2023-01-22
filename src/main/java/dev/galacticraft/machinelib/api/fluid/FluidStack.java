@@ -28,6 +28,8 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class FluidStack {
     public static final FluidStack EMPTY = new FluidStack(null, null, 0);
     private final @Nullable Fluid fluid;
@@ -79,5 +81,19 @@ public class FluidStack {
 
     public void shrink(long amount) {
         if (this.fluid != null) this.amount -= Math.min(this.amount, amount);
+    }
+
+    @Override
+    @Contract(value = "null -> false", pure = true)
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FluidStack that = (FluidStack) o;
+        return amount == that.amount && Objects.equals(fluid, that.fluid) && Objects.equals(tag, that.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fluid, tag, amount);
     }
 }

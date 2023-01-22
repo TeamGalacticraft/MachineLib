@@ -22,8 +22,11 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.*;
-import dev.galacticraft.machinelib.impl.storage.slot.CraftingSlotGroupImpl;
+import dev.galacticraft.machinelib.api.storage.Deserializable;
+import dev.galacticraft.machinelib.api.storage.MutableModifiable;
+import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.SlotProvider;
+import dev.galacticraft.machinelib.impl.storage.slot.ContainerSlotGroupImpl;
 import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
@@ -37,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-// FILTERS, has KNOWLEDGE of automation (I/O)
-public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> extends Iterable<Slot>, Modifiable, SlotProvider<Resource, Stack>, Deserializable<ListTag> {
+// FILTERS (non-strict), has indirect KNOWLEDGE of automation (I/O)
+public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> extends Iterable<Slot>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
     @Contract(value = "_ -> new", pure = true)
     static @NotNull <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> Builder<Resource, Stack, Slot> create(@NotNull SlotGroupType type) {
         return new Builder<>(type);
@@ -58,8 +61,8 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     @Contract("_, _ -> new")
     @SafeVarargs
-    static <Slot extends ResourceSlot<Item, ItemStack>> @NotNull CraftingSlotGroup<Slot> crafting(@NotNull SlotGroupType type, @NotNull Slot... slots) {
-        return new CraftingSlotGroupImpl<>(type, slots);
+    static <Slot extends ResourceSlot<Item, ItemStack>> @NotNull ContainerSlotGroup<Slot> crafting(@NotNull SlotGroupType type, @NotNull Slot... slots) {
+        return new ContainerSlotGroupImpl<>(type, slots);
     }
 
     void _setParent(@NotNull MutableModifiable modifiable);
@@ -72,7 +75,27 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     boolean isFull();
 
-    @NotNull ResourceFilter<Resource> getExternalFilter(int slot);
+    @NotNull ResourceFilter<Resource> getStrictFilter(int slot);
+
+    boolean canInsertOne(@NotNull Resource resource);
+
+    boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canInsert(@NotNull Resource resource, long amount);
+
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    default boolean insertOne(@NotNull Resource resource) {
+        return this.insertOne(resource, (TransactionContext) null);
+    }
+
+    boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context);
+
+    default boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        return this.insertOne(resource, tag, null);
+    }
+
+    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
 
     default long insert(@NotNull Resource resource, long amount) {
         return this.insert(resource, amount, null);
@@ -98,6 +121,14 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
+    boolean containsAny(@NotNull Resource resource);
+
+    boolean containsAny(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean contains(@NotNull Resource resource, long amount);
+
+    boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
     // START SLOT METHODS
 
     @NotNull Slot getSlot(int slot);
@@ -119,6 +150,14 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
     @NotNull Stack createStack(int slot);
 
     @NotNull Stack copyStack(int slot);
+
+    boolean canInsertOne(int slot, @NotNull Resource resource);
+
+    boolean canInsertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canInsert(int slot, @NotNull Resource resource, long amount);
+
+    boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     default boolean insertOne(int slot, @NotNull Resource resource) {
         return this.insertOne(slot, resource, (TransactionContext) null);
@@ -184,6 +223,10 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
 
+    boolean contains(int slot, @NotNull Resource resource, long amount);
+
+    boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
     // END SLOT METHODS
 
     class Builder<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> {
@@ -195,12 +238,21 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
         }
 
         public @NotNull Builder<Resource, Stack, Slot> add(Slot slot) {
+            if (slot == null) return this;
             this.slots.add(slot);
             return this;
         }
 
-        public SlotGroup<Resource, Stack, Slot> build() {
-            return SlotGroup.of(this.type, this.slots.toArray(new ResourceSlot[0]));
+        public @Nullable SlotGroup<Resource, Stack, Slot> build() {
+            if (this.slots.isEmpty()) return null;
+            if (this.slots.get(0) instanceof ItemResourceSlot) {
+                return (SlotGroup<Resource, Stack, Slot>) crafting(this.type, this.slots.toArray(new ItemResourceSlot[0]));
+            } else if (this.slots.get(0) instanceof FluidResourceSlot) {
+                return (SlotGroup<Resource, Stack, Slot>) of(this.type, this.slots.toArray(new FluidResourceSlot[0]));
+            } else {
+                throw new UnsupportedOperationException();
+            }
+//            return SlotGroup.of(this.type, this.slots.toArray(new Slot[0]));
         }
     }
 }

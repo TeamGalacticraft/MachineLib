@@ -29,8 +29,9 @@
     ],
     "fabric-gametest": [
       "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageBuilderTest",
-      "dev.galacticraft.machinelib.gametest.storage.item.SingleSlotItemStorageExtractionTest",
-      "dev.galacticraft.machinelib.gametest.storage.item.SingleSlotItemStorageInsertionTest"
+      "dev.galacticraft.machinelib.gametest.storage.SlotGroupBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.ResourceSlotExtractionTest",
+      "dev.galacticraft.machinelib.gametest.storage.SingletonSlotGroupExtractionTest"
     ]
   },
   "depends": {

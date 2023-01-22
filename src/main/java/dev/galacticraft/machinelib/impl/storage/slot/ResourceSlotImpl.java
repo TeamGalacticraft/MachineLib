@@ -69,7 +69,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
-    public @NotNull ResourceFilter<Resource> getExternalFilter() {
+    public @NotNull ResourceFilter<Resource> getStrictFilter() {
         return this.externalFilter;
     }
 
@@ -139,10 +139,34 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
+    public boolean canInsertOne(@NotNull Resource resource) {
+        assert this.isSane();
+        return this.amount < this.getRealCapacity() && this.canInsert(resource);
+    }
+
+    @Override
+    public boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        assert this.isSane();
+        return this.amount < this.getRealCapacity() && this.canInsert(resource, tag);
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Resource resource, long amount) {
+        assert this.isSane();
+        return this.amount >= amount && this.canInsert(resource);
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        assert this.isSane();
+        return this.amount >= amount && this.canInsert(resource, tag);
+    }
+
+    @Override
     public boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context) {
         assert this.isSane();
 
-        if (this.amount < this.capacity && this.canInsert(resource)) {
+        if (this.amount < this.getRealCapacity() && this.canInsert(resource)) {
             this.updateSnapshots(context);
             this.resource = resource;
             this.amount++;
@@ -155,7 +179,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
         assert this.isSane();
 
-        if (this.amount < this.capacity && this.canInsert(resource, tag)) {
+        if (this.amount < this.getRealCapacity() && this.canInsert(resource, tag)) {
             this.updateSnapshots(context);
             this.resource = resource;
             this.tag = stripTag(tag);
@@ -177,7 +201,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
                 this.updateSnapshots(context);
                 this.resource = resource;
                 this.amount = total;
-                return previous - amount;
+                return total - previous;
             }
         }
         return 0;
@@ -196,7 +220,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
                 this.resource = resource;
                 this.tag = stripTag(tag);
                 this.amount = total;
-                return previous - amount;
+                return total - previous;
             }
         }
         return 0;
@@ -315,6 +339,16 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
+    public boolean contains(@NotNull Resource resource, long amount) {
+        return this.contains(resource) && this.amount >= amount;
+    }
+
+    @Override
+    public boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.contains(resource) && this.amount >= amount;
+    }
+
+    @Override
     public long getModifications() {
         return this.modifications;
     }
@@ -322,11 +356,27 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public void revertModification() {
         this.modifications--;
+        this.group.revertModification();
     }
 
     @Override
     public void markModified() {
         this.modifications++;
+        this.group.markModified();
+    }
+
+    @Override
+    public void markModified(@Nullable TransactionContext context) {
+        this.modifications++;
+        this.group.markModified(context);
+
+        if (context != null) {
+            context.addCloseCallback((context1, result) -> {
+                if (result.wasAborted()) {
+                    this.modifications--;
+                }
+            });
+        }
     }
 
     @Override
@@ -337,7 +387,6 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Override
     protected void readSnapshot(Snapshot<Resource> snapshot) {
-        this.modifications--;
         this.resource = snapshot.resource;
         this.amount = snapshot.amount;
         this.tag = snapshot.tag;
@@ -345,9 +394,9 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Override
     public void updateSnapshots(TransactionContext transaction) {
-        if (transaction == null) {
-            this.modifications++;
-        } else {
+        this.markModified(transaction);
+
+        if (transaction != null) {
             super.updateSnapshots(transaction);
         }
     }
@@ -367,7 +416,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Contract(pure = true)
     private boolean canInsert(@NotNull Resource resource) {
-        return this.resource == resource || (this.resource == null && this.filter.test(resource, null));
+        return canInsert(resource, null);
     }
 
     @Contract(pure = true)
@@ -386,7 +435,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     private boolean isSane() {
-        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount < this.getCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
+        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount < this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
     }
 
     protected record Snapshot<Resource>(@Nullable Resource resource, long amount, @Nullable CompoundTag tag) {

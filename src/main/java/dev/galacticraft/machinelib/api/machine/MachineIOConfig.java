@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.machine;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.storage.Deserializable;
+import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.impl.machine.MachineIOConfigImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Stores the configuration of a machine's I/O for all six faces.
  */
-public interface MachineIOConfig extends Deserializable<CompoundTag> {
+public interface MachineIOConfig extends Deserializable<CompoundTag>, MenuSynchronizable {
     /**
      * Constructs a new machine i/o configuration.
      *

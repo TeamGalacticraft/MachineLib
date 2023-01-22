@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> implements SlotGroup<Resource, Stack, Slot>, MutableModifiable {
+public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> implements SlotGroup<Resource, Stack, Slot> {
     private final @NotNull SlotGroupType type;
     private final @NotNull Slot @NotNull [] slots;
     private MutableModifiable parent;
@@ -85,8 +85,64 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public @NotNull ResourceFilter<Resource> getExternalFilter(int slot) {
-        return this.slots[slot].getExternalFilter();
+    public @NotNull ResourceFilter<Resource> getStrictFilter(int slot) {
+        return this.slots[slot].getStrictFilter();
+    }
+
+    @Override
+    public boolean canInsertOne(@NotNull Resource resource) {
+        for (Slot slot : this.slots) {
+            if (slot.canInsertOne(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (Slot slot : this.slots) {
+            if (slot.canInsertOne(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Resource resource, long amount) {
+        long total = 0;
+        for (Slot slot : this.slots) {
+            if (slot.canInsert(resource, amount)) {
+                total += slot.getAmount();
+                if (total >= amount) return true;
+            }
+        }
+        return total >= amount;
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long total = 0;
+        for (Slot slot : this.slots) {
+            if (slot.canInsert(resource, tag, amount)) {
+                total += slot.getAmount();
+                if (total >= amount) return true;
+            }
+        }
+        return total >= amount;
+    }
+
+    @Override
+    public boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context) {
+        for (Slot slot : this.slots) {
+            if (slot.insertOne(resource, context)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
+        for (Slot slot : this.slots) {
+            if (slot.insertOne(resource, tag, context)) return true;
+        }
+        return false;
     }
 
     @Override
@@ -138,6 +194,47 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
+    public boolean containsAny(@NotNull Resource resource) {
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsAny(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean contains(@NotNull Resource resource, long amount) {
+        long total = 0;
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource)) {
+                total += slot.getAmount();
+                if (total >= amount) return true;
+            }
+        }
+        return total >= amount;
+    }
+
+    @Override
+    public boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long total = 0;
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource, tag)) {
+                total += slot.getAmount();
+                if (total >= amount) return true;
+            }
+        }
+        return total >= amount;
+    }
+
+
+    @Override
     public @NotNull Slot getSlot(int slot) {
         return this.slots[slot];
     }
@@ -185,6 +282,26 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     @Override
     public @NotNull Stack copyStack(int slot) {
         return this.slots[slot].copyStack();
+    }
+
+    @Override
+    public boolean canInsertOne(int slot, @NotNull Resource resource) {
+        return this.slots[slot].canInsertOne(resource);
+    }
+
+    @Override
+    public boolean canInsertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].canInsertOne(resource, tag);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Resource resource, long amount) {
+        return this.slots[slot].canInsert(resource, amount);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].canInsert(resource, tag, amount);
     }
 
     @Override
@@ -247,6 +364,16 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
         return this.slots[slot].contains(resource, tag);
     }
 
+    @Override
+    public boolean contains(int slot, @NotNull Resource resource, long amount) {
+        return this.slots[slot].contains(resource, amount);
+    }
+
+    @Override
+    public boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].contains(resource, tag, amount);
+    }
+
     @NotNull
     @Override
     public Iterator<Slot> iterator() {
@@ -270,6 +397,20 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
         if (this.parent == null) throw new AssertionError();
         this.parent.markModified();
         this.modifications++;
+    }
+
+    @Override
+    public void markModified(@Nullable TransactionContext context) {
+        this.parent.markModified(context);
+        this.modifications++;
+
+        if (context != null) {
+            context.addCloseCallback((context1, result) -> {
+                if (result.wasAborted()) {
+                    this.modifications--;
+                }
+            });
+        }
     }
 
     @Override

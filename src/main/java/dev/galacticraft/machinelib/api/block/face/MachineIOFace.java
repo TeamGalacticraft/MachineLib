@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
@@ -53,7 +54,7 @@ import java.util.List;
  * Represents a face of a {@link MachineBlockEntity} that has been configured to
  * accept certain types of resources.
  */
-public interface MachineIOFace extends Deserializable<CompoundTag> {
+public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchronizable {
     /**
      * Creates a new, blank {@link MachineIOFace}.
      *

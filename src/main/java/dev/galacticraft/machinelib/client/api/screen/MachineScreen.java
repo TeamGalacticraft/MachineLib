@@ -32,6 +32,7 @@ import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
@@ -40,6 +41,7 @@ import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -51,9 +53,10 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
-import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.fabricmc.fabric.impl.transfer.context.PlayerContainerItemContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -64,9 +67,9 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -78,7 +81,6 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +89,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Handles most of the boilerplate code for machine screens.
@@ -168,20 +171,6 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     private static final List<Component> TOOLTIP_ARRAY = new ArrayList<>();
 
     /**
-     * The position of the machine.
-     */
-    protected final BlockPos pos;
-
-    /**
-     * The level the machine is in.
-     */
-    protected final Level level;
-
-    /**
-     * The machine this screen is attached to.
-     */
-    protected final M machine;
-    /**
      * The sprite provider for the machine block. Used to render the machine on the IO configuration panel.
      */
     private final MachineModelRegistry.SpriteProvider spriteProvider;
@@ -209,7 +198,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * The skin of the owner of this machine.
      * Defaults to steve if the skin cannot be found.
      */
-    private @NotNull ResourceLocation ownerSkin = new ResourceLocation("textures/entity/steve.png");
+    private @NotNull ResourceLocation ownerSkin = DefaultPlayerSkin.getDefaultSkin(UUID.randomUUID());
 
     /**
      * Creates a new screen from the given screen handler.
@@ -221,16 +210,13 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected MachineScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
         super(handler, inv, title);
-        this.pos = this.menu.machine.getBlockPos();
-        this.level = inv.player.level;
-        this.machine = this.menu.machine;
         this.texture = texture;
 
-        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.machine.getBlockState() == null ? level.getBlockState(pos).getBlock() : this.machine.getBlockState().getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
+        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.menu.type.getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
 
-        Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.machine.getSecurity().getOwner(), this.machine.getSecurity().getUsername()), (type, identifier, tex) -> {
-            if (type == MinecraftProfileTexture.Type.SKIN && identifier != null) {
-                MachineScreen.this.ownerSkin = identifier;
+        Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.menu.configuration.getSecurity().getOwner(), this.menu.configuration.getSecurity().getUsername()), (type, skin, tex) -> {
+            if (type == MinecraftProfileTexture.Type.SKIN && skin != null) {
+                MachineScreen.this.ownerSkin = skin;
             }
         }, true);
     }
@@ -269,104 +255,100 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected void drawConfigurationPanels(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
-        if (this.machine != null) {
-            final MachineBlockEntity machine = this.machine;
-            boolean secondary = false;
-            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-            for (Tab tab : Tab.values()) { // 0, 1, 2, 3
-                if (secondary) matrices.translate(0, SPACING, 0);
-                this.blit(matrices, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
-                if (secondary) matrices.translate(0, -SPACING, 0);
-                secondary = !secondary;
-            }
+        boolean secondary = false;
+        RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
+        for (Tab tab : Tab.values()) { // 0, 1, 2, 3
+            if (secondary) matrices.translate(0, SPACING, 0);
+            this.blit(matrices, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
+            if (secondary) matrices.translate(0, -SPACING, 0);
+            secondary = !secondary;
+        }
+        matrices.pushPose();
+        matrices.translate(this.leftPos, this.topPos, 0);
+
+        if (Tab.REDSTONE.isOpen()) {
             matrices.pushPose();
-            matrices.translate(this.leftPos, this.topPos, 0);
+            matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
+            this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.IGNORE);
+            this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.LOW);
+            this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.HIGH);
+            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
+            this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
+            this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
+            this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
-            if (Tab.REDSTONE.isOpen()) {
-                matrices.pushPose();
-                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
-                this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, machine.getRedstoneActivation() == RedstoneActivation.IGNORE);
-                this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, machine.getRedstoneActivation() == RedstoneActivation.LOW);
-                this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, machine.getRedstoneActivation() == RedstoneActivation.HIGH);
-                this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
-                this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
-                this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
-                this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
+                    .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
+                    menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
+                            this.menu.configuration.getStatus() != MachineStatuses.OFF ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
+                                    : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
+                    .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
-                        machine.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                                !machine.isDisabled(this.level) ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
-                                        : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
-                        .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
-
-                matrices.popPose();
-            }
-            if (Tab.CONFIGURATION.isOpen()) {
-                matrices.pushPose();
-                matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
-                this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.CONFIGURATION)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-
-                RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-                this.drawMachineFace(matrices, TOP_FACE_X, TOP_FACE_Y, machine, BlockFace.TOP);
-                this.drawMachineFace(matrices, LEFT_FACE_X, LEFT_FACE_Y, machine, BlockFace.LEFT);
-                this.drawMachineFace(matrices, FRONT_FACE_X, FRONT_FACE_Y, machine, BlockFace.FRONT);
-                this.drawMachineFace(matrices, RIGHT_FACE_X, RIGHT_FACE_Y, machine, BlockFace.RIGHT);
-                this.drawMachineFace(matrices, BACK_FACE_X, BACK_FACE_Y, machine, BlockFace.BACK);
-                this.drawMachineFace(matrices, BOTTOM_FACE_X, BOTTOM_FACE_Y, machine, BlockFace.BOTTOM);
-                matrices.popPose();
-            }
-            if (Tab.STATS.isOpen()) {
-                matrices.pushPose();
-                matrices.translate(this.imageWidth, SPACING, 0);
-                this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
-                RenderSystem.setShaderTexture(0, this.ownerSkin);
-                blit(matrices, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.STATISTICS)
-                        .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                List<FormattedCharSequence> text = this.font.split(Component.translatable((machine.getBlockState() != null ? machine.getBlockState()
-                        : this.machine.getBlockState()).getBlock().getDescriptionId()), 64);
-                int offsetY = 0;
-                for (FormattedCharSequence orderedText : text) {
-                    this.font.draw(matrices, orderedText, 40, 22 + offsetY, 0xFFFFFFFF);
-                    offsetY += this.font.lineHeight + 2;
-                }
-//                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.gjt", "N/A")
-//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
-                //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.todo", "N/A")
-//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
-                matrices.popPose();
-            }
-
-            if (Tab.SECURITY.isOpen()) {
-                matrices.pushPose();
-                matrices.translate(this.imageWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
-                RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-                this.blit(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-
-                this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !machine.getSecurity().isOwner(this.menu.player));
-                this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, machine.getSecurity().getAccessLevel() == AccessLevel.TEAM || !machine.getSecurity().isOwner(this.menu.player));
-                this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, machine.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !machine.getSecurity().isOwner(this.menu.player));
-                this.blit(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-                this.blit(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-                this.blit(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.SECURITY)
-                        .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-                this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.ACCESS_LEVEL,
-                        machine.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
-//                assert machine.getSecurity().getOwner() != null;
-//                this.textRenderer.drawWithShadow(matrices, Text.translatable("ui.galacticraft.machine.security.owned_by", machine.getSecurity().getOwner().getName())
-//                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
-
-                matrices.popPose();
-            }
             matrices.popPose();
         }
+        if (Tab.CONFIGURATION.isOpen()) {
+            matrices.pushPose();
+            matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.CONFIGURATION)
+                    .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+
+            RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
+            this.drawMachineFace(matrices, TOP_FACE_X, TOP_FACE_Y, this.menu.machine, BlockFace.TOP);
+            this.drawMachineFace(matrices, LEFT_FACE_X, LEFT_FACE_Y, this.menu.machine, BlockFace.LEFT);
+            this.drawMachineFace(matrices, FRONT_FACE_X, FRONT_FACE_Y, this.menu.machine, BlockFace.FRONT);
+            this.drawMachineFace(matrices, RIGHT_FACE_X, RIGHT_FACE_Y, this.menu.machine, BlockFace.RIGHT);
+            this.drawMachineFace(matrices, BACK_FACE_X, BACK_FACE_Y, this.menu.machine, BlockFace.BACK);
+            this.drawMachineFace(matrices, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.menu.machine, BlockFace.BOTTOM);
+            matrices.popPose();
+        }
+        if (Tab.STATS.isOpen()) {
+            matrices.pushPose();
+            matrices.translate(this.imageWidth, SPACING, 0);
+            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
+            RenderSystem.setShaderTexture(0, this.ownerSkin);
+            blit(matrices, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.STATISTICS)
+                    .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+            List<FormattedCharSequence> text = this.font.split(this.menu.type.getBlock().getName(), 64);
+            int offsetY = 0;
+            for (FormattedCharSequence orderedText : text) {
+                this.font.draw(matrices, orderedText, 40, 22 + offsetY, 0xFFFFFFFF);
+                offsetY += this.font.lineHeight + 2;
+            }
+//                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.gjt", "N/A")
+//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
+            //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.todo", "N/A")
+//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
+            matrices.popPose();
+        }
+
+        if (Tab.SECURITY.isOpen()) {
+            matrices.pushPose();
+            matrices.translate(this.imageWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
+            this.blit(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+
+            this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.TEAM || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            this.blit(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            this.blit(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            this.blit(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.SECURITY)
+                    .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.ACCESS_LEVEL,
+                    this.menu.configuration.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
+//                assert this.menu.configuration.getSecurity().getOwner() != null;
+//                this.textRenderer.drawWithShadow(matrices, Text.translatable("ui.galacticraft.machine.security.owned_by", this.menu.configuration.getSecurity().getOwner().getName())
+//                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
+
+            matrices.popPose();
+        }
+        matrices.popPose();
     }
 
     /**
@@ -390,7 +372,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @param face     the face to draw
      */
     private void drawMachineFace(@NotNull PoseStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
-        MachineIOFace machineFace = machine.getIOConfig().get(face);
+        MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
         blit(matrices, x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
     }
 
@@ -404,7 +386,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     private void renderItemIcon(@NotNull PoseStack matrices, int x, int y, @NotNull ItemStack stack) {
         assert this.minecraft != null;
-        BakedModel model = this.itemRenderer.getModel(stack, this.level, this.menu.player, 8910823);
+        BakedModel model = this.itemRenderer.getModel(stack, null, this.menu.player, 8910823);
         matrices.pushPose();
         this.minecraft.getTextureManager().getTexture(InventoryMenu.BLOCK_ATLAS).setFilter(false, false);
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
@@ -461,10 +443,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     public boolean checkConfigurationPanelClick(double mouseX, double mouseY, int button) {
         assert this.minecraft != null;
-        assert this.machine != null;
 
         final double mX = mouseX, mY = mouseY;
-        final MachineBlockEntity machine = this.machine;
         mouseX = mX - this.leftPos;
         mouseY = mY - this.topPos;
         if (Tab.REDSTONE.isOpen()) {
@@ -569,7 +549,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 return true;
             }
 
-            if (machine.getSecurity().isOwner(this.menu.player)) {
+            if (this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.setAccessibility(AccessLevel.PRIVATE);
                     this.playButtonSound();
@@ -605,7 +585,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @param accessLevel The accessibility to set.
      */
     protected void setAccessibility(@NotNull AccessLevel accessLevel) {
-        this.machine.getSecurity().setAccessLevel(accessLevel);
+        this.menu.configuration.getSecurity().setAccessLevel(accessLevel);
         ClientPlayNetworking.send(Constant.id("security_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
     }
 
@@ -615,7 +595,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @param redstone The redstone mode to set.
      */
     protected void setRedstone(@NotNull RedstoneActivation redstone) {
-        this.machine.setRedstone(redstone);
+        this.menu.configuration.setRedstoneActivation(redstone);
         ClientPlayNetworking.send(Constant.id("redstone_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
     }
 
@@ -627,7 +607,6 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @param mouseY   The mouse's y-position.
      */
     protected void drawConfigurationPanelTooltips(PoseStack matrices, int mouseX, int mouseY) {
-        final MachineBlockEntity machine = this.machine;
         final int mX = mouseX, mY = mouseY;
         mouseX = mX - this.leftPos;
         mouseY = mY - this.topPos;
@@ -689,10 +668,10 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         mouseX -= this.imageWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            if (machine.getSecurity().getUsername() != null) {
+            if (this.menu.configuration.getSecurity().getUsername() != null) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
-                    assert machine.getSecurity().getOwner() != null;
-                    this.renderTooltip(matrices, Component.literal(machine.getSecurity().getUsername()), mX, mY);
+                    assert this.menu.configuration.getSecurity().getOwner() != null;
+                    this.renderTooltip(matrices, Component.literal(this.menu.configuration.getSecurity().getUsername()), mX, mY);
                 }
             }
         } else {
@@ -706,7 +685,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             mouseX -= this.imageWidth;
             mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
 
-            if (machine.getSecurity().isOwner(this.menu.player)) {
+            if (this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
                     this.renderTooltip(matrices, AccessLevel.PRIVATE.getName(), mX, mY);
                 }
@@ -746,15 +725,14 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected void renderFaceTooltip(PoseStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
-        MachineIOFace configuredFace = this.machine.getIOConfig().get(face);
+        MachineIOFace configuredFace = this.menu.configuration.getIOConfiguration().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
         if (configuredFace.getSelection() != null) {
+            TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.GROUP, configuredFace.getSelection().getGroup().name()).setStyle(Constant.Text.GRAY_STYLE));
             if (configuredFace.getSelection().isSlot()) {
-                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.MATCHES, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
-            } else {
-                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.MATCHES, configuredFace.getSelection().getGroup().name()).setStyle(Constant.Text.GRAY_STYLE));
+                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.SLOT, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
             }
         }
         this.renderComponentTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
@@ -765,7 +743,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     @Override
     public final void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
-        if (this.machine == null || !this.machine.getSecurity().hasAccess(menu.player)) {
+        if (!this.hasAccess()) {
             this.onClose();
             return;
         }
@@ -812,22 +790,24 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @param delta    The delta time
      */
     protected void drawCapacitor(PoseStack matrices, int mouseX, int mouseY, float delta) {
-        if (this.machine.energyStorage().getCapacity() > 0) {
+        long capacity = this.menu.energyStorage.getCapacity();
+        if (capacity > 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
             DrawableUtil.drawProgressTexture(matrices, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
-            float scale = (float) ((double) this.machine.energyStorage().getAmount() / (double) this.machine.energyStorage().getCapacity());
+            long amount = this.menu.energyStorage.getAmount();
+            float scale = (float) ((double) amount / (double) capacity);
             DrawableUtil.drawProgressTexture(matrices, this.leftPos + this.capacitorX, (this.topPos + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
-                MachineStatus status = this.machine.getStatus();
+                MachineStatus status = this.menu.configuration.getStatus();
                 if (status != MachineStatus.INVALID) {
                     lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.name()));
                 }
-                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getAmount()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-                lines.add(Component.translatable(Constant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(this.machine.energyStorage().getCapacity()).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(amount).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+                lines.add(Component.translatable(Constant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(capacity).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
                 this.appendEnergyTooltip(lines);
 
                 assert this.minecraft != null;
@@ -865,7 +845,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
             if (tank.getAmount() > 0) {
-                FluidVariant resource = tank.getResource();
+                FluidVariant resource = tank.getVariant();
                 boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
                 TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
                 int fluidColor = FluidVariantRendering.getColor(resource);
@@ -907,42 +887,51 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     @ApiStatus.Internal
     private void handleSlotHighlight(PoseStack matrices, int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX -= Constant.TextureCoordinate.PANEL_WIDTH + this.leftPos;
-            mouseY -= this.topPos + Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
+            mouseX -= (this.leftPos - Constant.TextureCoordinate.PANEL_WIDTH);
+            mouseY -= (this.topPos + (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING));
             MachineIOFace config = null;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.TOP);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.TOP);
             } else if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.LEFT);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.LEFT);
             } else if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.FRONT);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.FRONT);
             } else if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.RIGHT);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.RIGHT);
             } else if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.BACK);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.BACK);
             } else if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                config = this.machine.getIOConfig().get(BlockFace.BOTTOM);
+                config = this.menu.configuration.getIOConfiguration().get(BlockFace.BOTTOM);
             }
             if (config != null && config.getType().willAcceptResource(ResourceType.ITEM)) {
                 if (config.getSelection() != null) {
                     if (config.getSelection().isSlot()) {
                         assert config.getType() == ResourceType.ITEM;
-                        AutomatableSlot slot = this.menu.machineSlots[config.getSelection().getSlot()];
-                        int color = slot.getSlot().getGroup().getType().color().getValue();
-                        this.drawSlotOutline(matrices, slot.x, slot.y, color);
-                        this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                        ItemSlotDisplay slot = this.menu.itemStorage.getGroup(config.getSelection().getGroup()).getSlot(config.getSelection().getSlot()).getDisplay();
+                        int color = config.getSelection().getGroup().color().getValue();
+                        this.drawSlotOutline(matrices, slot.x(), slot.y(), color);
+                        this.drawSlotOverlay(matrices, slot.x(), slot.y(), color);
                     } else {
                         SlotGroupType group = config.getSelection().getGroup();
                         int color = group.color().getValue();
-                        for (AutomatableSlot slot : this.menu.slotMap.get(group)) {
-                            this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                        for (AutomatableSlot slot : this.menu.machineSlots) {
+                            SlotGroupType type = slot.getSlot().getGroup().getType();
+                            if (type == group) {
+                                if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
+                                    this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                                    this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                                }
+                            }
                         }
                     }
                 } else {
                     for (AutomatableSlot slot : this.menu.machineSlots) {
-                        int color = slot.getSlot().getGroup().getType().color().getValue();
-                        this.drawSlotOutline(matrices, slot.x, slot.y, color);
-                        this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                        SlotGroupType type = slot.getSlot().getGroup().getType();
+                        if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
+                            int color = type.color().getValue();
+                            this.drawSlotOutline(matrices, slot.x, slot.y, color);
+                            this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                        }
                     }
                 }
             }
@@ -1007,7 +996,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (hasAccess()) {
             boolean tankMod = false;
             if (this.focusedTank != null && button == 0) {
-                tankMod = this.focusedTank.acceptStack(ContainerItemContext.ofPlayerCursor(this.menu.player, this.menu));
+                tankMod = this.focusedTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
                 if (tankMod) {
                     FriendlyByteBuf packetByteBuf = PacketByteBufs.create().writeVarInt(this.menu.containerId);
                     packetByteBuf.writeInt(this.focusedTank.getId());
@@ -1034,10 +1023,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * @return whether the player has access to the machine
      */
     public boolean hasAccess() {
-        if (this.machine != null) {
-            return this.machine.getSecurity().hasAccess(this.menu.player);
-        }
-        return false;
+        return this.menu.configuration.getSecurity().hasAccess(this.menu.playerUUID);
     }
 
     /**
@@ -1098,8 +1084,16 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         this.playButtonSound();
     }
 
+    private @Nullable ResourceStorage<?, ?, ?, ?> getResourceStorage(@NotNull ResourceType type) {
+        return switch (type) {
+            case ITEM -> this.menu.itemStorage;
+            case FLUID -> this.menu.fluidStorage;
+            default -> null;
+        };
+    }
+
     private void cycleFace(BlockFace face, boolean reverse, boolean reset) {
-        MachineIOFace option = this.machine.getIOConfig().get(face);
+        MachineIOFace option = this.menu.configuration.getIOConfiguration().get(face);
         if (reset) {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
             option.setSelection(null);
@@ -1115,7 +1109,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         // Format: NONE, any [any][out][in], fluid [any][out][in], item [any][out][in], energy [any][out][in]
         short bits = 0b0_000_000_000_000;
 
-        for (SlotGroupType groupType : this.machine.fluidStorage().getTypes()) {
+        for (SlotGroupType groupType : this.menu.fluidStorage.getTypes()) {
             InputType inputType = groupType.inputType();
             if (inputType.externalInsertion()) bits |= 0b001;
             if (inputType.externalExtraction()) bits |= 0b010;
@@ -1124,7 +1118,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if ((bits & 0b011) == 0b011) bits |= 0b100;
         bits <<= 3;
 
-        for (SlotGroupType groupType : this.machine.itemStorage().getTypes()) {
+        for (SlotGroupType groupType : this.menu.itemStorage.getTypes()) {
             InputType inputType = groupType.inputType();
             if (inputType.externalInsertion()) bits |= 0b001;
             if (inputType.externalExtraction()) bits |= 0b010;
@@ -1133,8 +1127,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if ((bits & 0b011) == 0b011) bits |= 0b100;
         bits <<= 3;
 
-        if (this.machine.energyStorage().canExposedInsert()) bits |= 0b001;
-        if (this.machine.energyStorage().canExposedExtract()) bits |= 0b010;
+        if (this.menu.energyStorage.canExposedInsert()) bits |= 0b001;
+        if (this.menu.energyStorage.canExposedExtract()) bits |= 0b010;
         if ((bits & 0b011) == 0b011) bits |= 0b100;
 
         if (Integer.bitCount(bits & 0b000_001_001_001) > 1) {
@@ -1153,51 +1147,49 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             ResourceType type = option.getType();
             ResourceFlow flow = option.getFlow();
             int index = switch (type) {
-                case NONE -> 13;
+                case NONE -> 12;
                 case ENERGY, ITEM, FLUID, ANY -> (type.ordinal() - 1) * 3 + flow.ordinal();
             };
-            if (type == ResourceType.NONE) {
-                int i = index + (reverse ? -1 : 1);
-                while (i != index) {
-                    if (i == -1) {
-                        i = 13;
-                    } else if (i == 14) {
-                        i = 0;
-                    }
+            int i = index + (reverse ? -1 : 1);
+            while (i != index) {
+                if (i == -1) {
+                    i = 12;
+                } else if (i == 13) {
+                    i = 0;
+                }
 
-                    if ((bits >>> i & 0b1) != 0) {
-                        break;
-                    }
-                    if (reverse) {
-                        i--;
-                    } else {
-                        i++;
-                    }
+                if ((bits >>> i & 0b1) != 0) {
+                    break;
                 }
-                if (i == 13) {
-                    option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-                    option.setSelection(null);
-                    ClientPlayNetworking.send(Constant.id("reset_face"),
-                            new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                                    .writeByte(face.ordinal())
-                                    .writeBoolean(true)
-                            )
-                    );
+                if (reverse) {
+                    i--;
                 } else {
-                    byte iflow = (byte) (i % 3);
-                    byte itype = (byte) ((i - iflow) / 3);
-                    type = ResourceType.getFromOrdinal(itype);
-                    flow = ResourceFlow.getFromOrdinal(iflow);
-                    option.setOption(type, flow);
-                    option.setSelection(null);
-                    ClientPlayNetworking.send(Constant.id("face_type"),
-                            new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
-                                    .writeByte(face.ordinal())
-                                    .writeByte(itype)
-                                    .writeByte(iflow)
-                            )
-                    );
+                    i++;
                 }
+            }
+            if (i == 12) {
+                option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+                option.setSelection(null);
+                ClientPlayNetworking.send(Constant.id("reset_face"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
+                                .writeByte(face.ordinal())
+                                .writeBoolean(true)
+                        )
+                );
+            } else {
+                byte iflow = (byte) (i % 3);
+                byte itype = (byte) ((i - iflow) / 3 + 1);
+                type = ResourceType.getFromOrdinal(itype);
+                flow = ResourceFlow.getFromOrdinal(iflow);
+                option.setOption(type, flow);
+                option.setSelection(null);
+                ClientPlayNetworking.send(Constant.id("face_type"),
+                        new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
+                                .writeByte(face.ordinal())
+                                .writeByte(itype)
+                                .writeByte(iflow)
+                        )
+                );
             }
         } else {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
@@ -1212,7 +1204,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     }
 
     private void cycleGroup(BlockFace face, boolean back, boolean reset) {
-        MachineIOFace sideOption = this.machine.getIOConfig().get(face);
+        MachineIOFace sideOption = this.menu.configuration.getIOConfiguration().get(face);
         if (!sideOption.getType().matchesGroups()) return;
         if (reset) {
             sideOption.setSelection(null);
@@ -1225,7 +1217,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             return;
         }
 
-        List<SlotGroupType> groups = sideOption.getFlowMatchingGroups(this.machine);
+        List<SlotGroupType> groups = sideOption.getFlowMatchingGroups(this.menu.machine);
         if (groups == null) return;
 
         int index;
@@ -1267,7 +1259,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     }
 
     private void cycleSlot(BlockFace face, boolean back, boolean reset) {
-        MachineIOFace sideOption = machine.getIOConfig().get(face);
+        MachineIOFace sideOption = menu.configuration.getIOConfiguration().get(face);
         if (!sideOption.getType().matchesSlots()) return;
         if (reset) {
             sideOption.setSelection(null);
@@ -1284,7 +1276,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (selection == null) return;
 
         SlotGroupType type = selection.getGroup();
-        ResourceStorage<?, ?, ?, ?> storage = this.machine.getResourceStorage(sideOption.getType());
+        ResourceStorage<?, ?, ?, ?> storage = this.getResourceStorage(sideOption.getType());
         assert storage != null;
         SlotGroup<?, ?, ?> group = storage.getGroup(type);
         int index = selection.isSlot() ? selection.getSlot() : group.size();

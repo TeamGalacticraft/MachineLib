@@ -24,7 +24,9 @@ package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.SecuritySettings;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.menu.sync.SecuritySettingsSyncHandler;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -150,8 +152,12 @@ public final class SecuritySettingsImpl implements SecuritySettings {
      * @param player The player to set.
      */
     @Override
-    public void setOwner(@NotNull Player player) { //todo: teams
-        this.setOwner(player.getUUID(), player.getGameProfile().getName());
+    public void setOwner(@Nullable Player player) { //todo: teams
+        if (player == null) {
+            this.setOwner(null, null);
+        } else {
+            this.setOwner(player.getUUID(), player.getGameProfile().getName());
+        }
     }
 
     /**
@@ -161,11 +167,9 @@ public final class SecuritySettingsImpl implements SecuritySettings {
      * @param name The name of the player
      */
     @Override
-    public void setOwner(@NotNull UUID uuid, String name) {
-        if (this.getOwner() == null) {
-            this.owner = uuid;
+    public void setOwner(@Nullable UUID uuid, String name) {
+        this.owner = uuid;
 //            if (teams.getTeam(uuid) != null) this.team = teams.getTeam(uuid).id;  //todo: teams
-        }
     }
 
     /**
@@ -185,6 +189,11 @@ public final class SecuritySettingsImpl implements SecuritySettings {
         this.teamName = name;
     }
 
+    @Override
+    public void setUsername(@Nullable String username) {
+        this.username = username;
+    }
+
     /**
      * Sends the security settings to the client.
      *
@@ -192,6 +201,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
      * @param player The player to send the settings to.
      */
     @Override
+    @Deprecated(forRemoval = true)
     public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
         assert this.owner != null;
         FriendlyByteBuf buf = PacketByteBufs.create();
@@ -293,5 +303,10 @@ public final class SecuritySettingsImpl implements SecuritySettings {
             if ((bits & 0b0100) != 0) this.team = buf.readResourceLocation();
             if ((bits & 0b1000) != 0) this.teamName = buf.readUtf();
         }
+    }
+
+    @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return new SecuritySettingsSyncHandler(this);
     }
 }

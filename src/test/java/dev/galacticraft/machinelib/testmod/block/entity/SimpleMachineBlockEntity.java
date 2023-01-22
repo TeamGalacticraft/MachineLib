@@ -25,20 +25,21 @@ package dev.galacticraft.machinelib.testmod.block.entity;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
+import dev.galacticraft.machinelib.api.machine.MachineType;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
-import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
-import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
-import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
-import dev.galacticraft.machinelib.testmod.TestMod;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
+import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
+import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
@@ -48,69 +49,67 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     private int ticks = -1;
 
     public SimpleMachineBlockEntity(@NotNull BlockPos pos, BlockState state) {
-        super(TestMod.SIMPLE_MACHINE_BE_TYPE, pos, state);
-    }
-
-    @Override
-    protected @NotNull MachineItemStorage createItemStorage() {
-        return MachineItemStorage.create()
-                .addSlot(TestMod.CHARGE_SLOT, TestMod.ANY_ITEM, true, ItemSlotDisplay.create(32, 32))
-                .addSlot(TestMod.NO_DIAMOND_SLOT, TestMod.NO_DIAMONDS, true, ItemSlotDisplay.create(64, 64))
-                .build();
-    }
-
-    @Override
-    protected @NotNull MachineFluidStorage createFluidStorage() {
-        return MachineFluidStorage.create()
-                .addTank(TestMod.ANY_FLUID_SLOT, FluidConstants.BUCKET, TestMod.ANY_FLUID, true, TankDisplay.create(12, 8), false)
-                .build();
-    }
-
-    @Override
-    public boolean canExposedInsertEnergy() {
-        return true;
-    }
-
-    @Override
-    public long getEnergyCapacity() {
-        return 50_000;
+        super(TestModMachineTypes.SIMPLE_MACHINE, pos, state);
     }
 
     @Override
     protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(world, pos, state, profiler);
-        this.attemptChargeFromStack(0);
+        profiler.push("charge_stack");
+        this.attemptChargeFromStack(SlotGroupTypes.CHARGE, 0);
+        profiler.pop();
     }
 
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
-        return SimpleMachineMenu.create(syncId, player, this, TestMod.SIMPLE_MACHINE_SH_TYPE);
+        return new SimpleMachineMenu<>(syncId, ((ServerPlayer) player), this, (MachineType<MachineBlockEntity, ? extends MachineMenu<MachineBlockEntity>>) this.getMachineType());
     }
 
     @Override
     protected @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
-        if (ticks > 0 && world.getBlockState(pos.above()).isAir()) {
-            ticks--;
-            profiler.push("transaction");
-            try (Transaction transaction = Transaction.openOuter()) {
-                if (this.energyStorage().extract(100, transaction) == 100) {
-                    transaction.commit();
-                    if (ticks == 0) {
-                        world.setBlockAndUpdate(pos.above(), Blocks.DRIED_KELP_BLOCK.defaultBlockState());
+        if (this.ticks > 0) {
+            this.ticks--;
+            profiler.push("check");
+            if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
+                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsertOne(Items.DIAMOND)) {
+                    profiler.popPush("transaction");
+                    try (Transaction transaction = Transaction.openOuter()) {
+                        if (this.energyStorage().extract(150, transaction) == 150) {
+                            transaction.commit();
+                            if (this.ticks == 0) {
+                                world.setBlockAndUpdate(pos.above(), Blocks.DRIED_KELP_BLOCK.defaultBlockState());
+                            }
+                            return MachineStatuses.ACTIVE;
+                        } else {
+                            this.ticks = -1;
+                            return MachineStatuses.NOT_ENOUGH_ENERGY;
+                        }
+                    } finally {
+                        profiler.pop();
                     }
-                    return TestMod.WORKING;
                 } else {
-                    ticks = -1;
-                    return MachineStatuses.NOT_ENOUGH_ENERGY;
+                    profiler.pop();
+                    this.ticks = -1;
+                    return MachineStatuses.OUTPUT_FULL;
                 }
-            } finally {
+            } else {
                 profiler.pop();
+                this.ticks = -1;
+                return MachineStatuses.INVALID_RECIPE;
             }
         } else {
-            if (!this.energyStorage().isEmpty() && world.getBlockState(pos.above()).isAir()) {
-                ticks = 20 * 20;
-                return TestMod.WORKING;
+            if (this.energyStorage().getAmount() > 150) {
+                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
+                    if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsertOne(Items.DIAMOND)) {
+                        this.ticks = 5 * 20;
+                        return MachineStatuses.ACTIVE;
+                    } else {
+                        return MachineStatuses.OUTPUT_FULL;
+                    }
+                } else {
+                    return MachineStatuses.INVALID_RECIPE;
+                }
             } else {
                 return MachineStatuses.NOT_ENOUGH_ENERGY;
             }

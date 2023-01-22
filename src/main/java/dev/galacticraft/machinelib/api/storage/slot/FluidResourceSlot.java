@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.storage.slot;
 
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.FluidResourceSlotImpl;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
@@ -31,8 +32,15 @@ import org.jetbrains.annotations.NotNull;
 
 public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
     @Contract("_, _, _ -> new")
-    static @NotNull FluidResourceSlot create(@NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter, int capacity) {
-        if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
-        return new FluidResourceSlotImpl(filter, externalFilter, capacity);
+    static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
+        return create(display, capacity, filter, filter);
     }
+
+    @Contract("_, _, _, _ -> new")
+    static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
+        if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
+        return new FluidResourceSlotImpl(display, capacity, filter, externalFilter);
+    }
+
+    @NotNull TankDisplay getDisplay();
 }

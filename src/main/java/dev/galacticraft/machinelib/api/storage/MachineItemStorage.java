@@ -32,13 +32,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, ItemResourceSlot, SlotGroup<Item, ItemStack, ItemResourceSlot>> {
+public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, ItemResourceSlot, SlotGroup<Item, ItemStack, ItemResourceSlot>>, MenuSynchronizable {
     @Contract(value = " -> new", pure = true)
-    static @NotNull Builder create() {
+    static @NotNull Builder builder() {
         return new Builder();
     }
 
@@ -55,7 +56,8 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, Ite
         private Builder() {
         }
 
-        public @NotNull Builder addGroup(SlotGroup<Item, ItemStack, ItemResourceSlot> group) {
+        public @NotNull Builder addGroup(@Nullable SlotGroup<Item, ItemStack, ItemResourceSlot> group) {
+            if (group == null || group.size() == 0) return this;
             for (SlotGroup<Item, ItemStack, ItemResourceSlot> group1 : this.groups) {
                 if (group1.getType() == group.getType()) {
                     throw new UnsupportedOperationException("duplicate group");

@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.slot.CraftingSlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.ContainerSlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.MachineLib;
@@ -31,8 +31,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class CraftingSlotGroupImpl<Slot extends ResourceSlot<Item, ItemStack>> extends SlotGroupImpl<Item, ItemStack, Slot> implements CraftingSlotGroup<Slot> {
-    public CraftingSlotGroupImpl(@NotNull SlotGroupType type, @NotNull Slot @NotNull [] slots) {
+public class ContainerSlotGroupImpl<Slot extends ResourceSlot<Item, ItemStack>> extends SlotGroupImpl<Item, ItemStack, Slot> implements ContainerSlotGroup<Slot> {
+    public ContainerSlotGroupImpl(@NotNull SlotGroupType type, @NotNull Slot @NotNull [] slots) {
         super(type, slots);
     }
 

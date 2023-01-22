@@ -56,6 +56,11 @@ public final class MachineStatuses {
      * The machine is running.
      */
     public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(Constant.id("active"), Component.translatable(Constant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)), MachineStatus.Type.WORKING);
+    /**
+     * Disabled by redstone
+     */
+    public static final MachineStatus OFF = MachineStatus.createAndRegister(Constant.id("off"), Component.translatable(Constant.TranslationKey.STATUS_OFF).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.OTHER);
+
     @Contract(value = " -> fail", pure = true)
     private MachineStatuses() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -65,6 +70,6 @@ public final class MachineStatuses {
      * Utility method to initialize the class
      */
     @Contract(pure = true)
-    public static void init() {
+    public static void initialize() {
     }
 }

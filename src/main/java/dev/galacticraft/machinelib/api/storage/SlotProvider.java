@@ -24,6 +24,6 @@ package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 
-public interface SlotProvider<Resource, Stack> {
-    ResourceSlot<Resource, Stack>[] getSlots();
+public interface SlotProvider<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> {
+    Slot[] getSlots();
 }

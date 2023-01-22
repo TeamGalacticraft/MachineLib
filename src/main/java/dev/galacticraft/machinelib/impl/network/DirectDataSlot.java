@@ -27,7 +27,7 @@ import net.minecraft.world.inventory.DataSlot;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
-public final class DirectDataSlot extends DataSlot { //todo: look into sync to SH rather than BE
+public final class DirectDataSlot extends DataSlot {
     private final IntSupplier getter;
     private final IntConsumer setter;
 

@@ -23,12 +23,13 @@
 package dev.galacticraft.machinelib.testmod;
 
 import dev.galacticraft.machinelib.testmod.client.screen.SimpleMachineScreen;
+import dev.galacticraft.machinelib.testmod.menu.TestModMenuTypes;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.gui.screens.MenuScreens;
 
 public class TestModClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        MenuScreens.register(TestMod.SIMPLE_MACHINE_SH_TYPE, SimpleMachineScreen::new);
+        MenuScreens.register(TestModMenuTypes.SIMPLE_MACHINE, SimpleMachineScreen::new);
     }
 }

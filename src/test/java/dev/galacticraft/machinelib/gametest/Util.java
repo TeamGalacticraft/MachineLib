@@ -22,7 +22,9 @@
 
 package dev.galacticraft.machinelib.gametest;
 
+import dev.galacticraft.machinelib.impl.Utils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,5 +37,9 @@ public final class Util {
         nbt.putUUID("id", UUID.randomUUID());
         nbt.putLong("timestamp", System.currentTimeMillis());
         return nbt;
+    }
+
+    public static boolean stacksEqual(@NotNull ItemStack a, @NotNull ItemStack b) {
+        return (a.isEmpty() && b.isEmpty()) || (!b.isEmpty() && a.getItem() == b.getItem() && a.getCount() == b.getCount() && Utils.tagsEqual(a.getTag(), b.getTag()));
     }
 }

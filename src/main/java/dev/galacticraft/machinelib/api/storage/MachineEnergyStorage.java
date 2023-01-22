@@ -43,11 +43,18 @@ import team.reborn.energy.api.EnergyStorage;
  * @see ExposedEnergyStorage
  * @see team.reborn.energy.api.EnergyStorage
  */
-public interface MachineEnergyStorage extends EnergyStorage, Deserializable<LongTag> {
-    @Contract("_, _, _, _, _ -> new")
+public interface MachineEnergyStorage extends EnergyStorage, Deserializable<LongTag>, MenuSynchronizable {
+
+    @Contract(pure = true)
+    static @NotNull MachineEnergyStorage empty() {
+        return EmptyMachineEnergyStorage.INSTANCE;
+    }
+
+    @Contract(pure = true)
     static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean insert, boolean extract) {
+        if (energyCapacity == 0) return empty();
+
         StoragePreconditions.notNegative(energyCapacity);
-        if (energyCapacity == 0) return EmptyMachineEnergyStorage.INSTANCE;
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, insert, extract);
     }
 
@@ -134,4 +141,6 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
     boolean canExposedInsert();
 
     boolean canExposedExtract();
+
+    void setListener(Runnable listener);
 }

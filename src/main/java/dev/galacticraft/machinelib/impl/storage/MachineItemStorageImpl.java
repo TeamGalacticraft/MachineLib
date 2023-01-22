@@ -23,17 +23,20 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,8 +46,10 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     private final SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups;
     private final SlotGroupType[] types;
     private final Map<SlotGroupType, SlotGroup<Item, ItemStack, ItemResourceSlot>> typeToGroup;
-    private final ResourceSlot<Item, ItemStack>[] clumpedSlots;
+    private final ItemResourceSlot[] clumpedSlots;
     private long modifications = 0;
+    private Runnable listener;
+    private TransactionContext cachedTransaction;
 
     public MachineItemStorageImpl(SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
         this.groups = groups;
@@ -53,14 +58,15 @@ public class MachineItemStorageImpl implements MachineItemStorage {
         int slots = 0;
         for (int i = 0; i < this.groups.length; i++) {
             SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.groups[i];
+            group._setParent(this);
             this.typeToGroup.put(group.getType(), group);
             this.types[i] = group.getType();
             slots += group.getSlots().length;
         }
-        this.clumpedSlots = new ResourceSlot[slots];
+        this.clumpedSlots = new ItemResourceSlot[slots];
         slots = 0;
         for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            for (ResourceSlot<Item, ItemStack> slot : group.getSlots()) {
+            for (ItemResourceSlot slot : group.getSlots()) {
                 this.clumpedSlots[slots++] = slot;
             }
         }
@@ -72,7 +78,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public int size() {
+    public int groups() {
         return this.groups.length;
     }
 
@@ -89,7 +95,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
-    public ResourceSlot<Item, ItemStack>[] getSlots() {
+    public ItemResourceSlot[] getSlots() {
         return this.clumpedSlots;
     }
 
@@ -105,8 +111,38 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public void markModified(@Nullable TransactionContext context) {
+        if (context != null) {
+            this.modifications++;
+            context.addCloseCallback((context1, result) -> {
+                if (result.wasAborted()) {
+                    this.modifications--;
+                } else {
+                    if (this.listener != null) {
+                        TransactionContext outer = context1.nestingDepth() != 0 ? context1.getOpenTransaction(0) : context1;
+                        if (this.cachedTransaction != outer) {
+                            this.cachedTransaction = outer;
+                            context.addOuterCloseCallback((result1) -> {
+                                if (result1.wasCommitted()) this.listener.run();
+                            });
+                        }
+                    }
+                }
+            });
+        } else {
+            this.markModified();
+        }
+    }
+
+    @Override
     public void markModified() {
         this.modifications++;
+        if (this.listener != null) this.listener.run();
+    }
+
+    @Override
+    public void setListener(Runnable listener) {
+        this.listener = listener;
     }
 
     @Override
@@ -142,5 +178,10 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     @Override
     public @NotNull Container getCraftingView(@NotNull SlotGroupType type) {
         return ((Container) this.getGroup(type));
+    }
+
+    @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return new ResourceStorageSyncHandler<>(this);
     }
 }

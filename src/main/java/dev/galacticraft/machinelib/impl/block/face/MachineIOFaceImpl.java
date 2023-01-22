@@ -22,10 +22,10 @@
 
 package dev.galacticraft.machinelib.impl.block.face;
 
-import com.google.common.collect.ImmutableList;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
@@ -37,6 +37,7 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import dev.galacticraft.machinelib.impl.menu.sync.MachineIOFaceSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
@@ -47,10 +48,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -155,13 +158,14 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     public List<SlotGroupType> getFlowMatchingGroups(MachineBlockEntity machine) {
         List<SlotGroupType> groups = this.type.getStorageGroups(machine);
         if (groups == null) return null;
-        for (SlotGroupType type : ImmutableList.copyOf(groups)) { //co-mod
+        List<SlotGroupType> copy = new ArrayList<>(groups);
+        for (SlotGroupType type : groups) { //co-mod
             ResourceFlow flow = type.inputType().getExternalFlow();
             if (flow == null || !this.flow.canFlowIn(flow)) {
-                groups.remove(type);
+                copy.remove(type);
             }
         }
-        return groups;
+        return copy;
     }
 
     @Override
@@ -228,5 +232,11 @@ public final class MachineIOFaceImpl implements MachineIOFace {
         this.cachedItemStorage = null;
         this.cachedFluidStorage = null;
         this.cachedEnergyStorage = null;
+    }
+
+    @Contract(" -> new")
+    @Override
+    public @NotNull MenuSyncHandler createSyncHandler() {
+        return new MachineIOFaceSyncHandler(this);
     }
 }

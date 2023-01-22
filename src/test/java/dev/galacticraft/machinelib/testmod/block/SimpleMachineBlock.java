@@ -28,13 +28,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
 
 public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
     public SimpleMachineBlock(Block.Properties settings) {
@@ -47,23 +45,17 @@ public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
     }
 
     @Override
-    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (placer != null) {
-            placer.push(0, 1, 0);
-        }
-    }
-
-    @Override
     public Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced) {
-        return Component.empty();
+        return Component.translatable("machinelib-test.simple_machine.desc");
     }
 
     @Override
     public void animateTick(BlockState blockState, Level level, BlockPos blockPos, RandomSource randomSource) {
-        double d = blockPos.getX() + 0.4 + randomSource.nextFloat() * 0.2;
-        double e = blockPos.getY() + 0.7 + randomSource.nextFloat() * 0.3;
-        double f = blockPos.getZ() + 0.4 + randomSource.nextFloat() * 0.2;
-        level.addParticle(ParticleTypes.SMOKE, d, e, f, 0.0, 0.0, 0.0);
+        if (blockState.getValue(ACTIVE)) {
+            double d = blockPos.getX() + 0.4 + randomSource.nextFloat() * 0.2;
+            double e = blockPos.getY() + 0.7 + randomSource.nextFloat() * 0.3;
+            double f = blockPos.getZ() + 0.4 + randomSource.nextFloat() * 0.2;
+            level.addParticle(ParticleTypes.SMOKE, d, e, f, 0.0, 0.0, 0.0);
+        }
     }
 }

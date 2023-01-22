@@ -24,16 +24,20 @@ package dev.galacticraft.machinelib.client.api.screen;
 
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedSlot;
-import dev.galacticraft.machinelib.impl.screen.TankImpl;
+import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.impl.menu.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Somewhat like a {@link net.minecraft.world.inventory.Slot} but for fluids and gases.
@@ -42,10 +46,10 @@ import org.jetbrains.annotations.NotNull;
  * @see ResourceType#FLUID
  */
 public interface Tank {
-    @Contract(value = "_, _, _, _, _ -> new", pure = true)
-    static @NotNull Tank create(@NotNull ExposedSlot<Fluid, FluidVariant> storage, int index, int x, int y, int height) {
-        Preconditions.checkNotNull(storage);
-        return new TankImpl(storage, index, x, y, height);
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull Tank create(@NotNull FluidResourceSlot slot, int index) {
+        Preconditions.checkNotNull(slot);
+        return new TankImpl(slot, index, slot.getDisplay().x(), slot.getDisplay().y(), slot.getDisplay().height());
     }
 
     /**
@@ -53,7 +57,19 @@ public interface Tank {
      *
      * @return The resource that is currently in this tank.
      */
-    @NotNull FluidVariant getResource();
+    @Nullable Fluid getFluid();
+
+    @Nullable CompoundTag getTag();
+
+    @Nullable CompoundTag copyTag();
+
+    long getAmount();
+
+    long getCapacity();
+
+    boolean isEmpty();
+
+    FluidVariant getVariant();
 
     /**
      * Returns the index of this tank in the storage.
@@ -111,9 +127,5 @@ public interface Tank {
     boolean acceptStack(@NotNull ContainerItemContext context);
 
     @ApiStatus.Internal
-    ExposedSlot<Fluid, FluidVariant> getSlot();
-
-    long getAmount();
-
-    long getCapacity();
+    ResourceSlot<Fluid, FluidStack> getSlot();
 }

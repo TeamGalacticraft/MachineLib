@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.storage.slot;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -34,8 +35,16 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 
 public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> implements FluidResourceSlot {
-    public FluidResourceSlotImpl(ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter, long capacity) {
+    private final @NotNull TankDisplay display;
+
+    public FluidResourceSlotImpl(@NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
         super(filter, externalFilter, capacity);
+        this.display = display;
+    }
+
+    @Override
+    public @NotNull TankDisplay getDisplay() {
+        return this.display;
     }
 
     @Override

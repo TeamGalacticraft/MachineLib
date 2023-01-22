@@ -23,8 +23,11 @@
 package dev.galacticraft.machinelib.api.menu;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.machinelib.api.machine.MachineType;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,41 +37,31 @@ import java.util.function.Supplier;
 /**
  * A simple menu for a machine.
  *
- * @param <M> the type of machine block entity
+ * @param <Machine> the type of machine block entity
  */
-public class SimpleMachineMenu<M extends MachineBlockEntity> extends MachineMenu<M> {
-    protected SimpleMachineMenu(int syncId, Player player, M machine, MenuType<? extends MachineMenu<M>> type, int invX, int invY) {
+public class SimpleMachineMenu<Machine extends MachineBlockEntity> extends MachineMenu<Machine> {
+    public SimpleMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(syncId, player, machine, type);
-        this.addPlayerInventorySlots(invX, invY);
+        this.addPlayerInventorySlots(player.getInventory(), 0, 0); // it's the server so we don't care
     }
 
-    @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineMenu<T>> createFactory(Supplier<MenuType<? extends MachineMenu<T>>> handlerType) {
-        return createFactory(handlerType, 8, 84);
+    protected SimpleMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type, int invX, int invY) {
+        super(syncId, inventory, buf, type);
+        this.addPlayerInventorySlots(inventory, invX, invY);
     }
 
-    @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineMenu<T>> createFactory(Supplier<MenuType<? extends MachineMenu<T>>> handlerType, int invY) {
-        return createFactory(handlerType, 8, invY);
+    @Contract(value = "_ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<SimpleMachineMenu<Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends SimpleMachineMenu<Machine>>> selfReference) {
+        return createType(selfReference, 84);
     }
 
-    @Contract(pure = true)
-    public static <T extends MachineBlockEntity> ExtendedScreenHandlerType.@NotNull ExtendedFactory<SimpleMachineMenu<T>> createFactory(Supplier<MenuType<? extends MachineMenu<T>>> handlerType, int invX, int invY) {
-        return (syncId, inventory, buf) -> create(syncId, inventory.player, (T) inventory.player.level.getBlockEntity(buf.readBlockPos()), handlerType.get(), invX, invY);
+    @Contract(value = "_, _ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<SimpleMachineMenu<Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends SimpleMachineMenu<Machine>>> selfReference, int invY) {
+        return createType(selfReference, 8, invY);
     }
 
-    @Contract("_, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineMenu<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineMenu<T>> handlerType) {
-        return new SimpleMachineMenu<>(syncId, playerEntity, machine, handlerType, 8, 84);
-    }
-
-    @Contract("_, _, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineMenu<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineMenu<T>> handlerType, int invY) {
-        return new SimpleMachineMenu<>(syncId, playerEntity, machine, handlerType, 8, invY);
-    }
-
-    @Contract("_, _, _, _, _, _ -> new")
-    public static <T extends MachineBlockEntity> @NotNull SimpleMachineMenu<T> create(int syncId, Player playerEntity, T machine, MenuType<? extends MachineMenu<T>> handlerType, int invX, int invY) {
-        return new SimpleMachineMenu<>(syncId, playerEntity, machine, handlerType, invX, invY);
+    @Contract(value = "_, _, _-> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<SimpleMachineMenu<Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends SimpleMachineMenu<Machine>>> selfReference, int invX, int invY) {
+        return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new SimpleMachineMenu<>(syncId, inventory, buf, selfReference.get(), invX, invY));
     }
 }
