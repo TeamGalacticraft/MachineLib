@@ -28,5 +28,5 @@ jobs:
         env:
           PRE_RELEASE: ${{ env.release.prerelease }}
           BUILD_NUMBER: ${{ github.run_id }}
-          GC_NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
-          GC_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}

@@ -27,5 +27,5 @@ jobs:
           arguments: publishToGalacticMaven
         env:
           PRE_RELEASE: false
-          GC_NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
-          GC_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
