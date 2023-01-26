@@ -43,7 +43,7 @@ import team.reborn.energy.api.EnergyStorage;
  * @see ExposedEnergyStorage
  * @see team.reborn.energy.api.EnergyStorage
  */
-public interface MachineEnergyStorage extends EnergyStorage, Deserializable<LongTag>, MenuSynchronizable {
+public interface MachineEnergyStorage extends EnergyStorage, Deserializable<LongTag>, MenuSynchronizable, Modifiable {
 
     @Contract(pure = true)
     static @NotNull MachineEnergyStorage empty() {
@@ -58,43 +58,27 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
         return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, insert, extract);
     }
 
+    boolean canExtract(long amount);
+
+    boolean canInsert(long amount);
+
+    long tryExtract(long amount);
+
+    long tryInsert(long amount);
+
     long extract(long amount);
 
     long insert(long amount);
+
+    boolean extractExact(long amount);
+
+    boolean insertExact(long amount);
 
     @Override
     long extract(long amount, @NotNull TransactionContext transaction);
 
     @Override
     long insert(long amount, @NotNull TransactionContext transaction);
-
-    default boolean extractExact(long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            if (this.extract(amount, transaction) == amount) {
-                transaction.commit();
-                return true;
-            }
-            return false;
-        }
-    }
-
-    default boolean insertExact(long amount, @Nullable TransactionContext context) {
-        try (Transaction transaction = Transaction.openNested(context)) {
-            if (this.insert(amount, transaction) == amount) {
-                transaction.commit();
-                return true;
-            }
-            return false;
-        }
-    }
-
-    default boolean extractExact(long amount) {
-        return this.extractExact(amount, null);
-    }
-
-    default boolean insertExact(long amount) {
-        return this.insertExact(amount, null);
-    }
 
     /**
      * Returns whether the energy storage is full (cannot insert more energy).

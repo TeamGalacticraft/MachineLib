@@ -94,6 +94,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     public static final ResourceLocation MACHINE_ANY_IN = Constant.id("block/machine_any_input");
     public static final ResourceLocation MACHINE_ANY_OUT = Constant.id("block/machine_any_output");
     public static final ResourceLocation MACHINE_ANY_BOTH = Constant.id("block/machine_any_both");
+
     @ApiStatus.Internal
     public static final CachingSpriteAtlas CACHING_SPRITE_ATLAS = new CachingSpriteAtlas(null);
     @ApiStatus.Internal
@@ -111,6 +112,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
             new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0.2f, 0), new Vector3f(0.25f, 0.25f, 0.25f)),
             new ItemTransform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new Vector3f(0.5f, 0.5f, 0.5f))
     );
+
     private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
 
     static {

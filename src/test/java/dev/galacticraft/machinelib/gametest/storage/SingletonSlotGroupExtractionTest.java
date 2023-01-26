@@ -100,31 +100,6 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
                         this.afterEach(gameTestHelper);
                         gameTestHelper.succeed();
                     }));
-
-                    tests.add(new TestFunction("slot_group", "slot_group." + method.getName() + "_transactive", EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
-                        this.beforeEach(gameTestHelper);
-                        try (Transaction transaction = Transaction.openOuter()) {
-                            Runnable runnable = (Runnable) method.invoke(this, transaction);
-                            ItemStack itemStack = this.internalSlot.copyStack();
-                            runnable.run();
-                            transaction.abort();
-                            ItemStack itemStack1 = this.internalSlot.copyStack();
-                            if (Util.stacksEqual(itemStack, itemStack1)) {
-                                gameTestHelper.succeed();
-                            } else {
-                                gameTestHelper.fail("transaction test failed" + itemStack + " != " + itemStack1);
-                            }
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
-                        } catch (InvocationTargetException e) {
-                            if (e.getTargetException() instanceof GameTestAssertException) {
-                                throw (GameTestAssertException) e.getTargetException();
-                            }
-                            throw new RuntimeException(e);
-                        }
-                        this.afterEach(gameTestHelper);
-                        gameTestHelper.succeed();
-                    }));
                 }
             }
         }
@@ -134,9 +109,9 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     @Contract(pure = true)
     private @NotNull Runnable extract$empty_fail(TransactionContext context) {
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, null, 1, context));
-            assertEquals(0, this.group.extract(GOLD_INGOT, 100, context));
-            assertEquals(0, this.group.extract(GOLD_INGOT, 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, null, 1));
+            assertEquals(0, this.group.extract(GOLD_INGOT, 100));
+            assertEquals(0, this.group.extract(GOLD_INGOT, 1));
         };
     }
 
@@ -144,7 +119,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, null, 1);
 
         return () -> {
-            assertEquals(1, this.group.extract(GOLD_INGOT, null, 1, context));
+            assertEquals(1, this.group.extract(GOLD_INGOT, null, 1));
             assertTrue(this.group.isEmpty());
         };
     }
@@ -154,7 +129,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, tag, 1);
 
         return () -> {
-            assertEquals(1, this.group.extract(GOLD_INGOT, tag.copy(), 1, context));
+            assertEquals(1, this.group.extract(GOLD_INGOT, tag.copy(), 1));
             assertTrue(this.group.isEmpty());
         };
     }
@@ -163,9 +138,9 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, null, 64);
 
         return () -> {
-            assertEquals(32, this.group.extract(GOLD_INGOT, null, 32, context));
-            assertEquals(16, this.group.extract(GOLD_INGOT, null, 16, context));
-            assertEquals(8, this.group.extract(GOLD_INGOT, null, 8, context));
+            assertEquals(32, this.group.extract(GOLD_INGOT, null, 32));
+            assertEquals(16, this.group.extract(GOLD_INGOT, null, 16));
+            assertEquals(8, this.group.extract(GOLD_INGOT, null, 8));
             assertFalse(this.group.isEmpty());
         };
     }
@@ -175,9 +150,9 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, tag.copy(), 64);
 
         return () -> {
-            assertEquals(32, this.group.extract(GOLD_INGOT, tag.copy(), 32, context));
-            assertEquals(16, this.group.extract(GOLD_INGOT, tag.copy(), 16, context));
-            assertEquals(8, this.group.extract(GOLD_INGOT, tag.copy(), 8, context));
+            assertEquals(32, this.group.extract(GOLD_INGOT, tag.copy(), 32));
+            assertEquals(16, this.group.extract(GOLD_INGOT, tag.copy(), 16));
+            assertEquals(8, this.group.extract(GOLD_INGOT, tag.copy(), 8));
             assertFalse(this.group.isEmpty());
         };
     }
@@ -186,7 +161,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, null, 8);
 
         return () -> {
-            assertEquals(8, this.group.extract(GOLD_INGOT, null, 8, context));
+            assertEquals(8, this.group.extract(GOLD_INGOT, null, 8));
             assertTrue(this.group.isEmpty());
         };
     }
@@ -196,7 +171,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, tag.copy(), 8);
 
         return () -> {
-            assertEquals(8, this.group.extract(GOLD_INGOT, tag.copy(), 8, context));
+            assertEquals(8, this.group.extract(GOLD_INGOT, tag.copy(), 8));
             assertTrue(this.group.isEmpty());
         };
     }
@@ -205,7 +180,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(IRON_INGOT, null, 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, 1));
             assertFalse(this.group.isEmpty());
         };
     }
@@ -214,7 +189,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, null, 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
             assertTrue(!this.group.isEmpty());
         };
     }
@@ -223,7 +198,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, null, 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, null, 1));
             assertFalse(this.group.isEmpty());
         };
     }
@@ -232,7 +207,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
             assertFalse(this.group.isEmpty());
         };
     }
@@ -241,7 +216,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
             assertFalse(this.group.isEmpty());
         };
     }

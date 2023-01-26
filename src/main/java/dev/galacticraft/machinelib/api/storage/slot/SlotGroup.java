@@ -85,49 +85,37 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(@NotNull Resource resource) {
-        return this.insertOne(resource, (TransactionContext) null);
-    }
+    long tryInsert(@NotNull Resource resource, long amount);
 
-    boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context);
+    long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        return this.insertOne(resource, tag, null);
-    }
+    boolean insertOne(@NotNull Resource resource);
 
-    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
+    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
 
-    default long insert(@NotNull Resource resource, long amount) {
-        return this.insert(resource, amount, null);
-    }
+    long insert(@NotNull Resource resource, long amount);
 
-    long insert(@NotNull Resource resource, long amount, @Nullable TransactionContext context);
-
-    default long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.insert(resource, tag, amount, null);
-    }
-
-    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
-
-    default long extract(@Nullable Resource resource, long amount) {
-        return this.extract(resource, amount, null);
-    }
-
-    long extract(@Nullable Resource resource, long amount, @Nullable TransactionContext context);
-
-    default long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.extract(resource, tag, amount, null);
-    }
-
-    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     boolean containsAny(@NotNull Resource resource);
 
     boolean containsAny(@NotNull Resource resource, @Nullable CompoundTag tag);
 
-    boolean contains(@NotNull Resource resource, long amount);
+    boolean canExtract(@NotNull Resource resource, long amount);
 
-    boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+    boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryExtract(@NotNull Resource resource, long amount);
+
+    long tryExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean extractOne(@NotNull Resource resource);
+
+    boolean extractOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    long extract(@NotNull Resource resource, long amount);
+
+    long extract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     // START SLOT METHODS
 
@@ -159,73 +147,51 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(int slot, @NotNull Resource resource) {
-        return this.insertOne(slot, resource, (TransactionContext) null);
-    }
+    long tryInsert(int slot, @NotNull Resource resource, long amount);
 
-    boolean insertOne(int slot, @NotNull Resource resource, @Nullable TransactionContext context);
+    long tryInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
-        return this.insertOne(slot, resource, tag, null);
-    }
+    boolean insertOne(int slot, @NotNull Resource resource);
 
-    boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
+    boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
 
-    default long insert(int slot, @NotNull Resource resource, long amount) {
-        return this.insert(slot, resource, amount, null);
-    }
+    long insert(int slot, @NotNull Resource resource, long amount);
 
-    long insert(int slot, @NotNull Resource resource, long amount, @Nullable TransactionContext context);
+    long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.insert(slot, resource, amount, null);
-    }
+    boolean containsAny(int slot, @NotNull Resource resource);
 
-    long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+    boolean containsAny(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
 
-    default boolean extractOne(int slot) {
-        return this.extractOne(slot, (TransactionContext) null);
-    }
+    boolean canExtract(int slot, long amount);
 
-    boolean extractOne(int slot, @Nullable TransactionContext context);
+    boolean canExtract(int slot, @NotNull Resource resource, long amount);
 
-    default boolean extractOne(int slot, @Nullable Resource resource) {
-        return this.extractOne(slot, resource, (TransactionContext) null);
-    }
+    boolean canExtract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean extractOne(int slot, @Nullable Resource resource, @Nullable TransactionContext context);
+    long tryExtract(int slot, long amount);
 
-    default boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag) {
-        return this.extractOne(slot, resource, tag, null);
-    }
+    long tryExtract(int slot, @Nullable Resource resource, long amount);
 
-    boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
+    long tryExtract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default long extract(int slot, long amount) {
-        return this.extract(slot, amount, null);
-    }
+    boolean extractOne(int slot);
 
-    long extract(int slot, long amount, @Nullable TransactionContext context);
+    boolean extractOne(int slot, @Nullable Resource resource);
 
-    default long extract(int slot, @Nullable Resource resource, long amount) {
-        return this.extract(slot, resource, amount, null);
-    }
+    boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag);
 
-    long extract(int slot, @Nullable Resource resource, long amount, @Nullable TransactionContext context);
+    long extract(int slot, long amount);
 
-    default long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.extract(slot, resource, tag, amount, null);
-    }
+    long extract(int slot, @Nullable Resource resource, long amount);
 
-    long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+    long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean contains(int slot, @NotNull Resource resource);
+    // required for FAPI
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
-    boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
-
-    boolean contains(int slot, @NotNull Resource resource, long amount);
-
-    boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+    // required for FAPI
+    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
     // END SLOT METHODS
 

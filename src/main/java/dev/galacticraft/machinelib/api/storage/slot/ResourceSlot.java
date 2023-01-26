@@ -74,74 +74,51 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
 
     boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(@NotNull Resource resource) {
-        return this.insertOne(resource, (TransactionContext) null);
-    }
+    long tryInsert(@NotNull Resource resource, long amount);
 
-    boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context);
+    long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    default boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        return this.insertOne(resource, tag, null);
-    }
+    boolean insertOne(@NotNull Resource resource);
 
-    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
+    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
 
-    default long insert(@NotNull Resource resource, long amount) {
-        return this.insert(resource, amount, null);
-    }
+    long insert(@NotNull Resource resource, long amount);
 
-    long insert(@NotNull Resource resource, long amount, @Nullable TransactionContext context);
-
-    default long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.insert(resource, tag, amount, null);
-    }
-
-    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
-
-    default boolean extractOne() {
-        return this.extractOne((TransactionContext) null);
-    }
-
-    boolean extractOne(@Nullable TransactionContext context);
-
-    default boolean extractOne(@Nullable Resource resource) {
-        return this.extractOne(resource, (TransactionContext) null);
-    }
-
-    boolean extractOne(@Nullable Resource resource, @Nullable TransactionContext context);
-
-    default boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag) {
-        return this.extractOne(resource, tag, null);
-    }
-
-    boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context);
-
-    default long extract(long amount) {
-        return this.extract(amount, null);
-    }
-
-    long extract(long amount, @Nullable TransactionContext context);
-
-    default long extract(@Nullable Resource resource, long amount) {
-        return this.extract(resource, amount, null);
-    }
-
-    long extract(@Nullable Resource resource, long amount, @Nullable TransactionContext context);
-
-    default long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.extract(resource, tag, amount, null);
-    }
-
-    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     boolean contains(@NotNull Resource resource);
 
     boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag);
 
-    boolean contains(@NotNull Resource resource, long amount);
+    boolean canExtract(long amount);
 
-    boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+    boolean canExtract(@NotNull Resource resource, long amount);
+
+    boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryExtract(long amount);
+
+    long tryExtract(@Nullable Resource resource, long amount);
+
+    long tryExtract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean extractOne();
+
+    boolean extractOne(@Nullable Resource resource);
+
+    boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag);
+
+    long extract(long amount);
+
+    long extract(@Nullable Resource resource, long amount);
+
+    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
+
+    // required for FAPI
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+
+    // required for FAPI
+    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
-
 }

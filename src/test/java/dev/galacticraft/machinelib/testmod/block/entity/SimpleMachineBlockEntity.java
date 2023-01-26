@@ -72,7 +72,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
             this.ticks--;
             profiler.push("check");
             if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
-                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsertOne(Items.DIAMOND)) {
+                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsert(Items.DIAMOND, 1)) {
                     profiler.popPush("transaction");
                     try (Transaction transaction = Transaction.openOuter()) {
                         if (this.energyStorage().extract(150, transaction) == 150) {

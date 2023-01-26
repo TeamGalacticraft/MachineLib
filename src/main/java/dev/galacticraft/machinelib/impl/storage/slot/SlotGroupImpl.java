@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -130,67 +129,59 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context) {
+    public long tryInsert(@NotNull Resource resource, long amount) {
+        long inserted = 0;
         for (Slot slot : this.slots) {
-            if (slot.insertOne(resource, context)) return true;
+            inserted += slot.tryInsert(resource, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (Slot slot : this.slots) {
+            inserted += slot.tryInsert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public boolean insertOne(@NotNull Resource resource) {
+        for (Slot slot : this.slots) {
+            if (slot.canInsertOne(resource)) return true;
         }
         return false;
     }
 
     @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
+    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
         for (Slot slot : this.slots) {
-            if (slot.insertOne(resource, tag, context)) return true;
+            if (slot.insertOne(resource, tag)) return true;
         }
         return false;
     }
 
     @Override
-    public long insert(@NotNull Resource resource, long amount, @Nullable TransactionContext context) {
-        long requested = amount;
+    public long insert(@NotNull Resource resource, long amount) {
+        long inserted = 0;
         for (Slot slot : this.slots) {
-            if (amount == 0) return requested;
-            if (slot.getResource() == resource || slot.isEmpty()) {
-                amount -= slot.insert(resource, amount, context);
-            }
+            inserted += slot.insert(resource, amount - inserted);
+            if (inserted == amount) break;
         }
-        return requested - amount;
+        return inserted;
     }
 
     @Override
-    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
-        long requested = amount;
+    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
         for (Slot slot : this.slots) {
-            if (amount == 0) return requested;
-            if ((slot.getResource() == resource && Utils.tagsEqual(slot.getTag(), tag)) || slot.isEmpty()) {
-                amount -= slot.insert(resource, amount, context);
-            }
+            inserted += slot.insert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
         }
-        return requested - amount;
-    }
-
-    @Override
-    public long extract(@Nullable Resource resource, long amount, @Nullable TransactionContext context) {
-        long requested = amount;
-        for (Slot slot : this.slots) {
-            if (amount == 0) return requested;
-            if (resource == null || slot.contains(resource)) {
-                amount -= slot.extract(resource, amount, context);
-            }
-        }
-        return requested - amount;
-    }
-
-    @Override
-    public long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
-        long requested = amount;
-        for (Slot slot : this.slots) {
-            if (amount == 0) return requested;
-            if (resource == null || slot.contains(resource, tag)) {
-                amount -= slot.extract(resource, amount, context);
-            }
-        }
-        return requested - amount;
+        return inserted;
     }
 
     @Override
@@ -204,35 +195,102 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     @Override
     public boolean containsAny(@NotNull Resource resource, @Nullable CompoundTag tag) {
         for (Slot slot : this.slots) {
-            if (slot.contains(resource)) return true;
+            if (slot.contains(resource, tag)) return true;
         }
         return false;
     }
 
     @Override
-    public boolean contains(@NotNull Resource resource, long amount) {
-        long total = 0;
+    public boolean canExtract(@NotNull Resource resource, long amount) {
         for (Slot slot : this.slots) {
-            if (slot.contains(resource)) {
-                total += slot.getAmount();
-                if (total >= amount) return true;
-            }
+            if (slot.canExtract(resource, amount)) return true;
         }
-        return total >= amount;
+        return false;
     }
 
     @Override
-    public boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        long total = 0;
+    public boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         for (Slot slot : this.slots) {
-            if (slot.contains(resource, tag)) {
-                total += slot.getAmount();
-                if (total >= amount) return true;
-            }
+            if (slot.canExtract(resource, tag, amount)) return true;
         }
-        return total >= amount;
+        return false;
     }
 
+    @Override
+    public long tryExtract(@NotNull Resource resource, long amount) {
+        long extracted = 0;
+        for (Slot slot : this.slots) {
+            extracted += slot.tryExtract(resource, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public boolean extractOne(@NotNull Resource resource) {
+        for (Slot slot : this.slots) {
+            if (slot.extractOne(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean extractOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (Slot slot : this.slots) {
+            if (slot.extractOne(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long tryExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long extracted = 0;
+        for (Slot slot : this.slots) {
+            extracted += slot.tryExtract(resource, tag, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public long extract(@NotNull Resource resource, long amount) {
+        long extracted = 0;
+        for (Slot slot : this.slots) {
+            extracted += slot.extract(resource, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public long extract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long extracted = 0;
+        for (Slot slot : this.slots) {
+            extracted += slot.extract(resource, tag, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        long inserted = 0;
+        for (Slot slot : this.slots) {
+            inserted += slot.insert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        long extracted = 0;
+        for (Slot slot : this.slots) {
+            extracted += slot.extract(resource, tag, amount - extracted, context);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
 
     @Override
     public @NotNull Slot getSlot(int slot) {
@@ -305,73 +363,103 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean insertOne(int slot, @NotNull Resource resource, @Nullable TransactionContext context) {
-        return this.slots[slot].insertOne(resource, context);
+    public long tryInsert(int slot, @NotNull Resource resource, long amount) {
+        return this.slots[slot].tryInsert(resource, amount);
     }
 
     @Override
-    public boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
-        return this.slots[slot].insertOne(resource, tag, context);
+    public long tryInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].tryInsert(resource, tag, amount);
     }
 
     @Override
-    public long insert(int slot, @NotNull Resource resource, long amount, @Nullable TransactionContext context) {
-        return this.slots[slot].insert(resource, amount, context);
+    public boolean insertOne(int slot, @NotNull Resource resource) {
+        return this.slots[slot].insertOne(resource);
     }
 
     @Override
-    public long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
-        return this.slots[slot].insert(resource, tag, amount, context);
+    public boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].insertOne(resource, tag);
     }
 
     @Override
-    public boolean extractOne(int slot, @Nullable TransactionContext context) {
-        return this.slots[slot].extractOne(context);
+    public long insert(int slot, @NotNull Resource resource, long amount) {
+        return this.slots[slot].insert(resource, amount);
     }
 
     @Override
-    public boolean extractOne(int slot, @Nullable Resource resource, @Nullable TransactionContext context) {
-        return this.slots[slot].extractOne(resource, context);
+    public long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].insert(resource, tag, amount);
     }
 
     @Override
-    public boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
-        return this.slots[slot].extractOne(resource, tag, context);
-    }
-
-    @Override
-    public long extract(int slot, long amount, @Nullable TransactionContext context) {
-        return this.slots[slot].extract(amount, context);
-    }
-
-    @Override
-    public long extract(int slot, @Nullable Resource resource, long amount, @Nullable TransactionContext context) {
-        return this.slots[slot].extract(resource, amount, context);
-    }
-
-    @Override
-    public long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
-        return this.slots[slot].extract(resource, tag, amount, context);
-    }
-
-    @Override
-    public boolean contains(int slot, @NotNull Resource resource) {
+    public boolean containsAny(int slot, @NotNull Resource resource) {
         return this.slots[slot].contains(resource);
     }
 
     @Override
-    public boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
+    public boolean containsAny(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
         return this.slots[slot].contains(resource, tag);
     }
 
     @Override
-    public boolean contains(int slot, @NotNull Resource resource, long amount) {
-        return this.slots[slot].contains(resource, amount);
+    public boolean canExtract(int slot, long amount) {
+        return this.slots[slot].canExtract(amount);
     }
 
     @Override
-    public boolean contains(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.slots[slot].contains(resource, tag, amount);
+    public boolean canExtract(int slot, @NotNull Resource resource, long amount) {
+        return this.slots[slot].canExtract(resource, amount);
+    }
+
+    @Override
+    public boolean canExtract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].canExtract(resource, tag, amount);
+    }
+
+    @Override
+    public long tryExtract(int slot, long amount) {
+        return this.slots[slot].tryExtract(amount);
+    }
+
+    @Override
+    public long tryExtract(int slot, @Nullable Resource resource, long amount) {
+        return this.slots[slot].tryExtract(resource, amount);
+    }
+
+    @Override
+    public long tryExtract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].tryExtract(resource, tag, amount);
+    }
+
+    @Override
+    public boolean extractOne(int slot) {
+        return this.slots[slot].extractOne();
+    }
+
+    @Override
+    public boolean extractOne(int slot, @Nullable Resource resource) {
+        return this.slots[slot].extractOne(resource);
+    }
+
+    @Override
+    public boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].extractOne(resource, tag);
+    }
+
+    @Override
+    public long extract(int slot, long amount) {
+        return this.slots[slot].extract(amount);
+    }
+
+    @Override
+    public long extract(int slot, @Nullable Resource resource, long amount) {
+        return this.slots[slot].extract(resource, amount);
+    }
+
+    @Override
+    public long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].extract(resource, tag, amount);
     }
 
     @NotNull

@@ -36,6 +36,26 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     public static final MachineEnergyStorage INSTANCE = new EmptyMachineEnergyStorage();
 
     @Override
+    public boolean canExtract(long amount) {
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(long amount) {
+        return false;
+    }
+
+    @Override
+    public long tryExtract(long amount) {
+        return 0;
+    }
+
+    @Override
+    public long tryInsert(long amount) {
+        return 0;
+    }
+
+    @Override
     public long extract(long amount) {
         return 0;
     }
@@ -43,6 +63,16 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     @Override
     public long insert(long amount) {
         return 0;
+    }
+
+    @Override
+    public boolean extractExact(long amount) {
+        return false;
+    }
+
+    @Override
+    public boolean insertExact(long amount) {
+        return false;
     }
 
     @Override
@@ -61,8 +91,18 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
+    public boolean supportsInsertion() {
+        return false;
+    }
+
+    @Override
     public long insert(long amount, @NotNull TransactionContext transaction) {
         return 0;
+    }
+
+    @Override
+    public boolean supportsExtraction() {
+        return false;
     }
 
     @Override
@@ -77,12 +117,10 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
 
     @Override
     public void setEnergy(long amount, @NotNull TransactionContext context) {
-
     }
 
     @Override
     public void setEnergyUnsafe(long amount) {
-
     }
 
     @Override
@@ -102,7 +140,6 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
 
     @Override
     public void setListener(Runnable listener) {
-
     }
 
     @Override
@@ -125,5 +162,10 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     @Override
     public @Nullable MenuSyncHandler createSyncHandler() {
         return null;
+    }
+
+    @Override
+    public long getModifications() {
+        return -1;
     }
 }

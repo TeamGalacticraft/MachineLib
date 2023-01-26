@@ -71,27 +71,78 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public long insert(long amount) {
-        long inserted = Math.min(Math.min(amount, maxInput), capacity - amount);
+    public boolean canExtract(long amount) {
+        return this.amount >= amount && amount <= this.maxOutput;
+    }
 
-        if (inserted > 0) {
-            this.amount += inserted;
-            return inserted;
+    @Override
+    public boolean canInsert(long amount) {
+        return this.amount <= amount && amount <= this.maxInput;
+    }
+
+    @Override
+    public long tryExtract(long amount) {
+        return Math.min(this.maxOutput, Math.min(this.amount, amount));
+    }
+
+    @Override
+    public long tryInsert(long amount) {
+        return Math.min(this.maxInput, Math.min(this.amount + amount, this.capacity) - this.amount);
+    }
+
+    @Override
+    public long extract(long amount) {
+        long extracted = this.tryExtract(amount);
+
+        if (extracted > 0) {
+            this.amount -= extracted;
+            this.markModified();
+            return extracted;
         }
-
         return 0;
     }
 
     @Override
+    public long insert(long amount) {
+        long inserted = this.tryInsert(amount);
+
+        if (inserted > 0) {
+            this.amount += inserted;
+            this.markModified();
+            return inserted;
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean extractExact(long amount) {
+        if (this.canExtract(amount)) {
+            this.amount -= amount;
+            this.markModified();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean insertExact(long amount) {
+        if (this.canInsert(amount)) {
+            this.amount += amount;
+            this.markModified();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public long insert(long amount, @NotNull TransactionContext transaction) {
-        long inserted = Math.min(Math.min(amount, maxInput), capacity - this.amount);
+        long inserted = this.tryInsert(amount);
 
         if (inserted > 0) {
             this.updateSnapshots(transaction);
             this.amount += inserted;
             return inserted;
         }
-
         return 0;
     }
 
@@ -101,27 +152,14 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public long extract(long amount) {
-        long extracted = Math.min(this.amount, Math.min(amount, this.maxOutput));
-
-        if (extracted > 0) {
-            this.amount -= extracted;
-            return extracted;
-        }
-
-        return 0;
-    }
-
-    @Override
     public long extract(long amount, @NotNull TransactionContext transaction) {
-        long extracted = Math.min(this.amount, Math.min(amount, this.maxOutput));
+        long extracted = this.tryExtract(amount);
 
         if (extracted > 0) {
             this.updateSnapshots(transaction);
             this.amount -= extracted;
             return extracted;
         }
-
         return 0;
     }
 
@@ -200,11 +238,20 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     @Override
     protected void onFinalCommit() {
         super.onFinalCommit();
-        if (this.listener != null) this.listener.run();
+        this.markModified();
     }
 
     @Override
     public @NotNull MenuSyncHandler createSyncHandler() {
         return new MachineEnergyStorageSyncHandler(this);
+    }
+
+    @Override
+    public long getModifications() {
+        return this.amount;
+    }
+
+    private void markModified() {
+        if (this.listener != null) this.listener.run();
     }
 }

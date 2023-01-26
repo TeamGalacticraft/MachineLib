@@ -152,200 +152,239 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Override
     public boolean canInsert(@NotNull Resource resource, long amount) {
+        StoragePreconditions.notNegative(amount);
         assert this.isSane();
         return this.amount >= amount && this.canInsert(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        StoragePreconditions.notNegative(amount);
         assert this.isSane();
         return this.amount >= amount && this.canInsert(resource, tag);
     }
 
     @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable TransactionContext context) {
-        assert this.isSane();
-
-        if (this.amount < this.getCapacityFor(resource) && this.canInsert(resource)) {
-            this.updateSnapshots(context);
-            this.resource = resource;
-            this.amount++;
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
-        assert this.isSane();
-
-        if (this.amount < this.getCapacityFor(resource) && this.canInsert(resource, tag)) {
-            this.updateSnapshots(context);
-            this.resource = resource;
-            this.tag = stripTag(tag);
-            this.amount++;
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public long insert(@NotNull Resource resource, long amount, @Nullable TransactionContext context) {
+    public long tryInsert(@NotNull Resource resource, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
         if (this.canInsert(resource)) {
-            long previous = this.amount;
-            long total = Math.min(this.getCapacityFor(resource), this.amount + amount);
-            if (total != this.amount) {
-                this.updateSnapshots(context);
-                this.resource = resource;
-                this.amount = total;
-                return total - previous;
-            }
+            return Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount;
         }
         return 0;
     }
 
     @Override
-    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+    public long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
         if (this.canInsert(resource, tag)) {
-            long previous = this.amount;
-            long total = Math.min(this.getCapacityFor(resource), this.amount + amount);
-            if (total != this.amount) {
-                this.updateSnapshots(context);
-                this.resource = resource;
-                this.tag = stripTag(tag);
-                this.amount = total;
-                return total - previous;
-            }
+            return Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount;
         }
         return 0;
     }
 
     @Override
-    public boolean extractOne(@Nullable TransactionContext context) {
-        assert this.isSane();
-
-        if (this.resource != null) {
-            this.updateSnapshots(context);
-            if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
+    public boolean insertOne(@NotNull Resource resource) {
+        if (this.canInsertOne(resource)) {
+            this.resource = resource;
+            this.tag = null;
+            this.amount++;
+            this.markModified();
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean extractOne(@Nullable Resource resource, @Nullable TransactionContext context) {
-        assert this.isSane();
-
-        if (this.canExtract(resource)) {
-            this.updateSnapshots(context);
-            if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
+    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        if (this.canInsertOne(resource, tag)) {
+            this.resource = resource;
+            this.tag = stripTag(tag);
+            this.amount++;
+            this.markModified();
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag, @Nullable TransactionContext context) {
-        assert this.isSane();
-
-        if (this.canExtract(resource, tag)) {
-            this.updateSnapshots(context);
-            if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public long extract(long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
-        StoragePreconditions.notNegative(amount);
-        assert this.isSane();
-
-        if (this.resource != null) {
-            this.updateSnapshots(context);
-            long extracted = Math.min(this.amount, amount);
-            this.amount -= extracted;
-            if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
-            return extracted;
+    public long insert(@NotNull Resource resource, long amount) {
+        long inserted = this.tryInsert(resource, amount);
+        if (inserted > 0) {
+            this.resource = resource;
+            this.tag = null;
+            this.amount += inserted;
+            this.markModified();
+            return inserted;
         }
         return 0;
     }
 
     @Override
-    public long extract(@Nullable Resource resource, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
-        StoragePreconditions.notNegative(amount);
-        assert this.isSane();
-
-        if (this.canExtract(resource)) {
-            this.updateSnapshots(context);
-            long extracted = Math.min(this.amount, amount);
-            this.amount -= extracted;
-            if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
-            return extracted;
-        }
-        return 0;
-    }
-
-    @Override
-    public long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
-        if (amount == 0) return 0;
-        StoragePreconditions.notNegative(amount);
-        assert this.isSane();
-
-        if (this.canExtract(resource, tag)) {
-            this.updateSnapshots(context);
-            long extracted = Math.min(this.amount, amount);
-            this.amount -= extracted;
-            if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
-            }
-            return extracted;
+    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = this.tryInsert(resource, tag, amount);
+        if (inserted > 0) {
+            this.resource = resource;
+            this.tag = stripTag(tag);
+            this.amount += inserted;
+            this.markModified();
+            return inserted;
         }
         return 0;
     }
 
     @Override
     public boolean contains(@NotNull Resource resource) {
+        assert this.isSane();
         return this.resource == resource;
     }
 
     @Override
     public boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag) {
+        assert this.isSane();
         return this.resource == resource && Utils.tagsEqual(this.tag, tag);
     }
 
     @Override
-    public boolean contains(@NotNull Resource resource, long amount) {
-        return this.contains(resource) && this.amount >= amount;
+    public boolean canExtract(long amount) {
+        StoragePreconditions.notNegative(amount);
+        assert this.isSane();
+
+        return this.amount > amount;
     }
 
     @Override
-    public boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        return this.contains(resource) && this.amount >= amount;
+    public boolean canExtract(@NotNull Resource resource, long amount) {
+        StoragePreconditions.notNegative(amount);
+        assert this.isSane();
+
+        return this.canExtract(resource) && this.amount >= amount;
+    }
+
+    @Override
+    public boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        StoragePreconditions.notNegative(amount);
+        assert this.isSane();
+
+        return this.canExtract(resource, tag) && this.amount >= amount;
+    }
+
+    @Override
+    public long tryExtract(long amount) {
+        return Math.min(this.amount, amount);
+    }
+
+    @Override
+    public long tryExtract(@Nullable Resource resource, long amount) {
+        StoragePreconditions.notNegative(amount);
+        assert this.isSane();
+
+        if (this.amount > 0 && (resource == null || resource == this.resource)) {
+            return Math.min(this.amount, amount);
+        }
+        return 0;
+    }
+
+    @Override
+    public long tryExtract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+        StoragePreconditions.notNegative(amount);
+        assert this.isSane();
+
+        if (this.amount > 0 && (resource == null || resource == this.resource) && Utils.tagsEqual(this.tag, tag)) {
+            return Math.min(this.amount, amount);
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean extractOne() {
+        if (!this.isEmpty()) {
+            if (--this.amount == 0) {
+                this.resource = null;
+                this.tag = null;
+            }
+            this.markModified();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean extractOne(@Nullable Resource resource) {
+        if (resource == null ? !this.isEmpty() : this.contains(resource)) {
+            if (--this.amount == 0) {
+                this.resource = null;
+                this.tag = null;
+            }
+            this.markModified();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag) {
+        if (resource == null ? !this.isEmpty() : this.contains(resource, tag)) {
+            if (--this.amount == 0) {
+                this.resource = null;
+                this.tag = null;
+            }
+            this.markModified();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long extract(long amount) {
+        long extracted = this.tryExtract(amount);
+
+        return doExtraction(extracted);
+    }
+
+    @Override
+    public long extract(@Nullable Resource resource, long amount) {
+        long extracted = this.tryExtract(resource, amount);
+
+        return doExtraction(extracted);
+    }
+
+    @Override
+    public long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+        long extracted = this.tryExtract(resource, tag, amount);
+
+        return doExtraction(extracted);
+    }
+
+    @Override
+    public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        long inserted = this.tryInsert(resource, tag, amount);
+
+        if (inserted > 0) {
+            this.updateSnapshots(context);
+            this.resource = resource;
+            this.tag = stripTag(tag);
+            this.amount += inserted;
+            return inserted;
+        }
+        return 0;
+    }
+
+    @Override
+    public long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        long extracted = this.tryExtract(resource, tag, amount);
+
+        if (extracted > 0) {
+            this.updateSnapshots(context);
+            this.resource = resource;
+            this.tag = stripTag(tag);
+            this.amount -= extracted;
+            return extracted;
+        }
+        return 0;
     }
 
     @Override
@@ -415,7 +454,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Contract(pure = true)
     private boolean canInsert(@NotNull Resource resource) {
-        return canInsert(resource, null);
+        return this.canInsert(resource, null);
     }
 
     @Contract(pure = true)
@@ -425,7 +464,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Contract(pure = true)
     private boolean canExtract(@Nullable Resource resource) {
-        return this.resource != null && (this.resource == resource || resource == null);
+        return this.canExtract(resource, null);
     }
 
     @Contract(pure = true)
@@ -435,6 +474,19 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     private boolean isSane() {
         return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount < this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
+    }
+
+    private long doExtraction(long extracted) {
+        if (extracted > 0) {
+            this.amount -= extracted;
+            if (this.amount == 0) {
+                this.resource = null;
+                this.tag = null;
+            }
+            this.markModified();
+            return extracted;
+        }
+        return 0;
     }
 
     protected record Snapshot<Resource>(@Nullable Resource resource, long amount, @Nullable CompoundTag tag) {

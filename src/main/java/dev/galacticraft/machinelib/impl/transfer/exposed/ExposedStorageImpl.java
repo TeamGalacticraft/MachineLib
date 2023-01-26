@@ -32,7 +32,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 
 import java.util.Iterator;
 
-public class ExposedStorageImpl<Resource, Stack, Variant extends TransferVariant<Resource>> implements ExposedStorage<Resource, Variant> {
+public class ExposedStorageImpl<Resource, Variant extends TransferVariant<Resource>> implements ExposedStorage<Resource, Variant> {
     private final Modifiable modifiable;
     private final ExposedSlot<Resource, Variant>[] slots;
 
