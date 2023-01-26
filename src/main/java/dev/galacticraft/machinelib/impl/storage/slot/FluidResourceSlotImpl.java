@@ -53,6 +53,11 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
     }
 
     @Override
+    public long getCapacityFor(@NotNull Fluid fluid) {
+        return this.getCapacity();
+    }
+
+    @Override
     public @NotNull FluidStack createStack() {
         return FluidStack.create(this.getResource(), this.getTag(), this.getAmount());
     }

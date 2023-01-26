@@ -35,7 +35,7 @@ public class SimpleMachineScreen extends MachineScreen<SimpleMachineBlockEntity,
     private static final ResourceLocation TEXTURE = Constant.id("tex.png");
 
     public SimpleMachineScreen(@NotNull SimpleMachineMenu<SimpleMachineBlockEntity> handler, @NotNull Inventory inv, @NotNull Component title) {
-        super(handler, inv, title, TEXTURE);
+        super(handler, title, TEXTURE);
         this.capacitorX = 8;
         this.capacitorY = 8;
     }

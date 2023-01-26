@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.gametest.storage.item;
+package dev.galacticraft.machinelib.gametest.storage;
 
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;

@@ -28,9 +28,10 @@
       "dev.galacticraft.machinelib.testmod.TestModClient"
     ],
     "fabric-gametest": [
-      "dev.galacticraft.machinelib.gametest.storage.item.ItemStorageBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.ItemStorageBuilderTest",
       "dev.galacticraft.machinelib.gametest.storage.SlotGroupBuilderTest",
       "dev.galacticraft.machinelib.gametest.storage.ResourceSlotExtractionTest",
+      "dev.galacticraft.machinelib.gametest.storage.ResourceSlotInsertionTest",
       "dev.galacticraft.machinelib.gametest.storage.SingletonSlotGroupExtractionTest"
     ]
   },

@@ -204,12 +204,11 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      * Creates a new screen from the given screen handler.
      *
      * @param handler The screen handler to create the screen from.
-     * @param inv     The inventory of the machine.
      * @param title   The title of the screen.
      * @param texture The texture of the background screen.
      */
-    protected MachineScreen(@NotNull H handler, @NotNull Inventory inv, @NotNull Component title, @NotNull ResourceLocation texture) {
-        super(handler, inv, title);
+    protected MachineScreen(@NotNull H handler, @NotNull Component title, @NotNull ResourceLocation texture) {
+        super(handler, handler.playerInventory, title);
         this.texture = texture;
 
         this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.menu.type.getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);

@@ -80,7 +80,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * The progress of the machine's current recipe.
-     * Counts upwards until it reaches {@link #maxProgress maximum rogress}.
+     * Counts upwards until it reaches {@link #maxProgress maximum progress}.
      */
     private int progress = 0;
 

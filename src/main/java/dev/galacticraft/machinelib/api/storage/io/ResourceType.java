@@ -37,7 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Defines the types of resources that can be stored in a {@link ConfiguredStorage}.
+ * Defines the types of resource that are be stored in a storage
  */
 @SuppressWarnings("unused")
 public enum ResourceType {

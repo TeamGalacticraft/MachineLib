@@ -32,10 +32,7 @@ import dev.galacticraft.machinelib.gametest.Util;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestGenerator;
-import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -84,22 +81,27 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     @GameTestGenerator
     public @NotNull Collection<TestFunction> generate_tests() {
         List<TestFunction> tests = new ArrayList<>();
-        for (Method method : SingletonSlotGroupExtractionTest.class.getDeclaredMethods()) {
-            if (method.getAnnotation(GameTest.class) == null && method.getReturnType() == Runnable.class) {
+        for (Method method : this.getClass().getDeclaredMethods()) {
+            if (method.getAnnotation(GameTest.class) == null && !method.getName().contains("lambda") && method.getReturnType() == Runnable.class) {
                 Class<?>[] parameterTypes = method.getParameterTypes();
                 if (parameterTypes.length == 1 && parameterTypes[0] == TransactionContext.class) {
-                    tests.add(new TestFunction("slot_group", method.getName(), EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
+                    tests.add(new TestFunction("slot_group", "slot_group." + method.getName(), EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
                         this.beforeEach(gameTestHelper);
                         try {
                             ((Runnable) method.invoke(this, new Object[]{null})).run();
-                        } catch (IllegalAccessException | InvocationTargetException e) {
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        } catch (InvocationTargetException e) {
+                            if (e.getTargetException() instanceof GameTestAssertException) {
+                                throw (GameTestAssertException) e.getTargetException();
+                            }
                             throw new RuntimeException(e);
                         }
                         this.afterEach(gameTestHelper);
                         gameTestHelper.succeed();
                     }));
 
-                    tests.add(new TestFunction("slot_group", method.getName() + "_transactive", EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
+                    tests.add(new TestFunction("slot_group", "slot_group." + method.getName() + "_transactive", EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
                         this.beforeEach(gameTestHelper);
                         try (Transaction transaction = Transaction.openOuter()) {
                             Runnable runnable = (Runnable) method.invoke(this, transaction);
@@ -107,12 +109,17 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
                             runnable.run();
                             transaction.abort();
                             ItemStack itemStack1 = this.internalSlot.copyStack();
-                            if (Util.stacksEqual(itemStack1, itemStack1)) {
+                            if (Util.stacksEqual(itemStack, itemStack1)) {
                                 gameTestHelper.succeed();
                             } else {
                                 gameTestHelper.fail("transaction test failed" + itemStack + " != " + itemStack1);
                             }
-                        } catch (IllegalAccessException | InvocationTargetException e) {
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        } catch (InvocationTargetException e) {
+                            if (e.getTargetException() instanceof GameTestAssertException) {
+                                throw (GameTestAssertException) e.getTargetException();
+                            }
                             throw new RuntimeException(e);
                         }
                         this.afterEach(gameTestHelper);

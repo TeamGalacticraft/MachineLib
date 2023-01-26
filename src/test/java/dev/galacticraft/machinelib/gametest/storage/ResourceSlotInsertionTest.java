@@ -22,21 +22,22 @@
 
 package dev.galacticraft.machinelib.gametest.storage;
 
-import dev.galacticraft.machinelib.api.storage.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.Util;
+import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Rotation;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,17 +46,21 @@ import java.util.Collection;
 import java.util.List;
 
 import static dev.galacticraft.machinelib.gametest.Assertions.*;
-import static net.minecraft.world.item.Items.GOLD_INGOT;
-import static net.minecraft.world.item.Items.IRON_INGOT;
+import static net.minecraft.world.item.Items.*;
 
-public final class ResourceSlotExtractionTest implements MachineLibGametest {
+public final class ResourceSlotInsertionTest implements MachineLibGametest {
+    private static final CompoundTag ILLEGAL_NBT = new CompoundTag();
     private ResourceSlot<Item, ItemStack> slot;
+
+    static {
+        ILLEGAL_NBT.putBoolean("illegal", true);
+    }
 
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
-        this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always());
+        this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), (item, tag) -> item != Items.HONEYCOMB && !Utils.tagsEqual(ILLEGAL_NBT, tag));
     }
-
+    
     @Override
     public void afterEach(@NotNull GameTestHelper context) {
         this.slot = null;
@@ -76,13 +81,14 @@ public final class ResourceSlotExtractionTest implements MachineLibGametest {
     public @NotNull Collection<TestFunction> generate_tests() {
         List<TestFunction> tests = new ArrayList<>();
         for (Method method : this.getClass().getDeclaredMethods()) {
-            if (method.getAnnotation(GameTest.class) == null && !method.getName().contains("lambda") && method.getReturnType() == Runnable.class) {
+            if (method.getAnnotation(GameTest.class) == null && !method.getName().contains("lambda")) {
                 Class<?>[] parameterTypes = method.getParameterTypes();
                 if (parameterTypes.length == 1 && parameterTypes[0] == TransactionContext.class) {
                     tests.add(new TestFunction("resource_slot", "resource_slot." + method.getName().replace("$", "."), EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
                         this.beforeEach(gameTestHelper);
                         try {
-                            ((Runnable) method.invoke(this, new Object[]{null})).run();
+                            Object invoke = method.invoke(this, new Object[]{null});
+                            if (invoke != null) ((Runnable) invoke).run();
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
                         } catch (InvocationTargetException e) {
@@ -90,17 +96,21 @@ public final class ResourceSlotExtractionTest implements MachineLibGametest {
                                 throw (GameTestAssertException) e.getTargetException();
                             }
                             throw new RuntimeException(e);
+                        } finally {
+                            this.afterEach(gameTestHelper);
                         }
-                        this.afterEach(gameTestHelper);
                         gameTestHelper.succeed();
                     }));
 
                     tests.add(new TestFunction("resource_slot", "resource_slot." + method.getName().replace("$", ".") + "_transactive", EMPTY_STRUCTURE, Rotation.NONE, 0, 0, true, 1, 1, gameTestHelper -> {
                         this.beforeEach(gameTestHelper);
                         try (Transaction transaction = Transaction.openOuter()) {
-                            Runnable runnable = (Runnable) method.invoke(this, transaction);
-                            ItemStack itemStack = this.slot.copyStack();
-                            runnable.run();
+                            ItemStack itemStack = ItemStack.EMPTY;
+                            Object invoke = method.invoke(this, transaction);
+                            if (invoke != null) {
+                                itemStack = this.slot.copyStack();
+                                ((Runnable) invoke).run();
+                            }
                             transaction.abort();
                             ItemStack itemStack1 = this.slot.copyStack();
                             if (Util.stacksEqual(itemStack, itemStack1)) {
@@ -115,8 +125,9 @@ public final class ResourceSlotExtractionTest implements MachineLibGametest {
                                 throw (GameTestAssertException) e.getTargetException();
                             }
                             throw new RuntimeException(e);
+                        } finally {
+                            this.afterEach(gameTestHelper);
                         }
-                        this.afterEach(gameTestHelper);
                     }));
                 }
             }
@@ -124,127 +135,113 @@ public final class ResourceSlotExtractionTest implements MachineLibGametest {
         return tests;
     }
 
-    @Contract(pure = true)
-    private @NotNull Runnable extract$empty_fail(TransactionContext context) {
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, null, 1, context));
-            assertEquals(0, this.slot.extract(GOLD_INGOT, 100, context));
-            assertEquals(0, this.slot.extract(GOLD_INGOT, 1, context));
-        };
+    void insert$fail_negative(@Nullable TransactionContext context) {
+        assertThrows(() -> this.slot.insert(GOLD_INGOT, -1, context));
+        assertThrows(() -> this.slot.insert(GOLD_INGOT, null, -1, context));
     }
 
-    private @NotNull Runnable extract$one(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, null, 1);
+    void insert$empty(@Nullable TransactionContext context) {
+        assertEquals(8, this.slot.insert(GOLD_INGOT, 8, context));
 
-        return () -> {
-            assertEquals(1, this.slot.extract(GOLD_INGOT, null, 1, context));
-            assertTrue(this.slot.isEmpty());
-        };
+        assertEquals(GOLD_INGOT, this.slot.getResource());
+        assertEquals(null, this.slot.getTag());
+        assertEquals(8, this.slot.getAmount());
     }
 
-    private @NotNull Runnable extract$one_nbt(TransactionContext context) {
+    void insert$empty_nbt(@Nullable TransactionContext context) {
         CompoundTag tag = Util.generateNbt();
-        this.slot.set(GOLD_INGOT, tag, 1);
+        assertEquals(8, this.slot.insert(GOLD_INGOT, tag, 8, context));
 
-        return () -> {
-            assertEquals(1, this.slot.extract(GOLD_INGOT, tag.copy(), 1, context));
-            assertTrue(this.slot.isEmpty());
-        };
+        assertEquals(GOLD_INGOT, this.slot.getResource());
+        assertEquals(tag, this.slot.getTag());
+        assertEquals(8, this.slot.getAmount());
     }
 
-    private @NotNull Runnable extract$multiple(TransactionContext context) {
+    void insert$empty_overflow(@Nullable TransactionContext context) {
+        assertEquals(64, this.slot.insert(GOLD_INGOT, 100, context));
+
+        assertEquals(GOLD_INGOT, this.slot.getResource());
+        assertEquals(null, this.slot.getTag());
+        assertEquals(64, this.slot.getAmount());
+        assertTrue(this.slot.isFull());
+    }
+
+    void insert$empty_overflow_item_limiting(@Nullable TransactionContext context) {
+        assertEquals(16, this.slot.insert(EGG, 64, context));
+
+        assertEquals(EGG, this.slot.getResource());
+        assertEquals(null, this.slot.getTag());
+        assertEquals(16, this.slot.getAmount());
+        assertTrue(this.slot.isFull());
+    }
+
+    @NotNull Runnable insert$partially_filled(@Nullable TransactionContext context) {
+        this.slot.set(GOLD_INGOT, null, 16);
+
+        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, 64, context));
+    }
+
+    @NotNull Runnable insert$filled(@Nullable TransactionContext context) {
         this.slot.set(GOLD_INGOT, null, 64);
 
-        return () -> {
-            assertEquals(32, this.slot.extract(GOLD_INGOT, null, 32, context));
-            assertEquals(16, this.slot.extract(GOLD_INGOT, null, 16, context));
-            assertEquals(8, this.slot.extract(GOLD_INGOT, null, 8, context));
-            assertFalse(this.slot.isEmpty());
-        };
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, 24, context));
     }
 
-    private @NotNull Runnable extract$multiple_nbt(TransactionContext context) {
+    @NotNull Runnable insert$type_full(@Nullable TransactionContext context) {
+        this.slot.set(IRON_INGOT, null, 1);
+
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, 64, context));
+    }
+
+    @NotNull Runnable insert$nbt_type_full(@Nullable TransactionContext context) {
+        this.slot.set(GOLD_INGOT, null, 1);
+
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(), 64, context));
+    }
+
+    @NotNull Runnable insert$filled_nbt_type_full(@Nullable TransactionContext context) {
+        this.slot.set(GOLD_INGOT, Util.generateNbt(), 1);
+
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, 64, context));
+    }
+
+    @NotNull Runnable insert$filled_nbt_type_different(@Nullable TransactionContext context) {
+        this.slot.set(GOLD_INGOT, Util.generateNbt(), 1);
+
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(),64, context));
+    }
+
+    @NotNull Runnable insert$fill_nbt(@Nullable TransactionContext context) {
         CompoundTag tag = Util.generateNbt();
-        this.slot.set(GOLD_INGOT, tag.copy(), 64);
+        this.slot.set(GOLD_INGOT, tag, 16);
 
-        return () -> {
-            assertEquals(32, this.slot.extract(GOLD_INGOT, tag.copy(), 32, context));
-            assertEquals(16, this.slot.extract(GOLD_INGOT, tag.copy(), 16, context));
-            assertEquals(8, this.slot.extract(GOLD_INGOT, tag.copy(), 8, context));
-            assertFalse(this.slot.isEmpty());
-        };
+        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, tag,48, context));
     }
 
-    private @NotNull Runnable extract$multiple_exact(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, null, 8);
+    @NotNull Runnable insert$fill_overflow(@Nullable TransactionContext context) {
+        this.slot.set(GOLD_INGOT, null, 16);
 
-        return () -> {
-            assertEquals(8, this.slot.extract(GOLD_INGOT, null, 8, context));
-            assertTrue(this.slot.isEmpty());
-        };
+        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT,100, context));
     }
 
-    private @NotNull Runnable extract$multiple_exact_nbt(TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
-        this.slot.set(GOLD_INGOT, tag.copy(), 8);
+    @NotNull Runnable insert$fill_overflow_item_limiting(@Nullable TransactionContext context) {
+        this.slot.set(EGG, null, 6);
 
-        return () -> {
-            assertEquals(8, this.slot.extract(GOLD_INGOT, tag.copy(), 8, context));
-            assertTrue(this.slot.isEmpty());
-        };
+        return () -> assertEquals(10, this.slot.insert(EGG, 20, context));
     }
 
-    private @NotNull Runnable extract$any(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, null, 8);
+    @NotNull Runnable insert$fill_item_full_single(@Nullable TransactionContext context) {
+        this.slot.set(STONE_PICKAXE, null, 1);
 
-        return () -> {
-            assertEquals(8, this.slot.extract(8, context));
-            assertTrue(this.slot.isEmpty());
-        };
+        return () -> assertEquals(0, this.slot.insert(STONE_PICKAXE, 20, context));
     }
 
-    private @NotNull Runnable extract$type_fail(TransactionContext context) {
-        this.slot.set(IRON_INGOT, null, 8);
-
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, 1, context));
-            assertFalse(this.slot.isEmpty());
-        };
+    void insert$filtered(@Nullable TransactionContext context) {
+        assertEquals(0, this.slot.insert(HONEYCOMB, 64, context));
     }
 
-    private @NotNull Runnable extract$type_fail_nbt(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, null, 8);
-
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
-            assertTrue(!this.slot.isEmpty());
-        };
-    }
-
-    private @NotNull Runnable extract$nbt_type_fail(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, Util.generateNbt(), 8);
-
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, null, 1, context));
-            assertFalse(this.slot.isEmpty());
-        };
-    }
-
-    private @NotNull Runnable extract$different_nbt_type_fail(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, Util.generateNbt(), 8);
-
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
-            assertFalse(this.slot.isEmpty());
-        };
-    }
-
-    private @NotNull Runnable extract$overflow(TransactionContext context) {
-        this.slot.set(GOLD_INGOT, Util.generateNbt(), 8);
-
-        return () -> {
-            assertEquals(0, this.slot.extract(GOLD_INGOT, Util.generateNbt(), 1, context));
-            assertFalse(this.slot.isEmpty());
-        };
+    void insert$filtered_nbt(@Nullable TransactionContext context) {
+        assertEquals(0, this.slot.insert(IRON_INGOT, ILLEGAL_NBT, 64, context));
+        assertEquals(0, this.slot.insert(GOLD_INGOT, ILLEGAL_NBT, 64, context));
     }
 }

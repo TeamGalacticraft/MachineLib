@@ -695,6 +695,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
+    protected void attemptChargeFromStack(SlotGroupType type) {
+        assert this.itemStorage().getGroup(type).size() == 1;
+        attemptChargeFromStack(type, 0);
+    }
+
     /**
      * Tries to charge this machine from the item in the given slot in this {@link #itemStorage()}.
      *
@@ -710,6 +715,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
                 transaction.commit();
             }
         }
+    }
+
+    protected void attemptDrainPowerToStack(SlotGroupType type) {
+        assert this.itemStorage().getGroup(type).size() == 1;
+        attemptDrainPowerToStack(type, 0);
     }
 
     /**

@@ -52,6 +52,8 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
 
     long getCapacity();
 
+    long getCapacityFor(@NotNull Resource resource);
+
     long getRealCapacity();
 
     boolean isEmpty();

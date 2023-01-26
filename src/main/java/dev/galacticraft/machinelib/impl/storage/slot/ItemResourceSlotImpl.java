@@ -58,7 +58,12 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
 
     @Override
     public long getRealCapacity() {
-        return Math.min(this.getResource() == null ? 64 : this.getResource().getMaxStackSize(), this.getCapacity());
+        return Math.min(this.getCapacity(), this.getResource() == null ? 64 : this.getResource().getMaxStackSize());
+    }
+
+    @Override
+    public long getCapacityFor(@NotNull Item item) {
+        return Math.min(this.getCapacity(), item.getMaxStackSize());
     }
 
     @Override

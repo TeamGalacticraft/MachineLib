@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.menu;
 
 import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineType;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.network.DirectDataSlot;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.network.FriendlyByteBuf;
@@ -35,6 +36,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -56,14 +58,9 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
      * @param player  The player who is interacting with this menu.
      * @param machine The machine this menu is for.
      * @param type    The type of menu this is.
-     * @param invX    The leftmost x position of the player inventory.
-     * @param invY    The topmost y position of the player inventory.
      */
     public RecipeMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(syncId, player, machine, type);
-
-        this.addDataSlot(new DirectDataSlot(this::getProgress, this::setProgress));
-        this.addDataSlot(new DirectDataSlot(this::getMaxProgress, this::setMaxProgress));
 
         this.addPlayerInventorySlots(player.getInventory(), 0, 0); // it's the server so we don't care
     }
@@ -75,6 +72,14 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
         this.maxProgress = buf.readInt();
 
         this.addPlayerInventorySlots(inventory, invX, invY);
+    }
+
+    @Override
+    public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
+        super.registerSyncHandlers(consumer);
+
+        this.addDataSlot(new DirectDataSlot(this::getProgress, this::setProgress));
+        this.addDataSlot(new DirectDataSlot(this::getMaxProgress, this::setMaxProgress));
     }
 
     public int getProgress() {

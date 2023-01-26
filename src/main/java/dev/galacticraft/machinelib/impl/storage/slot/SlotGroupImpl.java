@@ -387,21 +387,19 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     @Override
     public void revertModification() {
-        if (this.parent == null) throw new AssertionError();
-        this.parent.revertModification();
+        if (this.parent != null) this.parent.revertModification();
         this.modifications--;
     }
 
     @Override
     public void markModified() {
-        if (this.parent == null) throw new AssertionError();
-        this.parent.markModified();
+        if (this.parent != null) this.parent.markModified();
         this.modifications++;
     }
 
     @Override
     public void markModified(@Nullable TransactionContext context) {
-        this.parent.markModified(context);
+        if (this.parent != null) this.parent.markModified(context);
         this.modifications++;
 
         if (context != null) {
