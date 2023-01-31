@@ -22,28 +22,39 @@
 
 package dev.galacticraft.machinelib.api.menu.sync;
 
+import dev.galacticraft.machinelib.impl.menu.sync.simple.BooleansMenuSyncHandler;
+import dev.galacticraft.machinelib.impl.menu.sync.simple.EnumMenuSyncHandler;
+import dev.galacticraft.machinelib.impl.menu.sync.simple.IntMenuSyncHandler;
+import dev.galacticraft.machinelib.impl.menu.sync.simple.LongMenuSyncHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.*;
 
 /**
  * Handles syncing of storage contents between the server and client.
  */
 public interface MenuSyncHandler {
-    MenuSyncHandler DEFAULT = new MenuSyncHandler() {
-        @Override
-        public boolean needsSyncing() {
-            return false;
-        }
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull MenuSyncHandler simple(LongSupplier supplier, LongConsumer consumer) {
+        return new LongMenuSyncHandler(supplier, consumer);
+    }
 
-        @Override
-        public void sync(@NotNull FriendlyByteBuf buf) {
-        }
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull MenuSyncHandler simple(IntSupplier supplier, IntConsumer consumer) {
+        return new IntMenuSyncHandler(supplier, consumer);
+    }
 
-        @Override
-        public void read(@NotNull FriendlyByteBuf buf) {
-        }
-    };
+    @Contract(value = "_, _, _ -> new", pure = true)
+    static @NotNull <E extends Enum<E>> MenuSyncHandler simple(Supplier<E> supplier, Consumer<E> consumer, E[] world) {
+        return new EnumMenuSyncHandler<>(supplier, consumer, world);
+    }
+
+    @Contract(value = "_, _ -> new", pure = true)
+    static @NotNull MenuSyncHandler booleans(boolean[] input, boolean[] output) {
+        return new BooleansMenuSyncHandler(input, output);
+    }
 
     /**
      * Returns whether the storage needs syncing.

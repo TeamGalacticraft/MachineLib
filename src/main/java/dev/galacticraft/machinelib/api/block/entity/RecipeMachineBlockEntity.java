@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.RecipeMachineMenu;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,12 +39,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
+import org.jetbrains.annotations.*;
 
 /**
  * A machine block entity that processes recipes.
@@ -116,19 +110,20 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * Inserts the recipe's output into the machine's inventory.
      *
      * @param recipe  The recipe to output.
-     * @param context The current transaction.
-     * @return Whether the recipe was successfully output.
      */
-    protected abstract boolean outputStacks(@NotNull R recipe, @NotNull TransactionContext context);
+    @MustBeInvokedByOverriders
+    protected abstract void outputStacks(@NotNull R recipe);
+
+    @MustBeInvokedByOverriders
+    protected abstract boolean canOutputStacks(@NotNull R recipe);
 
     /**
      * Extracts the recipe's input from the machine's inventory.
      *
      * @param recipe  The recipe to extract.
-     * @param context The current transaction.
-     * @return Whether the recipe was successfully extracted.
      */
-    protected abstract boolean extractCraftingMaterials(@NotNull R recipe, @NotNull TransactionContext context);
+    @MustBeInvokedByOverriders
+    protected abstract void extractCraftingMaterials(@NotNull R recipe);
 
     /**
      * Returns the machine status to use when the machine is working.
@@ -143,12 +138,13 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * Extracts the necessary resources to run this machine.
      * This can be energy, fuel, or any other resource (or nothing!).
      *
-     * @param context The current transaction.
      * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
      */
-    protected @Nullable MachineStatus extractResourcesToWork(@NotNull TransactionContext context) {
-        return null;
-    }
+    @MustBeInvokedByOverriders
+    protected abstract @Nullable MachineStatus hasResourcesToWork();
+
+    @MustBeInvokedByOverriders
+    protected abstract void extractResourcesToWork();
 
     @Override
     public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
@@ -160,13 +156,14 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         }
 
         if (this.getActiveRecipe() != null) {
-            profiler.push("working_transaction");
+            profiler.push("working");
             try (Transaction transaction = Transaction.openOuter()) {
-                MachineStatus status = this.extractResourcesToWork(transaction);
+                MachineStatus status = this.hasResourcesToWork();
                 if (status == null) {
+                    this.extractResourcesToWork();
                     if (++this.progress >= this.getMaxProgress()) {
                         profiler.push("crafting");
-                        this.craft(profiler, this.getActiveRecipe(), transaction);
+                        this.craft(profiler, this.getActiveRecipe());
                         profiler.pop();
                     }
                     transaction.commit();
@@ -196,17 +193,14 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         if (this.inventoryModCount != this.itemStorage().getModifications()) { // includes output slots
             this.inventoryModCount = this.itemStorage().getModifications();
             profiler.push("find_recipe");
-            Optional<R> optional = this.findValidRecipe(world);
+            R recipe = this.findValidRecipe(world);
             profiler.pop();
-            if (optional.isPresent()) {
-                R recipe = optional.get();
-                try (Transaction transaction = Transaction.openOuter()) {
-                    if (this.outputStacks(recipe, transaction)) {
-                        this.updateRecipe(recipe);
-                    } else {
-                        this.resetRecipe();
-                        return MachineStatuses.OUTPUT_FULL;
-                    }
+            if (recipe != null) {
+                if (this.canOutputStacks(recipe)) {
+                    this.updateRecipe(recipe);
+                } else {
+                    this.resetRecipe();
+                    return MachineStatuses.OUTPUT_FULL;
                 }
             } else {
                 this.resetRecipe();
@@ -239,21 +233,15 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      *
      * @param profiler The world profiler.
      * @param recipe   The recipe to craft.
-     * @param context  The current transaction.
      */
-    protected void craft(@NotNull ProfilerFiller profiler, @NotNull R recipe, @Nullable TransactionContext context) {
+    protected void craft(@NotNull ProfilerFiller profiler, @NotNull R recipe) {
         profiler.push("extract_materials");
-        try (Transaction inner = Transaction.openNested(context)) {
-            if (this.extractCraftingMaterials(recipe, inner)) {
-                profiler.popPush("output_stacks");
-                if (this.outputStacks(recipe, inner)) {
-                    this.inventoryModCount = -1; // make sure everything is recalculated
-                    this.resetRecipe();
-                    inner.commit();
-                }
-            }
-        }
+        this.extractCraftingMaterials(recipe);
+        profiler.popPush("output_stacks");
+        this.outputStacks(recipe);
         profiler.pop();
+        this.inventoryModCount = -1; // make sure everything is recalculated
+        this.resetRecipe();
     }
 
     /**
@@ -283,13 +271,11 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param world The world.
      * @return The first valid recipe in the machine's inventory.
      */
-    protected @NotNull Optional<R> findValidRecipe(@NotNull Level world) {
-        if (this.cachedRecipe != null) {
-            if (this.cachedRecipe.matches(this.craftingInv(), world)) {
-                return Optional.of(this.cachedRecipe);
-            }
+    protected @Nullable R findValidRecipe(@NotNull Level world) {
+        if (this.cachedRecipe != null && this.cachedRecipe.matches(this.craftingInv(), world)) {
+            return this.cachedRecipe;
         }
-        return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world);
+        return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world).orElse(null);
     }
 
     @Override
@@ -387,7 +373,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     public void setLevel(Level world) {
         super.setLevel(world);
         if (!world.isClientSide) {
-            this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world).orElse(null);
+            this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world);
         }
     }
 }

@@ -20,29 +20,24 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.network;
+package dev.galacticraft.machinelib.testmod.menu;
 
-import net.minecraft.world.inventory.DataSlot;
+import dev.galacticraft.machinelib.api.machine.MachineType;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
+import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.function.IntConsumer;
-import java.util.function.IntSupplier;
-
-public final class DirectDataSlot extends DataSlot {
-    private final IntSupplier getter;
-    private final IntConsumer setter;
-
-    public DirectDataSlot(IntSupplier getter, IntConsumer setter) {
-        this.getter = getter;
-        this.setter = setter;
+public class SimpleMachineMenu extends MachineMenu<SimpleMachineBlockEntity> {
+    public SimpleMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull SimpleMachineBlockEntity simpleMachineBlockEntity) {
+        super(syncId, player, simpleMachineBlockEntity, TestModMachineTypes.SIMPLE_MACHINE);
     }
 
-    @Override
-    public int get() {
-        return this.getter.getAsInt();
+    public SimpleMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf) {
+        super(syncId, inventory, buf, 8, 84, TestModMachineTypes.SIMPLE_MACHINE);
     }
 
-    @Override
-    public void set(int i) {
-        this.setter.accept(i);
-    }
 }

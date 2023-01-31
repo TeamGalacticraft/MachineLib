@@ -20,20 +20,41 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod.menu;
+package dev.galacticraft.machinelib.impl.menu.sync.simple;
 
-import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.testmod.Constant;
-import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
-import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.inventory.MenuType;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
+import net.minecraft.network.FriendlyByteBuf;
+import org.jetbrains.annotations.NotNull;
 
-public class TestModMenuTypes {
-    public static final MenuType<SimpleMachineMenu> SIMPLE_MACHINE = MachineMenu.createType(SimpleMachineMenu::new);
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
+import java.util.function.LongConsumer;
+import java.util.function.LongSupplier;
 
-    public static void register() {
-        Registry.register(BuiltInRegistries.MENU, Constant.id(Constant.SIMPLE_MACHINE), SIMPLE_MACHINE);
+public final class IntMenuSyncHandler implements MenuSyncHandler {
+    private final IntSupplier supplier;
+    private final IntConsumer consumer;
+    private int value;
+
+    public IntMenuSyncHandler(IntSupplier supplier, IntConsumer consumer) {
+        this.supplier = supplier;
+        this.consumer = consumer;
+    }
+
+    @Override
+    public boolean needsSyncing() {
+        return this.value != this.supplier.getAsInt();
+    }
+
+    @Override
+    public void sync(@NotNull FriendlyByteBuf buf) {
+        this.value = this.supplier.getAsInt();
+        buf.writeInt(this.value);
+    }
+
+    @Override
+    public void read(@NotNull FriendlyByteBuf buf) {
+        this.value = buf.readInt();
+        this.consumer.accept(this.value);
     }
 }

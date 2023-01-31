@@ -61,6 +61,11 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
+    public @NotNull ItemResourceSlot getSlot(@NotNull SlotGroupType type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public @NotNull SlotGroupType @NotNull [] getTypes() {
         return new SlotGroupType[0];
     }

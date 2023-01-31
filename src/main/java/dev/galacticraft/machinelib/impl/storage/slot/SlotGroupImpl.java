@@ -328,8 +328,23 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
+    public long getCapacityFor(int slot, @NotNull Resource resource) {
+        return this.slots[slot].getCapacityFor(resource);
+    }
+
+    @Override
     public long getRealCapacity(int slot) {
         return this.slots[slot].getRealCapacity();
+    }
+
+    @Override
+    public boolean isEmpty(int slot) {
+        return this.slots[slot].isEmpty();
+    }
+
+    @Override
+    public boolean isFull(int slot) {
+        return this.slots[slot].isFull();
     }
 
     @Override

@@ -90,6 +90,13 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public @NotNull ItemResourceSlot getSlot(@NotNull SlotGroupType type) {
+        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.getGroup(type);
+        assert group.size() == 1;
+        return group.getSlot(0);
+    }
+
+    @Override
     public @NotNull SlotGroupType @NotNull [] getTypes() {
         return this.types;
     }

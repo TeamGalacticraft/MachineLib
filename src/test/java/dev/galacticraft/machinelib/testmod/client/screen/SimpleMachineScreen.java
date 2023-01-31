@@ -22,20 +22,20 @@
 
 package dev.galacticraft.machinelib.testmod.client.screen;
 
-import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.testmod.Constant;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
+import dev.galacticraft.machinelib.testmod.menu.SimpleMachineMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleMachineScreen extends MachineScreen<SimpleMachineBlockEntity, SimpleMachineMenu<SimpleMachineBlockEntity>> {
-    private static final ResourceLocation TEXTURE = Constant.id("tex.png");
+public class SimpleMachineScreen extends MachineScreen<SimpleMachineBlockEntity, SimpleMachineMenu> {
+    private static final ResourceLocation TEXTURE = Constant.id("tex.png"); // todo: actual textures
 
-    public SimpleMachineScreen(@NotNull SimpleMachineMenu<SimpleMachineBlockEntity> handler, @NotNull Inventory inv, @NotNull Component title) {
-        super(handler, title, TEXTURE);
+    public SimpleMachineScreen(@NotNull SimpleMachineMenu menu, @NotNull Inventory inv, @NotNull Component title) {
+        super(menu, title, TEXTURE);
         this.capacitorX = 8;
         this.capacitorY = 8;
     }

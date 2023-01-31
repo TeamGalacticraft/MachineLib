@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.storage;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.storage.EmptyMachineFluidStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineFluidStorageImpl;
 import net.minecraft.world.level.material.Fluid;
@@ -54,13 +55,24 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, 
 
         public @NotNull MachineFluidStorage.Builder addGroup(@Nullable SlotGroup<Fluid, FluidStack, FluidResourceSlot> group) {
             if (group == null || group.isEmpty()) return this;
-            for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group1 : this.groups) {
-                if (group1.getType() == group.getType()) {
-                    throw new UnsupportedOperationException("duplicate group");
-                }
-            }
+            this.checkDuplicate(group.getType());
             this.groups.add(group);
             return this;
+        }
+
+        public @NotNull MachineFluidStorage.Builder addSingle(@NotNull SlotGroupType type, FluidResourceSlot slot) {
+            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = SlotGroup.of(type, slot);
+            this.checkDuplicate(group.getType());
+            this.groups.add(group);
+            return this;
+        }
+
+        private void checkDuplicate(@NotNull SlotGroupType type) {
+            for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.groups) {
+                if (type == group.getType()) {
+                    throw new UnsupportedOperationException("duplicate group type");
+                }
+            }
         }
 
         public @NotNull MachineFluidStorage build() {

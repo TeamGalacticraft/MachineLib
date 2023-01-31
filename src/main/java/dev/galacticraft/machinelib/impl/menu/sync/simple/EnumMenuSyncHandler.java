@@ -20,22 +20,43 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.storage;
+package dev.galacticraft.machinelib.impl.menu.sync.simple;
 
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import net.minecraft.nbt.ListTag;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
-public interface ResourceStorage<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>, Group extends SlotGroup<Resource, Stack, Slot>> extends Iterable<Group>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
-    int groups();
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
-    @NotNull Group getGroup(@NotNull SlotGroupType type);
+public final class EnumMenuSyncHandler<E extends Enum<E>> implements MenuSyncHandler {
+    private final Supplier<E> supplier;
+    private final Consumer<E> consumer;
+    private final E[] world;
+    private E value;
 
-    @NotNull Slot getSlot(@NotNull SlotGroupType type);
+    public EnumMenuSyncHandler(Supplier<E> supplier, Consumer<E> consumer, E[] world) {
+        this.supplier = supplier;
+        this.consumer = consumer;
+        this.world = world;
+    }
 
-    @NotNull SlotGroupType @NotNull [] getTypes();
+    @Override
+    public boolean needsSyncing() {
+        return this.value != this.supplier.get();
+    }
 
-    void setListener(Runnable listener);
+    @Override
+    public void sync(@NotNull FriendlyByteBuf buf) {
+        this.value = this.supplier.get();
+        buf.writeVarInt(this.value.ordinal());
+    }
+
+    @Override
+    public void read(@NotNull FriendlyByteBuf buf) {
+        this.value = this.world[buf.readVarInt()];
+        this.consumer.accept(this.value);
+    }
 }

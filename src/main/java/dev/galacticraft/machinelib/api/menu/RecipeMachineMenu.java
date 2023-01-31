@@ -25,7 +25,6 @@ package dev.galacticraft.machinelib.api.menu;
 import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
-import dev.galacticraft.machinelib.impl.network.DirectDataSlot;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,33 +60,29 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
      */
     public RecipeMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(syncId, player, machine, type);
-
-        this.addPlayerInventorySlots(player.getInventory(), 0, 0); // it's the server so we don't care
     }
 
-    protected RecipeMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type, int invX, int invY) {
-        super(syncId, inventory, buf, type);
+    protected RecipeMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, int invX, int invY, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
+        super(syncId, inventory, buf, invX, invY, type);
 
         this.progress = buf.readInt();
         this.maxProgress = buf.readInt();
-
-        this.addPlayerInventorySlots(inventory, invX, invY);
     }
 
     @Override
     public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
         super.registerSyncHandlers(consumer);
 
-        this.addDataSlot(new DirectDataSlot(this::getProgress, this::setProgress));
-        this.addDataSlot(new DirectDataSlot(this::getMaxProgress, this::setMaxProgress));
+        consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
+        consumer.accept(MenuSyncHandler.simple(this.machine::getMaxProgress, this::setMaxProgress));
     }
 
     public int getProgress() {
-        return progress;
+        return this.progress;
     }
 
     public int getMaxProgress() {
-        return maxProgress;
+        return this.maxProgress;
     }
 
     public void setProgress(int progress) {
@@ -110,6 +105,6 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
 
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference, int invX, int invY) {
-        return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new RecipeMachineMenu<>(syncId, inventory, buf, selfReference.get(), invX, invY));
+        return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new RecipeMachineMenu<>(syncId, inventory, buf, invX, invY, selfReference.get()));
     }
 }

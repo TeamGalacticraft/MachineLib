@@ -58,13 +58,24 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, Ite
 
         public @NotNull Builder addGroup(@Nullable SlotGroup<Item, ItemStack, ItemResourceSlot> group) {
             if (group == null || group.size() == 0) return this;
-            for (SlotGroup<Item, ItemStack, ItemResourceSlot> group1 : this.groups) {
-                if (group1.getType() == group.getType()) {
-                    throw new UnsupportedOperationException("duplicate group");
-                }
-            }
+            this.checkDuplicate(group.getType());
             this.groups.add(group);
             return this;
+        }
+
+        public @NotNull MachineItemStorage.Builder addSingle(@NotNull SlotGroupType type, ItemResourceSlot slot) {
+            SlotGroup<Item, ItemStack, ItemResourceSlot> group = SlotGroup.of(type, slot);
+            this.checkDuplicate(group.getType());
+            this.groups.add(group);
+            return this;
+        }
+
+        private void checkDuplicate(@NotNull SlotGroupType type) {
+            for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
+                if (type == group.getType()) {
+                    throw new UnsupportedOperationException("duplicate group type");
+                }
+            }
         }
 
         public @NotNull MachineItemStorage build() {

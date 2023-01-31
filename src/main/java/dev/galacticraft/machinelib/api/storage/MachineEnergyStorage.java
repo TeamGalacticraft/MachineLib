@@ -51,11 +51,23 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
     }
 
     @Contract(pure = true)
-    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean insert, boolean extract) {
-        if (energyCapacity == 0) return empty();
+    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean externalInsertion, boolean externalExtraction) {
+        if (energyCapacity == 0 || insertion == 0 || extraction == 0) return empty();
 
         StoragePreconditions.notNegative(energyCapacity);
-        return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, insert, extract);
+        StoragePreconditions.notNegative(insertion);
+        StoragePreconditions.notNegative(extraction);
+
+        return new MachineEnergyStorageImpl(energyCapacity, insertion, extraction, externalInsertion, externalExtraction);
+    }
+
+    @Contract(pure = true)
+    static @NotNull MachineEnergyStorage of(long energyCapacity, long ioRate, boolean externalInsertion, boolean externalExtraction) {
+        if (energyCapacity == 0 || ioRate == 0) return empty();
+
+        StoragePreconditions.notNegative(energyCapacity);
+        StoragePreconditions.notNegative(ioRate);
+        return new MachineEnergyStorageImpl(energyCapacity, ioRate, ioRate, externalInsertion, externalExtraction);
     }
 
     boolean canExtract(long amount);

@@ -27,9 +27,9 @@ import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
+import dev.galacticraft.machinelib.testmod.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
@@ -63,7 +63,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
-        return new SimpleMachineMenu<>(syncId, ((ServerPlayer) player), this, (MachineType<MachineBlockEntity, ? extends MachineMenu<MachineBlockEntity>>) this.getMachineType());
+        return new SimpleMachineMenu(syncId, ((ServerPlayer) player), this);
     }
 
     @Override

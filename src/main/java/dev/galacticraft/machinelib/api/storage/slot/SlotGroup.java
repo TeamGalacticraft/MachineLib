@@ -47,15 +47,9 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
         return new Builder<>(type);
     }
 
-//    @Contract(value = "_, _ -> new", pure = true)
-//    static <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> @NotNull SlotGroup<Resource, Stack, Slot> singleton(@NotNull SlotGroupType type, @NotNull Slot slot) {
-//        return new SingletonResourceSlotGroupImpl<>(type, slot);
-//    }
-
     @Contract("_, _ -> new")
     @SafeVarargs
     static <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> @NotNull SlotGroup<Resource, Stack, Slot> of(@NotNull SlotGroupType type, @NotNull Slot... slots) {
-//        if (slots.length == 1) return new SingletonResourceSlotGroupImpl<>(type, slots[0]);
         return new SlotGroupImpl<>(type, slots);
     }
 
@@ -133,7 +127,13 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     long getCapacity(int slot);
 
+    long getCapacityFor(int slot, @NotNull Resource resource);
+
     long getRealCapacity(int slot);
+
+    boolean isEmpty(int slot);
+
+    boolean isFull(int slot);
 
     @NotNull Stack createStack(int slot);
 

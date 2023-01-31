@@ -77,6 +77,11 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
+    public @NotNull FluidResourceSlot getSlot(@NotNull SlotGroupType type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public @NotNull SlotGroupType @NotNull [] getTypes() {
         return new SlotGroupType[0];
     }

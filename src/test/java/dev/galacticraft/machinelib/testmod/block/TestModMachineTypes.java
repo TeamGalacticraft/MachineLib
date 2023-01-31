@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.testmod.block;
 
 import dev.galacticraft.machinelib.api.machine.MachineType;
-import dev.galacticraft.machinelib.api.menu.SimpleMachineMenu;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
@@ -34,6 +34,7 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import dev.galacticraft.machinelib.testmod.block.entity.TestModBlockEntityTypes;
+import dev.galacticraft.machinelib.testmod.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.testmod.menu.TestModMenuTypes;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.world.item.Item;
@@ -41,7 +42,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public class TestModMachineTypes {
-    public static final MachineType<SimpleMachineBlockEntity, SimpleMachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE = MachineType.create(TestModBlocks.SIMPLE_MACHINE_BLOCK,
+    public static final MachineType<SimpleMachineBlockEntity, SimpleMachineMenu> SIMPLE_MACHINE = MachineType.create(TestModBlocks.SIMPLE_MACHINE_BLOCK,
             TestModBlockEntityTypes.SIMPLE_MACHINE,
             TestModMenuTypes.SIMPLE_MACHINE,
             () -> MachineEnergyStorage.of(30000, 300, 300, true, false),

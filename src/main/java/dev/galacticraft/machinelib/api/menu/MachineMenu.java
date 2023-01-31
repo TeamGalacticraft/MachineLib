@@ -36,40 +36,37 @@ import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Base container menu for machines.
  *
- * @param <M> The type of machine block entity this menu is linked to.
+ * @param <Machine> The type of machine block entity this menu is linked to.
  */
-public abstract class MachineMenu<M extends MachineBlockEntity> extends AbstractContainerMenu {
-    public final @NotNull MachineType<M, ? extends MachineMenu<M>> type;
+public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractContainerMenu {
+    public final @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type;
 
     @ApiStatus.Internal
     @Deprecated
-    public final @NotNull M machine;
+    public final @NotNull Machine machine;
+    public final boolean server;
 
     public final @NotNull ContainerLevelAccess levelAccess;
     public final @Nullable ServerPlayer player;
@@ -102,11 +99,12 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
      * @param machine The machine this menu is for.
      * @param type    The type of menu this is.
      */
-    protected MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull M machine, @NotNull MachineType<M, ? extends MachineMenu<M>> type) {
+    protected MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(type.getMenuType(), syncId);
         assert !Objects.requireNonNull(machine.getLevel()).isClientSide;
         this.type = type;
         this.machine = machine;
+        this.server = true;
         this.player = player;
         this.playerInventory = player.getInventory();
         this.playerUUID = player.getUUID();
@@ -143,6 +141,7 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
             }
         }
 
+        this.addPlayerInventorySlots(player.getInventory(), 0, 0); // its the server
         this.registerSyncHandlers(this::addSyncHandler);
     }
 
@@ -154,16 +153,17 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
      * @param inventory The inventory of the player interacting with this menu.
      * @param type      The type of menu this is.
      */
-    protected MachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<M, ? extends MachineMenu<M>> type) {
+    protected MachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, int invX, int invY, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(type.getMenuType(), syncId);
 
         this.type = type;
         this.player = null;
+        this.server = false;
         this.playerInventory = inventory;
         this.playerUUID = inventory.player.getUUID();
 
         BlockPos blockPos = buf.readBlockPos();
-        this.machine = (M) inventory.player.level.getBlockEntity(blockPos); //todo: actually stop using the BE on the client side
+        this.machine = (Machine) inventory.player.level.getBlockEntity(blockPos); //todo: actually stop using the BE on the client side
         this.levelAccess = ContainerLevelAccess.create(inventory.player.level, blockPos);
         this.configuration = MachineConfiguration.create();
         this.configuration.readPacket(buf);
@@ -199,14 +199,39 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
             }
         }
 
+        this.addPlayerInventorySlots(inventory, invX, invY);
         this.registerSyncHandlers(this::addSyncHandler);
-//        this.itemStorage.setListener(this::broadcastChanges);
+    }
+
+    @Contract(value = "_, _ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull MachineMenuFactory<Machine, Menu> factory, Supplier<MachineType<Machine, Menu>> typeSupplier) {
+        return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> factory.create(syncId, inventory, buf, typeSupplier.get()));
+    }
+
+    @Contract(value = "_ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull BasicMachineMenuFactory<Machine, Menu> factory) {
+        return new ExtendedScreenHandlerType<>(factory::create);
+    }
+
+    @Contract(value = "_, _, _ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invX, int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
+        return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new MachineMenu<>(syncId, inventory, buf, invX, invY, typeSupplier.get()));
+    }
+
+    @Contract(value = "_, _ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
+        return createSimple(8, invY, typeSupplier);
+    }
+
+    @Contract(value = "_ -> new", pure = true)
+    public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
+        return createSimple(84, typeSupplier);
     }
 
     @MustBeInvokedByOverriders
     public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
         consumer.accept(this.configuration.createSyncHandler());
-        consumer.accept(this.itemStorage.createSyncHandler()); //todo: probably synced by vanilla - is this neccecary?
+        consumer.accept(this.itemStorage.createSyncHandler()); //todo: probably synced by vanilla - is this necessary?
         consumer.accept(this.fluidStorage.createSyncHandler());
         consumer.accept(this.energyStorage.createSyncHandler());
     }
@@ -309,7 +334,7 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
      * @param x The x position of the top left slot.
      * @param y The y position of the top left slot.
      */
-    protected void addPlayerInventorySlots(Inventory inventory, int x, int y) {
+    private void addPlayerInventorySlots(Inventory inventory, int x, int y) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, x + j * 18, y + i * 18));
@@ -380,5 +405,15 @@ public abstract class MachineMenu<M extends MachineBlockEntity> extends Abstract
     public void addTank(@NotNull Tank tank) {
         tank.setId(this.tanks.size());
         this.tanks.add(tank);
+    }
+
+    @FunctionalInterface
+    public interface MachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<Machine, Menu> type);
+    }
+
+    @FunctionalInterface
+    public interface BasicMachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf);
     }
 }
