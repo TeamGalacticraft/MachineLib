@@ -48,10 +48,14 @@ public interface MachineType<Machine extends MachineBlockEntity, Menu extends Ma
     }
 
     @NotNull MachineEnergyStorage createEnergyStorage();
+
     @NotNull MachineItemStorage createItemStorage();
+
     @NotNull MachineFluidStorage createFluidStorage();
 
     @NotNull Block getBlock();
+
     @NotNull MenuType<Menu> getMenuType();
+
     @NotNull BlockEntityType<Machine> getBlockEntityType();
 }

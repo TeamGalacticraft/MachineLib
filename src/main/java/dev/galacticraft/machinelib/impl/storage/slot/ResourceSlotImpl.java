@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
+import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -46,7 +46,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     private final ResourceFilter<Resource> filter;
     private final ResourceFilter<Resource> externalFilter;
     private final long capacity;
-    private SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> group;
+    private MutableModifiable parent;
     private @Nullable Resource resource = null;
     private @Nullable CompoundTag tag = null;
     private long amount = 0;
@@ -74,15 +74,8 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
-    public @NotNull SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> getGroup() {
-        if (this.group == null) throw new AssertionError();
-        return this.group;
-    }
-
-    @Override
-    public void _setGroup(SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> group) {
-        assert group != null;
-        this.group = group;
+    public void _setParent(MutableModifiable parent) {
+        this.parent = parent;
     }
 
     @Override
@@ -395,19 +388,19 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public void revertModification() {
         this.modifications--;
-        if (this.group != null) this.group.revertModification();
+        if (this.parent != null) this.parent.revertModification();
     }
 
     @Override
     public void markModified() {
         this.modifications++;
-        if (this.group != null) this.group.markModified();
+        if (this.parent != null) this.parent.markModified();
     }
 
     @Override
     public void markModified(@Nullable TransactionContext context) {
         this.modifications++;
-        if (this.group != null) this.group.markModified(context);
+        if (this.parent != null) this.parent.markModified(context);
 
         if (context != null) {
             context.addCloseCallback((context1, result) -> {

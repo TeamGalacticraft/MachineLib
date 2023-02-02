@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -38,28 +37,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 
 public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> implements SlotGroup<Resource, Stack, Slot> {
-    private final @NotNull SlotGroupType type;
     private final @NotNull Slot @NotNull [] slots;
     private MutableModifiable parent;
     private long modifications = 0;
 
-    public SlotGroupImpl(@NotNull SlotGroupType type, @NotNull Slot @NotNull [] slots) {
-        this.type = type;
+    public SlotGroupImpl(@NotNull Slot @NotNull [] slots) {
         this.slots = slots;
         for (Slot slot : this.slots) {
-            slot._setGroup(this);
+            slot._setParent(this);
         }
     }
 
     @Override
     public void _setParent(@NotNull MutableModifiable modifiable) {
         this.parent = modifiable;
-    }
-
-    @NotNull
-    @Override
-    public SlotGroupType getType() {
-        return this.type;
     }
 
     @Override

@@ -30,7 +30,7 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// HAS FILTERS, BUT NO I/O CONSTRAINTS
+// NO I/O CONSTRAINTS
 // Resource must be comparable by identity
 public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deserializable<CompoundTag> {
     // FILTER DOES NOT INCLUDE NULL/EMPTY
@@ -38,9 +38,7 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
 
     @NotNull ResourceFilter<Resource> getStrictFilter();
 
-    @NotNull SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> getGroup();
-
-    void _setGroup(SlotGroup<Resource, Stack, ? extends ResourceSlot<Resource, Stack>> group);
+    void _setParent(MutableModifiable parent);
 
     @Nullable Resource getResource();
 

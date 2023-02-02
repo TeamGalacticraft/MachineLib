@@ -109,7 +109,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Inserts the recipe's output into the machine's inventory.
      *
-     * @param recipe  The recipe to output.
+     * @param recipe The recipe to output.
      */
     @MustBeInvokedByOverriders
     protected abstract void outputStacks(@NotNull R recipe);
@@ -120,7 +120,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Extracts the recipe's input from the machine's inventory.
      *
-     * @param recipe  The recipe to extract.
+     * @param recipe The recipe to extract.
      */
     @MustBeInvokedByOverriders
     protected abstract void extractCraftingMaterials(@NotNull R recipe);

@@ -119,7 +119,8 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
         super.setPlacedBy(world, pos, state, placer, itemStack);
         if (!world.isClientSide && placer instanceof Player player) {
             SecuritySettings security = ((MachineBlockEntity) Objects.requireNonNull(world.getBlockEntity(pos))).getSecurity();
-            if (security.getOwner() == null) security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
+            if (security.getOwner() == null)
+                security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
         }
     }
 

@@ -30,6 +30,10 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 public record MachineStatusImpl(@NotNull Component name, @NotNull MachineStatus.Type type) implements MachineStatus {
+    public static @NotNull MachineStatus readPacket(@NotNull FriendlyByteBuf buf) {
+        return MachineLib.MACHINE_STATUS_REGISTRY.byIdOrThrow(buf.readInt());
+    }
+
     @Override
     public @NotNull StringTag createTag() {
         return StringTag.valueOf(MachineLib.MACHINE_STATUS_REGISTRY.getKey(this).toString());
@@ -38,9 +42,5 @@ public record MachineStatusImpl(@NotNull Component name, @NotNull MachineStatus.
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
         buf.writeInt(MachineLib.MACHINE_STATUS_REGISTRY.getId(this));
-    }
-
-    public static @NotNull MachineStatus readPacket(@NotNull FriendlyByteBuf buf) {
-        return MachineLib.MACHINE_STATUS_REGISTRY.byIdOrThrow(buf.readInt());
     }
 }

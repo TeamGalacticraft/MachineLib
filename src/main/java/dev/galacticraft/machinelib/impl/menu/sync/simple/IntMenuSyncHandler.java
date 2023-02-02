@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
-import java.util.function.LongConsumer;
-import java.util.function.LongSupplier;
 
 public final class IntMenuSyncHandler implements MenuSyncHandler {
     private final IntSupplier supplier;

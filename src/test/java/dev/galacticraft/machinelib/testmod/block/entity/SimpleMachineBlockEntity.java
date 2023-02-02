@@ -25,11 +25,8 @@ package dev.galacticraft.machinelib.testmod.block.entity;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
-import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
-import dev.galacticraft.machinelib.testmod.menu.SimpleMachineMenu;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
@@ -56,14 +53,14 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(world, pos, state, profiler);
         profiler.push("charge_stack");
-        this.attemptChargeFromStack(SlotGroupTypes.CHARGE, 0);
+        this.attemptChargeFromStack(TestModSlotGroupTypes.CHARGE, 0);
         profiler.pop();
     }
 
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
-        return new SimpleMachineMenu(syncId, ((ServerPlayer) player), this);
+        return new MachineMenu<>(syncId, ((ServerPlayer) player), this, TestModMachineTypes.SIMPLE_MACHINE);
     }
 
     @Override

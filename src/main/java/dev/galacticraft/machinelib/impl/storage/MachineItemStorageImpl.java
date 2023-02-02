@@ -38,7 +38,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -46,28 +46,27 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     private final SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups;
     private final SlotGroupType[] types;
     private final Map<SlotGroupType, SlotGroup<Item, ItemStack, ItemResourceSlot>> typeToGroup;
-    private final ItemResourceSlot[] clumpedSlots;
+    private final ItemResourceSlot[] allSlots;
     private long modifications = 0;
     private Runnable listener;
     private TransactionContext cachedTransaction;
 
-    public MachineItemStorageImpl(SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
+    public MachineItemStorageImpl(SlotGroupType[] types, SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
         this.groups = groups;
-        this.typeToGroup = new HashMap<>(this.groups.length);
-        this.types = new SlotGroupType[this.groups.length];
+        this.types = types;
+        this.typeToGroup = new IdentityHashMap<>(this.groups.length);
         int slots = 0;
         for (int i = 0; i < this.groups.length; i++) {
             SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.groups[i];
             group._setParent(this);
-            this.typeToGroup.put(group.getType(), group);
-            this.types[i] = group.getType();
+            this.typeToGroup.put(this.types[i], group);
             slots += group.getSlots().length;
         }
-        this.clumpedSlots = new ItemResourceSlot[slots];
+        this.allSlots = new ItemResourceSlot[slots];
         slots = 0;
         for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
             for (ItemResourceSlot slot : group.getSlots()) {
-                this.clumpedSlots[slots++] = slot;
+                this.allSlots[slots++] = slot;
             }
         }
     }
@@ -103,7 +102,7 @@ public class MachineItemStorageImpl implements MachineItemStorage {
 
     @Override
     public ItemResourceSlot[] getSlots() {
-        return this.clumpedSlots;
+        return this.allSlots;
     }
 
     @NotNull

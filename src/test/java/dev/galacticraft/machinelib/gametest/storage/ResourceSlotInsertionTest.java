@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.Util;
 import dev.galacticraft.machinelib.impl.Utils;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.CompoundTag;
@@ -50,17 +49,18 @@ import static net.minecraft.world.item.Items.*;
 
 public final class ResourceSlotInsertionTest implements MachineLibGametest {
     private static final CompoundTag ILLEGAL_NBT = new CompoundTag();
-    private ResourceSlot<Item, ItemStack> slot;
 
     static {
         ILLEGAL_NBT.putBoolean("illegal", true);
     }
 
+    private ResourceSlot<Item, ItemStack> slot;
+
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
         this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), (item, tag) -> item != Items.HONEYCOMB && !Utils.tagsEqual(ILLEGAL_NBT, tag));
     }
-    
+
     @Override
     public void afterEach(@NotNull GameTestHelper context) {
         this.slot = null;
@@ -180,20 +180,20 @@ public final class ResourceSlotInsertionTest implements MachineLibGametest {
     @NotNull Runnable insert$filled_nbt_type_different(@Nullable TransactionContext context) {
         this.slot.set(GOLD_INGOT, Util.generateNbt(), 1);
 
-        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(),64));
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(), 64));
     }
 
     @NotNull Runnable insert$fill_nbt(@Nullable TransactionContext context) {
         CompoundTag tag = Util.generateNbt();
         this.slot.set(GOLD_INGOT, tag, 16);
 
-        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, tag,48));
+        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, tag, 48));
     }
 
     @NotNull Runnable insert$fill_overflow(@Nullable TransactionContext context) {
         this.slot.set(GOLD_INGOT, null, 16);
 
-        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT,100));
+        return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, 100));
     }
 
     @NotNull Runnable insert$fill_overflow_item_limiting(@Nullable TransactionContext context) {

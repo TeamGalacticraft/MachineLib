@@ -91,6 +91,11 @@ public final class SecuritySettingsImpl implements SecuritySettings {
         return this.username;
     }
 
+    @Override
+    public void setUsername(@Nullable String username) {
+        this.username = username;
+    }
+
     public @Nullable String getTeamName() {
         return this.teamName;
     }
@@ -187,11 +192,6 @@ public final class SecuritySettingsImpl implements SecuritySettings {
         if (team == null && name != null) throw new IllegalArgumentException("Team name without linked team??");
         this.team = team;
         this.teamName = name;
-    }
-
-    @Override
-    public void setUsername(@Nullable String username) {
-        this.username = username;
     }
 
     /**

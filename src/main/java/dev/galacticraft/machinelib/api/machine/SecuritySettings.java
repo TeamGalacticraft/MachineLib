@@ -77,6 +77,8 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Contract(pure = true)
     @Nullable String getUsername();
 
+    void setUsername(@Nullable String username);
+
     /**
      * Returns the name of the team or {@code null} if it has not been cached.
      *
@@ -170,6 +172,4 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @ApiStatus.Experimental
     @Contract(mutates = "this", value = "null, !null -> fail")
     void setTeam(@Nullable ResourceLocation team, @Nullable String name);
-
-    void setUsername(@Nullable String username);
 }

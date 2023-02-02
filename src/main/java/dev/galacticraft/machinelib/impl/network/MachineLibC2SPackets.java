@@ -152,12 +152,13 @@ public final class MachineLibC2SPackets {
                             if (machineFace.getType().matchesSlots() && machineFace.getSelection() != null) {
                                 ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(machineFace.getType());
                                 if (storage != null) {
-                                    SlotGroup<?, ?, ?> group = storage.getGroup(machineFace.getSelection().getGroup());
+                                    SlotGroupType type = machineFace.getSelection().getGroup();
+                                    SlotGroup<?, ?, ?> group = storage.getGroup(type);
                                     if (slot < group.size()) {
-                                        machineFace.setSelection(StorageSelection.create(group.getType(), slot));
+                                        machineFace.setSelection(StorageSelection.create(type, slot));
                                         machine.setChanged();
                                     } else if (slot == group.size()) {
-                                        machineFace.setSelection(StorageSelection.create(group.getType()));
+                                        machineFace.setSelection(StorageSelection.create(type));
                                         machine.setChanged();
                                     }
                                 }
@@ -235,7 +236,7 @@ public final class MachineLibC2SPackets {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
             ResourceSlot<Fluid, FluidStack> slot = tank.getSlot();
-            InputType type = slot.getGroup().getType().inputType();
+            InputType type = tank.getInputType();
             if (storage.supportsExtraction() && type.playerInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;

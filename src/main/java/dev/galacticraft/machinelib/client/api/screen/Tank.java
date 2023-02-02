@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.menu.TankImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
@@ -46,10 +47,10 @@ import org.jetbrains.annotations.Nullable;
  * @see ResourceType#FLUID
  */
 public interface Tank {
-    @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull Tank create(@NotNull FluidResourceSlot slot, int index) {
+    @Contract(value = "_, _, _ -> new", pure = true)
+    static @NotNull Tank create(@NotNull FluidResourceSlot slot, InputType inputType, int index) {
         Preconditions.checkNotNull(slot);
-        return new TankImpl(slot, index, slot.getDisplay().x(), slot.getDisplay().y(), slot.getDisplay().height());
+        return new TankImpl(slot, inputType, index, slot.getDisplay().x(), slot.getDisplay().y(), slot.getDisplay().height());
     }
 
     /**
@@ -128,4 +129,6 @@ public interface Tank {
 
     @ApiStatus.Internal
     ResourceSlot<Fluid, FluidStack> getSlot();
+
+    InputType getInputType();
 }

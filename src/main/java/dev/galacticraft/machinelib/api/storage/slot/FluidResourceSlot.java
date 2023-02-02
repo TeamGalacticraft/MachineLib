@@ -24,13 +24,20 @@ package dev.galacticraft.machinelib.api.storage.slot;
 
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.FluidResourceSlotImpl;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
+    @Contract(" -> new")
+    static @NotNull Builder builder() {
+        return new Builder();
+    }
+
     @Contract("_, _, _ -> new")
     static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
         return create(display, capacity, filter, filter);
@@ -43,4 +50,69 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
     }
 
     @NotNull TankDisplay getDisplay();
+
+    final class Builder {
+        private int x = 0;
+        private int y = 0;
+        private int height = 48;
+
+        private ResourceFilter<Fluid> filter = ResourceFilters.any();
+        private ResourceFilter<Fluid> strictFilter = null;
+        private long capacity = 0;
+
+        @Contract(pure = true)
+        private Builder() {
+        }
+
+        @Contract("_, _ -> this")
+        public @NotNull FluidResourceSlot.Builder pos(int x, int y) {
+            this.x(x);
+            this.y(y);
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder x(int x) {
+            this.x = x;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder y(int y) {
+            this.y = y;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder height(int height) {
+            this.height = height;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder filter(@NotNull ResourceFilter<Fluid> filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder strictFilter(@Nullable ResourceFilter<Fluid> strictFilter) {
+            this.strictFilter = strictFilter;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder capacity(long capacity) {
+            this.capacity = capacity;
+            return this;
+        }
+
+        @Contract(pure = true)
+        public @NotNull FluidResourceSlot build() {
+            if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
+            if (this.height < 0) throw new IllegalArgumentException("height is negative");
+
+            return FluidResourceSlot.create(TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter, this.strictFilter == null ? this.filter : this.strictFilter);
+        }
+    }
 }

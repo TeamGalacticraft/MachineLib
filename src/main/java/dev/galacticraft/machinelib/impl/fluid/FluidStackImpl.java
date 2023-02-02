@@ -20,62 +20,83 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.fluid;
+package dev.galacticraft.machinelib.impl.fluid;
 
-import dev.galacticraft.machinelib.impl.fluid.FluidStackImpl;
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FluidStack {
+import java.util.Objects;
+
+public final class FluidStackImpl implements FluidStack {
+    public static final FluidStackImpl EMPTY = new FluidStackImpl(null, null, 0);
+
+    private final @Nullable Fluid fluid;
+    private @Nullable CompoundTag tag;
+    private long amount;
+
     @Contract(pure = true)
-    static @NotNull FluidStack empty() {
-        return FluidStackImpl.EMPTY;
+    public FluidStackImpl(@Nullable Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        this.fluid = fluid;
+        this.tag = tag;
+        this.amount = amount;
     }
 
     @Contract(pure = true)
-    static @NotNull FluidStack create(@Nullable Fluid fluid, long amount) {
-        return create(fluid, null, amount);
+    public @Nullable Fluid getFluid() {
+        return this.fluid;
     }
 
     @Contract(pure = true)
-    static @NotNull FluidStack create(@Nullable Fluid fluid, @Nullable CompoundTag tag, long amount) {
+    public @Nullable CompoundTag getTag() {
+        return this.tag;
+    }
+
+    @Contract(mutates = "this")
+    public void setTag(@Nullable CompoundTag tag) {
+        this.tag = tag;
+    }
+
+    @Contract(pure = true)
+    public long getAmount() {
+        return this.amount;
+    }
+
+    @Contract(mutates = "this")
+    public void setAmount(long amount) {
         StoragePreconditions.notNegative(amount);
-        if (fluid == null || amount == 0) return empty();
-        return new FluidStackImpl(fluid, tag, amount);
+        this.amount = this.fluid == null ? 0 : amount;
     }
 
     @Contract(pure = true)
-    @Nullable Fluid getFluid();
-
-    @Contract(pure = true)
-    @Nullable CompoundTag getTag();
-
-    @Contract(mutates = "this")
-    void setTag(@Nullable CompoundTag tag);
-
-    @Contract(pure = true)
-    long getAmount();
+    public boolean isEmpty() {
+        return this.amount == 0;
+    }
 
     @Contract(mutates = "this")
-    void setAmount(long amount);
-
-    @Contract(pure = true)
-    boolean isEmpty();
-
-    @Contract(mutates = "this")
-    void grow(long amount);
+    public void grow(long amount) {
+        if (this.fluid != null) this.amount += amount;
+    }
 
     @Contract(mutates = "this")
-    void shrink(long amount);
+    public void shrink(long amount) {
+        if (this.fluid != null) this.amount -= Math.min(this.amount, amount);
+    }
 
     @Override
     @Contract(value = "null -> false", pure = true)
-    boolean equals(Object o);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FluidStackImpl that = (FluidStackImpl) o;
+        return amount == that.amount && Objects.equals(fluid, that.fluid) && Objects.equals(tag, that.tag);
+    }
 
     @Override
-    int hashCode();
+    public int hashCode() {
+        return Objects.hash(fluid, tag, amount);
+    }
 }

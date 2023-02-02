@@ -40,6 +40,7 @@ import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -99,7 +100,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
      * @param machine The machine this menu is for.
      * @param type    The type of menu this is.
      */
-    protected MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
+    public MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(type.getMenuType(), syncId);
         assert !Objects.requireNonNull(machine.getLevel()).isClientSide;
         this.type = type;
@@ -124,20 +125,22 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.machineSlots = new AutomatableSlot[totalSize];
 
         int index = 0;
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.itemStorage) {
+        for (SlotGroupType groupType : this.itemStorage.getTypes()) {
+            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.itemStorage.getGroup(groupType);
             ItemResourceSlot[] groupSlots = group.getSlots();
             for (int i = 0; i < groupSlots.length; i++) {
-                AutomatableSlot slot1 = new AutomatableSlot(groupSlots[i], i, this.playerUUID);
+                AutomatableSlot slot1 = new AutomatableSlot((Container) group, groupSlots[i], groupType, i, this.playerUUID);
                 this.addSlot(slot1);
                 this.machineSlots[index++] = slot1;
             }
         }
 
-        for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.fluidStorage) {
+        for (SlotGroupType groupType : this.fluidStorage.getTypes()) {
+            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage.getGroup(groupType);
             FluidResourceSlot[] groupSlots = group.getSlots();
             for (int i = 0; i < groupSlots.length; i++) {
                 FluidResourceSlot slot = groupSlots[i];
-                this.addTank(Tank.create(slot, i));
+                this.addTank(Tank.create(slot, groupType.inputType(), i));
             }
         }
 
@@ -182,20 +185,22 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.machineSlots = new AutomatableSlot[totalSize];
 
         int index = 0;
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.itemStorage) {
+        for (SlotGroupType groupType : this.itemStorage.getTypes()) {
+            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.itemStorage.getGroup(groupType);
             ItemResourceSlot[] groupSlots = group.getSlots();
             for (int i = 0; i < groupSlots.length; i++) {
-                AutomatableSlot slot1 = new AutomatableSlot(groupSlots[i], i, this.playerUUID);
+                AutomatableSlot slot1 = new AutomatableSlot((Container) group, groupSlots[i], groupType, i, this.playerUUID);
                 this.addSlot(slot1);
                 this.machineSlots[index++] = slot1;
             }
         }
 
-        for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.fluidStorage) {
+        for (SlotGroupType groupType : this.fluidStorage.getTypes()) {
+            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage.getGroup(groupType);
             FluidResourceSlot[] groupSlots = group.getSlots();
             for (int i = 0; i < groupSlots.length; i++) {
                 FluidResourceSlot slot = groupSlots[i];
-                this.addTank(Tank.create(slot, i));
+                this.addTank(Tank.create(slot, groupType.inputType(), i));
             }
         }
 
@@ -264,7 +269,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
             int insert = stack1.getCount();
             for (AutomatableSlot slot1 : this.machineSlots) {
-                if (slot1.insert && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
+                if (slot1.getType().inputType().playerInsertion() && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
                     insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
                     if (insert == 0) break;
                 }

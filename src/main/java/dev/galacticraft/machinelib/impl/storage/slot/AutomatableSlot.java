@@ -23,11 +23,12 @@
 package dev.galacticraft.machinelib.impl.storage.slot;
 
 import com.mojang.datafixers.util.Pair;
-import dev.galacticraft.machinelib.api.storage.slot.ContainerSlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -42,17 +43,21 @@ import java.util.UUID;
 public class AutomatableSlot extends Slot {
     private final @Nullable Pair<ResourceLocation, ResourceLocation> icon;
     private final @NotNull ItemResourceSlot slot;
-    public final boolean insert;
+    private final SlotGroupType type;
     private final @NotNull UUID uuid;
     private @Nullable ItemStack watchedStack = null;
     private long watchModCount = Long.MIN_VALUE;
 
-    public AutomatableSlot(@NotNull ItemResourceSlot slot, int index, @NotNull UUID player) {
-        super(((ContainerSlotGroup) slot.getGroup()), index, slot.getDisplay().x(), slot.getDisplay().y());
+    public AutomatableSlot(Container group, @NotNull ItemResourceSlot slot, SlotGroupType type, int index, @NotNull UUID player) {
+        super(group, index, slot.getDisplay().x(), slot.getDisplay().y());
         this.icon = slot.getDisplay().icon();
         this.slot = slot;
-        this.insert = slot.getGroup().getType().inputType().playerInsertion();
+        this.type = type;
         this.uuid = player;
+    }
+
+    public SlotGroupType getType() {
+        return type;
     }
 
     @Override
@@ -72,7 +77,7 @@ public class AutomatableSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return this.insert && (stack.isEmpty() || this.slot.getStrictFilter().test(stack.getItem(), stack.getTag()));
+        return this.type.inputType().playerInsertion() && (stack.isEmpty() || this.slot.getStrictFilter().test(stack.getItem(), stack.getTag()));
     }
 
     @Override

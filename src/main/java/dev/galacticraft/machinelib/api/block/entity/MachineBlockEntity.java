@@ -184,10 +184,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         this.fluidStorage.setListener(this::setChanged);
     }
 
-    public MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> getMachineType() {
-        return this.type;
-    }
-
     /**
      * Registers the transfer handlers for this machine.
      * <p>
@@ -215,6 +211,10 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             }
             return null;
         }, blocks);
+    }
+
+    public MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> getMachineType() {
+        return this.type;
     }
 
     /**

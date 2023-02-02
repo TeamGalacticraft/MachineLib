@@ -76,7 +76,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -911,11 +910,10 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                         this.drawSlotOutline(matrices, slot.x(), slot.y(), color);
                         this.drawSlotOverlay(matrices, slot.x(), slot.y(), color);
                     } else {
-                        SlotGroupType group = config.getSelection().getGroup();
-                        int color = group.color().getValue();
+                        SlotGroupType type = config.getSelection().getGroup();
+                        int color = type.color().getValue();
                         for (AutomatableSlot slot : this.menu.machineSlots) {
-                            SlotGroupType type = slot.getSlot().getGroup().getType();
-                            if (type == group) {
+                            if (slot.getType() == type) {
                                 if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
                                     this.drawSlotOutline(matrices, slot.x, slot.y, color);
                                     this.drawSlotOverlay(matrices, slot.x, slot.y, color);
@@ -925,7 +923,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                     }
                 } else {
                     for (AutomatableSlot slot : this.menu.machineSlots) {
-                        SlotGroupType type = slot.getSlot().getGroup().getType();
+                        SlotGroupType type = slot.getType();
                         if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
                             int color = type.color().getValue();
                             this.drawSlotOutline(matrices, slot.x, slot.y, color);

@@ -29,8 +29,6 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.Util;
-import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.CompoundTag;
@@ -56,10 +54,8 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
 
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
-        this.internalSlot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always());
-        this.group = SlotGroup.<Item, ItemStack, ItemResourceSlot>create(TestModSlotGroupTypes.DIAMONDS)
-                        .add(this.internalSlot)
-                        .build();
+        this.internalSlot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.any());
+        this.group = SlotGroup.ofItem(internalSlot);
     }
 
     @Override

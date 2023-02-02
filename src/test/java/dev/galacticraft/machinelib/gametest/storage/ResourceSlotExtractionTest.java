@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
 import dev.galacticraft.machinelib.gametest.Util;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.CompoundTag;
@@ -53,7 +52,7 @@ public final class ResourceSlotExtractionTest implements MachineLibGametest {
 
     @Override
     public void beforeEach(@NotNull GameTestHelper context) {
-        this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always());
+        this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.any());
     }
 
     @Override

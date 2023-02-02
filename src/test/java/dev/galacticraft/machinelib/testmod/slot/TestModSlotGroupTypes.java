@@ -28,6 +28,7 @@ import dev.galacticraft.machinelib.testmod.Constant;
 import net.minecraft.network.chat.TextColor;
 
 public class TestModSlotGroupTypes {
+    public static final SlotGroupType CHARGE = SlotGroupType.createAndRegister(Constant.id("charge"), TextColor.fromRgb(0xffff55), InputType.TRANSFER);
     public static final SlotGroupType DIRT = SlotGroupType.createAndRegister(Constant.id("dirt"), TextColor.fromRgb(0x774422), InputType.INPUT);
     public static final SlotGroupType DIAMONDS = SlotGroupType.createAndRegister(Constant.id("diamonds"), TextColor.fromRgb(0x55ffff), InputType.OUTPUT);
 

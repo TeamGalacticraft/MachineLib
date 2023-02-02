@@ -159,7 +159,7 @@ public final class Assertions {
     private static @NotNull String format(@Nullable Object expected, @Nullable Object found, int depth) {
         return "[Expected: " + expected + ", Found: " + found + "] (Line: " + StackWalker.getInstance().walk(s -> s.skip(depth + 1).findFirst().map(StackWalker.StackFrame::getLineNumber).orElse(-1)) + ")";
     }
-    
+
     @Contract(value = "_ -> fail", pure = true)
     private static void raise(String s) {
         throw new GameTestAssertException(s); // make breakpoints easier

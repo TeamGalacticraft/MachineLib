@@ -27,12 +27,10 @@ import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
 import dev.galacticraft.machinelib.impl.storage.EmptyMachineEnergyStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineEnergyStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.LongTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import team.reborn.energy.api.EnergyStorage;
 

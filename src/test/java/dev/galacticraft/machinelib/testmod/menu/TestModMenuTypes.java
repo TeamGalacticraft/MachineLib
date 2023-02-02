@@ -31,7 +31,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.MenuType;
 
 public class TestModMenuTypes {
-    public static final MenuType<SimpleMachineMenu> SIMPLE_MACHINE = MachineMenu.createType(SimpleMachineMenu::new);
+    public static final MenuType<MachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE = MachineMenu.createSimple(() -> TestModMachineTypes.SIMPLE_MACHINE);
 
     public static void register() {
         Registry.register(BuiltInRegistries.MENU, Constant.id(Constant.SIMPLE_MACHINE), SIMPLE_MACHINE);

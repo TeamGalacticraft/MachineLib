@@ -57,14 +57,16 @@ import java.util.List;
  */
 public final class TankImpl implements Tank {
     public final ResourceSlot<Fluid, FluidStack> slot;
+    private final InputType inputType;
     private final int index;
     private final int x;
     private final int y;
     private final int height;
     public int id = -1;
 
-    public TankImpl(ResourceSlot<Fluid, FluidStack> slot, int index, int x, int y, int height) {
+    public TankImpl(ResourceSlot<Fluid, FluidStack> slot, InputType inputType, int index, int x, int y, int height) {
         this.slot = slot;
+        this.inputType = inputType;
         this.index = index;
         this.x = x;
         this.y = y;
@@ -170,8 +172,7 @@ public final class TankImpl implements Tank {
     public boolean acceptStack(@NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            InputType type = this.slot.getGroup().getType().inputType();
-            if (storage.supportsExtraction() && type.playerInsertion()) {
+            if (storage.supportsExtraction() && this.inputType.playerInsertion()) {
                 try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (this.isEmpty()) {
@@ -187,7 +188,7 @@ public final class TankImpl implements Tank {
                         return false;
                     }
                 }
-            } else if (storage.supportsInsertion() && type.playerExtraction()) {
+            } else if (storage.supportsInsertion() && this.inputType.playerExtraction()) {
                 FluidVariant storedResource = this.getVariant();
                 if (!storedResource.isBlank()) {
                     try (Transaction transaction = Transaction.openOuter()) {
@@ -206,5 +207,10 @@ public final class TankImpl implements Tank {
     @Override
     public ResourceSlot<Fluid, FluidStack> getSlot() {
         return this.slot;
+    }
+
+    @Override
+    public InputType getInputType() {
+        return this.inputType;
     }
 }

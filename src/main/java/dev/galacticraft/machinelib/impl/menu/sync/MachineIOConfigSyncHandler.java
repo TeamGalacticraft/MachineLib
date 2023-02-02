@@ -36,7 +36,8 @@ public class MachineIOConfigSyncHandler implements MenuSyncHandler {
         for (int i = 0; i < values.length; i++) {
             this.syncHandlers[i] = config.get(values[i]).createSyncHandler();
         }
-     }
+    }
+
     @Override
     public boolean needsSyncing() {
         for (MenuSyncHandler syncHandler : this.syncHandlers) {

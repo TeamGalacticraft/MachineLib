@@ -31,10 +31,10 @@ import dev.galacticraft.machinelib.impl.storage.MachineFluidStorageImpl;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, FluidResourceSlot, SlotGroup<Fluid, FluidStack, FluidResourceSlot>>, MenuSynchronizable {
     @Contract(value = " -> new", pure = true)
@@ -47,37 +47,43 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, 
         return EmptyMachineFluidStorage.INSTANCE;
     }
 
-    class Builder {
-        private final List<SlotGroup<Fluid, FluidStack, FluidResourceSlot>> groups = new ArrayList<>();
+    final class Builder {
+        private final List<SlotGroupType> types = new ArrayList<>();
+        private final List<Supplier<SlotGroup<Fluid, FluidStack, FluidResourceSlot>>> groups = new ArrayList<>(); // i would use a map, but ordering must be guaranteed
 
         private Builder() {
         }
 
-        public @NotNull MachineFluidStorage.Builder addGroup(@Nullable SlotGroup<Fluid, FluidStack, FluidResourceSlot> group) {
-            if (group == null || group.isEmpty()) return this;
-            this.checkDuplicate(group.getType());
-            this.groups.add(group);
-            return this;
-        }
-
-        public @NotNull MachineFluidStorage.Builder addSingle(@NotNull SlotGroupType type, FluidResourceSlot slot) {
-            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = SlotGroup.of(type, slot);
-            this.checkDuplicate(group.getType());
-            this.groups.add(group);
-            return this;
-        }
-
-        private void checkDuplicate(@NotNull SlotGroupType type) {
-            for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.groups) {
-                if (type == group.getType()) {
-                    throw new UnsupportedOperationException("duplicate group type");
-                }
+        @Contract("_, _ -> this")
+        public @NotNull MachineFluidStorage.Builder group(@NotNull SlotGroupType type, @NotNull Supplier<SlotGroup<Fluid, FluidStack, FluidResourceSlot>> group) {
+            if (!this.types.contains(type)) {
+                this.types.add(type);
+                this.groups.add(group);
+            } else {
+                throw new IllegalArgumentException();
             }
+            return this;
+        }
+
+        @Contract("_, _ -> this")
+        public @NotNull MachineFluidStorage.Builder single(@NotNull SlotGroupType type, Supplier<FluidResourceSlot> slot) {
+            if (!this.types.contains(type)) {
+                this.types.add(type);
+                this.groups.add(() -> SlotGroup.of(slot.get()));
+            } else {
+                throw new IllegalArgumentException();
+            }
+            return this;
         }
 
         public @NotNull MachineFluidStorage build() {
             if (this.groups.isEmpty()) return MachineFluidStorage.empty();
-            return new MachineFluidStorageImpl(this.groups.toArray(new SlotGroup[0]));
+            int size = this.groups.size();
+            SlotGroup<Fluid, FluidStack, FluidResourceSlot>[] groups = new SlotGroup[size];
+            for (int i = 0; i < size; i++) {
+                groups[i] = this.groups.get(i).get();
+            }
+            return new MachineFluidStorageImpl(this.types.toArray(new SlotGroupType[0]), groups);
         }
     }
 }

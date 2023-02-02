@@ -42,8 +42,8 @@ import java.util.function.Supplier;
  * A simple menu that keeps track of recipe progress
  *
  * @param <Machine> The type of machine block entity
- * @param <R> The type of recipe the machine processes
- * @param <C> The type of storage the recipe uses
+ * @param <R>       The type of recipe the machine processes
+ * @param <C>       The type of storage the recipe uses
  * @see MachineMenu
  */
 public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineMenu<Machine> {
@@ -69,30 +69,6 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
         this.maxProgress = buf.readInt();
     }
 
-    @Override
-    public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
-        super.registerSyncHandlers(consumer);
-
-        consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
-        consumer.accept(MenuSyncHandler.simple(this.machine::getMaxProgress, this::setMaxProgress));
-    }
-
-    public int getProgress() {
-        return this.progress;
-    }
-
-    public int getMaxProgress() {
-        return this.maxProgress;
-    }
-
-    public void setProgress(int progress) {
-        this.progress = progress;
-    }
-
-    public void setMaxProgress(int maxProgress) {
-        this.maxProgress = maxProgress;
-    }
-
     @Contract(value = "_ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference) {
         return createType(selfReference, 84);
@@ -106,5 +82,29 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference, int invX, int invY) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new RecipeMachineMenu<>(syncId, inventory, buf, invX, invY, selfReference.get()));
+    }
+
+    @Override
+    public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
+        super.registerSyncHandlers(consumer);
+
+        consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
+        consumer.accept(MenuSyncHandler.simple(this.machine::getMaxProgress, this::setMaxProgress));
+    }
+
+    public int getProgress() {
+        return this.progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+
+    public int getMaxProgress() {
+        return this.maxProgress;
+    }
+
+    public void setMaxProgress(int maxProgress) {
+        this.maxProgress = maxProgress;
     }
 }

@@ -23,16 +23,12 @@
 package dev.galacticraft.machinelib.gametest.storage;
 
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupTypes;
-import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.gametest.MachineLibGametest;
+import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import static dev.galacticraft.machinelib.gametest.Assertions.*;
@@ -41,28 +37,23 @@ public final class ItemStorageBuilderTest implements MachineLibGametest {
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void create_empty(@NotNull GameTestHelper context) {
         assertEquals(0, MachineItemStorage.empty().groups());
-        assertEquals(0, MachineItemStorage.builder().addGroup(null).build().groups());
-        assertEquals(0, MachineItemStorage.builder().addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE).build()).build().groups());
+        assertEquals(0, MachineItemStorage.builder().build().groups());
 
         assertIdentityEquals(MachineItemStorage.empty(), MachineItemStorage.builder().build());
-        assertIdentityEquals(MachineItemStorage.empty(), MachineItemStorage.builder().addGroup(null).build());
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void create_slot_size(@NotNull GameTestHelper context) {
         assertEquals(1, MachineItemStorage.builder()
-                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
-                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
-                        .build()
+                .group(TestModSlotGroupTypes.CHARGE, SlotGroup.item()
+                        .add(ItemResourceSlot.builder()::build)
+                        ::build
                 )
                 .build().groups()
         );
+
         assertEquals(1, MachineItemStorage.builder()
-                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
-                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
-                        .build()
-                )
-                .addGroup(null)
+                .single(TestModSlotGroupTypes.CHARGE, ItemResourceSlot.builder()::build)
                 .build().groups()
         );
     }
@@ -70,13 +61,13 @@ public final class ItemStorageBuilderTest implements MachineLibGametest {
     @GameTest(template = EMPTY_STRUCTURE, batch = "item_storage", timeoutTicks = 0)
     void fail_duplicate(@NotNull GameTestHelper context) {
         assertThrows(() -> MachineItemStorage.builder()
-                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE)
-                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
-                        .build()
+                .group(TestModSlotGroupTypes.CHARGE, SlotGroup.item()
+                        .add(ItemResourceSlot.builder()::build)
+                        ::build
                 )
-                .addGroup(SlotGroup.<Item, ItemStack, ItemResourceSlot>create(SlotGroupTypes.CHARGE) // duplicate group
-                        .add(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.always()))
-                        .build()
+                .group(TestModSlotGroupTypes.CHARGE, SlotGroup.item() // duplicate group
+                        .add(ItemResourceSlot.builder()::build)
+                        ::build
                 )
                 .build().groups()
         );

@@ -36,9 +36,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Caches apis available in adjacent blocks.
  *
- * @param <A> the api type
+ * @param <Api> the api type
  */
-public interface AdjacentBlockApiCache<A> {
+public interface AdjacentBlockApiCache<Api> {
     @Contract("_, _, _ -> new")
     static <A> @NotNull AdjacentBlockApiCache<A> create(@NotNull BlockApiLookup<A, Direction> lookup, @NotNull ServerLevel world, @NotNull BlockPos pos) {
         return new AdjacentBlockApiCacheImpl<>(lookup, world, pos);
@@ -52,7 +52,7 @@ public interface AdjacentBlockApiCache<A> {
      */
     @Contract(mutates = "this")
     @Nullable
-    default A find(Direction direction) {
+    default Api find(Direction direction) {
         return this.find(direction, null);
     }
 
@@ -65,7 +65,7 @@ public interface AdjacentBlockApiCache<A> {
      */
     @Contract(mutates = "this")
     @Nullable
-    A find(@NotNull Direction direction, @Nullable BlockState state);
+    Api find(@NotNull Direction direction, @Nullable BlockState state);
 
     /**
      * Returns the block entity in the given direction.

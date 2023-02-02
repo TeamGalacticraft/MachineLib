@@ -45,28 +45,28 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     private final SlotGroup<Fluid, FluidStack, FluidResourceSlot>[] groups;
     private final SlotGroupType[] types;
     private final Map<SlotGroupType, SlotGroup<Fluid, FluidStack, FluidResourceSlot>> typeToGroup;
-    private final FluidResourceSlot[] clumpedSlots;
+    private final FluidResourceSlot[] allSlots;
     private TransactionContext cachedTransaction = null;
     private long modifications = 0;
     private Runnable listener;
 
-    public MachineFluidStorageImpl(SlotGroup<Fluid, FluidStack, FluidResourceSlot>[] groups) {
+    public MachineFluidStorageImpl(SlotGroupType @NotNull [] types, SlotGroup<Fluid, FluidStack, FluidResourceSlot> @NotNull [] groups) {
+        assert groups.length == types.length;
         this.groups = groups;
+        this.types = types;
         this.typeToGroup = new HashMap<>(this.groups.length);
-        this.types = new SlotGroupType[this.groups.length];
         int slots = 0;
         for (int i = 0; i < this.groups.length; i++) {
             SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.groups[i];
+            this.typeToGroup.put(this.types[i], group);
             group._setParent(this);
-            this.typeToGroup.put(group.getType(), group);
-            this.types[i] = group.getType();
             slots += group.getSlots().length;
         }
-        this.clumpedSlots = new FluidResourceSlot[slots];
+        this.allSlots = new FluidResourceSlot[slots];
         slots = 0;
         for (SlotGroup<Fluid, FluidStack, FluidResourceSlot> group : this.groups) {
             for (FluidResourceSlot slot : group.getSlots()) {
-                this.clumpedSlots[slots++] = slot;
+                this.allSlots[slots++] = slot;
             }
         }
     }
@@ -107,7 +107,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
 
     @Override
     public FluidResourceSlot[] getSlots() {
-        return this.clumpedSlots;
+        return this.allSlots;
     }
 
     @NotNull

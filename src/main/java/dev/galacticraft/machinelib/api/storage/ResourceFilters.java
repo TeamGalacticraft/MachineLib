@@ -24,18 +24,22 @@ package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 public final class ResourceFilters {
-    private static final ResourceFilter<?> ALWAYS = (resource, tag) -> true;
-    private static final ResourceFilter<?> NEVER = (resource, tag)-> false;
-
     public static final ResourceFilter<Item> CAN_EXTRACT_ENERGY = (item, tag) -> {
         if (item == null) return false;
         EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
@@ -64,30 +68,132 @@ public final class ResourceFilters {
         }
         return false;
     };
+    private static final ResourceFilter<?> ANY = (resource, tag) -> true;
+    private static final ResourceFilter<?> NONE = (resource, tag) -> false;
+
+    private ResourceFilters() {
+    }
 
     @Contract(pure = true)
-    public static <Resource> @NotNull ResourceFilter<Resource> matchAnyNbt(@NotNull Resource resource) {
+    public static <Resource> @NotNull ResourceFilter<Resource> ofResourceAnyNBT(@NotNull Resource resource) {
         return (r, ignored) -> r == resource;
     }
 
     @Contract(pure = true)
-    public static <Resource> @NotNull ResourceFilter<Resource> match(@NotNull Resource resource, @NotNull CompoundTag tag) {
+    public static <Resource> @NotNull ResourceFilter<Resource> ofResource(@NotNull Resource resource, @Nullable CompoundTag tag) {
         return (r, t) -> r == resource && Utils.tagsEqual(t, tag);
     }
 
     @Contract(pure = true)
-    public static <Resource> @NotNull ResourceFilter<Resource> matchNoNbt(@NotNull Resource resource) {
+    public static <Resource> @NotNull ResourceFilter<Resource> ofResource(@NotNull Resource resource) {
         return (r, tag) -> r == resource && Utils.tagsEqual(tag, null);
     }
 
     @Contract(pure = true)
-    public static <Resource> @NotNull ResourceFilter<Resource> always() {
-        return (ResourceFilter<Resource>) ALWAYS;
+    public static @NotNull ResourceFilter<Item> itemTagAnyNBT(@NotNull TagKey<Item> tag) {
+        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag);
     }
 
-    public static <Resource> @NotNull ResourceFilter<Resource> never() {
-        return (ResourceFilter<Resource>) NEVER;
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> itemTag(@NotNull TagKey<Item> tag, @Nullable CompoundTag nbt) {
+        return (r, nbtC) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbtC, nbt);
     }
 
-    private ResourceFilters() {}
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> itemTag(@NotNull TagKey<Item> tag) {
+        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbt, null);
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Fluid> fluidTagAnyNBT(@NotNull TagKey<Fluid> tag) {
+        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag);
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Fluid> fluidTag(@NotNull TagKey<Fluid> tag, @Nullable CompoundTag nbt) {
+        return (r, nbtC) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbtC, nbt);
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Fluid> fluidTag(@NotNull TagKey<Fluid> tag) {
+        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbt, null);
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> isFluidStorage() {
+        return (r, nbt) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
+            return storage != null;
+        };
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> canExtractFluidStrict(@NotNull Fluid fluid) {
+        return (r, nbt) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
+            if (storage == null || !storage.supportsExtraction()) return false;
+            try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
+                if (storage.simulateExtract(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> canExtractFluidStrict(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
+        return (r, nbtC) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
+            if (storage == null || !storage.supportsExtraction()) return false;
+            try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
+                if (storage.simulateExtract(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> canInsertFluidStrict(@NotNull Fluid fluid) {
+        return (r, nbt) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
+            if (storage == null || !storage.supportsExtraction()) return false;
+            try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
+                if (storage.simulateInsert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> canInsertFluidStrict(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
+        return (r, nbtC) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
+            if (storage == null || !storage.supportsExtraction()) return false;
+            try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
+                if (storage.simulateInsert(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    @Contract(pure = true)
+    public static <Resource> @NotNull ResourceFilter<Resource> any() {
+        return (ResourceFilter<Resource>) ANY;
+    }
+
+    public static <Resource> @NotNull ResourceFilter<Resource> none() {
+        return (ResourceFilter<Resource>) NONE;
+    }
 }

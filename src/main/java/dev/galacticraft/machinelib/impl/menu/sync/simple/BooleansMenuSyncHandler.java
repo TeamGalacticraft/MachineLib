@@ -50,7 +50,7 @@ public final class BooleansMenuSyncHandler implements MenuSyncHandler {
         int len = this.input.length;
         int bLen = (len - len % 8) / 8 + 1;
         byte[] bytes = new byte[bLen];
-        Arrays.fill(bytes, (byte)0);
+        Arrays.fill(bytes, (byte) 0);
         int b = 0;
         int j = 0;
         for (int i = 0; i < len; i++) {

@@ -32,10 +32,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, ItemResourceSlot, SlotGroup<Item, ItemStack, ItemResourceSlot>>, MenuSynchronizable {
     @Contract(value = " -> new", pure = true)
@@ -50,37 +50,43 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, Ite
 
     @NotNull Container getCraftingView(@NotNull SlotGroupType type);
 
-    class Builder {
-        private final List<SlotGroup<Item, ItemStack, ItemResourceSlot>> groups = new ArrayList<>();
+    final class Builder {
+        private final List<SlotGroupType> types = new ArrayList<>();
+        private final List<Supplier<SlotGroup<Item, ItemStack, ItemResourceSlot>>> groups = new ArrayList<>(); // i would use a map, but ordering must be guaranteed
 
         private Builder() {
         }
 
-        public @NotNull Builder addGroup(@Nullable SlotGroup<Item, ItemStack, ItemResourceSlot> group) {
-            if (group == null || group.size() == 0) return this;
-            this.checkDuplicate(group.getType());
-            this.groups.add(group);
-            return this;
-        }
-
-        public @NotNull MachineItemStorage.Builder addSingle(@NotNull SlotGroupType type, ItemResourceSlot slot) {
-            SlotGroup<Item, ItemStack, ItemResourceSlot> group = SlotGroup.of(type, slot);
-            this.checkDuplicate(group.getType());
-            this.groups.add(group);
-            return this;
-        }
-
-        private void checkDuplicate(@NotNull SlotGroupType type) {
-            for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-                if (type == group.getType()) {
-                    throw new UnsupportedOperationException("duplicate group type");
-                }
+        @Contract("_, _ -> this")
+        public @NotNull Builder group(@NotNull SlotGroupType type, @NotNull Supplier<SlotGroup<Item, ItemStack, ItemResourceSlot>> group) {
+            if (!this.types.contains(type)) {
+                this.types.add(type);
+                this.groups.add(group);
+            } else {
+                throw new IllegalArgumentException();
             }
+            return this;
+        }
+
+        @Contract("_, _ -> this")
+        public @NotNull Builder single(@NotNull SlotGroupType type, Supplier<ItemResourceSlot> slot) {
+            if (!this.types.contains(type)) {
+                this.types.add(type);
+                this.groups.add(() -> SlotGroup.of(slot.get()));
+            } else {
+                throw new IllegalArgumentException();
+            }
+            return this;
         }
 
         public @NotNull MachineItemStorage build() {
             if (this.groups.isEmpty()) return MachineItemStorage.empty();
-            return new MachineItemStorageImpl(this.groups.toArray(new SlotGroup[0]));
+            int size = this.groups.size();
+            SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups = new SlotGroup[size];
+            for (int i = 0; i < size; i++) {
+                groups[i] = this.groups.get(i).get();
+            }
+            return new MachineItemStorageImpl(this.types.toArray(new SlotGroupType[0]), groups);
         }
     }
 }

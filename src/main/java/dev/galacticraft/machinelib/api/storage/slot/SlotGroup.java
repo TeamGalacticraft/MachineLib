@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
@@ -33,35 +34,42 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 // FILTERS (non-strict), has indirect KNOWLEDGE of automation (I/O)
 public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> extends Iterable<Slot>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
-    @Contract(value = "_ -> new", pure = true)
-    static @NotNull <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> Builder<Resource, Stack, Slot> create(@NotNull SlotGroupType type) {
-        return new Builder<>(type);
+    @Contract(value = " -> new", pure = true)
+    static @NotNull <Slot extends ItemResourceSlot> Builder<Item, ItemStack, Slot> item() {
+        return new Builder<>(true);
     }
 
-    @Contract("_, _ -> new")
+    @Contract(value = " -> new", pure = true)
+    static @NotNull <Slot extends FluidResourceSlot> Builder<Fluid, FluidStack, Slot> fluid() {
+        return new Builder<>(false);
+    }
+
+    @Contract("_ -> new")
     @SafeVarargs
-    static <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> @NotNull SlotGroup<Resource, Stack, Slot> of(@NotNull SlotGroupType type, @NotNull Slot... slots) {
-        return new SlotGroupImpl<>(type, slots);
+    static <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> @NotNull SlotGroup<Resource, Stack, Slot> of(@NotNull Slot... slots) {
+        return new SlotGroupImpl<>(slots);
     }
 
-    @Contract("_, _ -> new")
+    @Contract("_ -> new")
     @SafeVarargs
-    static <Slot extends ResourceSlot<Item, ItemStack>> @NotNull ContainerSlotGroup<Slot> crafting(@NotNull SlotGroupType type, @NotNull Slot... slots) {
-        return new ContainerSlotGroupImpl<>(type, slots);
+    static <Slot extends ResourceSlot<Item, ItemStack>> @NotNull ContainerSlotGroup<Slot> ofItem(@NotNull Slot... slots) {
+        return new ContainerSlotGroupImpl<>(slots);
     }
 
+    @ApiStatus.Internal
     void _setParent(@NotNull MutableModifiable modifiable);
-
-    @NotNull SlotGroupType getType();
 
     int size();
 
@@ -196,29 +204,25 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
     // END SLOT METHODS
 
     class Builder<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> {
-        private final @NotNull SlotGroupType type;
-        private final List<Slot> slots = new ArrayList<>();
+        private final boolean item;
+        private final List<Supplier<Slot>> slots = new ArrayList<>();
 
-        private Builder(@NotNull SlotGroupType type) {
-            this.type = type;
+        private Builder(boolean item) {
+            this.item = item;
         }
 
-        public @NotNull Builder<Resource, Stack, Slot> add(Slot slot) {
-            if (slot == null) return this;
+        public @NotNull Builder<Resource, Stack, Slot> add(@NotNull Supplier<Slot> slot) {
             this.slots.add(slot);
             return this;
         }
 
-        public @Nullable SlotGroup<Resource, Stack, Slot> build() {
-            if (this.slots.isEmpty()) return null;
-            if (this.slots.get(0) instanceof ItemResourceSlot) {
-                return (SlotGroup<Resource, Stack, Slot>) crafting(this.type, this.slots.toArray(new ItemResourceSlot[0]));
-            } else if (this.slots.get(0) instanceof FluidResourceSlot) {
-                return (SlotGroup<Resource, Stack, Slot>) of(this.type, this.slots.toArray(new FluidResourceSlot[0]));
+        public @NotNull SlotGroup<Resource, Stack, Slot> build() {
+            if (this.slots.size() == 0) throw new RuntimeException();
+            if (this.item) {
+                return (SlotGroup<Resource, Stack, Slot>) ofItem(this.slots.stream().map(Supplier::get).toArray((ItemResourceSlot[]::new)));
             } else {
-                throw new UnsupportedOperationException();
+                return (SlotGroup<Resource, Stack, Slot>) of(this.slots.stream().map(Supplier::get).toArray((FluidResourceSlot[]::new)));
             }
-//            return SlotGroup.of(this.type, this.slots.toArray(new Slot[0]));
         }
     }
 }
