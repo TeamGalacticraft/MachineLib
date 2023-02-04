@@ -36,7 +36,6 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -104,7 +103,7 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public FluidVariant getVariant() {
+    public FluidVariant createVariant() {
         return this.getFluid() == null ? FluidVariant.blank() : FluidVariant.of(this.getFluid(), this.getTag());
     }
 
@@ -161,7 +160,7 @@ public final class TankImpl implements Tank {
             MutableComponent translatableText;
             translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
 
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.getVariant())).setStyle(Constant.Text.BLUE_STYLE));
+            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())).setStyle(Constant.Text.BLUE_STYLE));
             lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
             client.screen.renderComponentTooltip(matrices, lines, mouseX, mouseY);
         }
@@ -173,31 +172,19 @@ public final class TankImpl implements Tank {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
             if (storage.supportsExtraction() && this.inputType.playerInsertion()) {
-                try (Transaction transaction = Transaction.openOuter()) {
-                    FluidVariant storedResource;
-                    if (this.isEmpty()) {
-                        storedResource = StorageUtil.findStoredResource(storage, variant -> this.slot.getFilter().test(variant.getFluid(), variant.getNbt()));
-                    } else {
-                        storedResource = this.getVariant();
-                    }
-                    if (storedResource != null && !storedResource.isBlank()) {
-                        if (GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, transaction) != 0) {
-                            transaction.commit();
-                            return true;
-                        }
-                        return false;
-                    }
+                FluidVariant storedResource;
+                if (this.isEmpty()) {
+                    storedResource = StorageUtil.findStoredResource(storage, variant -> this.slot.getFilter().test(variant.getFluid(), variant.getNbt()));
+                } else {
+                    storedResource = this.createVariant();
+                }
+                if (storedResource != null && !storedResource.isBlank()) {
+                    return GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, null) != 0;
                 }
             } else if (storage.supportsInsertion() && this.inputType.playerExtraction()) {
-                FluidVariant storedResource = this.getVariant();
+                FluidVariant storedResource = this.createVariant();
                 if (!storedResource.isBlank()) {
-                    try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, transaction) != 0) {
-                            transaction.commit();
-                            return true;
-                        }
-                        return false;
-                    }
+                    return GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, null) != 0;
                 }
             }
         }

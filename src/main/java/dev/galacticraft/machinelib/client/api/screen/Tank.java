@@ -70,7 +70,7 @@ public interface Tank {
 
     boolean isEmpty();
 
-    FluidVariant getVariant();
+    FluidVariant createVariant();
 
     /**
      * Returns the index of this tank in the storage.

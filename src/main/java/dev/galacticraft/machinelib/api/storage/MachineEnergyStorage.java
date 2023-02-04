@@ -31,7 +31,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.LongTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
@@ -112,17 +112,13 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
      * @param amount  The amount of energy to set the energy stored to
      * @param context The transaction context
      */
-    void setEnergy(long amount, @NotNull TransactionContext context);
+    void setEnergy(long amount, @Nullable TransactionContext context);
 
     /**
-     * Sets the energy stored to the given amount, without using a transaction.
-     * Used for syncing the energy stored between client and server.
-     * Use at your own risk.
-     *
+     * Sets the energy stored to the given amount.
      * @param amount The amount of energy to set the energy stored to
      */
-    @TestOnly
-    void setEnergyUnsafe(long amount);
+    void setEnergy(long amount);
 
     /**
      * Returns an exposed energy storage that has restricted input and output.

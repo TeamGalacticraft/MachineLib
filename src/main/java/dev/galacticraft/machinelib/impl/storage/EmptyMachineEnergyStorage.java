@@ -116,11 +116,11 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public void setEnergy(long amount, @NotNull TransactionContext context) {
+    public void setEnergy(long amount, @Nullable TransactionContext context) {
     }
 
     @Override
-    public void setEnergyUnsafe(long amount) {
+    public void setEnergy(long amount) {
     }
 
     @Override

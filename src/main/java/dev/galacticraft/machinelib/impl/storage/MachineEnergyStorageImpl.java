@@ -26,7 +26,6 @@ import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineEnergyStorageSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
@@ -34,6 +33,7 @@ import net.minecraft.nbt.LongTag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 @ApiStatus.Internal
@@ -184,14 +184,13 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public void setEnergy(long amount, @NotNull TransactionContext context) {
-        this.updateSnapshots(context);
-        this.amount = amount;
+    public void setEnergy(long amount, @Nullable TransactionContext context) {
+        if (context != null) this.updateSnapshots(context);
+        this.setEnergy(amount);
     }
 
     @Override
-    public void setEnergyUnsafe(long amount) {
-        GenericApiUtil.noTransaction();
+    public void setEnergy(long amount) {
         this.amount = amount;
     }
 

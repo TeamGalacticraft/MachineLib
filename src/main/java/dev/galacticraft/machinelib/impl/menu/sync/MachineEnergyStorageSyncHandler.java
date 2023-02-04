@@ -49,6 +49,6 @@ public class MachineEnergyStorageSyncHandler implements MenuSyncHandler {
 
     @Override
     public void read(@NotNull FriendlyByteBuf buf) {
-        this.storage.setEnergyUnsafe(buf.readLong());
+        this.storage.setEnergy(buf.readLong());
     }
 }

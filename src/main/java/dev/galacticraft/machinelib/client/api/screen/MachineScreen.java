@@ -843,7 +843,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
             if (tank.getAmount() > 0) {
-                FluidVariant resource = tank.getVariant();
+                FluidVariant resource = tank.createVariant();
                 boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
                 TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
                 int fluidColor = FluidVariantRendering.getColor(resource);

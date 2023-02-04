@@ -53,7 +53,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(world, pos, state, profiler);
         profiler.push("charge_stack");
-        this.attemptChargeFromStack(TestModSlotGroupTypes.CHARGE, 0);
+        this.chargeFromStack(TestModSlotGroupTypes.CHARGE);
         profiler.pop();
     }
 

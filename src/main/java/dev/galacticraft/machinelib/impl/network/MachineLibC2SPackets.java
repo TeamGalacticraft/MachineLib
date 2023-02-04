@@ -48,7 +48,6 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -238,32 +237,21 @@ public final class MachineLibC2SPackets {
             ResourceSlot<Fluid, FluidStack> slot = tank.getSlot();
             InputType type = tank.getInputType();
             if (storage.supportsExtraction() && type.playerInsertion()) {
-                try (Transaction transaction = Transaction.openOuter()) {
                     FluidVariant storedResource;
                     if (tank.isEmpty()) {
                         storedResource = StorageUtil.findStoredResource(storage, variant -> slot.getFilter().test(variant.getFluid(), variant.getNbt()));
                     } else {
-                        storedResource = tank.getVariant();
+                        storedResource = tank.createVariant();
                     }
                     if (storedResource != null) {
-                        if (GenericApiUtil.move(storedResource, storage, slot, Long.MAX_VALUE, transaction) != 0) {
-                            transaction.commit();
-                            return true;
-                        }
-                        return false;
+                        return GenericApiUtil.move(storedResource, storage, slot, Long.MAX_VALUE, null) != 0;
                     }
-                }
             } else if (storage.supportsInsertion() && type.playerExtraction()) {
-                FluidVariant storedResource = tank.getVariant();
+                FluidVariant storedResource = tank.createVariant();
                 if (!storedResource.isBlank()) {
-                    try (Transaction transaction = Transaction.openOuter()) {
-                        if (GenericApiUtil.move(storedResource, slot, storage, Long.MAX_VALUE, transaction) != 0) {
-                            transaction.commit();
-                            return true;
-                        }
-                        return false;
-                    }
+                    return GenericApiUtil.move(storedResource, slot, storage, Long.MAX_VALUE, null) != 0;
                 }
+
             }
         }
         return false;
