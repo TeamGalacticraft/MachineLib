@@ -27,8 +27,8 @@ import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.SlotProvider;
-import dev.galacticraft.machinelib.impl.storage.slot.ContainerSlotGroupImpl;
-import dev.galacticraft.machinelib.impl.storage.slot.SlotGroupImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.FluidSlotGroupImpl;
+import dev.galacticraft.machinelib.impl.storage.slot.ItemSlotGroupImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -42,30 +42,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 // FILTERS (non-strict), has indirect KNOWLEDGE of automation (I/O)
 public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> extends Iterable<Slot>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
     @Contract(value = " -> new", pure = true)
-    static @NotNull <Slot extends ItemResourceSlot> Builder<Item, ItemStack, Slot> item() {
-        return new Builder<>(true);
+    static @NotNull Builder<Item, ItemStack, ItemResourceSlot> item() {
+        return new Builder<>(SlotGroup::ofItem, ItemResourceSlot[]::new);
     }
 
     @Contract(value = " -> new", pure = true)
-    static @NotNull <Slot extends FluidResourceSlot> Builder<Fluid, FluidStack, Slot> fluid() {
-        return new Builder<>(false);
+    static @NotNull Builder<Fluid, FluidStack, FluidResourceSlot> fluid() {
+        return new Builder<>(SlotGroup::ofFluid, FluidResourceSlot[]::new);
     }
 
     @Contract("_ -> new")
     @SafeVarargs
-    static <Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> @NotNull SlotGroup<Resource, Stack, Slot> of(@NotNull Slot... slots) {
-        return new SlotGroupImpl<>(slots);
+    static <Slot extends ResourceSlot<Fluid, FluidStack>> @NotNull SlotGroup<Fluid, FluidStack, Slot> ofFluid(@NotNull Slot... slots) {
+        return new FluidSlotGroupImpl<>(slots);
     }
 
     @Contract("_ -> new")
     @SafeVarargs
     static <Slot extends ResourceSlot<Item, ItemStack>> @NotNull ContainerSlotGroup<Slot> ofItem(@NotNull Slot... slots) {
-        return new ContainerSlotGroupImpl<>(slots);
+        return new ItemSlotGroupImpl<>(slots);
     }
 
     @ApiStatus.Internal
@@ -79,25 +81,31 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     @NotNull ResourceFilter<Resource> getStrictFilter(int slot);
 
-    boolean canInsertOne(@NotNull Resource resource);
+    boolean canInsert(@NotNull Resource resource);
 
-    boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag);
 
     boolean canInsert(@NotNull Resource resource, long amount);
 
     boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
+    boolean canInsertStack(@NotNull Stack stack);
+
     long tryInsert(@NotNull Resource resource, long amount);
 
     long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean insertOne(@NotNull Resource resource);
-
-    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+    long tryInsertStack(@NotNull Stack stack);
 
     long insert(@NotNull Resource resource, long amount);
 
     long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insertStack(@NotNull Stack stack);
+
+    long insertMatching(@NotNull Resource resource, long amount);
+
+    long insertMatching(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     boolean containsAny(@NotNull Resource resource);
 
@@ -147,25 +155,27 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
 
     @NotNull Stack copyStack(int slot);
 
-    boolean canInsertOne(int slot, @NotNull Resource resource);
+    boolean canInsert(int slot, @NotNull Resource resource);
 
-    boolean canInsertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
+    boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
 
     boolean canInsert(int slot, @NotNull Resource resource, long amount);
 
     boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
+    boolean canInsertStack(int slot, @NotNull Stack stack);
+
     long tryInsert(int slot, @NotNull Resource resource, long amount);
 
     long tryInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean insertOne(int slot, @NotNull Resource resource);
-
-    boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
+    long tryInsertStack(int slot, @NotNull Stack stack);
 
     long insert(int slot, @NotNull Resource resource, long amount);
 
     long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insertStack(int slot, @NotNull Stack stack);
 
     boolean containsAny(int slot, @NotNull Resource resource);
 
@@ -204,11 +214,13 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
     // END SLOT METHODS
 
     class Builder<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> {
-        private final boolean item;
         private final List<Supplier<Slot>> slots = new ArrayList<>();
+        private final Function<Slot[], SlotGroup<Resource, Stack, Slot>> constructor;
+        private final IntFunction<Slot[]> arrayProvider;
 
-        private Builder(boolean item) {
-            this.item = item;
+        private Builder(Function<Slot[], SlotGroup<Resource, Stack, Slot>> constructor, IntFunction<Slot[]> arrayProvider) {
+            this.constructor = constructor;
+            this.arrayProvider = arrayProvider;
         }
 
         public @NotNull Builder<Resource, Stack, Slot> add(@NotNull Supplier<Slot> slot) {
@@ -217,12 +229,8 @@ public interface SlotGroup<Resource, Stack, Slot extends ResourceSlot<Resource, 
         }
 
         public @NotNull SlotGroup<Resource, Stack, Slot> build() {
-            if (this.slots.size() == 0) throw new RuntimeException();
-            if (this.item) {
-                return (SlotGroup<Resource, Stack, Slot>) ofItem(this.slots.stream().map(Supplier::get).toArray((ItemResourceSlot[]::new)));
-            } else {
-                return (SlotGroup<Resource, Stack, Slot>) of(this.slots.stream().map(Supplier::get).toArray((FluidResourceSlot[]::new)));
-            }
+            if (this.slots.size() == 0) throw new IllegalArgumentException("no slots");
+            return this.constructor.apply(this.slots.stream().map(Supplier::get).toArray(this.arrayProvider));
         }
     }
 }

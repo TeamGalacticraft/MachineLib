@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> implements SlotGroup<Resource, Stack, Slot> {
+public abstract class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> implements SlotGroup<Resource, Stack, Slot> {
     private final @NotNull Slot @NotNull [] slots;
     private MutableModifiable parent;
     private long modifications = 0;
@@ -80,43 +80,39 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean canInsertOne(@NotNull Resource resource) {
+    public boolean canInsert(@NotNull Resource resource) {
         for (Slot slot : this.slots) {
-            if (slot.canInsertOne(resource)) return true;
+            if (slot.canInsert(resource)) return true;
         }
         return false;
     }
 
     @Override
-    public boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+    public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag) {
         for (Slot slot : this.slots) {
-            if (slot.canInsertOne(resource, tag)) return true;
+            if (slot.canInsert(resource, tag)) return true;
         }
         return false;
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, long amount) {
-        long total = 0;
+        long inserted = 0;
         for (Slot slot : this.slots) {
-            if (slot.canInsert(resource, amount)) {
-                total += slot.getAmount();
-                if (total >= amount) return true;
-            }
+            inserted += slot.tryInsert(resource, amount - inserted);
+            if (inserted == amount) return true;
         }
-        return total >= amount;
+        return inserted == amount;
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
-        long total = 0;
+        long inserted = 0;
         for (Slot slot : this.slots) {
-            if (slot.canInsert(resource, tag, amount)) {
-                total += slot.getAmount();
-                if (total >= amount) return true;
-            }
+            inserted += slot.tryInsert(resource, tag, amount - inserted);
+            if (inserted == amount) return true;
         }
-        return total >= amount;
+        return inserted == amount;
     }
 
     @Override
@@ -140,22 +136,6 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean insertOne(@NotNull Resource resource) {
-        for (Slot slot : this.slots) {
-            if (slot.canInsertOne(resource)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        for (Slot slot : this.slots) {
-            if (slot.insertOne(resource, tag)) return true;
-        }
-        return false;
-    }
-
-    @Override
     public long insert(@NotNull Resource resource, long amount) {
         long inserted = 0;
         for (Slot slot : this.slots) {
@@ -168,6 +148,40 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     @Override
     public long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         long inserted = 0;
+        for (Slot slot : this.slots) {
+            inserted += slot.insert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long insertMatching(@NotNull Resource resource, long amount) {
+        long inserted = 0;
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource)) {
+                inserted += slot.insert(resource, amount - inserted);
+                if (inserted == amount) return inserted;
+            }
+        }
+
+        for (Slot slot : this.slots) {
+            inserted += slot.insert(resource, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long insertMatching(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (Slot slot : this.slots) {
+            if (slot.contains(resource, tag)) {
+                inserted += slot.insert(resource, tag, amount - inserted);
+                if (inserted == amount) return inserted;
+            }
+        }
+
         for (Slot slot : this.slots) {
             inserted += slot.insert(resource, tag, amount - inserted);
             if (inserted == amount) break;
@@ -349,13 +363,13 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean canInsertOne(int slot, @NotNull Resource resource) {
-        return this.slots[slot].canInsertOne(resource);
+    public boolean canInsert(int slot, @NotNull Resource resource) {
+        return this.slots[slot].canInsert(resource);
     }
 
     @Override
-    public boolean canInsertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
-        return this.slots[slot].canInsertOne(resource, tag);
+    public boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].canInsert(resource, tag);
     }
 
     @Override
@@ -369,6 +383,11 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
+    public boolean canInsertStack(int slot, @NotNull Stack stack) {
+        return this.slots[slot].canInsertStack(stack);
+    }
+
+    @Override
     public long tryInsert(int slot, @NotNull Resource resource, long amount) {
         return this.slots[slot].tryInsert(resource, amount);
     }
@@ -379,13 +398,8 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     }
 
     @Override
-    public boolean insertOne(int slot, @NotNull Resource resource) {
-        return this.slots[slot].insertOne(resource);
-    }
-
-    @Override
-    public boolean insertOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
-        return this.slots[slot].insertOne(resource, tag);
+    public long tryInsertStack(int slot, @NotNull Stack stack) {
+        return this.slots[slot].tryInsertStack(stack);
     }
 
     @Override
@@ -396,6 +410,11 @@ public class SlotGroupImpl<Resource, Stack, Slot extends ResourceSlot<Resource, 
     @Override
     public long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         return this.slots[slot].insert(resource, tag, amount);
+    }
+
+    @Override
+    public long insertStack(int slot, @NotNull Stack stack) {
+        return this.slots[slot].insertStack(stack);
     }
 
     @Override

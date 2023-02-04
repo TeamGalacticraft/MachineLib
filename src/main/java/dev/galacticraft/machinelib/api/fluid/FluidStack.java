@@ -26,6 +26,7 @@ import dev.galacticraft.machinelib.impl.fluid.FluidStackImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public interface FluidStack {
     @Contract(pure = true)
     static @NotNull FluidStack create(@Nullable Fluid fluid, @Nullable CompoundTag tag, long amount) {
         StoragePreconditions.notNegative(amount);
-        if (fluid == null || amount == 0) return empty();
+        if (fluid == null || fluid == Fluids.EMPTY || amount == 0) return empty();
         return new FluidStackImpl(fluid, tag, amount);
     }
 

@@ -69,7 +69,7 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidStack, 
         public @NotNull MachineFluidStorage.Builder single(@NotNull SlotGroupType type, Supplier<FluidResourceSlot> slot) {
             if (!this.types.contains(type)) {
                 this.types.add(type);
-                this.groups.add(() -> SlotGroup.of(slot.get()));
+                this.groups.add(() -> SlotGroup.ofFluid(slot.get()));
             } else {
                 throw new IllegalArgumentException();
             }

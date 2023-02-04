@@ -132,29 +132,29 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
-    public boolean canInsertOne(@NotNull Resource resource) {
+    public boolean canInsert(@NotNull Resource resource) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canInsert(resource);
+        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
-    public boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
+    public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canInsert(resource, tag);
+        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount >= amount && this.canInsert(resource);
+        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount >= amount && this.canInsert(resource, tag);
+        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
@@ -162,10 +162,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        if (this.canInsert(resource)) {
-            return Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount;
-        }
-        return 0;
+        return this.canAccept(resource) ? Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount : 0;
     }
 
     @Override
@@ -173,34 +170,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        if (this.canInsert(resource, tag)) {
-            return Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount;
-        }
-        return 0;
-    }
-
-    @Override
-    public boolean insertOne(@NotNull Resource resource) {
-        if (this.canInsertOne(resource)) {
-            this.resource = resource;
-            this.tag = null;
-            this.amount++;
-            this.markModified();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        if (this.canInsertOne(resource, tag)) {
-            this.resource = resource;
-            this.tag = stripTag(tag);
-            this.amount++;
-            this.markModified();
-            return true;
-        }
-        return false;
+        return this.canAccept(resource, tag) ? Math.min(this.amount + amount, this.getCapacityFor(resource)) - this.amount : 0;
     }
 
     @Override
@@ -254,7 +224,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        return this.canExtract(resource) && this.amount >= amount;
+        return this.contains(resource) && this.amount >= amount;
     }
 
     @Override
@@ -262,7 +232,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        return this.canExtract(resource, tag) && this.amount >= amount;
+        return this.contains(resource, tag) && this.amount >= amount;
     }
 
     @Override
@@ -275,10 +245,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        if (this.amount > 0 && (resource == null || resource == this.resource)) {
-            return Math.min(this.amount, amount);
-        }
-        return 0;
+        return this.amount > 0 && (resource == null || resource == this.resource) ? Math.min(this.amount, amount) : 0;
     }
 
     @Override
@@ -286,10 +253,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        if (this.amount > 0 && (resource == null || resource == this.resource) && Utils.tagsEqual(this.tag, tag)) {
-            return Math.min(this.amount, amount);
-        }
-        return 0;
+        return this.amount > 0 && (resource == null || resource == this.resource) && Utils.tagsEqual(this.tag, tag) ? Math.min(this.amount, amount) : 0;
     }
 
     @Override
@@ -421,6 +385,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         this.resource = snapshot.resource;
         this.amount = snapshot.amount;
         this.tag = snapshot.tag;
+        assert this.isSane();
     }
 
     @Override
@@ -446,23 +411,13 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Contract(pure = true)
-    private boolean canInsert(@NotNull Resource resource) {
-        return this.canInsert(resource, null);
+    private boolean canAccept(@NotNull Resource resource) {
+        return this.canAccept(resource, null);
     }
 
     @Contract(pure = true)
-    private boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag) {
+    private boolean canAccept(@NotNull Resource resource, @Nullable CompoundTag tag) {
         return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || (this.resource == null && this.filter.test(resource, tag));
-    }
-
-    @Contract(pure = true)
-    private boolean canExtract(@Nullable Resource resource) {
-        return this.canExtract(resource, null);
-    }
-
-    @Contract(pure = true)
-    private boolean canExtract(@Nullable Resource resource, @Nullable CompoundTag tag) {
-        return this.resource != null && (this.resource == resource || resource == null) && Utils.tagsEqual(this.tag, tag);
     }
 
     private boolean isSane() {

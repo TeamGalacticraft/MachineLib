@@ -68,6 +68,27 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
     }
 
     @Override
+    public boolean canInsertStack(@NotNull FluidStack stack) {
+        if (stack.isEmpty()) return true;
+        assert stack.getFluid() != null;
+        return this.canInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
+    }
+
+    @Override
+    public long tryInsertStack(@NotNull FluidStack stack) {
+        if (stack.isEmpty()) return 0;
+        assert stack.getFluid() != null;
+        return this.tryInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
+    }
+
+    @Override
+    public long insertStack(@NotNull FluidStack stack) {
+        if (stack.isEmpty()) return 0;
+        assert stack.getFluid() != null;
+        return this.insert(stack.getFluid(), stack.getTag(), stack.getAmount());
+    }
+
+    @Override
     public @NotNull CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
         if (this.isEmpty()) return tag;

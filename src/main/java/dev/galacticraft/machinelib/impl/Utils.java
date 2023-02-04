@@ -48,4 +48,8 @@ public final class Utils {
     public static boolean itemsEqual(@Nullable Item a, @NotNull Item b) {
         return a == b || (a == null && b == Items.AIR);
     }
+
+    public static void breakpointMe(String s) {
+        MachineLib.LOGGER.error(s);
+    }
 }

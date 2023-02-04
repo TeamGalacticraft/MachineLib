@@ -98,7 +98,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
         } else {
             if (this.energyStorage().getAmount() > 150) {
                 if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
-                    if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsertOne(Items.DIAMOND)) {
+                    if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsert(Items.DIAMOND)) {
                         this.ticks = 5 * 20;
                         return MachineStatuses.ACTIVE;
                     } else {

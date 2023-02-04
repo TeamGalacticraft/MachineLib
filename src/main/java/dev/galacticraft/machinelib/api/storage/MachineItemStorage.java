@@ -72,7 +72,7 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemStack, Ite
         public @NotNull Builder single(@NotNull SlotGroupType type, Supplier<ItemResourceSlot> slot) {
             if (!this.types.contains(type)) {
                 this.types.add(type);
-                this.groups.add(() -> SlotGroup.of(slot.get()));
+                this.groups.add(() -> SlotGroup.ofItem(slot.get()));
             } else {
                 throw new IllegalArgumentException();
             }

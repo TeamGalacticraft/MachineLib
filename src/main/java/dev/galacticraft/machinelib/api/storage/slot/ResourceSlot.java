@@ -64,25 +64,27 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     // tag can be mutated
     @NotNull Stack copyStack();
 
-    boolean canInsertOne(@NotNull Resource resource);
+    boolean canInsert(@NotNull Resource resource);
 
-    boolean canInsertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag);
 
     boolean canInsert(@NotNull Resource resource, long amount);
 
     boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
+    boolean canInsertStack(@NotNull Stack stack);
+
     long tryInsert(@NotNull Resource resource, long amount);
 
     long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean insertOne(@NotNull Resource resource);
-
-    boolean insertOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+    long tryInsertStack(@NotNull Stack stack);
 
     long insert(@NotNull Resource resource, long amount);
 
     long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insertStack(@NotNull Stack stack);
 
     boolean contains(@NotNull Resource resource);
 

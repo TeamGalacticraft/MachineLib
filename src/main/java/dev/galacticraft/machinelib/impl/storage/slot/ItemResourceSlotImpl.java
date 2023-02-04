@@ -37,6 +37,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,27 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
         ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
         stack.setTag(this.copyTag());
         return stack;
+    }
+
+    @Override
+    public boolean canInsertStack(@NotNull ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
+        return this.canInsert(stack.getItem(), stack.getTag(), stack.getCount());
+    }
+
+    @Override
+    public long tryInsertStack(@NotNull ItemStack stack) {
+        if (stack.isEmpty()) return 0;
+        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
+        return this.tryInsert(stack.getItem(), stack.getTag(), stack.getCount());
+    }
+
+    @Override
+    public long insertStack(@NotNull ItemStack stack) {
+        if (stack.isEmpty()) return 0;
+        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
+        return this.insert(stack.getItem(), stack.getTag(), stack.getCount());
     }
 
     @Override
