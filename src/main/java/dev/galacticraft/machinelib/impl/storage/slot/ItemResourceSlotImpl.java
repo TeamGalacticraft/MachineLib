@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> implements ItemResourceSlot {
     private final @NotNull ItemSlotDisplay display;
@@ -182,8 +183,17 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
 
                 @Override
                 public ItemVariant getResource() {
-                    assert ItemResourceSlotImpl.this.getResource() != null;
-                    return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(ItemResourceSlotImpl.this.getResource(), ItemResourceSlotImpl.this.getTag());
+                    return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.getResource()), ItemResourceSlotImpl.this.getTag());
+                }
+
+                @Override
+                public long simulateInsert(ItemVariant resource, long maxAmount, @Nullable TransactionContext transaction) {
+                    return ItemResourceSlotImpl.this.tryInsert(resource.getItem(), resource.getNbt(), maxAmount);
+                }
+
+                @Override
+                public long simulateExtract(ItemVariant resource, long maxAmount, @Nullable TransactionContext transaction) {
+                    return ItemResourceSlotImpl.this.tryExtract(resource.getItem(), resource.getNbt(), maxAmount);
                 }
 
                 @Override

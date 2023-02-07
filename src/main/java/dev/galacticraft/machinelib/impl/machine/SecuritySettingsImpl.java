@@ -27,13 +27,9 @@ import dev.galacticraft.machinelib.api.machine.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.menu.sync.SecuritySettingsSyncHandler;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -152,20 +148,6 @@ public final class SecuritySettingsImpl implements SecuritySettings {
     }
 
     /**
-     * Sets the player who owns the linked machine.
-     *
-     * @param player The player to set.
-     */
-    @Override
-    public void setOwner(@Nullable Player player) { //todo: teams
-        if (player == null) {
-            this.setOwner(null, null);
-        } else {
-            this.setOwner(player.getUUID(), player.getGameProfile().getName());
-        }
-    }
-
-    /**
      * Sets the game profile of the owner of the linked machine.
      *
      * @param uuid The uuid to set.
@@ -174,7 +156,13 @@ public final class SecuritySettingsImpl implements SecuritySettings {
     @Override
     public void setOwner(@Nullable UUID uuid, String name) {
         this.owner = uuid;
-//            if (teams.getTeam(uuid) != null) this.team = teams.getTeam(uuid).id;  //todo: teams
+        if (this.owner != null) {
+            this.username = name;
+        } else {
+            this.username = null;
+            this.team = null;
+            this.teamName = null;
+        } //todo: teams
     }
 
     /**
@@ -194,39 +182,9 @@ public final class SecuritySettingsImpl implements SecuritySettings {
         this.teamName = name;
     }
 
-    /**
-     * Sends the security settings to the client.
-     *
-     * @param pos    The position of the machine.
-     * @param player The player to send the settings to.
-     */
     @Override
-    @Deprecated(forRemoval = true)
-    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
-        assert this.owner != null;
-        FriendlyByteBuf buf = PacketByteBufs.create();
-        buf.writeBlockPos(pos);
-        buf.writeByte(this.accessLevel.ordinal());
-        buf.writeUUID(this.owner);
-        if (this.username != null) {
-            buf.writeBoolean(true);
-            buf.writeUtf(this.username);
-        } else {
-            buf.writeBoolean(false);
-        }
-        if (this.team != null) {
-            buf.writeBoolean(true);
-            buf.writeUtf(this.team.toString());
-        } else {
-            buf.writeBoolean(false);
-        }
-        if (this.teamName != null) {
-            buf.writeBoolean(true);
-            buf.writeUtf(this.teamName);
-        } else {
-            buf.writeBoolean(false);
-        }
-        ServerPlayNetworking.send(player, Constant.id("security_update"), buf);
+    public boolean hasOwner() {
+        return this.getOwner() != null;
     }
 
     @Override

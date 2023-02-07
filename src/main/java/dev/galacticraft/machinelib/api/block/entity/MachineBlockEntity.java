@@ -286,11 +286,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getStatus()
      */
     public void setStatus(@NotNull MachineStatus status) {
-        if (this.isActive() != status.type().isActive()) {
-            if (this.level != null) {
-                this.level.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(MachineBlock.ACTIVE, status.type().isActive()));
-            }
-        }
         this.configuration.setStatus(status);
     }
 
@@ -637,11 +632,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (level != null && level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, Blocks.AIR.defaultBlockState(), this.getBlockState(), Block.UPDATE_IMMEDIATE);
         }
-    }
-
-    @Override
-    public void setChanged() {
-        super.setChanged();
     }
 
     /**

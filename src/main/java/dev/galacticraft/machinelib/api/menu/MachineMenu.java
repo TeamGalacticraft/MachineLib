@@ -34,8 +34,8 @@ import dev.galacticraft.machinelib.api.storage.slot.*;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import io.netty.buffer.Unpooled;
+import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -62,10 +62,9 @@ import java.util.function.Supplier;
  * @param <Machine> The type of machine block entity this menu is linked to.
  */
 public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractContainerMenu {
-    public final @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type;
+    public final @NotNull MachineType<?, ?> type;
 
     @ApiStatus.Internal
-    @Deprecated
     public final @NotNull Machine machine;
     public final boolean server;
 
@@ -98,12 +97,11 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
      * @param syncId  The sync id for this menu.
      * @param player  The player who is interacting with this menu.
      * @param machine The machine this menu is for.
-     * @param type    The type of menu this is.
      */
-    public MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
-        super(type.getMenuType(), syncId);
+    public MachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine) {
+        super(machine.getMachineType().getMenuType(), syncId);
         assert !Objects.requireNonNull(machine.getLevel()).isClientSide;
-        this.type = type;
+        this.type = machine.getMachineType();
         this.machine = machine;
         this.server = true;
         this.player = player;
@@ -374,7 +372,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
             }
 
             if (sync > 0) {
-                FriendlyByteBuf buf = PacketByteBufs.create();
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeByte(this.containerId);
                 buf.writeVarInt(sync);
                 for (int i = 0; i < this.syncHandlers.size(); i++) {
@@ -384,7 +382,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                         handler.sync(buf);
                     }
                 }
-                ServerPlayNetworking.send(this.player, Constant.id("storage_sync"), buf);
+                PacketSender.s2c(this.player).send(Constant.id("storage_sync"), buf);
             }
         }
     }

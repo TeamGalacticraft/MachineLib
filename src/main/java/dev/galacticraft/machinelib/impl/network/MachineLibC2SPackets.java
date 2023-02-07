@@ -41,8 +41,8 @@ import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import lol.bai.badpackets.api.C2SPacketReceiver;
+import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -52,6 +52,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
@@ -66,7 +67,7 @@ public final class MachineLibC2SPackets {
     }
 
     public static void register() {
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
             byte f = buf.readByte();
             boolean type = buf.readBoolean();
 
@@ -86,8 +87,8 @@ public final class MachineLibC2SPackets {
                                 FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 1)
                                         .writeLong(pos.asLong()).writeByte(f)
                                 );
-                                for (ServerPlayer tracking : PlayerLookup.tracking(level, pos)) {
-                                    ServerPlayNetworking.send(tracking, Constant.id("reset_face"), buffer);
+                                for (ServerPlayer tracking : level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false)) {
+                                    PacketSender.s2c(tracking).send(Constant.id("reset_face"), buffer);
                                 }
                             }
                             machineFace.setSelection(null);
@@ -100,7 +101,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("face_type"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("face_type"), (server, player, handler, buf, responseSender) -> {
             byte f = buf.readByte();
             byte type = buf.readByte();
             byte flow = buf.readByte();
@@ -128,8 +129,8 @@ public final class MachineLibC2SPackets {
                             FriendlyByteBuf buffer = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Long.BYTES + 3)
                                     .writeLong(pos.asLong()).writeByte(f).writeByte(type).writeByte(flow)
                             );
-                            for (ServerPlayer tracking : PlayerLookup.tracking(level, machine.getBlockPos())) {
-                                ServerPlayNetworking.send(tracking, Constant.id("face_type"), buffer);
+                            for (ServerPlayer tracking : level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false)) {
+                                PacketSender.s2c(tracking).send(Constant.id("face_type"), buffer);
                             }
                         }
                     }
@@ -137,7 +138,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("match_slot"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("match_slot"), (server, player, handler, buf, responseSender) -> {
             byte b = buf.readByte();
             int slot = buf.readInt();
 
@@ -168,7 +169,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("match_group"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("match_group"), (server, player, handler, buf, responseSender) -> {
             byte b = buf.readByte();
             int group = buf.readInt();
 
@@ -192,7 +193,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.containerMenu instanceof MachineMenu<?> sHandler) {
@@ -205,7 +206,7 @@ public final class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.containerMenu instanceof MachineMenu<?> sHandler) {
@@ -218,7 +219,7 @@ public final class MachineLibC2SPackets {
             });
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(Constant.id("tank_modify"), (server, player, handler, buf, responseSender) -> {
+        C2SPacketReceiver.register(Constant.id("tank_modify"), (server, player, handler, buf, responseSender) -> {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {

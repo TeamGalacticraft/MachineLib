@@ -25,23 +25,16 @@ package dev.galacticraft.machinelib.client.impl.network;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.block.face.BlockFace;
 import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.impl.Constant;
+import lol.bai.badpackets.api.S2CPacketReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.ApiStatus;
-
-import java.util.UUID;
 
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
@@ -50,18 +43,18 @@ public final class MachineLibS2CPackets {
     }
 
     public static void register() {
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
-            FriendlyByteBuf packet = PacketByteBufs.copy(buf);
+        S2CPacketReceiver.register(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
+            FriendlyByteBuf packet = new FriendlyByteBuf(buf.copy());
             client.execute(() -> {
-                if (client.player.containerMenu instanceof MachineMenu<?> machineHandler) {
-                    if (machineHandler.containerId == packet.readByte()) {
-                        machineHandler.receiveState(packet);
+                if (client.player.containerMenu instanceof MachineMenu<?> menu) {
+                    if (menu.containerId == packet.readByte()) {
+                        menu.receiveState(packet);
                     }
                 }
             });
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("reset_face"), (client, handler, buf, responseSender) -> {
+        S2CPacketReceiver.register(Constant.id("reset_face"), (client, handler, buf, responseSender) -> {
             BlockPos pos = BlockPos.of(buf.readLong());
             byte f = buf.readByte();
 
@@ -79,7 +72,7 @@ public final class MachineLibS2CPackets {
             }
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("face_type"), (client, handler, buf, responseSender) -> {
+        S2CPacketReceiver.register(Constant.id("face_type"), (client, handler, buf, responseSender) -> {
             BlockPos pos = BlockPos.of(buf.readLong());
             byte f = buf.readByte();
             byte type = buf.readByte();
@@ -101,50 +94,6 @@ public final class MachineLibS2CPackets {
                     }
                 });
             }
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("security_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
-            BlockPos pos = buf.readBlockPos();
-            AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
-            UUID uuid = buf.readUUID();
-            String username = null;
-            ResourceLocation team = null;
-            String teamName = null;
-
-            if (buf.readBoolean()) username = buf.readUtf();
-            if (buf.readBoolean()) team = new ResourceLocation(buf.readUtf());
-            if (buf.readBoolean()) teamName = buf.readUtf();
-
-
-            String finalUsername = username; // for lambda capture
-            ResourceLocation finalTeam = team;
-            String finalTeamName = teamName;
-            client.execute(() -> {
-                assert client.level != null;
-                BlockEntity entity = client.level.getBlockEntity(pos);
-                if (entity instanceof MachineBlockEntity machine) {
-                    assert uuid != null;
-                    assert accessLevel != null;
-                    machine.getSecurity().setOwner(uuid, finalUsername);
-                    machine.getSecurity().setTeam(finalTeam, finalTeamName);
-                    machine.getSecurity().setAccessLevel(accessLevel);
-
-                }
-            });
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("redstone_update"), (client, handler, buf, responseSender) -> { //todo(marcus): 1.17?
-            BlockPos pos = buf.readBlockPos();
-            RedstoneActivation redstone = RedstoneActivation.values()[buf.readByte()];
-
-            client.execute(() -> {
-                assert client.level != null;
-                BlockEntity entity = client.level.getBlockEntity(pos);
-                if (entity instanceof MachineBlockEntity) {
-                    assert redstone != null;
-                    ((MachineBlockEntity) entity).setRedstone(redstone);
-                }
-            });
         });
     }
 }

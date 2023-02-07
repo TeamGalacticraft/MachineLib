@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.client.impl.model;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
@@ -33,7 +32,6 @@ import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
-import dev.galacticraft.machinelib.client.impl.util.CachingSpriteAtlas;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -45,11 +43,12 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -58,7 +57,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,42 +64,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 @ApiStatus.Internal
 public final class MachineBakedModel implements FabricBakedModel, BakedModel {
-    public static final MachineBakedModel INSTANCE = new MachineBakedModel();
+    public static final Material MACHINE = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine"));
+    public static final Material MACHINE_SIDE = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_side"));
+    
+    public static final Material MACHINE_ENERGY_IN = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_power_input"));
+    public static final Material MACHINE_ENERGY_OUT = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_power_output"));
+    public static final Material MACHINE_ENERGY_BOTH = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_power_both"));
 
-    public static final ResourceLocation MACHINE_ENERGY_IN = Constant.id("block/machine_power_input");
-    public static final ResourceLocation MACHINE_ENERGY_OUT = Constant.id("block/machine_power_output");
-    public static final ResourceLocation MACHINE_ENERGY_BOTH = Constant.id("block/machine_power_both");
+    public static final Material MACHINE_FLUID_IN = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_fluid_input"));
+    public static final Material MACHINE_FLUID_OUT = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_fluid_output"));
+    public static final Material MACHINE_FLUID_BOTH = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_fluid_both"));
 
-    public static final ResourceLocation MACHINE_FLUID_IN = Constant.id("block/machine_fluid_input");
-    public static final ResourceLocation MACHINE_FLUID_OUT = Constant.id("block/machine_fluid_output");
-    public static final ResourceLocation MACHINE_FLUID_BOTH = Constant.id("block/machine_fluid_both");
+    public static final Material MACHINE_ITEM_IN = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_item_input"));
+    public static final Material MACHINE_ITEM_OUT = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_item_output"));
+    public static final Material MACHINE_ITEM_BOTH = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_item_both"));
 
-    public static final ResourceLocation MACHINE_ITEM_IN = Constant.id("block/machine_item_input");
-    public static final ResourceLocation MACHINE_ITEM_OUT = Constant.id("block/machine_item_output");
-    public static final ResourceLocation MACHINE_ITEM_BOTH = Constant.id("block/machine_item_both");
+    public static final Material MACHINE_GAS_IN = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_gas_input"));
+    public static final Material MACHINE_GAS_OUT = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_gas_output"));
+    public static final Material MACHINE_GAS_BOTH = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_gas_both"));
 
-    public static final ResourceLocation MACHINE_GAS_IN = Constant.id("block/machine_gas_input");
-    public static final ResourceLocation MACHINE_GAS_OUT = Constant.id("block/machine_gas_output");
-    public static final ResourceLocation MACHINE_GAS_BOTH = Constant.id("block/machine_gas_both");
+    public static final Material MACHINE_ANY_IN = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_any_input"));
+    public static final Material MACHINE_ANY_OUT = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_any_output"));
+    public static final Material MACHINE_ANY_BOTH = new Material(TextureAtlas.LOCATION_BLOCKS, Constant.id("block/machine_any_both"));
 
-    public static final ResourceLocation MACHINE_ANY_IN = Constant.id("block/machine_any_input");
-    public static final ResourceLocation MACHINE_ANY_OUT = Constant.id("block/machine_any_output");
-    public static final ResourceLocation MACHINE_ANY_BOTH = Constant.id("block/machine_any_both");
-
-    @ApiStatus.Internal
-    public static final CachingSpriteAtlas CACHING_SPRITE_ATLAS = new CachingSpriteAtlas(null);
-    @ApiStatus.Internal
-    public static final Map<Block, MachineModelRegistry.SpriteProvider> SPRITE_PROVIDERS = new IdentityHashMap<>();
-    @ApiStatus.Internal
-    public static final Map<String, Set<String>> IDENTIFIERS = new HashMap<>();
-    public static final List<ResourceLocation> TEXTURE_DEPENDENCIES = new ArrayList<>();
     private static final ItemTransforms ITEM_TRANSFORMATION = new ItemTransforms(
             new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
             new ItemTransform(new Vector3f(75, 45, 0), new Vector3f(0, 0.25f, 0), new Vector3f(0.375f, 0.375f, 0.375f)),
@@ -114,65 +107,30 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     );
 
     private static final MachineConfiguration CONFIGURATION = MachineConfiguration.create();
+    private final MachineModelRegistry.SpriteProvider provider;
+    private final Function<Material, TextureAtlasSprite> atlasFunction;
+    private final TextureAtlasSprite particle;
 
-    static {
-        TEXTURE_DEPENDENCIES.add(MachineModelRegistry.MACHINE);
-        TEXTURE_DEPENDENCIES.add(MachineModelRegistry.MACHINE_SIDE);
-
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_IN);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_OUT);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ENERGY_BOTH);
-
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_IN);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_OUT);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_FLUID_BOTH);
-
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_IN);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_OUT);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ITEM_BOTH);
-
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_IN);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_OUT);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_GAS_BOTH);
-
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_IN);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_OUT);
-        TEXTURE_DEPENDENCIES.add(MachineBakedModel.MACHINE_ANY_BOTH);
+    public MachineBakedModel(MachineModelRegistry.SpriteProviderFactory factory, JsonObject spriteInfo, Function<Material, TextureAtlasSprite> function) {
+        this.provider = factory.create(spriteInfo, function);
+        this.atlasFunction = function;
+        this.particle = function.apply(MACHINE);
     }
 
-    private MachineBakedModel() {
-    }
-
-    public static void register(@NotNull Block block, @NotNull MachineModelRegistry.SpriteProvider provider) {
-        Preconditions.checkNotNull(block);
-        Preconditions.checkNotNull(provider);
-
-        SPRITE_PROVIDERS.put(block, provider);
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
-        IDENTIFIERS.computeIfAbsent(id.getNamespace(), s -> new HashSet<>());
-        IDENTIFIERS.get(id.getNamespace()).add(id.getPath());
-    }
-
-    @ApiStatus.Internal
-    public static void setSpriteAtlas(Function<ResourceLocation, TextureAtlasSprite> function) {
-        CACHING_SPRITE_ATLAS.setAtlas(function);
-    }
-
-    public static boolean transform(@NotNull MachineIOConfig ioConfig, @Nullable MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
+    private boolean transform(@NotNull MachineIOConfig ioConfig, @Nullable MachineBlockEntity machine, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
         MachineIOFace machineFace = ioConfig.get(face);
         quad.spriteBake(0,
                 getSprite(face,
                         machine,
                         null,
-                        SPRITE_PROVIDERS.getOrDefault(state.getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT),
                         machineFace.getType(), machineFace.getFlow()),
                 MutableQuadView.BAKE_LOCK_UV);
         quad.spriteColor(0, -1, -1, -1, -1);
         return true;
     }
 
-    public static boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
+    private boolean transformItem(@NotNull ItemStack stack, @NotNull MutableQuadView quad) {
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(Constant.Nbt.BLOCK_ENTITY_TAG, Tag.TAG_COMPOUND)) {
             CONFIGURATION.readTag(tag.getCompound(Constant.Nbt.BLOCK_ENTITY_TAG).getCompound(Constant.Nbt.CONFIGURATION));
@@ -181,54 +139,73 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
                     getSprite(BlockFace.toFace(Direction.NORTH, quad.nominalFace()),
                             null,
                             stack,
-                            SPRITE_PROVIDERS.getOrDefault(((BlockItem) stack.getItem()).getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT),
                             machineFace.getType(), machineFace.getFlow()),
                     MutableQuadView.BAKE_LOCK_UV);
         } else {
-            quad.spriteBake(0, SPRITE_PROVIDERS.getOrDefault(((BlockItem) stack.getItem()).getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT)
-                    .getSpritesForState(null, stack, BlockFace.toFace(Direction.NORTH, quad.nominalFace()), CACHING_SPRITE_ATLAS), MutableQuadView.BAKE_LOCK_UV);
+            quad.spriteBake(0, this.provider
+                    .getSpritesForState(null, stack, BlockFace.toFace(Direction.NORTH, quad.nominalFace())), MutableQuadView.BAKE_LOCK_UV);
         }
         quad.spriteColor(0, -1, -1, -1, -1);
         return true;
     }
 
-    public static TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull MachineModelRegistry.SpriteProvider provider, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
+    public TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
         switch (flow) {
             case INPUT -> {
-                if (type == ResourceType.ENERGY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ENERGY_IN);
-                } else if (type == ResourceType.ITEM) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_IN);
-                } else if (type == ResourceType.FLUID) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_IN);
-                } else if (type == ResourceType.ANY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_IN);
+                switch (type) {
+                    case ENERGY -> {
+                        return this.atlasFunction.apply(MACHINE_ENERGY_IN); //todo: cache these
+                    }
+                    case ITEM -> {
+                        return this.atlasFunction.apply(MACHINE_ITEM_IN);
+                    }
+                    case FLUID -> {
+                        return this.atlasFunction.apply(MACHINE_FLUID_IN);
+                    }
+                    case ANY -> {
+                        return this.atlasFunction.apply(MACHINE_ANY_IN);
+                    }
                 }
             }
             case OUTPUT -> {
-                if (type == ResourceType.ENERGY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ENERGY_OUT);
-                } else if (type == ResourceType.ITEM) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_OUT);
-                } else if (type == ResourceType.FLUID) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_OUT);
-                } else if (type == ResourceType.ANY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_OUT);
+                switch (type) {
+                    case ENERGY -> {
+                        return this.atlasFunction.apply(MACHINE_ENERGY_OUT);
+                    }
+                    case ITEM -> {
+                        return this.atlasFunction.apply(MACHINE_ITEM_OUT);
+                    }
+                    case FLUID -> {
+                        return this.atlasFunction.apply(MACHINE_FLUID_OUT);
+                    }
+                    case ANY -> {
+                        return this.atlasFunction.apply(MACHINE_ANY_OUT);
+                    }
                 }
             }
             case BOTH -> {
-                if (type == ResourceType.ENERGY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ENERGY_BOTH);
-                } else if (type == ResourceType.ITEM) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ITEM_BOTH);
-                } else if (type == ResourceType.FLUID) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_FLUID_BOTH);
-                } else if (type == ResourceType.ANY) {
-                    return CACHING_SPRITE_ATLAS.apply(MACHINE_ANY_BOTH);
+                switch (type) {
+                    case ENERGY -> {
+                        return this.atlasFunction.apply(MACHINE_ENERGY_BOTH);
+                    }
+                    case ITEM -> {
+                        return this.atlasFunction.apply(MACHINE_ITEM_BOTH);
+                    }
+                    case FLUID -> {
+                        return this.atlasFunction.apply(MACHINE_FLUID_BOTH);
+                    }
+                    case ANY -> {
+                        return this.atlasFunction.apply(MACHINE_ANY_BOTH);
+                    }
                 }
             }
         }
-        return provider.getSpritesForState(machine, stack, face, CACHING_SPRITE_ATLAS);
+
+        return this.provider.getSpritesForState(machine, stack, face);
+    }
+
+    public MachineModelRegistry.SpriteProvider getProvider() {
+        return provider;
     }
 
     @Override
@@ -286,7 +263,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     @Override
     public @NotNull TextureAtlasSprite getParticleIcon() {
-        return CACHING_SPRITE_ATLAS.apply(MachineModelRegistry.MACHINE);
+        return particle;
     }
 
     @Override
@@ -300,71 +277,62 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     }
 
     public static class FrontFaceSpriteProvider implements MachineModelRegistry.SpriteProvider {
-        private ResourceLocation sprite;
+        private final TextureAtlasSprite sprite;
+        private final TextureAtlasSprite machineSide;
+        private final TextureAtlasSprite machine;
 
-        public FrontFaceSpriteProvider(ResourceLocation sprite) {
-            this.sprite = sprite;
-        }
-
-        public FrontFaceSpriteProvider() {
-            this.sprite = MachineModelRegistry.MACHINE;
-        }
-
-        @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
-            if (face == BlockFace.FRONT) return atlas.apply(sprite);
-            if (face.side()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
-            return atlas.apply(MachineModelRegistry.MACHINE);
+        public FrontFaceSpriteProvider(@NotNull JsonObject json, @NotNull Function<Material, TextureAtlasSprite> atlas) {
+            this.sprite = atlas.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(GsonHelper.getAsString(json, "sprite"))));
+            this.machineSide = atlas.apply(MACHINE_SIDE);
+            this.machine = atlas.apply(MACHINE);
         }
 
         @Override
-        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
-            this.sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
-            textureDependencies.add(sprite);
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face) {
+            if (face == BlockFace.FRONT) return this.sprite;
+            if (face.side()) return this.machineSide;
+            return this.machine;
         }
     }
 
     public static class SingleSpriteProvider implements MachineModelRegistry.SpriteProvider {
-        private ResourceLocation sprite;
+        private final TextureAtlasSprite sprite;
 
-        @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
-            return atlas.apply(sprite);
+        public SingleSpriteProvider(@NotNull JsonObject json, @NotNull Function<Material, TextureAtlasSprite> atlas) {
+            this.sprite = atlas.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(GsonHelper.getAsString(json, "sprite"))));
         }
 
         @Override
-        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
-            this.sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
-            textureDependencies.add(sprite);
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face) {
+            return this.sprite;
         }
     }
 
     public static class ZAxisSpriteProvider implements MachineModelRegistry.SpriteProvider {
-        private ResourceLocation front;
-        private ResourceLocation back;
-        private boolean sided;
+        private final boolean sided;
+        private final TextureAtlasSprite front;
+        private final TextureAtlasSprite back;
+        private final TextureAtlasSprite machineSide;
+        private final TextureAtlasSprite machine;
 
-        @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face, @NotNull Function<ResourceLocation, TextureAtlasSprite> atlas) {
-            if (face == BlockFace.FRONT) return atlas.apply(this.front);
-            if (face == BlockFace.BACK) return atlas.apply(this.back);
-            if (this.sided && face.side()) return atlas.apply(MachineModelRegistry.MACHINE_SIDE);
-            return atlas.apply(MachineModelRegistry.MACHINE);
+        public ZAxisSpriteProvider(@NotNull JsonObject json, @NotNull Function<Material, TextureAtlasSprite> atlas) {
+            if (json.has("sprite")) {
+                this.front = this.back = atlas.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(GsonHelper.getAsString(json, "sprite"))));
+            } else {
+                this.front = atlas.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(GsonHelper.getAsString(json, "front"))));
+                this.back = atlas.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(GsonHelper.getAsString(json, "back"))));
+            }
+            this.sided = GsonHelper.getAsBoolean(json, "sided");
+            this.machineSide = atlas.apply(MACHINE_SIDE);
+            this.machine = atlas.apply(MACHINE);
         }
 
         @Override
-        public void fromJson(JsonObject jsonObject, Set<ResourceLocation> textureDependencies) {
-            if (jsonObject.has("sprite")) {
-                ResourceLocation sprite = new ResourceLocation(GsonHelper.getAsString(jsonObject, "sprite"));
-                this.front = sprite;
-                this.back = sprite;
-            } else {
-                this.front = new ResourceLocation(GsonHelper.getAsString(jsonObject, "front"));
-                this.back = new ResourceLocation(GsonHelper.getAsString(jsonObject, "back"));
-            }
-            this.sided = GsonHelper.getAsBoolean(jsonObject, "sided");
-            textureDependencies.add(front);
-            textureDependencies.add(back);
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face) {
+            if (face == BlockFace.FRONT) return this.front;
+            if (face == BlockFace.BACK) return this.back;
+            if (this.sided && face.side()) return this.machineSide;
+            return this.machine;
         }
     }
 }

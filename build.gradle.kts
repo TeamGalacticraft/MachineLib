@@ -41,10 +41,12 @@ val modName = project.property("mod.name").toString()
 
 val minecraft = project.property("minecraft.version").toString()
 val loader = project.property("loader.version").toString()
-val fabric = project.property("fabric.version").toString()
-val energy = project.property("energy.version").toString()
 
-extensions.getByType(org.cadixdev.gradle.licenser.LicenseExtension::class).apply {
+val badpackets = project.property("badpackets.version").toString()
+val energy = project.property("energy.version").toString()
+val fabric = project.property("fabric.version").toString()
+
+license {
     setHeader(rootProject.file("LICENSE_HEADER.txt"))
     include("**/dev/galacticraft/**/*.java")
     include("build.gradle.kts")
@@ -89,12 +91,16 @@ loom {
         }
     }
 
+    createRemapConfigurations(sourceSets.test.get())
+
     runs {
-        getByName("client") {
-            source(sourceSets.test.get())
-        }
         getByName("server") {
             source(sourceSets.test.get())
+        }
+        getByName("client") {
+            name("Game Test Client")
+            source(sourceSets.test.get())
+            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
         register("gametest") {
             name("Game Test Server")
@@ -102,11 +108,13 @@ loom {
             source(sourceSets.test.get())
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
-        register("gametestClient") {
-            name("Game Test Client")
-            client()
-            source(sourceSets.test.get())
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
+    }
+}
+
+repositories {
+    maven("https://maven.bai.lol") {
+        content {
+            includeGroup("lol.bai")
         }
     }
 }
@@ -116,13 +124,29 @@ dependencies {
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$loader")
 
-    include(modApi("teamreborn:energy:$energy") {
-        exclude(group = "net.fabricmc.fabric-api")
-    }) {
-        exclude(group = "net.fabricmc.fabric-api")
+    modApi("teamreborn:energy:$energy") {
+        isTransitive = false
     }
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric")
+    listOf(
+        "fabric-api-base",
+        "fabric-api-lookup-api-v1",
+        "fabric-models-v0",
+        "fabric-object-builder-api-v1",
+        "fabric-registry-sync-v0",
+        "fabric-renderer-api-v1",
+        "fabric-rendering-data-attachment-v1",
+        "fabric-rendering-fluids-v1",
+        "fabric-resource-loader-v0",
+        "fabric-screen-handler-api-v1",
+        "fabric-transfer-api-v1",
+        "fabric-transitive-access-wideners-v1"
+    ).forEach {
+        modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}") { isTransitive = false }
+    }
+    modImplementation("lol.bai:badpackets:fabric-$badpackets")
+
+    "modTestImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
 }
 
 tasks.withType<ProcessResources> {
@@ -131,7 +155,7 @@ tasks.withType<ProcessResources> {
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
-            "modid" to modId,
+            "mod_id" to modId,
             "mod_name" to modName
         )
     }

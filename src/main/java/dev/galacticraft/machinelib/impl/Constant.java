@@ -28,7 +28,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -83,10 +82,6 @@ public interface Constant {
         String TEAM_NAME = "TeamName";
         String GROUP = "Group";
         String SLOT = "Slot";
-    }
-
-    interface Property {
-        BooleanProperty ACTIVE = BooleanProperty.create("active");
     }
 
     interface ScreenTexture {

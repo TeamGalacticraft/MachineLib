@@ -42,16 +42,15 @@ import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
-import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
+import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
 import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
+import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -95,7 +94,7 @@ import java.util.UUID;
  * Handles the rendering of tanks, configuration panels and capacitors.
  */
 @Environment(EnvType.CLIENT)
-public abstract class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M>> extends AbstractContainerScreen<H> {
+public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M>> extends AbstractContainerScreen<H> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
     private static final ItemStack GUNPOWDER = new ItemStack(Items.GUNPOWDER);
     private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "unlit_torch")));
@@ -170,10 +169,6 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     private static final List<Component> TOOLTIP_ARRAY = new ArrayList<>();
 
     /**
-     * The sprite provider for the machine block. Used to render the machine on the IO configuration panel.
-     */
-    private final MachineModelRegistry.SpriteProvider spriteProvider;
-    /**
      * The texture of the background screen.
      */
     private final @NotNull ResourceLocation texture;
@@ -199,6 +194,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     private @NotNull ResourceLocation ownerSkin = DefaultPlayerSkin.getDefaultSkin(UUID.randomUUID());
 
+    private @Nullable MachineBakedModel model;
+
     /**
      * Creates a new screen from the given screen handler.
      *
@@ -208,9 +205,8 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected MachineScreen(@NotNull H handler, @NotNull Component title, @NotNull ResourceLocation texture) {
         super(handler, handler.playerInventory, title);
-        this.texture = texture;
 
-        this.spriteProvider = MachineModelRegistry.getSpriteProviderOrElseGet(this.menu.type.getBlock(), MachineModelRegistry.SpriteProvider.DEFAULT);
+        this.texture = texture;
 
         Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.menu.configuration.getSecurity().getOwner(), this.menu.configuration.getSecurity().getUsername()), (type, skin, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && skin != null) {
@@ -232,7 +228,12 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
     @Override
     protected void init() {
         super.init();
+        assert this.minecraft != null;
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+
+        if (this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(this.menu.type.getBlock().defaultBlockState()) instanceof MachineBakedModel model) {
+            this.model = model;
+        }
     }
 
     /**
@@ -371,7 +372,9 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     private void drawMachineFace(@NotNull PoseStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
         MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
-        blit(matrices, x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, MachineModelRegistry.getSprite(face, machine, null, this.spriteProvider, machineFace.getType(), machineFace.getFlow()));
+        if (this.model != null) {
+            blit(matrices, x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine, null, machineFace.getType(), machineFace.getFlow()));
+        }
     }
 
     /**
@@ -584,7 +587,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected void setAccessibility(@NotNull AccessLevel accessLevel) {
         this.menu.configuration.getSecurity().setAccessLevel(accessLevel);
-        ClientPlayNetworking.send(Constant.id("security_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
+        PacketSender.c2s().send(Constant.id("security_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(accessLevel.ordinal())));
     }
 
     /**
@@ -594,7 +597,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected void setRedstone(@NotNull RedstoneActivation redstone) {
         this.menu.configuration.setRedstoneActivation(redstone);
-        ClientPlayNetworking.send(Constant.id("redstone_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
+        PacketSender.c2s().send(Constant.id("redstone_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
     }
 
     /**
@@ -789,7 +792,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
      */
     protected void drawCapacitor(PoseStack matrices, int mouseX, int mouseY, float delta) {
         long capacity = this.menu.energyStorage.getCapacity();
-        if (capacity > 0) {
+        if (capacity > 0 && this.capacitorHeight != 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
@@ -840,40 +843,42 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         assert this.minecraft != null;
         this.focusedTank = null;
         for (Tank tank : this.menu.tanks) {
-            fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
+            if (tank.getHeight() > 0) {
+                fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
-            if (tank.getAmount() > 0) {
-                FluidVariant resource = tank.createVariant();
-                boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
-                TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
-                int fluidColor = FluidVariantRendering.getColor(resource);
+                if (tank.getAmount() > 0) {
+                    FluidVariant resource = tank.createVariant();
+                    boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
+                    TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
+                    int fluidColor = FluidVariantRendering.getColor(resource);
 
-                if (sprite == null || sprite.atlasLocation().equals(MissingTextureAtlasSprite.getLocation())) {
-                    sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
-                    fluidColor = -1;
-                    if (sprite == null) throw new IllegalStateException("Water sprite is null");
+                    if (sprite == null || sprite.atlasLocation().equals(MissingTextureAtlasSprite.getLocation())) {
+                        sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
+                        fluidColor = -1;
+                        if (sprite == null) throw new IllegalStateException("Water sprite is null");
+                    }
+                    RenderSystem.setShaderTexture(0, sprite.atlasLocation());
+                    RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
+                    double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
+                    if (!fillFromTop) {
+                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                    } else {
+                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                    }
                 }
-                RenderSystem.setShaderTexture(0, sprite.atlasLocation());
-                RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
-                double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
-                if (!fillFromTop) {
-                    DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
-                } else {
-                    DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
-                }
-            }
 
-            boolean shorten = true;
-            for (int y = this.topPos + tank.getY() + tank.getHeight() - 2; y > this.topPos + tank.getY(); y -= 3) {
-                fill(matrices, this.leftPos + tank.getX(), y, this.leftPos + tank.getX() + (tank.getWidth() / 2) + ((shorten = !shorten) ? -(tank.getWidth() / 8) : 0), y - 1, 0xFFB31212);
-            }
-            if (this.focusedTank == null && DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
-                this.focusedTank = tank;
-                RenderSystem.disableDepthTest();
-                RenderSystem.colorMask(true, true, true, false);
-                GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
-                RenderSystem.colorMask(true, true, true, true);
-                RenderSystem.enableDepthTest();
+                boolean shorten = true;
+                for (int y = this.topPos + tank.getY() + tank.getHeight() - 2; y > this.topPos + tank.getY(); y -= 3) {
+                    fill(matrices, this.leftPos + tank.getX(), y, this.leftPos + tank.getX() + (tank.getWidth() / 2) + ((shorten = !shorten) ? -(tank.getWidth() / 8) : 0), y - 1, 0xFFB31212);
+                }
+                if (this.focusedTank == null && DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                    this.focusedTank = tank;
+                    RenderSystem.disableDepthTest();
+                    RenderSystem.colorMask(true, true, true, false);
+                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
+                    RenderSystem.colorMask(true, true, true, true);
+                    RenderSystem.enableDepthTest();
+                }
             }
         }
 
@@ -995,9 +1000,9 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             if (this.focusedTank != null && button == 0) {
                 tankMod = this.focusedTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
                 if (tankMod) {
-                    FriendlyByteBuf packetByteBuf = PacketByteBufs.create().writeVarInt(this.menu.containerId);
-                    packetByteBuf.writeInt(this.focusedTank.getId());
-                    ClientPlayNetworking.send(Constant.id("tank_modify"), packetByteBuf);
+                    FriendlyByteBuf buf = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Integer.BYTES * 2)).writeVarInt(this.menu.containerId);
+                    buf.writeInt(this.focusedTank.getId());
+                    PacketSender.c2s().send(Constant.id("tank_modify"), buf);
                 }
             }
             return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
@@ -1094,7 +1099,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (reset) {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
             option.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(true)
@@ -1167,7 +1172,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
             if (i == 12) {
                 option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
                 option.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("reset_face"),
+                PacketSender.c2s().send(Constant.id("reset_face"),
                         new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                                 .writeByte(face.ordinal())
                                 .writeBoolean(true)
@@ -1180,7 +1185,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
                 flow = ResourceFlow.getFromOrdinal(iflow);
                 option.setOption(type, flow);
                 option.setSelection(null);
-                ClientPlayNetworking.send(Constant.id("face_type"),
+                PacketSender.c2s().send(Constant.id("face_type"),
                         new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
                                 .writeByte(face.ordinal())
                                 .writeByte(itype)
@@ -1191,7 +1196,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         } else {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
             option.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(true)
@@ -1205,7 +1210,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (!sideOption.getType().matchesGroups()) return;
         if (reset) {
             sideOption.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(false)
@@ -1238,7 +1243,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
         if (index == groups.size()) {
             sideOption.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(false)
@@ -1247,7 +1252,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         } else {
             sideOption.setSelection(StorageSelection.create(groups.get(index)));
 
-            ClientPlayNetworking.send(Constant.id("match_group"),
+            PacketSender.c2s().send(Constant.id("match_group"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
                             .writeByte(face.ordinal())
                             .writeInt(index))
@@ -1260,7 +1265,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         if (!sideOption.getType().matchesSlots()) return;
         if (reset) {
             sideOption.setSelection(null);
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(false)
@@ -1289,7 +1294,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
 
         if (index == group.size()) {
             sideOption.setSelection(StorageSelection.create(type));
-            ClientPlayNetworking.send(Constant.id("reset_face"),
+            PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
                             .writeBoolean(false)
@@ -1298,7 +1303,7 @@ public abstract class MachineScreen<M extends MachineBlockEntity, H extends Mach
         } else {
             sideOption.setSelection(StorageSelection.create(type, index));
 
-            ClientPlayNetworking.send(Constant.id("match_slot"),
+            PacketSender.c2s().send(Constant.id("match_slot"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
                             .writeByte(face.ordinal())
                             .writeInt(index))

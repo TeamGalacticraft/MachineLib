@@ -26,27 +26,25 @@ import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
+
     public SimpleMachineBlock(Block.Properties settings) {
-        super(settings);
+        super(settings, SimpleMachineBlockEntity::new);
+        this.registerDefaultState(this.defaultBlockState().setValue(ACTIVE, false));
     }
 
     @Override
-    public SimpleMachineBlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new SimpleMachineBlockEntity(pos, state);
-    }
-
-    @Override
-    public Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced) {
-        return Component.translatable("machinelib-test.simple_machine.desc");
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(ACTIVE);
     }
 
     @Override

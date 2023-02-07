@@ -56,10 +56,9 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
      * @param syncId  The sync id for this menu.
      * @param player  The player who is interacting with this menu.
      * @param machine The machine this menu is for.
-     * @param type    The type of menu this is.
      */
-    public RecipeMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
-        super(syncId, player, machine, type);
+    public RecipeMachineMenu(int syncId, @NotNull ServerPlayer player, @NotNull Machine machine) {
+        super(syncId, player, machine);
     }
 
     protected RecipeMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, int invX, int invY, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {

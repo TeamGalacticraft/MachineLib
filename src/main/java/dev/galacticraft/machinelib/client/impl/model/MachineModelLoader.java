@@ -30,8 +30,8 @@ import com.google.gson.stream.JsonReader;
 import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
 import net.fabricmc.fabric.api.client.model.ModelResourceProvider;
 import net.fabricmc.fabric.api.client.model.ModelVariantProvider;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -43,11 +43,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.Set;
+import java.util.HashMap;
 
 @ApiStatus.Internal
 public final class MachineModelLoader {
+    public static final String MACHINE_GENERATED = "machinelib:generated";
+    private static final HashMap<ModelResourceLocation, UnbakedModel> GENERATED_MODELS = new HashMap<>();
+
     @Contract(pure = true)
     public static @NotNull ModelResourceProvider applyModel(ResourceManager resourceManager) {
         return (resourceId, context) -> {
@@ -61,9 +63,8 @@ public final class MachineModelLoader {
     @Contract(pure = true)
     public static @NotNull ModelVariantProvider applyModelVariant(ResourceManager resourceManager) {
         return (modelId, context) -> {
-            getModel(resourceManager, new ResourceLocation(modelId.getNamespace(), "models/block/" + modelId.getPath() + ".json"));
-            if (modelId.getVariant().equals("inventory") && MachineBakedModel.IDENTIFIERS.getOrDefault(modelId.getNamespace(), Collections.emptySet()).contains(modelId.getPath())) {
-                return MachineUnbakedModel.INSTANCE;
+            if (modelId.getVariant().equals("inventory") && GENERATED_MODELS.containsKey(modelId)) {
+                return GENERATED_MODELS.remove(modelId);
             }
             return null;
         };
@@ -76,14 +77,16 @@ public final class MachineModelLoader {
                 return null;
             JsonElement element = Streams.parse(new JsonReader(new InputStreamReader(resource.open(), Charsets.UTF_8)));
             JsonObject json = element.getAsJsonObject();
-            if (!json.has("machine"))
+            if (!json.has(MACHINE_GENERATED))
                 return null;
-            MachineModelRegistry.SpriteProvider provider = MachineModelRegistry.getSpriteProvider(new ResourceLocation(GsonHelper.getAsString(json, "sprite_provider"))).get();
-            if (json.has("sprite_info"))
-                provider.fromJson(json.getAsJsonObject("sprite_info"), Set.copyOf(MachineBakedModel.TEXTURE_DEPENDENCIES));
-            String blockID = GsonHelper.getAsString(json, "machine");
-            MachineBakedModel.register(BuiltInRegistries.BLOCK.get(new ResourceLocation(blockID)), provider);
-            return MachineUnbakedModel.INSTANCE;
+            MachineModelRegistry.SpriteProviderFactory factory = MachineModelRegistry.getProviderFactory(new ResourceLocation(GsonHelper.getAsString(json, MACHINE_GENERATED)));
+            MachineUnbakedModel model = new MachineUnbakedModel(factory, json.getAsJsonObject("data"));
+            String path = resourceId.getPath();
+            int d = path.lastIndexOf('.');
+            int s = path.lastIndexOf('/');
+
+            GENERATED_MODELS.put(new ModelResourceLocation(resourceId.getNamespace(), path.substring(s + 1, d), "inventory"), model);
+            return model;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

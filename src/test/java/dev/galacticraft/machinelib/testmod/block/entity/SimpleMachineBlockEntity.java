@@ -60,7 +60,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
-        return new MachineMenu<>(syncId, ((ServerPlayer) player), this, TestModMachineTypes.SIMPLE_MACHINE);
+        return new MachineMenu<>(syncId, ((ServerPlayer) player), this);
     }
 
     @Override

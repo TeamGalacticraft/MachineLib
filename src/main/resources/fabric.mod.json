@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "$modid",
+  "id": "$mod_id",
   "version": "$version",
   "name": "$mod_name",
-  "icon": "assets/${modid}/icon.png",
+  "icon": "assets/${mod_id}/icon.png",
   "description": "Machine Library for the FabricMC port of Galacticraft.",
   "license": "MIT",
   "contact": {
@@ -38,17 +38,20 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.14.12",
+    "fabricloader": ">=0.14",
     "minecraft": "1.19.3",
+
     "fabric-api-base": "*",
     "fabric-api-lookup-api-v1": "*",
-    "fabric-lifecycle-events-v1": "*",
-    "fabric-networking-api-v1": "*",
+    "fabric-models-v0": "*",
+    "fabric-object-builder-api-v1": "*",
     "fabric-registry-sync-v0": "*",
+    "fabric-renderer-api-v1": "*",
+    "fabric-rendering-data-attachment-v1": "*",
+    "fabric-rendering-fluids-v1": "*",
     "fabric-resource-loader-v0": "*",
     "fabric-screen-handler-api-v1": "*",
-    "fabric-transfer-api-v1": "*",
-    "fabric-transitive-access-wideners-v1": "*"
+    "fabric-transfer-api-v1": "*"
   },
   "custom": {
     "modmenu": {

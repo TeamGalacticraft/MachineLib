@@ -25,10 +25,8 @@ package dev.galacticraft.machinelib.api.machine;
 import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.impl.machine.SecuritySettingsImpl;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -131,14 +129,6 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Nullable UUID getOwner();
 
     /**
-     * Sets the player who owns the linked machine.
-     *
-     * @param owner The player to set.
-     */
-    @Contract(mutates = "this")
-    void setOwner(@Nullable Player owner);
-
-    /**
      * Sets the game profile of the owner of the linked machine.
      *
      * @param owner The uuid of the owner.
@@ -155,15 +145,6 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Nullable ResourceLocation getTeam();
 
     /**
-     * Sends the security settings to the client.
-     *
-     * @param pos    The position of the machine.
-     * @param player The player to send the settings to.
-     */
-    @Deprecated(forRemoval = true)
-    void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player);
-
-    /**
      * Sets the team linked to these security settings
      *
      * @param team the team to be granted access to the linked machine can be {@code null}.
@@ -172,4 +153,6 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @ApiStatus.Experimental
     @Contract(mutates = "this", value = "null, !null -> fail")
     void setTeam(@Nullable ResourceLocation team, @Nullable String name);
+
+    boolean hasOwner();
 }

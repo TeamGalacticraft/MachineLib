@@ -29,7 +29,6 @@ import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
 import net.minecraft.client.Minecraft;
@@ -43,14 +42,11 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -65,7 +61,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -83,31 +78,29 @@ import java.util.Objects;
  *
  * @see MachineBlockEntity
  */
-public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEntityBlock {
-    /**
-     * This property represents whether the machine is active.
-     * It is used for world rendering purposes.
-     */
-    public static final BooleanProperty ACTIVE = Constant.Property.ACTIVE;
-
+public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    private final MachineBlockEntityFactory<Machine> factory;
     /**
      * Creates a new machine block.
      *
      * @param settings The settings for the block.
+     * @param factory
      */
-    protected MachineBlock(Properties settings) {
+    public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
         super(settings);
-        this.registerDefaultState(this.defaultBlockState().setValue(ACTIVE, false));
+        this.factory = factory;
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(BlockStateProperties.HORIZONTAL_FACING, ACTIVE);
+        builder.add(BlockStateProperties.HORIZONTAL_FACING);
     }
 
     @Override
-    public abstract T newBlockEntity(BlockPos pos, BlockState state);
+    public Machine newBlockEntity(BlockPos pos, BlockState state) {
+        return this.factory.create(pos, state);
+    }
 
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
@@ -118,9 +111,12 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.setPlacedBy(world, pos, state, placer, itemStack);
         if (!world.isClientSide && placer instanceof Player player) {
-            SecuritySettings security = ((MachineBlockEntity) Objects.requireNonNull(world.getBlockEntity(pos))).getSecurity();
-            if (security.getOwner() == null)
-                security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
+            if (world.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                SecuritySettings security = machine.getConfiguration().getSecurity();
+                if (!security.hasOwner()) {
+                    security.setOwner(player.getUUID(), player.getGameProfile().getName());
+                }
+            }
         }
     }
 
@@ -131,7 +127,7 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
 
     @Override
     public final void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
-        Component text = machineDescription(stack, view, context.isAdvanced());
+        Component text = this.shiftDescription(stack, view, context);
         if (text != null) {
             if (Screen.hasShiftDown()) {
                 char[] line = text.getContents() instanceof TranslatableContents content ? I18n.get(content.getKey()).toCharArray() : text.getString().toCharArray();
@@ -193,17 +189,12 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
             BlockEntity entity = world.getBlockEntity(pos);
             if (entity instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getSecurity();
-                if (security.getOwner() == null)
-                    security.setOwner(/*((MinecraftServerTeamsGetter) world.getServer()).getSpaceRaceTeams(), */player); //todo: teams
-                if (security.isOwner(player)) {
-                    MenuProvider factory = state.getMenuProvider(world, pos);
-
-                    if (factory != null) {
-                        player.openMenu(factory);
-                        security.sendPacket(pos, (ServerPlayer) player);
-                        machine.getRedstoneActivation().sendPacket(pos, (ServerPlayer) player);
-                        return InteractionResult.CONSUME;
-                    }
+                if (!security.hasOwner()) {
+                    security.setOwner(player.getUUID(), player.getGameProfile().getName()); //todo: teams
+                }
+                if (security.hasAccess(player)) {
+                    player.openMenu(machine);
+                    return InteractionResult.CONSUME;
                 }
             }
         }
@@ -218,11 +209,10 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
         if (entity instanceof MachineBlockEntity machine) {
             MachineItemStorage inv = machine.itemStorage();
             List<ItemEntity> entities = new ArrayList<>();
-            for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : inv) {
-                for (ItemResourceSlot slot : group) {
-                    if (!slot.isEmpty()) {
-                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
-                    }
+            for (ItemResourceSlot slot : inv.getSlots()) {
+                if (!slot.isEmpty()) {
+                    entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
+                    slot.set(null, null, 0);
                 }
             }
             for (ItemEntity itemEntity : entities) {
@@ -263,8 +253,15 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BaseEnt
      *
      * @param stack    The item stack (the contained item is this block).
      * @param view     The world.
-     * @param advanced Whether advanced tooltips are enabled.
+     * @param context Whether advanced tooltips are enabled.
      * @return This machine's description.
      */
-    public abstract @Nullable Component machineDescription(ItemStack stack, BlockGetter view, boolean advanced);
+    public @Nullable Component shiftDescription(ItemStack stack, BlockGetter view, TooltipFlag context) {
+        return Component.translatable(this.getDescriptionId() + ".description");
+    }
+
+    @FunctionalInterface
+    public interface MachineBlockEntityFactory<Machine extends MachineBlockEntity> {
+        @Nullable Machine create(@NotNull BlockPos pos, @NotNull BlockState state);
+    }
 }

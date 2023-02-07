@@ -23,13 +23,9 @@
 package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -76,19 +72,6 @@ public enum RedstoneActivation implements StringRepresentable {
 
     public static @NotNull RedstoneActivation readPacket(@NotNull FriendlyByteBuf buf) {
         return VALUES[buf.readByte()];
-    }
-
-    /**
-     * Sends a packet to the client to update the redstone activation state.
-     *
-     * @param pos    The position of the machine.
-     * @param player The player to send the packet to.
-     */
-    public void sendPacket(@NotNull BlockPos pos, @NotNull ServerPlayer player) {
-        FriendlyByteBuf buf = PacketByteBufs.create();
-        buf.writeBlockPos(pos);
-        buf.writeByte(this.ordinal());
-        ServerPlayNetworking.send(player, Constant.id("redstone_update"), buf);
     }
 
     /**

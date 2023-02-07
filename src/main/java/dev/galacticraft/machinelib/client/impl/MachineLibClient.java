@@ -27,18 +27,15 @@ import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.model.MachineModelLoader;
 import dev.galacticraft.machinelib.client.impl.network.MachineLibS2CPackets;
-import dev.galacticraft.machinelib.client.impl.resource.MachineLibResourceReloadListener;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
 import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.PackType;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -48,14 +45,11 @@ import java.util.List;
 public final class MachineLibClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(MachineLibResourceReloadListener.INSTANCE);
-
         ModelLoadingRegistry.INSTANCE.registerResourceProvider(MachineModelLoader::applyModel);
-
         ModelLoadingRegistry.INSTANCE.registerVariantProvider(MachineModelLoader::applyModelVariant);
 
         // Builtin Sprite Providers
-        MachineModelRegistry.register(Constant.id("default"), () -> MachineModelRegistry.SpriteProvider.DEFAULT);
+        MachineModelRegistry.register(Constant.id("default"), MachineModelRegistry.SpriteProviderFactory.DEFAULT);
         MachineModelRegistry.register(Constant.id("front_face"), MachineBakedModel.FrontFaceSpriteProvider::new);
         MachineModelRegistry.register(Constant.id("single"), MachineBakedModel.SingleSpriteProvider::new);
         MachineModelRegistry.register(Constant.id("z_axis"), MachineBakedModel.ZAxisSpriteProvider::new);
