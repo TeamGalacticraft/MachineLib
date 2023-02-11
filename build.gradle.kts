@@ -131,6 +131,7 @@ dependencies {
     listOf(
         "fabric-api-base",
         "fabric-api-lookup-api-v1",
+        "fabric-gametest-api-v1",
         "fabric-models-v0",
         "fabric-object-builder-api-v1",
         "fabric-registry-sync-v0",

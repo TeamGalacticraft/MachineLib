@@ -28,11 +28,20 @@
       "dev.galacticraft.machinelib.testmod.TestModClient"
     ],
     "fabric-gametest": [
-      "dev.galacticraft.machinelib.gametest.storage.ItemStorageBuilderTest",
-      "dev.galacticraft.machinelib.gametest.storage.SlotGroupBuilderTest",
-      "dev.galacticraft.machinelib.gametest.storage.ResourceSlotExtractionTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.FluidResourceSlotBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.FluidSlotGroupBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.FluidStorageBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.ItemResourceSlotBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.ItemSlotGroupBuilderTest",
+      "dev.galacticraft.machinelib.gametest.storage.builder.ItemStorageBuilderTest",
+
+      "dev.galacticraft.machinelib.gametest.storage.FluidResourceSlotExtractionTest",
+      "dev.galacticraft.machinelib.gametest.storage.ItemResourceSlotExtractionTest",
+
       "dev.galacticraft.machinelib.gametest.storage.ResourceSlotInsertionTest",
-      "dev.galacticraft.machinelib.gametest.storage.SingletonSlotGroupExtractionTest"
+      "dev.galacticraft.machinelib.gametest.storage.SingletonSlotGroupExtractionTest",
+
+      "dev.galacticraft.machinelib.testmod.gametest.SimpleMachineGametest"
     ]
   },
   "depends": {

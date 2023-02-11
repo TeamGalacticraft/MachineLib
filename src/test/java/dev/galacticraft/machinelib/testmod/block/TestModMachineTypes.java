@@ -37,7 +37,8 @@ import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.world.item.Items;
 
 public class TestModMachineTypes {
-    public static final MachineType<SimpleMachineBlockEntity, MachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE = MachineType.create(TestModBlocks.SIMPLE_MACHINE_BLOCK,
+    public static final MachineType<SimpleMachineBlockEntity, MachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE = MachineType.create(
+            TestModBlocks.SIMPLE_MACHINE_BLOCK,
             TestModBlockEntityTypes.SIMPLE_MACHINE,
             TestModMenuTypes.SIMPLE_MACHINE,
             () -> MachineEnergyStorage.of(30000, 300, 300, true, false),

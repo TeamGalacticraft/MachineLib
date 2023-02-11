@@ -121,4 +121,5 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
+    void set(@Nullable Resource resource, long amount);
 }

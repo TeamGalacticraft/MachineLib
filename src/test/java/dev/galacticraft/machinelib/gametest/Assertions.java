@@ -119,6 +119,20 @@ public final class Assertions {
         }
     }
 
+    public static void assertIdentityNotEquals(Object a, Object b) {
+        if (a == b) {
+            String aStr = "null";
+            String bStr = "null";
+            if (a != null) {
+                aStr = a.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(a)) + "[" + a + "]";
+            }
+            if (b != null) {
+                bStr = b.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(b)) + "[" + b + "]";
+            }
+            raise(format(aStr, bStr, 1));
+        }
+    }
+
     public static void assertThrows(Runnable runnable) {
         try {
             runnable.run();

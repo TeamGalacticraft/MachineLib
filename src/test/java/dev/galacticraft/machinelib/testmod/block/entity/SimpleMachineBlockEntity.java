@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,13 +36,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SimpleMachineBlockEntity extends MachineBlockEntity {
-    private int ticks = -1;
+    public int ticks = -1;
 
     public SimpleMachineBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.SIMPLE_MACHINE, pos, state);
@@ -69,21 +67,22 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
             this.ticks--;
             profiler.push("check");
             if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
-                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsert(Items.DIAMOND, 1)) {
-                    profiler.popPush("transaction");
-                    try (Transaction transaction = Transaction.openOuter()) {
-                        if (this.energyStorage().extract(150, transaction) == 150) {
-                            transaction.commit();
+                if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsert(Items.DIAMOND)) {
+                    if (this.energyStorage().canExtract(150)) {
+                        profiler.popPush("transaction");
+                        try {
+                            this.energyStorage().extractExact(150);
                             if (this.ticks == 0) {
-                                world.setBlockAndUpdate(pos.above(), Blocks.DRIED_KELP_BLOCK.defaultBlockState());
+                                this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).extract(Items.DIRT, 1);
+                                this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).insert(Items.DIAMOND, 1);
                             }
                             return MachineStatuses.ACTIVE;
-                        } else {
-                            this.ticks = -1;
-                            return MachineStatuses.NOT_ENOUGH_ENERGY;
+                        } finally {
+                            profiler.pop();
                         }
-                    } finally {
-                        profiler.pop();
+                    } else {
+                        this.ticks = -1;
+                        return MachineStatuses.NOT_ENOUGH_ENERGY;
                     }
                 } else {
                     profiler.pop();

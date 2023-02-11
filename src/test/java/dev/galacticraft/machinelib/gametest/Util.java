@@ -32,7 +32,7 @@ import java.util.UUID;
 
 public final class Util {
     @Contract("-> new")
-    public static @NotNull CompoundTag generateNbt() {
+    public static @NotNull CompoundTag generateUniqueNbt() {
         CompoundTag nbt = new CompoundTag();
         nbt.putUUID("id", UUID.randomUUID());
         nbt.putLong("timestamp", System.currentTimeMillis());

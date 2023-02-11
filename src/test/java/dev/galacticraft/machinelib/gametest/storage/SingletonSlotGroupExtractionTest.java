@@ -121,7 +121,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     }
 
     private @NotNull Runnable extract$one_nbt(TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
+        CompoundTag tag = Util.generateUniqueNbt();
         this.internalSlot.set(GOLD_INGOT, tag, 1);
 
         return () -> {
@@ -142,7 +142,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     }
 
     private @NotNull Runnable extract$multiple_nbt(TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
+        CompoundTag tag = Util.generateUniqueNbt();
         this.internalSlot.set(GOLD_INGOT, tag.copy(), 64);
 
         return () -> {
@@ -163,7 +163,7 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     }
 
     private @NotNull Runnable extract$multiple_exact_nbt(TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
+        CompoundTag tag = Util.generateUniqueNbt();
         this.internalSlot.set(GOLD_INGOT, tag.copy(), 8);
 
         return () -> {
@@ -185,13 +185,13 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
         this.internalSlot.set(GOLD_INGOT, null, 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateUniqueNbt(), 1));
             assertTrue(!this.group.isEmpty());
         };
     }
 
     private @NotNull Runnable extract$nbt_type_fail(TransactionContext context) {
-        this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
+        this.internalSlot.set(GOLD_INGOT, Util.generateUniqueNbt(), 8);
 
         return () -> {
             assertEquals(0, this.group.extract(GOLD_INGOT, null, 1));
@@ -200,19 +200,19 @@ public final class SingletonSlotGroupExtractionTest implements MachineLibGametes
     }
 
     private @NotNull Runnable extract$different_nbt_type_fail(TransactionContext context) {
-        this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
+        this.internalSlot.set(GOLD_INGOT, Util.generateUniqueNbt(), 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateUniqueNbt(), 1));
             assertFalse(this.group.isEmpty());
         };
     }
 
     private @NotNull Runnable extract$overflow(TransactionContext context) {
-        this.internalSlot.set(GOLD_INGOT, Util.generateNbt(), 8);
+        this.internalSlot.set(GOLD_INGOT, Util.generateUniqueNbt(), 8);
 
         return () -> {
-            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateNbt(), 1));
+            assertEquals(0, this.group.extract(GOLD_INGOT, Util.generateUniqueNbt(), 1));
             assertFalse(this.group.isEmpty());
         };
     }

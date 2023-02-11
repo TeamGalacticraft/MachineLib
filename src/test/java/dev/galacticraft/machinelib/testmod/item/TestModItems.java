@@ -32,7 +32,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.InfiniteEnergyStorage;
-import team.reborn.energy.api.base.LimitingEnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyItem;
 
 public class TestModItems {
@@ -45,7 +44,7 @@ public class TestModItems {
         Registry.register(BuiltInRegistries.ITEM, Constant.id("infinite_battery"), TestModItems.INFINITE_BATTERY);
         Registry.register(BuiltInRegistries.ITEM, Constant.id("battery"), TestModItems.BASIC_BATTERY);
 
-        EnergyStorage.ITEM.registerForItems((stack, context) -> new LimitingEnergyStorage(InfiniteEnergyStorage.INSTANCE, 150, 150), TestModItems.INFINITE_BATTERY);
+        EnergyStorage.ITEM.registerForItems((stack, context) -> InfiniteEnergyStorage.INSTANCE, TestModItems.INFINITE_BATTERY);
         EnergyStorage.ITEM.registerForItems((stack, context) -> SimpleEnergyItem.createStorage(context, BASIC_BATTERY.getEnergyCapacity(stack), BASIC_BATTERY.getEnergyMaxInput(stack), BASIC_BATTERY.getEnergyMaxOutput(stack)), BASIC_BATTERY);
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {

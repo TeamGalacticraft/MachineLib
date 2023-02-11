@@ -403,9 +403,18 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         this.amount = 0;
     }
 
+    @Override
     public void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
         this.resource = resource;
         this.tag = tag;
+        this.amount = amount;
+        assert this.isSane();
+    }
+
+    @Override
+    public void set(@Nullable Resource resource, long amount) {
+        this.resource = resource;
+        this.tag = null;
         this.amount = amount;
         assert this.isSane();
     }

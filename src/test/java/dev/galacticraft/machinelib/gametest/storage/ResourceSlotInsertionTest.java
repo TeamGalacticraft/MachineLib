@@ -121,7 +121,7 @@ public final class ResourceSlotInsertionTest implements MachineLibGametest {
     }
 
     void insert$empty_nbt(@Nullable TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
+        CompoundTag tag = Util.generateUniqueNbt();
         assertEquals(8, this.slot.insert(GOLD_INGOT, tag, 8));
 
         assertEquals(GOLD_INGOT, this.slot.getResource());
@@ -168,23 +168,23 @@ public final class ResourceSlotInsertionTest implements MachineLibGametest {
     @NotNull Runnable insert$nbt_type_full(@Nullable TransactionContext context) {
         this.slot.set(GOLD_INGOT, null, 1);
 
-        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(), 64));
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateUniqueNbt(), 64));
     }
 
     @NotNull Runnable insert$filled_nbt_type_full(@Nullable TransactionContext context) {
-        this.slot.set(GOLD_INGOT, Util.generateNbt(), 1);
+        this.slot.set(GOLD_INGOT, Util.generateUniqueNbt(), 1);
 
         return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, 64));
     }
 
     @NotNull Runnable insert$filled_nbt_type_different(@Nullable TransactionContext context) {
-        this.slot.set(GOLD_INGOT, Util.generateNbt(), 1);
+        this.slot.set(GOLD_INGOT, Util.generateUniqueNbt(), 1);
 
-        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateNbt(), 64));
+        return () -> assertEquals(0, this.slot.insert(GOLD_INGOT, Util.generateUniqueNbt(), 64));
     }
 
     @NotNull Runnable insert$fill_nbt(@Nullable TransactionContext context) {
-        CompoundTag tag = Util.generateNbt();
+        CompoundTag tag = Util.generateUniqueNbt();
         this.slot.set(GOLD_INGOT, tag, 16);
 
         return () -> assertEquals(48, this.slot.insert(GOLD_INGOT, tag, 48));

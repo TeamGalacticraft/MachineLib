@@ -45,7 +45,7 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
 
     @Contract("_, _, _, _ -> new")
     static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
-        if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
+        if (capacity < 0) throw new IllegalArgumentException();
         return new FluidResourceSlotImpl(display, capacity, filter, externalFilter);
     }
 
