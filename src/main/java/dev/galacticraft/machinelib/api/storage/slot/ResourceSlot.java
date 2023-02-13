@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +121,7 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     // required for FAPI
     long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
+    @Contract("null, !null, _ -> fail")
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
     void set(@Nullable Resource resource, long amount);
 }

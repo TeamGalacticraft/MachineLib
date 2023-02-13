@@ -31,7 +31,6 @@ import dev.galacticraft.machinelib.testmod.item.TestModItems;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +50,12 @@ public class SimpleMachineGametest extends MachineGameTest<SimpleMachineBlockEnt
         };
     }
 
-    @ProcessingTest(workTime = 5 * 20 + 1, requiresEnergy = true)
-    public void craft(SimpleMachineBlockEntity machine, GameTestHelper helper) {
+    @ProcessingTest(workTime = 5 * 20, requiresEnergy = true)
+    public Runnable craft(SimpleMachineBlockEntity machine) {
         machine.itemStorage().getSlot(TestModSlotGroupTypes.DIRT).set(Items.DIRT, 1);
-        helper.runAfterDelay(5 * 20 + 1, () -> {
+        return () -> {
             if (machine.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).isEmpty()) throw new GameTestAssertException("machine did not craft");
-            helper.succeed();
-        });
+        };
     }
 
     @Override

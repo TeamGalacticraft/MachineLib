@@ -28,6 +28,7 @@ import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -213,6 +214,34 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
             };
         }
         return this.cachedStorage;
+    }
+
+    @Override
+    public ItemVariant getItemVariant() {
+        return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.getResource()), ItemResourceSlotImpl.this.getTag());
+    }
+
+    @Override
+    public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+        return this.extract(resource.getItem(), resource.getNbt(), maxAmount, transaction);
+    }
+
+    @Override
+    public long exchange(ItemVariant newVariant, long maxAmount, TransactionContext transaction) {
+        StoragePreconditions.notBlankNotNegative(newVariant, maxAmount);
+
+        boolean full = this.getAmount() == maxAmount;
+        if (full && this.getCapacityFor(newVariant.getItem()) <= maxAmount) {
+            this.set(newVariant.getItem(), newVariant.getNbt(), maxAmount);
+            return maxAmount;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
+        return this.insert(resource.getItem(), resource.getNbt(), maxAmount, transaction);
     }
 
     @Override

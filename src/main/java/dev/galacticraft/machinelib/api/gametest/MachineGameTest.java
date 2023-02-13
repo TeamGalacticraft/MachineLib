@@ -65,6 +65,14 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
     @MustBeInvokedByOverriders
     public @NotNull List<TestFunction> generateTests() {
         List<TestFunction> tests = new ArrayList<>();
+
+        tests.add(new TestFunction(this.getBaseId(), this.getBaseId() + "/create_machine", EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
+            if (this.createMachine(helper) == null) {
+                throw new GameTestAssertException("No machine assoicated with block!");
+            }
+            helper.succeed();
+        }));
+
         Class<? extends MachineGameTest<Machine>> clazz = (Class<? extends MachineGameTest<Machine>>) this.getClass();
         DefaultedMetadata meta = clazz.getAnnotation(DefaultedMetadata.class);
         String structure = meta != null ? meta.structure() : EMPTY_STRUCTURE;
@@ -79,20 +87,20 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
                         subId = "/" + meta.group();
                     }
                 }
-                tests.add(new TestFunction(this.getBaseId() + subId, NAME_CONVERSION.apply(method.getName()), structure, Rotation.NONE, processingTest.workTime(), 1, true, 1, 1, helper -> {
+                tests.add(new TestFunction(this.getBaseId() + subId, this.getBaseId() + '/' + NAME_CONVERSION.apply(method.getName()), structure, Rotation.NONE, processingTest.workTime() + 1, 1, true, 1, 1, helper -> {
                     Machine machine = this.createMachine(helper);
                     if (processingTest.requiresEnergy()) machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
                     try {
-                        method.invoke(this, machine, helper);
+                        Runnable runnable = (Runnable) method.invoke(this, machine);
+                        helper.runAfterDelay(processingTest.workTime() + 1, () -> {
+                            runnable.run();
+                            helper.succeed();
+                        });
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException("Failed to invoke test method!", e);
                     } catch (InvocationTargetException e) {
-                        if (e.getCause() instanceof GameTestAssertException ex) {
-                            throw ex;
-                        } else {
-                            throw new RuntimeException(e.getCause());
-                        }
+                        handleException(e);
                     }
                 }));
             } else {
@@ -106,16 +114,16 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
                             subId = "/" + meta.group();
                         }
                     }
-                    tests.add(new TestFunction(this.getBaseId() + subId, NAME_CONVERSION.apply(method.getName()), EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
+                    tests.add(new TestFunction(this.getBaseId() + subId, this.getBaseId() + '/' + NAME_CONVERSION.apply(method.getName()), EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
                         Machine machine = this.createMachine(helper);
+                        if (instantTest.requiresEnergy())
+                            machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
                         try {
                             Runnable runnable = (Runnable) method.invoke(this, machine);
                             if (runnable == null) {
                                 helper.succeed();
                                 return;
                             }
-                            if (instantTest.requiresEnergy())
-                                machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
                             helper.runAfterDelay(1, () -> {
                                 runnable.run();
@@ -124,11 +132,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException("Failed to invoke test method!", e);
                         } catch (InvocationTargetException e) {
-                            if (e.getCause() instanceof GameTestAssertException ex) {
-                                throw ex;
-                            } else {
-                                throw new RuntimeException(e.getCause());
-                            }
+                            handleException(e);
                         }
                     }));
                 }
@@ -139,7 +143,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
     }
 
     public @NotNull TestFunction createChargeFromEnergyItemTest(@NotNull SlotGroupType slotType, Item infiniteBattery) {
-        return new TestFunction(this.getBaseId() + "/" + "instant", "charge_from_item", EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
+        return new TestFunction(this.getBaseId(), this.getBaseId() + "/charge_from_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
             Machine machine = this.createMachine(helper);
             for (ItemResourceSlot slot : machine.itemStorage().getGroup(slotType)) {
                 slot.set(infiniteBattery, 1);
@@ -154,7 +158,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
     }
 
     public @NotNull TestFunction createDrainToEnergyItemTest(@NotNull SlotGroupType slotType, Item battery) {
-        return new TestFunction(this.getBaseId() + "/" + "instant", "drain_to_item", EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
+        return new TestFunction(this.getBaseId(), this.getBaseId() + "/drain_to_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
             Machine machine = this.createMachine(helper);
             machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
@@ -169,6 +173,18 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
                 helper.succeed();
             });
         });
+    }
+
+    public static void handleException(@NotNull InvocationTargetException e) {
+        if (e.getCause() instanceof GameTestAssertException ex) {
+            throw ex;
+        } else if (e.getCause() instanceof RuntimeException ex){
+            throw ex;
+        } else if (e.getCause() != null) {
+            throw new RuntimeException(e.getCause());
+        } else {
+            throw new RuntimeException(e);
+        }
     }
 
     public @NotNull String getBaseId() {

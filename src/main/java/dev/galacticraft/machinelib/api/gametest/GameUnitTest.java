@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.gametest.annotation.UnitTest;
 import dev.galacticraft.machinelib.api.gametest.annotation.container.DefaultedMetadata;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.level.block.Rotation;
@@ -77,7 +76,7 @@ public abstract class GameUnitTest<T> implements FabricGameTest {
 
                 if (method.getParameterTypes().length == 1) {
                     assert this.supplier != null;
-                    tests.add(new TestFunction(this.id + subId, NAME_CONVERSION.apply(method.getName()), structure, Rotation.NONE, 1, 0, true, 1, 1, helper -> {
+                    tests.add(new TestFunction(this.id + subId, this.id + subId + '/' + NAME_CONVERSION.apply(method.getName()), structure, Rotation.NONE, 1, 0, true, 1, 1, helper -> {
                         T t = this.supplier.get();
                         try {
                             method.invoke(this, t);
@@ -85,26 +84,18 @@ public abstract class GameUnitTest<T> implements FabricGameTest {
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
                         } catch (InvocationTargetException e) {
-                            if (e.getCause() instanceof GameTestAssertException ex) {
-                                throw ex;
-                            } else {
-                                throw new RuntimeException(e.getCause());
-                            }
+                            MachineGameTest.handleException(e);
                         }
                     }));
                 } else {
-                    tests.add(new TestFunction(this.id + "/" + unitTest.group(), NAME_CONVERSION.apply(method.getName()), EMPTY_STRUCTURE, Rotation.NONE, 1, 0, true, 1, 1, helper -> {
+                    tests.add(new TestFunction(this.id + subId, this.id + subId + '/' + NAME_CONVERSION.apply(method.getName()), EMPTY_STRUCTURE, Rotation.NONE, 1, 0, true, 1, 1, helper -> {
                         try {
                             method.invoke(this);
                             helper.succeed();
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
                         } catch (InvocationTargetException e) {
-                            if (e.getCause() instanceof GameTestAssertException ex) {
-                                throw ex;
-                            } else {
-                                throw new RuntimeException(e.getCause());
-                            }
+                            MachineGameTest.handleException(e);
                         }
                     }));
                 }
