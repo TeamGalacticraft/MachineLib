@@ -2,8 +2,7 @@ name: Maven Publish
 
 on:
   push:
-    branches:
-      - '1.19'
+    branches: [ 'minecraft/*' ]
 
 jobs:
   Publish:
@@ -26,7 +25,7 @@ jobs:
         with:
           arguments: publish
         env:
-          PRE_RELEASE: false
+          PRE_RELEASE: true
           NEXUS_REPOSITORY_URL: ${{ secrets.NEXUS_RELEASE_URL }}
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}

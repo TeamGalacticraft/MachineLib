@@ -24,9 +24,9 @@ package dev.galacticraft.machinelib.api.block;
 
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
-import dev.galacticraft.machinelib.api.machine.SecuritySettings;
+import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.impl.Constant;

@@ -22,8 +22,10 @@
 
 package dev.galacticraft.machinelib.api.storage;
 
+import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.storage.EmptyMachineEnergyStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineEnergyStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;

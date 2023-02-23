@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.machine;
+package dev.galacticraft.machinelib.api.machine.configuration;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;

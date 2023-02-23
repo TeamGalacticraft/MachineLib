@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.impl.machine;
 
-import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
-import dev.galacticraft.machinelib.api.machine.MachineIOConfig;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
+import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
+import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineIOConfigSyncHandler;
 import net.minecraft.nbt.CompoundTag;

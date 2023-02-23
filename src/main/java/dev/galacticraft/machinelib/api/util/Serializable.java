@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.storage;
+package dev.galacticraft.machinelib.api.util;
 
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
-public interface Deserializable<T extends Tag> extends Serializable<T> {
-    void readTag(@NotNull T tag);
+public interface Serializable<T extends Tag> {
+    @NotNull T createTag();
 
-    void readPacket(@NotNull FriendlyByteBuf buf);
+    void writePacket(@NotNull FriendlyByteBuf buf);
 }

@@ -23,11 +23,11 @@
 package dev.galacticraft.machinelib.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
+import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;

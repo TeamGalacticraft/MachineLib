@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.storage;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 

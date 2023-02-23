@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;

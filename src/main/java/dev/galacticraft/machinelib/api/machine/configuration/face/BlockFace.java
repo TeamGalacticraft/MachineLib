@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.block.face;
+package dev.galacticraft.machinelib.api.machine.configuration.face;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.core.Direction;

@@ -60,11 +60,6 @@ public class AutomatableSlot extends Slot {
         return type;
     }
 
-    @Override
-    public void initialize(ItemStack stack) {
-        this.set(stack);
-    }
-
     public @NotNull ResourceSlot<Item, ItemStack> getSlot() {
         return this.slot;
     }

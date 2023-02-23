@@ -22,7 +22,11 @@
 
 package dev.galacticraft.machinelib.impl.machine;
 
-import dev.galacticraft.machinelib.api.machine.*;
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineConfigurationSyncHandler;

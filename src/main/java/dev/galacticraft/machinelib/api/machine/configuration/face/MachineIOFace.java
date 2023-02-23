@@ -20,14 +20,13 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.block.face;
+package dev.galacticraft.machinelib.api.machine.configuration.face;
 
 import com.google.common.base.Preconditions;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
-import dev.galacticraft.machinelib.api.storage.Deserializable;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
@@ -36,6 +35,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;

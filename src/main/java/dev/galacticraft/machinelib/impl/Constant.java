@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import dev.galacticraft.machinelib.api.block.face.BlockFace;
+import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;

@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.impl.menu.sync;
 
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.SecuritySettings;
+import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;

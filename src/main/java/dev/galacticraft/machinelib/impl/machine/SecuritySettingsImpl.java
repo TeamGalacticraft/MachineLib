@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.impl.machine;
 
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.SecuritySettings;
+import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.menu.sync.SecuritySettingsSyncHandler;

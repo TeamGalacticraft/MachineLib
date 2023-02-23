@@ -2,11 +2,10 @@ name: CodeQL Analysis
 
 on:
   push:
-    branches:
-      - '1.19'
+    branches: [ 'minecraft/*' ]
   pull_request:
-    branches:
-      - '1.19'
+     types: [ synchronize, opened ]
+     branches: [ 'minecraft/*' ]
 
 jobs:
   Analysis:

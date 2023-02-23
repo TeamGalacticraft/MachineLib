@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.machine;
+package dev.galacticraft.machinelib.api.machine.configuration;
 
-import dev.galacticraft.machinelib.api.storage.Deserializable;
-import dev.galacticraft.machinelib.api.storage.MenuSynchronizable;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.SecuritySettingsImpl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;

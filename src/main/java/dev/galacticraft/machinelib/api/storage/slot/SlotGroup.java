@@ -23,10 +23,10 @@
 package dev.galacticraft.machinelib.api.storage.slot;
 
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
-import dev.galacticraft.machinelib.api.storage.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.SlotProvider;
+import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.storage.slot.FluidSlotGroupImpl;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemSlotGroupImpl;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;

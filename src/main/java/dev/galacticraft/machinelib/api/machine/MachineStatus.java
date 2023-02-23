@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
-import dev.galacticraft.machinelib.api.storage.Serializable;
+import dev.galacticraft.machinelib.api.util.Serializable;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;

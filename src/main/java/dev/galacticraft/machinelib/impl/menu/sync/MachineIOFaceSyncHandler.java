@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.impl.menu.sync;
 
-import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
+import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;

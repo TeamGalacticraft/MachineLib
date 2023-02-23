@@ -2,8 +2,7 @@ name: Build
 
 on:
   push:
-    branches:
-      - '1.19'
+    branches: [ 'minecraft/*' ]
 
 jobs:
   Build:

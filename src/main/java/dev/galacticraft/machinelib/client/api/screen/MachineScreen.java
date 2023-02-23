@@ -28,12 +28,12 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.block.face.BlockFace;
-import dev.galacticraft.machinelib.api.block.face.MachineIOFace;
-import dev.galacticraft.machinelib.api.machine.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
-import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
+import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
@@ -62,7 +62,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -77,6 +76,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -258,7 +258,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
         for (Tab tab : Tab.values()) { // 0, 1, 2, 3
             if (secondary) matrices.translate(0, SPACING, 0);
-            this.blit(matrices, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
+            blit(matrices, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
             if (secondary) matrices.translate(0, -SPACING, 0);
             secondary = !secondary;
         }
@@ -328,14 +328,14 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
             matrices.pushPose();
             matrices.translate(this.imageWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-            this.blit(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            blit(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
             this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
             this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.TEAM || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
             this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
-            this.blit(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-            this.blit(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-            this.blit(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            blit(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            blit(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            blit(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
             this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.SECURITY)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
@@ -391,7 +391,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
         matrices.pushPose();
         this.minecraft.getTextureManager().getTexture(InventoryMenu.BLOCK_ATLAS).setFilter(false, false);
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-        matrices.translate(x + 8, y + 8, 100.0F + this.getBlitOffset());
+        matrices.translate(x + 8, y + 8, 100.0F);
         matrices.scale(16, -16, 16);
         MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean bl = !model.usesBlockLight();
@@ -399,7 +399,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
             Lighting.setupForFlatItems();
         }
 
-        this.itemRenderer.render(stack, ItemTransforms.TransformType.GUI, false, matrices, immediate, 15728880, OverlayTexture.NO_OVERLAY, model);
+        this.itemRenderer.render(stack, ItemDisplayContext.GUI, false, matrices, immediate, 15728880, OverlayTexture.NO_OVERLAY, model);
         immediate.endBatch();
         if (bl) {
             Lighting.setupFor3DItems();
@@ -423,13 +423,13 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
         assert this.minecraft != null;
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
         if (pressed) {
-            this.blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
             return;
         }
         if (DrawableUtil.isWithin(mouseX, mouseY, x, y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-            this.blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         } else {
-            this.blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         }
     }
 
@@ -773,7 +773,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, this.texture);
 
-        this.blit(matrices, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+        blit(matrices, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
         this.renderBackground(matrices, mouseX, mouseY, delta);
         this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
         this.drawTanks(matrices, mouseX, mouseY, delta);
@@ -948,38 +948,36 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
     protected void drawSlotOutline(@NotNull PoseStack matrices, int x, int y, int color) {
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
-        RenderSystem.disableTexture();
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         fillGradient(matrices.last().pose(), bufferBuilder,
                 x - 1, y - 1,
                 x - 1, y + 17,
-                this.getBlitOffset(),
+                0,
                 color,
                 color);
         fillGradient(matrices.last().pose(), bufferBuilder,
                 x - 1, y + 17,
                 x + 17, y - 1,
-                this.getBlitOffset(),
+                0,
                 color,
                 color);
         fillGradient(matrices.last().pose(), bufferBuilder,
                 x + 17, y + 17,
                 x + 17, y - 1,
-                this.getBlitOffset(),
+                0,
                 color,
                 color);
         fillGradient(matrices.last().pose(), bufferBuilder,
                 x + 17, y - 1,
                 x - 1, y - 1,
-                this.getBlitOffset(),
+                0,
                 color,
                 color);
         tesselator.end();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
-        RenderSystem.enableTexture();
     }
 
     protected void drawSlotOverlay(@NotNull PoseStack matrices, int x, int y, int color) {

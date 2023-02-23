@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.impl.menu.sync;
 
-import dev.galacticraft.machinelib.api.machine.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import net.minecraft.network.FriendlyByteBuf;
