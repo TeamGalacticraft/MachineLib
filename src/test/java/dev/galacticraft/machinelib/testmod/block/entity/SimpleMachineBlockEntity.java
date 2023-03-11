@@ -26,6 +26,8 @@ import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.core.BlockPos;
@@ -35,6 +37,8 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +47,11 @@ import org.jetbrains.annotations.Nullable;
 public class SimpleMachineBlockEntity extends MachineBlockEntity {
     public int ticks = -1;
 
+    private final SlotGroup<Item, ItemStack, ItemResourceSlot> dirt;
+
     public SimpleMachineBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.SIMPLE_MACHINE, pos, state);
+        this.dirt = this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT);
     }
 
     @Override
@@ -66,14 +73,14 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
         if (this.ticks > 0) {
             this.ticks--;
             profiler.push("check");
-            if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).containsAny(Items.DIRT)) {
+            if (dirt.containsAny(Items.DIRT)) {
                 if (this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).canInsert(Items.DIAMOND)) {
                     if (this.energyStorage().canExtract(150)) {
                         profiler.popPush("transaction");
                         try {
                             this.energyStorage().extractExact(150);
                             if (this.ticks == 0) {
-                                this.itemStorage().getGroup(TestModSlotGroupTypes.DIRT).extract(Items.DIRT, 1);
+                                dirt.extract(Items.DIRT, 1);
                                 this.itemStorage().getGroup(TestModSlotGroupTypes.DIAMONDS).insert(Items.DIAMOND, 1);
                             }
                             return MachineStatuses.ACTIVE;

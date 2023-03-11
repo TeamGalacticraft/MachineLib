@@ -30,10 +30,9 @@ import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.Utils;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -41,7 +40,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -79,7 +78,11 @@ import java.util.Objects;
  * @see MachineBlockEntity
  */
 public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    private static final Component PRESS_SHIFT = Component.translatable(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE);
+
     private final MachineBlockEntityFactory<Machine> factory;
+    private List<Component> description = null;
+
     /**
      * Creates a new machine block.
      *
@@ -110,7 +113,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (!world.isClientSide && placer instanceof Player player) {
+        if (!world.isClientSide && placer instanceof ServerPlayer player) {
             if (world.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getConfiguration().getSecurity();
                 if (!security.hasOwner()) {
@@ -130,23 +133,12 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         Component text = this.shiftDescription(stack, view, context);
         if (text != null) {
             if (Screen.hasShiftDown()) {
-                char[] line = text.getContents() instanceof TranslatableContents content ? I18n.get(content.getKey()).toCharArray() : text.getString().toCharArray();
-                int len = 0;
-                final int maxLength = 175;
-                StringBuilder builder = new StringBuilder();
-                for (char c : line) {
-                    len += Minecraft.getInstance().font.width(String.valueOf(c));
-                    if (c == ' ' && len >= maxLength) {
-                        len = 0;
-                        tooltip.add(Component.literal(builder.toString()).setStyle(text.getStyle()));
-                        builder = new StringBuilder();
-                        continue;
-                    }
-                    builder.append(c);
+                if (this.description == null) {
+                    this.description = Utils.wrapText(text, 175);
                 }
-                tooltip.add(Component.literal(builder.toString()).setStyle(text.getStyle()));
+                tooltip.addAll(this.description);
             } else {
-                tooltip.add(Component.translatable(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE));
+                tooltip.add(PRESS_SHIFT);
             }
         }
 
@@ -160,11 +152,11 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 if (security.contains(Constant.Nbt.OWNER, Tag.TAG_COMPOUND)) {
                     GameProfile profile = NbtUtils.readGameProfile(security.getCompound(Constant.Nbt.OWNER));
                     if (profile != null) {
-                        MutableComponent text1 = Component.translatable(Constant.TranslationKey.OWNER, Component.literal(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
+                        MutableComponent owner = Component.translatable(Constant.TranslationKey.OWNER, Component.literal(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
                         if (Screen.hasControlDown()) {
-                            text1.append(Component.literal(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
+                            owner.append(Component.literal(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
                         }
-                        tooltip.add(text1);
+                        tooltip.add(owner);
                     } else {
                         tooltip.add(Component.translatable(Constant.TranslationKey.OWNER, Component.translatable(Constant.TranslationKey.UNKNOWN).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
                     }
@@ -235,8 +227,13 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         ItemStack stack = super.getCloneItemStack(view, pos, state);
 
         BlockEntity blockEntity = view.getBlockEntity(pos);
-        if (blockEntity != null) { // todo: limit to IO config
-            stack.getOrCreateTag().put(Constant.Nbt.BLOCK_ENTITY_TAG, blockEntity.saveWithoutMetadata());
+        if (blockEntity instanceof MachineBlockEntity machine) {
+            CompoundTag nbt = new CompoundTag();
+            CompoundTag nbt1 = new CompoundTag();
+            nbt.put(Constant.Nbt.CONFIGURATION, nbt1);
+            nbt1.put(Constant.Nbt.CONFIGURATION, machine.getConfiguration().getIOConfiguration().createTag());
+
+            stack.getOrCreateTag().put(Constant.Nbt.BLOCK_ENTITY_TAG, nbt);
         }
 
         return stack;
