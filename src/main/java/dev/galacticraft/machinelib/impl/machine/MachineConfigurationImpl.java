@@ -88,7 +88,10 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     public void readTag(@NotNull CompoundTag tag) {
         this.security.readTag(tag.getCompound(Constant.Nbt.SECURITY));
         this.configuration.readTag(tag.getCompound(Constant.Nbt.CONFIGURATION));
-        this.redstone = RedstoneActivation.readTag(Objects.requireNonNull((ByteTag) tag.get(Constant.Nbt.REDSTONE_ACTIVATION)));
+
+        if (tag.contains(Constant.Nbt.REDSTONE_ACTIVATION)) {
+            this.redstone = RedstoneActivation.readTag(Objects.requireNonNull((ByteTag) tag.get(Constant.Nbt.REDSTONE_ACTIVATION)));
+        }
     }
 
     @Override

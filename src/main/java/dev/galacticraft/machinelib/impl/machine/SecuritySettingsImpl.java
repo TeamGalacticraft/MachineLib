@@ -222,7 +222,9 @@ public final class SecuritySettingsImpl implements SecuritySettings {
             }
         }
 
-        this.accessLevel = AccessLevel.fromString(tag.getString(Constant.Nbt.ACCESS_LEVEL));
+        if (tag.contains(Constant.Nbt.ACCESS_LEVEL)) {
+            this.accessLevel = AccessLevel.fromString(tag.getString(Constant.Nbt.ACCESS_LEVEL));
+        }
     }
 
     @Override
