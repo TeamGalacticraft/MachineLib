@@ -20,38 +20,23 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.machine.configuration;
+package dev.galacticraft.machinelib.impl.transfer.exposed;
 
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
-import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
-import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
-import dev.galacticraft.machinelib.api.util.Deserializable;
-import dev.galacticraft.machinelib.impl.machine.MachineIOConfigImpl;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
-import org.jetbrains.annotations.Contract;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Stores the configuration of a machine's I/O for all six faces.
- */
-public interface MachineIOConfig extends Deserializable<CompoundTag>, MenuSynchronizable {
-    /**
-     * Constructs a new machine i/o configuration.
-     *
-     * @return a new {@link MachineIOConfig}
-     * @see MachineIOConfigImpl the default implementation
-     */
-    @Contract(" -> new")
-    static @NotNull MachineIOConfig create() {
-        return new MachineIOConfigImpl();
+public class ExposedFullItemSlotImpl extends ExposedFullSlotImpl<Item, ItemStack, ItemVariant> {
+    public ExposedFullItemSlotImpl(@NotNull ResourceSlot<Item, ItemStack> slot) {
+        super(slot);
     }
 
-    /**
-     * Returns the I/O configuration for the given face.
-     *
-     * @param face the block face to pull the option from
-     * @return the I/O configuration for the given face.
-     */
-    @NotNull MachineIOFace get(@Nullable BlockFace face);
+    @Override
+    protected @NotNull ItemVariant createVariant(@Nullable Item item, @Nullable CompoundTag tag) {
+        return item != null ? ItemVariant.of(item, tag) : ItemVariant.blank();
+    }
 }

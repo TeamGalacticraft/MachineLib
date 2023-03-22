@@ -114,4 +114,9 @@ public class ItemSlotGroupImpl<Slot extends ResourceSlot<Item, ItemStack>> exten
     public void clearContent() {
         Utils.breakpointMe("attempted to clear items in a recipe test container!");
     }
+
+    @Override
+    public int slots() {
+        return this.size();
+    }
 }

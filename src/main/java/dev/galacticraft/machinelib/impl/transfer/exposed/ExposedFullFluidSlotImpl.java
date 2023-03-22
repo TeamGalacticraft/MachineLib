@@ -20,31 +20,23 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.gas;
+package dev.galacticraft.machinelib.impl.transfer.exposed;
 
-import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.ApiStatus;
+import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents a gas.
- * Not yet stable API - use is not recommended.
- */
-@ApiStatus.Experimental
-@Deprecated // TODO: better gas implementation - typechecking feels like the wrong way to go about this
-// may want an external registry or something
-public interface Gas {
-    /**
-     * The name of the gas
-     *
-     * @return the name of the gas
-     */
-    @NotNull Component getName();
+public class ExposedFullFluidSlotImpl extends ExposedFullSlotImpl<Fluid, FluidStack, FluidVariant> {
+    public ExposedFullFluidSlotImpl(@NotNull ResourceSlot<Fluid, FluidStack> slot) {
+        super(slot);
+    }
 
-    /**
-     * The gas' symbol
-     *
-     * @return the gas' symbol
-     */
-    @NotNull String getSymbol();
+    @Override
+    protected @NotNull FluidVariant createVariant(@Nullable Fluid fluid, @Nullable CompoundTag tag) {
+        return fluid != null ? FluidVariant.of(fluid, tag) : FluidVariant.blank();
+    }
 }

@@ -37,6 +37,7 @@ import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
+import dev.galacticraft.machinelib.impl.block.face.NullMachineIOFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
@@ -80,6 +81,11 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
         Preconditions.checkNotNull(flow);
 
         return new MachineIOFaceImpl(type, flow);
+    }
+
+    @Contract(value = " -> new", pure = true)
+    static @NotNull MachineIOFace nullFace() {
+        return new NullMachineIOFaceImpl();
     }
 
     /**

@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import dev.galacticraft.machinelib.api.gas.Gases;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
@@ -49,7 +48,6 @@ public final class MachineLib implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        Gases.init();
         MachineLibC2SPackets.register();
         MachineStatuses.initialize();
     }

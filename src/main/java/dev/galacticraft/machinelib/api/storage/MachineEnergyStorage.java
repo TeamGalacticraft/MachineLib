@@ -128,7 +128,7 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
      * @param flow The resource flow
      * @return The exposed energy storage
      */
-    @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow);
+    @Nullable EnergyStorage getExposedStorage(@NotNull ResourceFlow flow);
 
     boolean canExposedInsert();
 

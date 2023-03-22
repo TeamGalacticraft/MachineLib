@@ -46,7 +46,7 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
 
     @Override
     public long getModifications() {
-        return -2;
+        return -1;
     }
 
     @Override
@@ -101,6 +101,11 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
+    }
+
+    @Override
+    public int slots() {
+        return 0;
     }
 
     @Override

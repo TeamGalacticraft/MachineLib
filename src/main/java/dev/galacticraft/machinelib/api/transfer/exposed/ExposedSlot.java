@@ -26,6 +26,8 @@ import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedFluidSlotImpl;
+import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedFullFluidSlotImpl;
+import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedFullItemSlotImpl;
 import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedItemSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -46,5 +48,14 @@ public interface ExposedSlot<Resource, Variant extends TransferVariant<Resource>
     @Contract("_, _ -> new")
     static @NotNull ExposedSlot<Fluid, FluidVariant> createFluid(@NotNull ResourceSlot<Fluid, FluidStack> slot, @NotNull ResourceFlow flow) {
         return new ExposedFluidSlotImpl(slot, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
+    }
+    @Contract("_ -> new")
+    static @NotNull ExposedSlot<Item, ItemVariant> createFullItem(@NotNull ResourceSlot<Item, ItemStack> slot) {
+        return new ExposedFullItemSlotImpl(slot);
+    }
+
+    @Contract("_ -> new")
+    static @NotNull ExposedSlot<Fluid, FluidVariant> createFullFluid(@NotNull ResourceSlot<Fluid, FluidStack> slot) {
+        return new ExposedFullFluidSlotImpl(slot);
     }
 }

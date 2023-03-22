@@ -38,6 +38,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ExposedStorage<Resource, Variant extends TransferVariant<Resource>> extends Storage<Variant> {
     @Contract("_, _, _ -> new")
@@ -80,6 +81,26 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         ExposedSlot<Fluid, FluidVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
             slots[i] = ExposedSlot.createFluid(rawSlots[i], flow);
+        }
+        return new ExposedStorageImpl<>(storage, slots);
+    }
+
+    static @Nullable ExposedStorage<Item, ItemVariant> createFullItem(ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage) {
+        if (storage.slots() == 0) return null;
+        ResourceSlot<Item, ItemStack>[] rawSlots = storage.getSlots();
+        ExposedSlot<Item, ItemVariant>[] slots = new ExposedSlot[rawSlots.length];
+        for (int i = 0; i < rawSlots.length; i++) {
+            slots[i] = ExposedSlot.createFullItem(rawSlots[i]);
+        }
+        return new ExposedStorageImpl<>(storage, slots);
+    }
+
+    static @Nullable ExposedStorage<Fluid, FluidVariant> createFullFluid(ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage) {
+        if (storage.slots() == 0) return null;
+        ResourceSlot<Fluid, FluidStack>[] rawSlots = storage.getSlots();
+        ExposedSlot<Fluid, FluidVariant>[] slots = new ExposedSlot[rawSlots.length];
+        for (int i = 0; i < rawSlots.length; i++) {
+            slots[i] = ExposedSlot.createFullFluid(rawSlots[i]);
         }
         return new ExposedStorageImpl<>(storage, slots);
     }

@@ -101,6 +101,11 @@ public class MachineItemStorageImpl implements MachineItemStorage {
     }
 
     @Override
+    public int slots() {
+        return this.allSlots.length;
+    }
+
+    @Override
     public ItemResourceSlot[] getSlots() {
         return this.allSlots;
     }

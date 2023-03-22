@@ -501,7 +501,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedEnergyStorage(Direction, Direction)
      */
     @ApiStatus.Internal
-    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockState state, @NotNull Direction direction) {
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockState state, @Nullable Direction direction) {
         return this.getExposedEnergyStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
@@ -514,7 +514,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedEnergyStorage(BlockFace)
      */
     @ApiStatus.Internal
-    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction facing, @NotNull Direction direction) {
+    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull Direction facing, @Nullable Direction direction) {
         return this.getExposedEnergyStorage(BlockFace.toFace(facing, direction));
     }
 
@@ -525,7 +525,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled energy storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable EnergyStorage getExposedEnergyStorage(@NotNull BlockFace face) {
+    private @Nullable EnergyStorage getExposedEnergyStorage(@Nullable BlockFace face) {
+        if (face == null) return this.energyStorage;
         return this.getIOConfig().get(face).getExposedEnergyStorage(this.energyStorage);
     }
 
@@ -537,7 +538,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedItemStorage(Direction, Direction)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockState state, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockState state, @Nullable Direction direction) {
         return this.getExposedItemStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
@@ -550,7 +551,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedItemStorage(BlockFace)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction facing, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull Direction facing, @Nullable Direction direction) {
         return this.getExposedItemStorage(BlockFace.toFace(facing, direction));
     }
 
@@ -561,7 +562,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled item storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull BlockFace face) {
+    private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@Nullable BlockFace face) {
         return this.getIOConfig().get(face).getExposedItemStorage(this.itemStorage);
     }
 

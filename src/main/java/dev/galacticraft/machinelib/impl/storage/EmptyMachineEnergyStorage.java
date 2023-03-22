@@ -124,8 +124,8 @@ public class EmptyMachineEnergyStorage implements MachineEnergyStorage {
     }
 
     @Override
-    public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
-        return this;
+    public @Nullable EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
+        return null;
     }
 
     @Override

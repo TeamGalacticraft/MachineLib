@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.menu.sync;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
 import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +33,8 @@ public class MachineIOConfigSyncHandler implements MenuSyncHandler {
     private final MenuSyncHandler[] syncHandlers = new MenuSyncHandler[6];
 
     public MachineIOConfigSyncHandler(MachineIOConfig config) {
-        BlockFace[] values = BlockFace.values();
-        for (int i = 0; i < values.length; i++) {
-            this.syncHandlers[i] = config.get(values[i]).createSyncHandler();
+        for (int i = 0; i < Constant.Cache.BLOCK_FACES.length; i++) {
+            this.syncHandlers[i] = config.get(Constant.Cache.BLOCK_FACES[i]).createSyncHandler();
         }
     }
 

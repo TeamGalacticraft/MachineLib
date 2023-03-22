@@ -28,6 +28,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An enum representing a face of a block.
@@ -81,9 +82,11 @@ public enum BlockFace {
      * @param target The direction to get the face for.
      * @return The face corresponding to the given direction and rotation.
      */
-    @Contract(pure = true)
-    public static @NotNull BlockFace toFace(@NotNull Direction facing, @NotNull Direction target) { //todo: a better way to do this?
+    @Contract(pure = true, value = "_, null -> null; _, !null -> !null")
+    public static @Nullable BlockFace toFace(@NotNull Direction facing, @Nullable Direction target) { //todo: a better way to do this?
         assert facing != Direction.UP && facing != Direction.DOWN;
+
+        if (target == null) return null;
 
         if (target == Direction.DOWN) {
             return BOTTOM;

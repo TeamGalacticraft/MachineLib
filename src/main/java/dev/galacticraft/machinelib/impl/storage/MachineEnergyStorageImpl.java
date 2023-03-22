@@ -195,8 +195,34 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
     }
 
     @Override
-    public @NotNull EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
-        return ExposedEnergyStorage.create(this, this.insert && flow.canFlowIn(ResourceFlow.INPUT), this.extract && flow.canFlowIn(ResourceFlow.OUTPUT));
+    public @Nullable EnergyStorage getExposedStorage(@NotNull ResourceFlow flow) {
+        switch (flow) {
+            case INPUT -> {
+                if (this.insert) {
+                    return ExposedEnergyStorage.create(this, true, false);
+                }
+                return null;
+            }
+            case OUTPUT -> {
+                if (this.extract) {
+                    return ExposedEnergyStorage.create(this, true, false);
+                }
+                return null;
+            }
+            case BOTH -> {
+                if (this.insert) {
+                    if (this.extract) {
+                        return this;
+                    } else {
+                        return ExposedEnergyStorage.create(this, true, false);
+                    }
+                } else if (this.extract) {
+                    return ExposedEnergyStorage.create(this, false, true);
+                }
+                return null;
+            }
+        }
+        return null;
     }
 
     @Override

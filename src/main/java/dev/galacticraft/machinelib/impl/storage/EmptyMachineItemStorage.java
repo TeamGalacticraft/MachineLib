@@ -71,6 +71,11 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
+    public int slots() {
+        return 0;
+    }
+
+    @Override
     public ItemResourceSlot[] getSlots() {
         return new ItemResourceSlot[0];
     }

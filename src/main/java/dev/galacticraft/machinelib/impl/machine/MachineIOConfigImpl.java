@@ -32,6 +32,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class MachineIOConfigImpl implements MachineIOConfig {
@@ -41,9 +42,11 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull MachineIOFace right = MachineIOFace.blank();
     private final @NotNull MachineIOFace top = MachineIOFace.blank();
     private final @NotNull MachineIOFace bottom = MachineIOFace.blank();
+    private final @NotNull MachineIOFace nullFace = MachineIOFace.nullFace();
 
     @Override
-    public @NotNull MachineIOFace get(@NotNull BlockFace face) {
+    public @NotNull MachineIOFace get(@Nullable BlockFace face) {
+        if (face == null) return this.nullFace;
         return switch (face) {
             case FRONT -> this.front;
             case TOP -> this.top;
@@ -51,6 +54,7 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
             case RIGHT -> this.right;
             case LEFT -> this.left;
             case BOTTOM -> this.bottom;
+//            null -> this.nullFace;
         };
     }
 

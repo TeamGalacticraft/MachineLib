@@ -106,6 +106,11 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
     }
 
     @Override
+    public int slots() {
+        return this.allSlots.length;
+    }
+
+    @Override
     public FluidResourceSlot[] getSlots() {
         return this.allSlots;
     }

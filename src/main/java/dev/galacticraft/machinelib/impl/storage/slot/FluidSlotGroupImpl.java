@@ -68,4 +68,9 @@ public class FluidSlotGroupImpl<Slot extends ResourceSlot<Fluid, FluidStack>> ex
         }
         return inserted;
     }
+
+    @Override
+    public int slots() {
+        return this.size();
+    }
 }

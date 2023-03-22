@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.client.impl;
 
-import dev.galacticraft.machinelib.api.gas.GasFluid;
 import dev.galacticraft.machinelib.client.api.model.MachineModelRegistry;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.model.MachineModelLoader;
@@ -30,16 +29,7 @@ import dev.galacticraft.machinelib.client.impl.network.MachineLibS2CPackets;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.ApiStatus;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public final class MachineLibClient implements ClientModInitializer {
@@ -53,17 +43,6 @@ public final class MachineLibClient implements ClientModInitializer {
         MachineModelRegistry.register(Constant.id("front_face"), MachineBakedModel.FrontFaceSpriteProvider::new);
         MachineModelRegistry.register(Constant.id("single"), MachineBakedModel.SingleSpriteProvider::new);
         MachineModelRegistry.register(Constant.id("z_axis"), MachineBakedModel.ZAxisSpriteProvider::new);
-
-        for (GasFluid gasFluid : GasFluid.GAS_FLUIDS) {
-            FluidVariantRendering.register(gasFluid, new FluidVariantRenderHandler() {
-                @Override
-                public void appendTooltip(FluidVariant fluidVariant, List<Component> tooltip, TooltipFlag tooltipContext) {
-                    tooltip.add(Component.translatable(Constant.TranslationKey.GAS_MARKER));
-                    if (tooltipContext.isAdvanced()) tooltip.add(Component.nullToEmpty(gasFluid.getSymbol()));
-                }
-            });
-            FluidRenderHandlerRegistry.INSTANCE.register(gasFluid, new SimpleFluidRenderHandler(gasFluid.getTexture(), gasFluid.getTexture(), null, gasFluid.getTint()));
-        }
 
         MachineLibS2CPackets.register();
     }
