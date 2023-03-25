@@ -205,7 +205,7 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
             }
             case OUTPUT -> {
                 if (this.extract) {
-                    return ExposedEnergyStorage.create(this, true, false);
+                    return ExposedEnergyStorage.create(this, false, true);
                 }
                 return null;
             }
