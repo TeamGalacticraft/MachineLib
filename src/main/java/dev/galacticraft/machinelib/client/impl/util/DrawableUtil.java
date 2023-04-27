@@ -30,16 +30,21 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
 @ApiStatus.Internal
 @Environment(EnvType.CLIENT)
 public final class DrawableUtil {
     private DrawableUtil() {
+    }
+
+    public static int normalize(int dist, int value) {
+        return value - dist;
+    }
+
+    public static double normalize(double dist, double value) {
+        return value - dist;
     }
 
     public static void drawCenteredStringWithoutShadow(PoseStack matrices, Font textRenderer, Component text, int x, int y, int color) {
@@ -108,24 +113,4 @@ public final class DrawableUtil {
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 
-    public static String roundForDisplay(double d, int places) {
-        if (places == 0) return String.valueOf(Math.round(d));
-        String s = String.valueOf(d);
-        int dot = s.indexOf('.');
-        if (dot == -1) {
-            return s;
-        }
-        return s.substring(0, Math.min(s.length(), dot + 1 + places));
-    }
-
-    @Contract(pure = true, value = "_ -> new")
-    public static @NotNull MutableComponent getEnergyDisplay(long amount) {
-        if (amount > 1_000_000L) {
-            return Component.literal(roundForDisplay(amount / 1_000_000.0, 3) + " MgJ");
-        } else if (amount > 1_000L) {
-            return Component.literal(roundForDisplay(amount / 1_000.0, 3) + " kgJ");
-        } else {
-            return Component.literal(amount + " gJ");
-        }
-    }
 }

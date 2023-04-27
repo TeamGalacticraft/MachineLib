@@ -29,8 +29,8 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.Utils;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -134,7 +134,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         if (text != null) {
             if (Screen.hasShiftDown()) {
                 if (this.description == null) {
-                    this.description = Utils.wrapText(text, 175);
+                    this.description = DisplayUtil.wrapText(text, 64);
                 }
                 tooltip.addAll(this.description);
             } else {
@@ -199,27 +199,27 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         super.playerWillDestroy(world, pos, state, player);
         BlockEntity entity = world.getBlockEntity(pos);
         if (entity instanceof MachineBlockEntity machine) {
-            MachineItemStorage inv = machine.itemStorage();
-            List<ItemEntity> entities = new ArrayList<>();
-            for (ItemResourceSlot slot : inv.getSlots()) {
-                if (!slot.isEmpty()) {
-                    entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
-                    slot.set(null, null, 0);
+            if (!machine.areDropsDisabled()) {
+                MachineItemStorage inv = machine.itemStorage();
+                List<ItemEntity> entities = new ArrayList<>();
+                for (ItemResourceSlot slot : inv.getSlots()) {
+                    if (!slot.isEmpty()) {
+                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
+                        slot.set(null, null, 0);
+                    }
                 }
-            }
-            for (ItemEntity itemEntity : entities) {
-                world.addFreshEntity(itemEntity);
+                for (ItemEntity itemEntity : entities) {
+                    world.addFreshEntity(itemEntity);
+                }
             }
         }
     }
 
     @Override
     public @NotNull List<ItemStack> getDrops(BlockState state, LootContext.@NotNull Builder builder) {
-        BlockEntity entity = builder.getParameter(LootContextParams.BLOCK_ENTITY);
-        if (entity instanceof MachineBlockEntity machine) {
-            if (machine.areDropsDisabled()) return Collections.emptyList();
-        }
-        return super.getDrops(state, builder);
+        return builder.getParameter(LootContextParams.BLOCK_ENTITY) instanceof MachineBlockEntity machine
+                && machine.areDropsDisabled() ? Collections.emptyList()
+                : super.getDrops(state, builder);
     }
 
     @Override
@@ -228,12 +228,9 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
 
         BlockEntity blockEntity = view.getBlockEntity(pos);
         if (blockEntity instanceof MachineBlockEntity machine) {
-            CompoundTag nbt = new CompoundTag();
-            CompoundTag nbt1 = new CompoundTag();
-            nbt.put(Constant.Nbt.CONFIGURATION, nbt1);
-            nbt1.put(Constant.Nbt.CONFIGURATION, machine.getConfiguration().getIOConfiguration().createTag());
-
-            stack.getOrCreateTag().put(Constant.Nbt.BLOCK_ENTITY_TAG, nbt);
+            CompoundTag config = new CompoundTag();
+            config.put(Constant.Nbt.CONFIGURATION, machine.getConfiguration().createTag());
+            stack.getOrCreateTag().put(Constant.Nbt.BLOCK_ENTITY_TAG, config);
         }
 
         return stack;

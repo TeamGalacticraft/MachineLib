@@ -172,7 +172,6 @@ public interface Constant {
         String STATUS_OFF = "status.machinelib.off";
 
         String CURRENT_ENERGY = "ui.machinelib.machine.current_energy";
-        String MAX_ENERGY = "ui.machinelib.machine.max_energy";
 
         String SECURITY = "ui.machinelib.machine.security";
         String ACCESS_LEVEL = "ui.machinelib.machine.security.access";
@@ -218,26 +217,6 @@ public interface Constant {
         String TANK_AMOUNT = "ui.machinelib.machine.tank.contents.amount";
         String TANK_EMPTY = "ui.machinelib.machine.tank.contents.empty";
 
-        String INVALID_SLOT_TYPE = "slot_type.machinelib.invalid";
-
-        String HYDROGEN = "gas.machinelib.hydrogen";
-        String NITROGEN = "gas.machinelib.nitrogen";
-        String OXYGEN = "gas.machinelib.oxygen";
-        String CARBON_DIOXIDE = "gas.machinelib.carbon_dioxide";
-        String CARBON_MONOXIDE = "gas.machinelib.carbon_monoxide";
-        String WATER_VAPOR = "gas.machinelib.water_vapor";
-        String METHANE = "gas.machinelib.methane";
-        String HELIUM = "gas.machinelib.helium";
-        String ARGON = "gas.machinelib.argon";
-        String NITROUS_OXIDE = "gas.machinelib.nitrous_oxide";
-        String NEON = "gas.machinelib.neon";
-        String KRYPTON = "gas.machinelib.krypton";
-        String XENON = "gas.machinelib.xenon";
-        String OZONE = "gas.machinelib.ozone";
-        String NITROUS_DIOXIDE = "gas.machinelib.nitrous_dioxide";
-        String IODINE = "gas.machinelib.iodine";
-
-        String GAS_MARKER = "tooltip.machinelib.gas";
         String UNKNOWN = "tooltip.machinelib.machine.unknown";
     }
 

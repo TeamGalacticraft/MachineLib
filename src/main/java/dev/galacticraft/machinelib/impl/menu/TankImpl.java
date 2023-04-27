@@ -26,6 +26,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -154,8 +155,8 @@ public final class TankImpl implements Tank {
             }
             long amount = this.getAmount();
             MutableComponent text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                    Component.literal(DrawableUtil.roundForDisplay(amount / 81.0, 0) + "mB")
-                    : Component.literal(DrawableUtil.roundForDisplay(amount / 81000.0, 2) + "B");
+                    Component.literal(DisplayUtil.truncateDecimal(amount / 81.0, 0) + "mB")
+                    : Component.literal(DisplayUtil.truncateDecimal(amount / 81000.0, 2) + "B");
 
             MutableComponent translatableText;
             translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);

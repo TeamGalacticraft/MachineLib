@@ -42,6 +42,7 @@ import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -71,6 +72,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -81,20 +83,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Handles most of the boilerplate code for machine screens.
  * Handles the rendering of tanks, configuration panels and capacitors.
  */
 @Environment(EnvType.CLIENT)
-public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M>> extends AbstractContainerScreen<H> {
+public class MachineScreen<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> extends AbstractContainerScreen<Menu> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
     private static final ItemStack GUNPOWDER = new ItemStack(Items.GUNPOWDER);
     private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "unlit_torch")));
@@ -195,6 +196,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
     private @NotNull ResourceLocation ownerSkin = DefaultPlayerSkin.getDefaultSkin(UUID.randomUUID());
 
     private @Nullable MachineBakedModel model;
+    private double componentZ = 0.0;
 
     /**
      * Creates a new screen from the given screen handler.
@@ -203,7 +205,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
      * @param title   The title of the screen.
      * @param texture The texture of the background screen.
      */
-    protected MachineScreen(@NotNull H handler, @NotNull Component title, @NotNull ResourceLocation texture) {
+    protected MachineScreen(@NotNull Menu handler, @NotNull Component title, @NotNull ResourceLocation texture) {
         super(handler, handler.playerInventory, title);
 
         this.texture = texture;
@@ -744,10 +746,6 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
     @Override
     public final void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
-        if (!this.hasAccess()) {
-            this.onClose();
-            return;
-        }
 
         super.render(matrices, mouseX, mouseY, delta);
 
@@ -769,16 +767,18 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
     @Override
     protected final void renderBg(PoseStack matrices, float delta, int mouseX, int mouseY) {
         this.renderBackground(matrices);
+
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, this.texture);
 
         blit(matrices, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+
         this.renderBackground(matrices, mouseX, mouseY, delta);
-        this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
         this.drawTanks(matrices, mouseX, mouseY, delta);
         this.drawCapacitor(matrices, mouseX, mouseY, delta);
         this.handleSlotHighlight(matrices, mouseX, mouseY);
+        this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
     }
 
     /**
@@ -807,8 +807,7 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
                 if (status != MachineStatus.INVALID) {
                     lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.name()));
                 }
-                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DrawableUtil.getEnergyDisplay(amount).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
-                lines.add(Component.translatable(Constant.TranslationKey.MAX_ENERGY, DrawableUtil.getEnergyDisplay(capacity).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.RED_STYLE));
+                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
                 this.appendEnergyTooltip(lines);
 
                 assert this.minecraft != null;
@@ -993,37 +992,22 @@ public class MachineScreen<M extends MachineBlockEntity, H extends MachineMenu<M
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (hasAccess()) {
-            boolean tankMod = false;
-            if (this.focusedTank != null && button == 0) {
-                tankMod = this.focusedTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
-                if (tankMod) {
-                    FriendlyByteBuf buf = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Integer.BYTES * 2)).writeVarInt(this.menu.containerId);
-                    buf.writeInt(this.focusedTank.getId());
-                    PacketSender.c2s().send(Constant.id("tank_modify"), buf);
-                }
+        boolean tankMod = false;
+        if (this.focusedTank != null && button == 0) {
+            tankMod = this.focusedTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
+            if (tankMod) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Integer.BYTES * 2)).writeVarInt(this.menu.containerId);
+                buf.writeInt(this.focusedTank.getId());
+                PacketSender.c2s().send(Constant.id("tank_modify"), buf);
             }
-            return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
-        } else {
-            return false;
         }
+        return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button) | tankMod;
     }
 
     @Override
     protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
-        if (hasAccess()) {
-            super.renderTooltip(matrices, mouseX, mouseY);
-            this.drawConfigurationPanelTooltips(matrices, mouseX, mouseY);
-        }
-    }
-
-    /**
-     * Returns whether the player has access to the machine.
-     *
-     * @return whether the player has access to the machine
-     */
-    public boolean hasAccess() {
-        return this.menu.configuration.getSecurity().hasAccess(this.menu.playerUUID);
+        super.renderTooltip(matrices, mouseX, mouseY);
+        this.drawConfigurationPanelTooltips(matrices, mouseX, mouseY);
     }
 
     /**

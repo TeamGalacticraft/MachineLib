@@ -22,21 +22,12 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import com.google.common.collect.ImmutableList;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.List;
 
 public final class Utils {
     private Utils() {
@@ -56,34 +47,6 @@ public final class Utils {
     @Contract(pure = true)
     public static boolean itemsEqual(@Nullable Item a, @NotNull Item b) {
         return a == b || (a == null && b == Items.AIR);
-    }
-
-    public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull Component text, int length) {
-        return wrapText(text.getContents() instanceof TranslatableContents contents ? I18n.get(contents.getKey(), contents.getArgs()) : text.getString(), length, text.getStyle());
-    }
-
-    public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull String text, int length, @Nullable Style style) {
-        if (text.length() <= length) {
-            return ImmutableList.of(Component.literal(text));
-        }
-
-        Minecraft minecraft = Minecraft.getInstance();
-        ImmutableList.Builder<Component> list = ImmutableList.builder();
-        StringBuilder builder = new StringBuilder();
-        int lineLength = 0;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            lineLength += minecraft.font.width(String.valueOf(c));
-            if (Character.isWhitespace(c) && lineLength >= length) {
-                lineLength = 0;
-                list.add(Component.literal(builder.toString()).setStyle(style));
-                builder.delete(0, builder.length());
-            } else {
-                builder.append(c);
-            }
-        }
-        list.add(Component.literal(builder.toString()).setStyle(style));
-        return list.build();
     }
 
     public static void breakpointMe(String s) {

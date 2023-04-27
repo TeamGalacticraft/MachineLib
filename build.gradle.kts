@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Team Galacticraft
+ * Copyright (c) 2021-2023 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,10 @@ import java.time.format.DateTimeFormatter
 
 plugins {
     `maven-publish`
-    id("fabric-loom") version ("1.1-SNAPSHOT")
+    id("fabric-loom") version ("1.2-SNAPSHOT")
     id("io.github.juuxel.loom-quiltflower") version ("1.8.0")
     id("org.cadixdev.licenser") version ("0.6.1")
-    id("org.ajoberstar.grgit") version("5.0.0")
+    id("org.ajoberstar.grgit") version("5.2.0")
 }
 
 val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
@@ -47,9 +47,8 @@ val energy = project.property("energy.version").toString()
 val fabric = project.property("fabric.version").toString()
 
 license {
-    setHeader(rootProject.file("LICENSE_HEADER.txt"))
+    header(rootProject.file("LICENSE_HEADER.txt"))
     include("**/dev/galacticraft/**/*.java")
-    include("build.gradle.kts")
 }
 
 group = "dev.galacticraft"
