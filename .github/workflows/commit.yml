@@ -1,10 +1,8 @@
-name: Pull Request Check
+name: Commit
 
 on:
-  pull_request:
-    types: [ synchronize, opened ]
+  push:
     branches: [ 'minecraft/*' ]
-
 
 jobs:
   validate-wrapper:
@@ -33,6 +31,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: checkLicenses
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/minecraft/') }}
 
   build:
     needs: validate-wrapper
@@ -52,6 +51,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: build -x checkLicenses
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/minecraft/') }}
 
   test:
     needs: [validate-wrapper, build]
@@ -71,3 +71,29 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: runGametest
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/minecraft/') }}
+
+  publish:
+    needs: [ validate-wrapper, build, test ]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Publish
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: publish
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/minecraft/') }}
+        env:
+          PRE_RELEASE: false
+          NEXUS_REPOSITORY_URL: ${{ secrets.NEXUS_RELEASE_URL }}
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
