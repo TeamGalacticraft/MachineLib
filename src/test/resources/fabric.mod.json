@@ -47,6 +47,6 @@
     ]
   },
   "depends": {
-    "machinelib": ">=0.1.0"
+    "machinelib": "*"
   }
 }

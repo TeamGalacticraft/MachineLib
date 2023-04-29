@@ -5,7 +5,6 @@ on:
     types: [ synchronize, opened ]
     branches: [ 'minecraft/*' ]
 
-
 jobs:
   validate-wrapper:
     runs-on: ubuntu-22.04
@@ -16,7 +15,7 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-  license-headers:
+  initialize:
     needs: validate-wrapper
     runs-on: ubuntu-22.04
     steps:
@@ -28,14 +27,51 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+
+      - name: Cache gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
+            ${{ runner.os }}-gradle-
+
+      - name: Initialize caches
+        run: ./gradlew --no-daemon
+
+
+  license-headers:
+    needs: initialize
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Restore gradle cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
 
       - name: License headers
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: checkLicenses
+        run: ./gradlew checkLicenses --no-daemon
 
   build:
-    needs: validate-wrapper
+    needs: initialize
     runs-on: ubuntu-22.04
 
     steps:
@@ -47,14 +83,80 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+
+      - name: Restore gradle cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
 
       - name: Build
-        uses: gradle/gradle-build-action@v2
+        run: ./gradlew build -x checkLicenses --no-daemon
+
+      - name: Cache build output
+        uses: actions/cache/save@v3
         with:
-          arguments: build -x checkLicenses
+          path: |
+            .gradle/
+            !.gradle/loom-cache
+            build/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+  codeQL:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Restore gradle cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+
+      - name: Restore cached build output
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            .gradle/
+            !.gradle/loom-cache
+            build/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java
+          debug: true
+
+      - name: Build
+        run: ./gradlew build -x checkLicenses --no-daemon
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
 
   test:
-    needs: [validate-wrapper, build]
+    needs: build
     runs-on: ubuntu-22.04
 
     steps:
@@ -67,7 +169,25 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Gametest
-        uses: gradle/gradle-build-action@v2
+      - name: Restore gradle cache
+        uses: actions/cache/restore@v3
         with:
-          arguments: runGametest
+          fail-on-cache-miss: true
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+
+      - name: Restore cached build output
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            .gradle/
+            !.gradle/loom-cache
+            build/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+      - name: Gametest
+        run: ./gradlew runGametest --no-daemon
