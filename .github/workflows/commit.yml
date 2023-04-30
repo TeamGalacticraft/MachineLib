@@ -93,6 +93,11 @@ jobs:
             .gradle/loom-cache
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java
+
       - name: Build
         run: ./gradlew build -x checkLicenses --no-daemon
 
@@ -104,52 +109,6 @@ jobs:
             !.gradle/loom-cache
             build/
           key: ${{ runner.os }}-build-${{ github.sha }}
-
-  codeQL:
-    needs: build
-    runs-on: ubuntu-22.04
-    permissions:
-      security-events: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: temurin
-
-      - name: Restore gradle cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
-
-      - name: Restore cached build output
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            .gradle/
-            !.gradle/loom-cache
-            build/
-          key: ${{ runner.os }}-build-${{ github.sha }}
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: java
-          debug: true
-
-      - name: Build
-        run: ./gradlew build -x checkLicenses --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
