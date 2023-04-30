@@ -35,9 +35,8 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
             ${{ runner.os }}-gradle-
 
       - name: Initialize caches
@@ -65,7 +64,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
 
       - name: License headers
         run: ./gradlew checkLicenses --no-daemon
@@ -92,7 +91,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
 
       - name: Build
         run: ./gradlew build -x checkLicenses --no-daemon
@@ -106,7 +105,7 @@ jobs:
             build/
           key: ${{ runner.os }}-build-${{ github.sha }}
 
-  codeQL:
+  analysis:
     needs: build
     runs-on: ubuntu-22.04
     permissions:
@@ -131,17 +130,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
-
-      - name: Restore cached build output
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            .gradle/
-            !.gradle/loom-cache
-            build/
-          key: ${{ runner.os }}-build-${{ github.sha }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -177,7 +166,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}-${{ github.sha }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
 
       - name: Restore cached build output
         uses: actions/cache/restore@v3
