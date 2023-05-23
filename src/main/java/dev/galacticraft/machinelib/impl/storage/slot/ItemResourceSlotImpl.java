@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.storage.slot;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -230,8 +231,11 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
     public long exchange(ItemVariant newVariant, long maxAmount, TransactionContext transaction) {
         StoragePreconditions.notBlankNotNegative(newVariant, maxAmount);
 
-        boolean full = this.getAmount() == maxAmount;
-        if (full && this.getCapacityFor(newVariant.getItem()) <= maxAmount) {
+        if (newVariant.getItem() == this.getResource() && Utils.tagsEqual(this.getTag(), newVariant.getNbt())) {
+            return Math.min(this.getAmount(), maxAmount);
+        }
+
+        if (this.getAmount() == maxAmount && this.getCapacityFor(newVariant.getItem()) >= maxAmount) {
             this.set(newVariant.getItem(), newVariant.getNbt(), maxAmount);
             return maxAmount;
         }

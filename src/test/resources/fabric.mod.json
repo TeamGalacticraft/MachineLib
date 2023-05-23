@@ -41,6 +41,8 @@
       "dev.galacticraft.machinelib.gametest.storage.ResourceSlotInsertionTest",
       "dev.galacticraft.machinelib.gametest.storage.SingletonSlotGroupExtractionTest",
 
+      "dev.galacticraft.machinelib.gametest.storage.ItemResourceSlotInteropTest",
+
       "dev.galacticraft.machinelib.gametest.serialization.EmptyDeserializationTest",
 
       "dev.galacticraft.machinelib.testmod.gametest.SimpleMachineGametest"
