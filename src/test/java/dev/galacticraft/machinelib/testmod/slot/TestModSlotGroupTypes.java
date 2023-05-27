@@ -33,7 +33,8 @@ public class TestModSlotGroupTypes {
     public static final SlotGroupType DIAMONDS = SlotGroupType.createAndRegister(Constant.id("diamonds"), TextColor.fromRgb(0x55ffff), InputType.OUTPUT);
 
     public static final SlotGroupType SOLID_FUEL = SlotGroupType.createAndRegister(Constant.id("solid_fuel"), TextColor.fromRgb(0x000000), InputType.INPUT);
-    public static final SlotGroupType WASTE = SlotGroupType.createAndRegister(Constant.id("waste"), TextColor.fromRgb(0xaa0000), InputType.OUTPUT);
+    public static final SlotGroupType TANK_IN = SlotGroupType.createAndRegister(Constant.id("tin"), TextColor.fromRgb(0xaa0000), InputType.INPUT);
+    public static final SlotGroupType WATER = SlotGroupType.createAndRegister(Constant.id("water"), TextColor.fromRgb(0x0000ff), InputType.INPUT);
 
     public static void initialize() {
     }

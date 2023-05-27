@@ -28,13 +28,16 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
 import dev.galacticraft.machinelib.testmod.block.entity.TestModBlockEntityTypes;
 import dev.galacticraft.machinelib.testmod.menu.TestModMenuTypes;
 import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluids;
 
 public class TestModMachineTypes {
     public static final MachineType<SimpleMachineBlockEntity, MachineMenu<SimpleMachineBlockEntity>> SIMPLE_MACHINE = MachineType.create(
@@ -65,8 +68,17 @@ public class TestModMachineTypes {
                                     .filter(ResourceFilters.ofResourceAnyNBT(Items.DIAMOND))
                                     ::build
                             )::build
+                    )
+                    .single(TestModSlotGroupTypes.TANK_IN, ItemResourceSlot.builder()
+                            .pos(64, 64)
+                            .filter(ResourceFilters.canExtractFluidStrict(Fluids.WATER))
+                            ::build
                     )::build,
-            MachineFluidStorage::empty
+            MachineFluidStorage.builder().single(TestModSlotGroupTypes.WATER,
+                    FluidResourceSlot.builder()
+                            .capacity(FluidConstants.BUCKET * 10)
+                            ::build
+            )::build
     );
 
     public static void initialize() {

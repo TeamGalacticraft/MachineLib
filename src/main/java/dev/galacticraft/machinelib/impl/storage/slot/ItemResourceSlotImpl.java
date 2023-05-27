@@ -236,6 +236,7 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
         }
 
         if (this.getAmount() == maxAmount && this.getCapacityFor(newVariant.getItem()) >= maxAmount) {
+            this.updateSnapshots(transaction);
             this.set(newVariant.getItem(), newVariant.getNbt(), maxAmount);
             return maxAmount;
         }

@@ -41,6 +41,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public class SimpleMachineBlockEntity extends MachineBlockEntity {
         super.tickConstant(world, pos, state, profiler);
         profiler.push("charge_stack");
         this.chargeFromStack(TestModSlotGroupTypes.CHARGE);
+        this.takeFluidFromStack(TestModSlotGroupTypes.TANK_IN, TestModSlotGroupTypes.WATER, Fluids.WATER);
         profiler.pop();
     }
 
