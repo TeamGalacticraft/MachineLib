@@ -874,7 +874,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     this.focusedTank = tank;
                     RenderSystem.disableDepthTest();
                     RenderSystem.colorMask(true, true, true, false);
-                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
+                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0x80ffffff);
                     RenderSystem.colorMask(true, true, true, true);
                     RenderSystem.enableDepthTest();
                 }
