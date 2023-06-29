@@ -857,7 +857,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                         if (sprite == null) throw new IllegalStateException("Water sprite is null");
                     }
                     RenderSystem.setShaderTexture(0, sprite.atlasLocation());
-                    RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
+                    RenderSystem.setShaderColor((fluidColor >> 16 & 0xFF) / 255.0F, (fluidColor >> 8 & 0xFF) / 255.0F, (fluidColor & 0xFF) / 255.0F, (fluidColor >> 24 & 0xFF) / 255.0F);
                     double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
                     if (!fillFromTop) {
                         DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
@@ -985,7 +985,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
         RenderSystem.disableDepthTest();
         color |= (255 << 24);
-        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
+//        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
     }
