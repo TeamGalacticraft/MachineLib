@@ -858,11 +858,15 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     }
                     RenderSystem.setShaderTexture(0, sprite.atlasLocation());
                     RenderSystem.setShaderColor((fluidColor >> 16 & 0xFF) / 255.0F, (fluidColor >> 8 & 0xFF) / 255.0F, (fluidColor & 0xFF) / 255.0F, (fluidColor >> 24 & 0xFF) / 255.0F);
+
                     double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
+                    int airHeight = (int) (v * tank.getHeight());
+                    int fluidHeight = tank.getHeight() - airHeight;
+
                     if (!fillFromTop) {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        blit(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY() + airHeight, 0, tank.getWidth(), fluidHeight, sprite);
                     } else {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        blit(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), 0, tank.getWidth(), fluidHeight, sprite);
                     }
                 }
 
@@ -985,7 +989,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
         RenderSystem.disableDepthTest();
         color |= (255 << 24);
-//        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
+        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
     }
