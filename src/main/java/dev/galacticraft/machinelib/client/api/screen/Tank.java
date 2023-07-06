@@ -33,6 +33,7 @@ import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
@@ -123,7 +124,7 @@ public interface Tank {
     @ApiStatus.Internal
     void setId(int id);
 
-    void drawTooltip(@NotNull PoseStack matrices, Minecraft client, int x, int y, int mouseX, int mouseY);
+    void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY);
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 

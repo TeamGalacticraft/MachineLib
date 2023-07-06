@@ -108,6 +108,8 @@ loom {
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
     }
+
+    accessWidenerPath.set(file("src/main/resources/machinelib.accesswidener"))
 }
 
 repositories {

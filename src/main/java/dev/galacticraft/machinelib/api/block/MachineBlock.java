@@ -61,7 +61,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +90,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
      * @param factory
      */
     public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
-        super(settings);
+        super(settings.pushReaction(PushReaction.BLOCK));
         this.factory = factory;
     }
 
@@ -171,11 +171,6 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public @NotNull PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
     public final @NotNull InteractionResult use(BlockState state, @NotNull Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!world.isClientSide) {
             BlockEntity entity = world.getBlockEntity(pos);
@@ -216,7 +211,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public @NotNull List<ItemStack> getDrops(BlockState state, LootContext.@NotNull Builder builder) {
+    public @NotNull List<ItemStack> getDrops(BlockState state, LootParams.@NotNull Builder builder) {
         return builder.getParameter(LootContextParams.BLOCK_ENTITY) instanceof MachineBlockEntity machine
                 && machine.areDropsDisabled() ? Collections.emptyList()
                 : super.getDrops(state, builder);

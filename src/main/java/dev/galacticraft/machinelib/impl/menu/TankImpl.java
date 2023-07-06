@@ -39,6 +39,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -144,13 +145,13 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public void drawTooltip(@NotNull PoseStack matrices, Minecraft client, int x, int y, int mouseX, int mouseY) { //todo: client/server split
-        matrices.translate(0, 0, 1);
+    public void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY) { //todo: client/server split
+        graphics.pose().translate(0, 0, 1);
         if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Component> lines = new ArrayList<>(2);
             assert client.screen != null;
             if (this.isEmpty()) {
-                client.screen.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
+                graphics.renderTooltip(client.font, Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
                 return;
             }
             long amount = this.getAmount();
@@ -163,9 +164,9 @@ public final class TankImpl implements Tank {
 
             lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())).setStyle(Constant.Text.BLUE_STYLE));
             lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
-            client.screen.renderComponentTooltip(matrices, lines, mouseX, mouseY);
+            graphics.renderComponentTooltip(client.font, lines, mouseX, mouseY);
         }
-        matrices.translate(0, 0, -1);
+        graphics.pose().translate(0, 0, -1);
     }
 
     @Override

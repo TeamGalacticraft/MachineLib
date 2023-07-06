@@ -28,6 +28,7 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,8 +48,8 @@ public final class DrawableUtil {
         return value - dist;
     }
 
-    public static void drawCenteredStringWithoutShadow(PoseStack matrices, Font textRenderer, Component text, int x, int y, int color) {
-        textRenderer.draw(matrices, text.getVisualOrderText(), (float) (x - textRenderer.width(text) / 2), (float) y, color);
+    public static void drawCenteredStringWithoutShadow(GuiGraphics graphics, Font textRenderer, Component text, int x, int y, int color) {
+        graphics.drawString(textRenderer, text.getVisualOrderText(), (x - textRenderer.width(text) / 2), y, color, false);
     }
 
     public static void drawOxygenBuffer(PoseStack matrices, int x, int y, int oxygen, int capacity) {

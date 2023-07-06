@@ -164,8 +164,8 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.playerUUID = inventory.player.getUUID();
 
         BlockPos blockPos = buf.readBlockPos();
-        this.machine = (Machine) inventory.player.level.getBlockEntity(blockPos); //todo: actually stop using the BE on the client side
-        this.levelAccess = ContainerLevelAccess.create(inventory.player.level, blockPos);
+        this.machine = (Machine) inventory.player.level().getBlockEntity(blockPos); //todo: actually stop using the BE on the client side
+        this.levelAccess = ContainerLevelAccess.create(inventory.player.level(), blockPos);
         this.configuration = MachineConfiguration.create();
         this.configuration.readPacket(buf);
         this.energyStorage = type.createEnergyStorage();

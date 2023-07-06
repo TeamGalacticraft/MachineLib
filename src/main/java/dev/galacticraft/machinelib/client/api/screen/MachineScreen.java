@@ -58,7 +58,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.impl.transfer.context.PlayerContainerItemContext;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -249,171 +249,169 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Draws the configuration panels and their contents.
      *
-     * @param matrices The matrix stack.
+     * @param graphics The gui graphics.
      * @param mouseX   The mouse's x-position.
      * @param mouseY   The mouse's y-position.
      * @param delta    The delta time.
      */
-    protected void drawConfigurationPanels(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
+    protected void drawConfigurationPanels(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
         boolean secondary = false;
         RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
         for (Tab tab : Tab.values()) { // 0, 1, 2, 3
-            if (secondary) matrices.translate(0, SPACING, 0);
-            blit(matrices, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
-            if (secondary) matrices.translate(0, -SPACING, 0);
+            if (secondary) graphics.pose().translate(0, SPACING, 0);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -Constant.TextureCoordinate.PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? Constant.TextureCoordinate.PANEL_WIDTH : Constant.TextureCoordinate.TAB_WIDTH, tab.isOpen() ? Constant.TextureCoordinate.PANEL_HEIGHT : Constant.TextureCoordinate.TAB_HEIGHT);
+            if (secondary) graphics.pose().translate(0, -SPACING, 0);
             secondary = !secondary;
         }
-        matrices.pushPose();
-        matrices.translate(this.leftPos, this.topPos, 0);
+        graphics.pose().pushPose();
+        graphics.pose().translate(this.leftPos, this.topPos, 0);
 
         if (Tab.REDSTONE.isOpen()) {
-            matrices.pushPose();
-            matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
-            this.drawButton(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.IGNORE);
-            this.drawButton(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.LOW);
-            this.drawButton(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.HIGH);
-            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
-            this.renderItemIcon(matrices, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
-            this.renderItemIcon(matrices, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
-            this.renderItemIcon(matrices, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
+            graphics.pose().pushPose();
+            graphics.pose().translate(-Constant.TextureCoordinate.PANEL_WIDTH, SPACING, 0);
+            this.drawButton(graphics, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.IGNORE);
+            this.drawButton(graphics, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.LOW);
+            this.drawButton(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + Constant.TextureCoordinate.PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, delta, menu.configuration.getRedstoneActivation() == RedstoneActivation.HIGH);
+            this.renderItemIcon(graphics, PANEL_ICON_X, PANEL_ICON_Y, REDSTONE);
+            this.renderItemIcon(graphics, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, GUNPOWDER);
+            this.renderItemIcon(graphics, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2, UNLIT_TORCH);
+            this.renderItemIcon(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2, REDSTONE_TORCH);
 
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
                     menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
                             this.menu.configuration.getStatus() != MachineStatuses.OFF ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                     : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                     .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
-            matrices.popPose();
+            graphics.pose().popPose();
         }
         if (Tab.CONFIGURATION.isOpen()) {
-            matrices.pushPose();
-            matrices.translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
-            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.CONFIGURATION)
+            graphics.pose().pushPose();
+            graphics.pose().translate(-Constant.TextureCoordinate.PANEL_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+            this.renderItemIcon(graphics, PANEL_ICON_X, PANEL_ICON_Y, WRENCH);
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.CONFIGURATION)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
 
             RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-            this.drawMachineFace(matrices, TOP_FACE_X, TOP_FACE_Y, this.menu.machine, BlockFace.TOP);
-            this.drawMachineFace(matrices, LEFT_FACE_X, LEFT_FACE_Y, this.menu.machine, BlockFace.LEFT);
-            this.drawMachineFace(matrices, FRONT_FACE_X, FRONT_FACE_Y, this.menu.machine, BlockFace.FRONT);
-            this.drawMachineFace(matrices, RIGHT_FACE_X, RIGHT_FACE_Y, this.menu.machine, BlockFace.RIGHT);
-            this.drawMachineFace(matrices, BACK_FACE_X, BACK_FACE_Y, this.menu.machine, BlockFace.BACK);
-            this.drawMachineFace(matrices, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.menu.machine, BlockFace.BOTTOM);
-            matrices.popPose();
+            this.drawMachineFace(graphics, TOP_FACE_X, TOP_FACE_Y, this.menu.machine, BlockFace.TOP);
+            this.drawMachineFace(graphics, LEFT_FACE_X, LEFT_FACE_Y, this.menu.machine, BlockFace.LEFT);
+            this.drawMachineFace(graphics, FRONT_FACE_X, FRONT_FACE_Y, this.menu.machine, BlockFace.FRONT);
+            this.drawMachineFace(graphics, RIGHT_FACE_X, RIGHT_FACE_Y, this.menu.machine, BlockFace.RIGHT);
+            this.drawMachineFace(graphics, BACK_FACE_X, BACK_FACE_Y, this.menu.machine, BlockFace.BACK);
+            this.drawMachineFace(graphics, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.menu.machine, BlockFace.BOTTOM);
+            graphics.pose().popPose();
         }
         if (Tab.STATS.isOpen()) {
-            matrices.pushPose();
-            matrices.translate(this.imageWidth, SPACING, 0);
-            this.renderItemIcon(matrices, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
-            RenderSystem.setShaderTexture(0, this.ownerSkin);
-            blit(matrices, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.STATISTICS)
+            graphics.pose().pushPose();
+            graphics.pose().translate(this.imageWidth, SPACING, 0);
+            this.renderItemIcon(graphics, PANEL_ICON_X, PANEL_ICON_Y, ALUMINUM_WIRE);
+            graphics.blit(this.ownerSkin, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.STATISTICS)
                     .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
             List<FormattedCharSequence> text = this.font.split(this.menu.type.getBlock().getName(), 64);
             int offsetY = 0;
             for (FormattedCharSequence orderedText : text) {
-                this.font.draw(matrices, orderedText, 40, 22 + offsetY, 0xFFFFFFFF);
+                graphics.drawString(this.font, orderedText, 40, 22 + offsetY, 0xFFFFFFFF, false);
                 offsetY += this.font.lineHeight + 2;
             }
 //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.gjt", "N/A")
 //                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
             //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.todo", "N/A")
 //                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
-            matrices.popPose();
+            graphics.pose().popPose();
         }
 
         if (Tab.SECURITY.isOpen()) {
-            matrices.pushPose();
-            matrices.translate(this.imageWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
-            RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
-            blit(matrices, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            graphics.pose().pushPose();
+            graphics.pose().translate(this.imageWidth, Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING, 0);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, PANEL_ICON_X, PANEL_ICON_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
-            this.drawButton(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
-            this.drawButton(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.TEAM || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
-            this.drawButton(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
-            blit(matrices, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-            blit(matrices, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
-            blit(matrices, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            this.drawButton(graphics, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PUBLIC || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            this.drawButton(graphics, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.TEAM || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            this.drawButton(graphics, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING) - this.topPos, delta, this.menu.configuration.getSecurity().getAccessLevel() == AccessLevel.PRIVATE || !this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID));
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_U, Constant.TextureCoordinate.ICON_LOCK_PRIVATE_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_TEAM_X, SECURITY_TEAM_Y, Constant.TextureCoordinate.ICON_LOCK_PARTY_U, Constant.TextureCoordinate.ICON_LOCK_PARTY_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_U, Constant.TextureCoordinate.ICON_LOCK_PUBLIC_V, Constant.TextureCoordinate.ICON_WIDTH, Constant.TextureCoordinate.ICON_HEIGHT);
 
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.SECURITY)
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.SECURITY)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-            this.font.drawShadow(matrices, Component.translatable(Constant.TranslationKey.ACCESS_LEVEL,
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.ACCESS_LEVEL,
                     this.menu.configuration.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
 //                assert this.menu.configuration.getSecurity().getOwner() != null;
 //                this.textRenderer.drawWithShadow(matrices, Text.translatable("ui.galacticraft.machine.security.owned_by", this.menu.configuration.getSecurity().getOwner().getName())
 //                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
 
-            matrices.popPose();
+            graphics.pose().popPose();
         }
-        matrices.popPose();
+        graphics.pose().popPose();
     }
 
     /**
      * Draws the title of the machine.
      *
-     * @param matrices the matrix stack
+     * @param graphics the gui graphics
      * @see #titleLabelX
      * @see #titleLabelY
      */
-    protected void drawTitle(@NotNull PoseStack matrices) {
-        this.font.draw(matrices, this.title, this.titleLabelX, this.titleLabelY, 0xFFFFFFFF);
+    protected void drawTitle(@NotNull GuiGraphics graphics) {
+        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFFFFFFFF, false);
     }
 
     /**
      * Draws the sprite of a given machine face.
      *
-     * @param matrices the matrix stack
+     * @param graphics the gui graphics
      * @param x        the x position to draw at
      * @param y        the y position to draw at
      * @param machine  the machine to draw
      * @param face     the face to draw
      */
-    private void drawMachineFace(@NotNull PoseStack matrices, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
+    private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
         MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
         if (this.model != null) {
-            blit(matrices, x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine, null, machineFace.getType(), machineFace.getFlow()));
+            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine, null, machineFace.getType(), machineFace.getFlow()));
         }
     }
 
     /**
      * Renders the icon of the given item, without any extra effects.
      *
-     * @param matrices the matrix stack
+     * @param graphics the gui graphics
      * @param x        the x position to draw at
      * @param y        the y position to draw at
      * @param stack    the item to render
      */
-    private void renderItemIcon(@NotNull PoseStack matrices, int x, int y, @NotNull ItemStack stack) {
+    private void renderItemIcon(@NotNull GuiGraphics graphics, int x, int y, @NotNull ItemStack stack) {
         assert this.minecraft != null;
-        BakedModel model = this.itemRenderer.getModel(stack, null, this.menu.player, 8910823);
-        matrices.pushPose();
+        BakedModel model = Minecraft.getInstance().getItemRenderer().getModel(stack, null, this.menu.player, 8910823);
+        graphics.pose().pushPose();
         this.minecraft.getTextureManager().getTexture(InventoryMenu.BLOCK_ATLAS).setFilter(false, false);
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-        matrices.translate(x + 8, y + 8, 100.0F);
-        matrices.scale(16, -16, 16);
+        graphics.pose().translate(x + 8, y + 8, 100.0F);
+        graphics.pose().scale(16, -16, 16);
         MultiBufferSource.BufferSource immediate = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean bl = !model.usesBlockLight();
         if (bl) {
             Lighting.setupForFlatItems();
         }
 
-        this.itemRenderer.render(stack, ItemDisplayContext.GUI, false, matrices, immediate, 15728880, OverlayTexture.NO_OVERLAY, model);
+        Minecraft.getInstance().getItemRenderer().render(stack, ItemDisplayContext.GUI, false, graphics.pose(), immediate, 15728880, OverlayTexture.NO_OVERLAY, model);
         immediate.endBatch();
         if (bl) {
             Lighting.setupFor3DItems();
         }
-        matrices.popPose();
+        graphics.pose().popPose();
     }
 
     /**
      * Draws a 16x16 button at the given position.
      * The button will be highlighted if the mouse is hovering over it.
      *
-     * @param matrices the matrix stack
+     * @param graphics the gui graphics instance
      * @param x        the x-position to draw at
      * @param y        the y-position to draw at
      * @param mouseX   the mouse's x-position
@@ -421,17 +419,16 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      * @param delta    the delta time
      * @param pressed  whether the button is pressed
      */
-    public void drawButton(PoseStack matrices, int x, int y, double mouseX, double mouseY, float delta, boolean pressed) {
+    public void drawButton(GuiGraphics graphics, int x, int y, double mouseX, double mouseY, float delta, boolean pressed) {
         assert this.minecraft != null;
-        RenderSystem.setShaderTexture(0, Constant.ScreenTexture.MACHINE_CONFIG_PANELS);
         if (pressed) {
-            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_PRESSED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
             return;
         }
         if (DrawableUtil.isWithin(mouseX, mouseY, x, y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_HOVERED_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         } else {
-            blit(matrices, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, x, y, Constant.TextureCoordinate.BUTTON_U, Constant.TextureCoordinate.BUTTON_V, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT);
         }
     }
 
@@ -605,11 +602,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Draws the tooltips of the configuration panel.
      *
-     * @param matrices The matrices to use.
+     * @param graphics The gui graphics to use.
      * @param mouseX   The mouse's x-position.
      * @param mouseY   The mouse's y-position.
      */
-    protected void drawConfigurationPanelTooltips(PoseStack matrices, int mouseX, int mouseY) {
+    protected void drawConfigurationPanelTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
         final int mX = mouseX, mY = mouseY;
         mouseX = mX - this.leftPos;
         mouseY = mY - this.topPos;
@@ -617,19 +614,19 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneActivation.IGNORE.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneActivation.IGNORE.getName(), mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneActivation.LOW.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneActivation.LOW.getName(), mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                this.renderTooltip(matrices, RedstoneActivation.HIGH.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneActivation.HIGH.getName(), mX, mY);
             }
         } else {
             mouseX += Constant.TextureCoordinate.TAB_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION).setStyle(Constant.Text.RED_STYLE), mX, mY);
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION).setStyle(Constant.Text.RED_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.leftPos;
@@ -638,22 +635,22 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += Constant.TextureCoordinate.PANEL_WIDTH;
             mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.TOP, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.TOP, mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.LEFT, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.LEFT, mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.FRONT, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.FRONT, mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.RIGHT, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.RIGHT, mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.BACK, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.BACK, mX, mY);
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-                this.renderFaceTooltip(matrices, BlockFace.BOTTOM, mX, mY);
+                this.renderFaceTooltip(graphics, BlockFace.BOTTOM, mX, mY);
             }
         } else {
             mouseX += Constant.TextureCoordinate.TAB_WIDTH;
@@ -663,7 +660,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.leftPos;
@@ -674,12 +671,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             if (this.menu.configuration.getSecurity().getUsername() != null) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, Constant.TextureCoordinate.OWNER_FACE_WIDTH, Constant.TextureCoordinate.OWNER_FACE_HEIGHT)) {
                     assert this.menu.configuration.getSecurity().getOwner() != null;
-                    this.renderTooltip(matrices, Component.literal(this.menu.configuration.getSecurity().getUsername()), mX, mY);
+                    graphics.renderTooltip(this.font, Component.literal(this.menu.configuration.getSecurity().getUsername()), mX, mY);
                 }
             }
         } else {
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.leftPos;
@@ -690,19 +687,19 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
             if (this.menu.configuration.getSecurity().isOwner(this.menu.playerUUID)) {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, AccessLevel.PRIVATE.getName(), mX, mY);
+                    graphics.renderTooltip(this.font, AccessLevel.PRIVATE.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, AccessLevel.TEAM.getName(), mX, mY);
+                    graphics.renderTooltip(this.font, AccessLevel.TEAM.getName(), mX, mY);
                 }
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, AccessLevel.PUBLIC.getName(), mX, mY);
+                    graphics.renderTooltip(this.font, AccessLevel.PUBLIC.getName(), mX, mY);
                 }
             } else {
                 if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
                         || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)
                         || DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, Constant.TextureCoordinate.BUTTON_WIDTH, Constant.TextureCoordinate.BUTTON_HEIGHT)) {
-                    this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
+                    graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
         } else {
@@ -713,7 +710,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 mouseY -= Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, Constant.TextureCoordinate.TAB_WIDTH, Constant.TextureCoordinate.TAB_HEIGHT)) {
-                this.renderTooltip(matrices, Component.translatable(Constant.TranslationKey.SECURITY).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.SECURITY).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
             }
         }
     }
@@ -721,12 +718,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Renders the tooltip for the given face.
      *
-     * @param matrices The matrix stack
+     * @param graphics The gui graphics
      * @param face     The face to render the tooltip for
      * @param mouseX   The mouse's x-position
      * @param mouseY   The mouse's y-position
      */
-    protected void renderFaceTooltip(PoseStack matrices, @NotNull BlockFace face, int mouseX, int mouseY) {
+    protected void renderFaceTooltip(GuiGraphics graphics, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
         MachineIOFace configuredFace = this.menu.configuration.getIOConfiguration().get(face);
         if (configuredFace.getType() != ResourceType.NONE) {
@@ -738,68 +735,67 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.SLOT, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
             }
         }
-        this.renderComponentTooltip(matrices, TOOLTIP_ARRAY, mouseX, mouseY);
+        graphics.renderComponentTooltip(this.font, TOOLTIP_ARRAY, mouseX, mouseY);
 
         TOOLTIP_ARRAY.clear();
     }
 
     @Override
-    public final void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    public final void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
 
-        super.render(matrices, mouseX, mouseY, delta);
+        super.render(graphics, mouseX, mouseY, delta);
 
-        this.renderForeground(matrices, mouseX, mouseY, delta);
-        this.renderTooltip(matrices, mouseX, mouseY);
+        this.renderForeground(graphics, mouseX, mouseY, delta);
+        this.renderTooltip(graphics, mouseX, mouseY);
     }
 
     /**
      * Renders the foreground of the screen.
      *
-     * @param matrices The matrix stack
+     * @param graphics The gui graphics
      * @param mouseX   The mouse's x-position
      * @param mouseY   The mouse's y-position
      * @param delta    The delta time
      */
-    protected void renderForeground(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
     }
 
     @Override
-    protected final void renderBg(PoseStack matrices, float delta, int mouseX, int mouseY) {
-        this.renderBackground(matrices);
+    protected final void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
+        this.renderBackground(graphics);
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, this.texture);
 
-        blit(matrices, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+        graphics.blit(this.texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 
-        this.renderBackground(matrices, mouseX, mouseY, delta);
-        this.drawTanks(matrices, mouseX, mouseY, delta);
-        this.drawCapacitor(matrices, mouseX, mouseY, delta);
-        this.handleSlotHighlight(matrices, mouseX, mouseY);
-        this.drawConfigurationPanels(matrices, mouseX, mouseY, delta);
+        this.renderBackground(graphics, mouseX, mouseY, delta);
+        this.drawTanks(graphics, mouseX, mouseY, delta);
+        this.drawCapacitor(graphics, mouseX, mouseY, delta);
+        this.handleSlotHighlight(graphics, mouseX, mouseY);
+        this.drawConfigurationPanels(graphics, mouseX, mouseY, delta);
     }
 
     /**
      * Draws the capacitor of this machine.
      * If the machine has no capacitor, this method does nothing.
      *
-     * @param matrices The matrix stack
+     * @param graphics The gui graphics
      * @param mouseX   The mouse's x-position
      * @param mouseY   The mouse's y-position
      * @param delta    The delta time
      */
-    protected void drawCapacitor(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    protected void drawCapacitor(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         long capacity = this.menu.energyStorage.getCapacity();
         if (capacity > 0 && this.capacitorHeight != 0) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShaderTexture(0, Constant.ScreenTexture.OVERLAY_BARS);
-            DrawableUtil.drawProgressTexture(matrices, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            DrawableUtil.drawProgressTexture(graphics.pose(), this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 0.01f, Constant.TextureCoordinate.ENERGY_BACKGROUND_X, Constant.TextureCoordinate.ENERGY_BACKGROUND_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
             long amount = this.menu.energyStorage.getAmount();
             float scale = (float) ((double) amount / (double) capacity);
-            DrawableUtil.drawProgressTexture(matrices, this.leftPos + this.capacitorX, (this.topPos + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
+            DrawableUtil.drawProgressTexture(graphics.pose(), this.leftPos + this.capacitorX, (this.topPos + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), 0.02f, Constant.TextureCoordinate.ENERGY_X, Constant.TextureCoordinate.ENERGY_Y, Constant.TextureCoordinate.OVERLAY_WIDTH, Constant.TextureCoordinate.OVERLAY_HEIGHT * scale, Constant.TextureCoordinate.OVERLAY_TEX_WIDTH, Constant.TextureCoordinate.OVERLAY_TEX_HEIGHT);
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
@@ -812,9 +808,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
                 assert this.minecraft != null;
                 assert this.minecraft.screen != null;
-                matrices.translate(0.0D, 0.0D, 1.0D);
-                this.minecraft.screen.renderComponentTooltip(matrices, lines, mouseX, mouseY);
-                matrices.translate(0.0D, 0.0D, -1.0D);
+                graphics.pose().translate(0.0D, 0.0D, 1.0D);
+                graphics.renderComponentTooltip(this.minecraft.font, lines, mouseX, mouseY);
+                graphics.pose().translate(0.0D, 0.0D, -1.0D);
             }
         }
     }
@@ -822,28 +818,28 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Draws the background of this machine.
      *
-     * @param matrices The matrix stack
+     * @param graphics The gui graphics
      * @param mouseX   The mouse's x-position
      * @param mouseY   The mouse's y-position
      * @param delta    The delta time
      */
-    protected void renderBackground(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
     }
 
     /**
      * Draws the (fluid and gas) tanks of this machine.
      *
-     * @param matrices The matrix stack
+     * @param graphics The gui graphics
      * @param mouseX   The mouse's x-position
      * @param mouseY   The mouse's y-position
      * @param delta    The delta time
      */
-    protected void drawTanks(PoseStack matrices, int mouseX, int mouseY, float delta) {
+    protected void drawTanks(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         assert this.minecraft != null;
         this.focusedTank = null;
         for (Tank tank : this.menu.tanks) {
             if (tank.getHeight() > 0) {
-                fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
+                graphics.fill(this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0xFF8B8B8B);
 
                 if (tank.getAmount() > 0) {
                     FluidVariant resource = tank.createVariant();
@@ -860,21 +856,21 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
                     double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
                     if (!fillFromTop) {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        DrawableUtil.drawTexturedQuad_F(graphics.pose().last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
                     } else {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        DrawableUtil.drawTexturedQuad_F(graphics.pose().last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
                     }
                 }
 
                 boolean shorten = true;
                 for (int y = this.topPos + tank.getY() + tank.getHeight() - 2; y > this.topPos + tank.getY(); y -= 3) {
-                    fill(matrices, this.leftPos + tank.getX(), y, this.leftPos + tank.getX() + (tank.getWidth() / 2) + ((shorten = !shorten) ? -(tank.getWidth() / 8) : 0), y - 1, 0xFFB31212);
+                    graphics.fill(this.leftPos + tank.getX(), y, this.leftPos + tank.getX() + (tank.getWidth() / 2) + ((shorten = !shorten) ? -(tank.getWidth() / 8) : 0), y - 1, 0xFFB31212);
                 }
                 if (this.focusedTank == null && DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
                     this.focusedTank = tank;
                     RenderSystem.disableDepthTest();
                     RenderSystem.colorMask(true, true, true, false);
-                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
+                    graphics.fill(this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
                     RenderSystem.colorMask(true, true, true, true);
                     RenderSystem.enableDepthTest();
                 }
@@ -882,12 +878,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         }
 
         for (Tank tank : this.menu.tanks) {
-            tank.drawTooltip(matrices, this.minecraft, this.leftPos, this.topPos, mouseX, mouseY);
+            tank.drawTooltip(graphics, this.minecraft, this.leftPos, this.topPos, mouseX, mouseY);
         }
     }
 
     @ApiStatus.Internal
-    private void handleSlotHighlight(PoseStack matrices, int mouseX, int mouseY) {
+    private void handleSlotHighlight(GuiGraphics graphics, int mouseX, int mouseY) {
         if (Tab.CONFIGURATION.isOpen()) {
             mouseX -= (this.leftPos - Constant.TextureCoordinate.PANEL_WIDTH);
             mouseY -= (this.topPos + (Constant.TextureCoordinate.TAB_HEIGHT + SPACING + SPACING));
@@ -911,16 +907,16 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                         assert config.getType() == ResourceType.ITEM;
                         ItemSlotDisplay slot = this.menu.itemStorage.getGroup(config.getSelection().getGroup()).getSlot(config.getSelection().getSlot()).getDisplay();
                         int color = config.getSelection().getGroup().color().getValue();
-                        this.drawSlotOutline(matrices, slot.x(), slot.y(), color);
-                        this.drawSlotOverlay(matrices, slot.x(), slot.y(), color);
+                        this.drawSlotOutline(graphics, slot.x(), slot.y(), color);
+                        this.drawSlotOverlay(graphics, slot.x(), slot.y(), color);
                     } else {
                         SlotGroupType type = config.getSelection().getGroup();
                         int color = type.color().getValue();
                         for (AutomatableSlot slot : this.menu.machineSlots) {
                             if (slot.getType() == type) {
                                 if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
-                                    this.drawSlotOutline(matrices, slot.x, slot.y, color);
-                                    this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                                    this.drawSlotOutline(graphics, slot.x, slot.y, color);
+                                    this.drawSlotOverlay(graphics, slot.x, slot.y, color);
                                 }
                             }
                         }
@@ -930,8 +926,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                         SlotGroupType type = slot.getType();
                         if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
                             int color = type.color().getValue();
-                            this.drawSlotOutline(matrices, slot.x, slot.y, color);
-                            this.drawSlotOverlay(matrices, slot.x, slot.y, color);
+                            this.drawSlotOutline(graphics, slot.x, slot.y, color);
+                            this.drawSlotOverlay(graphics, slot.x, slot.y, color);
                         }
                     }
                 }
@@ -942,33 +938,33 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Draws a coloured box around the slot, based on the slot's type.
      *
-     * @param matrices the matrix stack
+     * @param graphics the gui graphics
      */
-    protected void drawSlotOutline(@NotNull PoseStack matrices, int x, int y, int color) {
+    protected void drawSlotOutline(@NotNull GuiGraphics graphics, int x, int y, int color) {
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        fillGradient(matrices.last().pose(), bufferBuilder,
+        graphics.fillGradient(bufferBuilder,
                 x - 1, y - 1,
                 x - 1, y + 17,
                 0,
                 color,
                 color);
-        fillGradient(matrices.last().pose(), bufferBuilder,
+        graphics.fillGradient(bufferBuilder,
                 x - 1, y + 17,
                 x + 17, y - 1,
                 0,
                 color,
                 color);
-        fillGradient(matrices.last().pose(), bufferBuilder,
+        graphics.fillGradient(bufferBuilder,
                 x + 17, y + 17,
                 x + 17, y - 1,
                 0,
                 color,
                 color);
-        fillGradient(matrices.last().pose(), bufferBuilder,
+        graphics.fillGradient(bufferBuilder,
                 x + 17, y - 1,
                 x - 1, y - 1,
                 0,
@@ -979,13 +975,13 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         RenderSystem.enableDepthTest();
     }
 
-    protected void drawSlotOverlay(@NotNull PoseStack matrices, int x, int y, int color) {
+    protected void drawSlotOverlay(@NotNull GuiGraphics graphics, int x, int y, int color) {
         RenderSystem.disableDepthTest();
         RenderSystem.colorMask(true, true, true, false);
 
         RenderSystem.disableDepthTest();
         color |= (255 << 24);
-        fillGradient(matrices, this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
+        graphics.fillGradient(this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color, color);
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.enableDepthTest();
     }
@@ -1005,9 +1001,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     @Override
-    protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
-        super.renderTooltip(matrices, mouseX, mouseY);
-        this.drawConfigurationPanelTooltips(matrices, mouseX, mouseY);
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        super.renderTooltip(graphics, mouseX, mouseY);
+        this.drawConfigurationPanelTooltips(graphics, mouseX, mouseY);
     }
 
     /**
@@ -1019,8 +1015,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     @Override
-    protected final void renderLabels(PoseStack matrices, int mouseX, int mouseY) {
-        this.drawTitle(matrices);
+    protected final void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        this.drawTitle(graphics);
     }
 
     /**
