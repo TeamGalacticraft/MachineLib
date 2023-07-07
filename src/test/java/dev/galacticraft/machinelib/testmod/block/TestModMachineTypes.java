@@ -76,6 +76,7 @@ public class TestModMachineTypes {
                     )::build,
             MachineFluidStorage.builder().single(TestModSlotGroupTypes.WATER,
                     FluidResourceSlot.builder()
+                            .pos(96, 16)
                             .capacity(FluidConstants.BUCKET * 10)
                             ::build
             )::build

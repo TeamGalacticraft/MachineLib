@@ -857,12 +857,16 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                         if (sprite == null) throw new IllegalStateException("Water sprite is null");
                     }
                     RenderSystem.setShaderTexture(0, sprite.atlasLocation());
-                    RenderSystem.setShaderColor(0xFF, fluidColor >> 16 & 0xFF, fluidColor >> 8 & 0xFF, fluidColor & 0xFF);
+                    RenderSystem.setShaderColor((fluidColor >> 16 & 0xFF) / 255.0F, (fluidColor >> 8 & 0xFF) / 255.0F, (fluidColor & 0xFF) / 255.0F, (fluidColor >> 24 & 0xFF) / 255.0F);
+
                     double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
+                    int airHeight = (int) (v * tank.getHeight());
+                    int fluidHeight = tank.getHeight() - airHeight;
+
                     if (!fillFromTop) {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), (float) (this.topPos + (v * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        blit(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY() + airHeight, 0, tank.getWidth(), fluidHeight, sprite);
                     } else {
-                        DrawableUtil.drawTexturedQuad_F(matrices.last().pose(), this.leftPos, this.leftPos + tank.getWidth(), this.topPos, (float) (this.topPos + ((1.0 - v) * tank.getHeight())), tank.getWidth(), sprite.getU0(), sprite.getU1(), sprite.getV0(), (float) (sprite.getV0() + ((sprite.getV1() - sprite.getV0()) * v)));
+                        blit(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), 0, tank.getWidth(), fluidHeight, sprite);
                     }
                 }
 
@@ -874,7 +878,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     this.focusedTank = tank;
                     RenderSystem.disableDepthTest();
                     RenderSystem.colorMask(true, true, true, false);
-                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getWidth(), this.topPos + tank.getHeight(), 0x80ffffff);
+                    GuiComponent.fill(matrices, this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), 0x80ffffff);
                     RenderSystem.colorMask(true, true, true, true);
                     RenderSystem.enableDepthTest();
                 }
