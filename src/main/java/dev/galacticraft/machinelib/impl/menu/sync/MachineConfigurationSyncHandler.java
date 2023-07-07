@@ -23,10 +23,10 @@
 package dev.galacticraft.machinelib.impl.menu.sync;
 
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
-import dev.galacticraft.machinelib.impl.MachineLib;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,12 +36,14 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
     private final MenuSyncHandler security;
     private MachineStatus status;
     private RedstoneActivation redstone;
+    private MachineType<?, ?> type;
 
     public MachineConfigurationSyncHandler(MachineConfiguration configuration) {
         this.ioConfig = configuration.getIOConfiguration().createSyncHandler();
         this.security = configuration.getSecurity().createSyncHandler();
         this.status = configuration.getStatus();
         this.redstone = configuration.getRedstoneActivation();
+        this.type = configuration.getType();
         this.configuration = configuration;
     }
 
@@ -55,8 +57,8 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
         byte ref = 0b0000;
         if (this.ioConfig.needsSyncing()) ref |= 0b0001;
         if (this.security.needsSyncing()) ref |= 0b0010;
-        if (this.status != configuration.getStatus()) ref |= 0b0100;
-        if (this.redstone != configuration.getRedstoneActivation()) ref |= 0b1000;
+        if (this.status != this.configuration.getStatus()) ref |= 0b0100;
+        if (this.redstone != this.configuration.getRedstoneActivation()) ref |= 0b1000;
 
         buf.writeByte(ref);
 
@@ -66,13 +68,13 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
         if (this.security.needsSyncing()) {
             this.security.sync(buf);
         }
-        if (this.status != configuration.getStatus()) {
-            this.status = configuration.getStatus();
-            buf.writeResourceLocation(MachineLib.MACHINE_STATUS_REGISTRY.getKey(configuration.getStatus()));
+        if (this.status != this.configuration.getStatus()) {
+            this.status = this.configuration.getStatus();
+            buf.writeByte(this.type.statusDomain().indexOf(this.configuration.getStatus()));
         }
-        if (this.redstone != configuration.getRedstoneActivation()) {
-            this.redstone = configuration.getRedstoneActivation();
-            buf.writeByte(configuration.getRedstoneActivation().ordinal());
+        if (this.redstone != this.configuration.getRedstoneActivation()) {
+            this.redstone = this.configuration.getRedstoneActivation();
+            buf.writeByte(this.configuration.getRedstoneActivation().ordinal());
         }
     }
 
@@ -86,7 +88,7 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
             this.security.read(buf);
         }
         if ((ref & 0b0100) != 0) {
-            this.status = MachineLib.MACHINE_STATUS_REGISTRY.get(buf.readResourceLocation());
+            this.status = this.type.statusDomain().get(buf.readByte());
         }
         if ((ref & 0b1000) != 0) {
             this.redstone = RedstoneActivation.VALUES[buf.readByte()];

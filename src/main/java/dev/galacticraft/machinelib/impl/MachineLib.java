@@ -22,14 +22,11 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.network.MachineLibC2SPackets;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
-import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,13 +39,9 @@ public final class MachineLib implements ModInitializer {
     public static final MappedRegistry<SlotGroupType> SLOT_GROUP_TYPE_REGISTRY = FabricRegistryBuilder.createSimple(SlotGroupType.class, new ResourceLocation(Constant.MOD_ID, "slot_group"))
             .attribute(RegistryAttribute.SYNCED)
             .buildAndRegister();
-    public static final DefaultedRegistry<MachineStatus> MACHINE_STATUS_REGISTRY = FabricRegistryBuilder.createDefaulted(MachineStatus.class, new ResourceLocation(Constant.MOD_ID, "machine_status"), new ResourceLocation(Constant.MOD_ID, "invalid"))
-            .attribute(RegistryAttribute.SYNCED)
-            .buildAndRegister();
 
     @Override
     public void onInitialize() {
         MachineLibC2SPackets.register();
-        MachineStatuses.initialize();
     }
 }

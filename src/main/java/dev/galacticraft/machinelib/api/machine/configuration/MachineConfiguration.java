@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.api.machine.configuration;
 
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineConfigurationImpl;
@@ -40,9 +41,9 @@ public interface MachineConfiguration extends Deserializable<CompoundTag>, MenuS
      *
      * @return a new configuration.
      */
-    @Contract(" -> new")
-    static @NotNull MachineConfiguration create() {
-        return new MachineConfigurationImpl();
+    @Contract("_ -> new")
+    static @NotNull MachineConfiguration create(MachineType<?, ?> type) {
+        return new MachineConfigurationImpl(type);
     }
 
     /**
@@ -92,4 +93,6 @@ public interface MachineConfiguration extends Deserializable<CompoundTag>, MenuS
      */
     @Contract(mutates = "this")
     void setRedstoneActivation(@NotNull RedstoneActivation redstone);
+
+    MachineType<?, ?> getType();
 }

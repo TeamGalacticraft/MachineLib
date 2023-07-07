@@ -26,10 +26,12 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
@@ -81,14 +83,16 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Handles most of the boilerplate code for machine screens.
@@ -283,7 +287,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
                     menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                            this.menu.configuration.getStatus() != MachineStatuses.OFF ? Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
+                            this.menu.configuration.getRedstoneActivation().isActive(() -> this.menu.levelAccess.evaluate(Level::hasNeighborSignal).orElse(false)) ?
+                                    Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                     : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                     .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
@@ -800,9 +805,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             if (DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
                 MachineStatus status = this.menu.configuration.getStatus();
-                if (status != MachineStatus.INVALID) {
-                    lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.name()));
-                }
+                lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getName()));
                 lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
                 this.appendEnergyTooltip(lines);
 

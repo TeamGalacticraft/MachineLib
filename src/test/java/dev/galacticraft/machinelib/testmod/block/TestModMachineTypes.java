@@ -22,6 +22,8 @@
 
 package dev.galacticraft.machinelib.testmod.block;
 
+import com.google.common.collect.ImmutableList;
+import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
@@ -44,6 +46,7 @@ public class TestModMachineTypes {
             TestModBlocks.SIMPLE_MACHINE_BLOCK,
             TestModBlockEntityTypes.SIMPLE_MACHINE,
             TestModMenuTypes.SIMPLE_MACHINE,
+            ImmutableList.of(MachineStatuses.ACTIVE, MachineStatuses.NOT_ENOUGH_ENERGY, MachineStatuses.INVALID_RECIPE, MachineStatuses.OUTPUT_FULL),
             () -> MachineEnergyStorage.of(30000, 300, 300, true, false),
             MachineItemStorage.builder()
                     .group(TestModSlotGroupTypes.CHARGE, SlotGroup.item()

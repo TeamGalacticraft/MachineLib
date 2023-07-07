@@ -104,7 +104,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @see MachineConfiguration
      */
-    private final MachineConfiguration configuration = MachineConfiguration.create();
+    private final MachineConfiguration configuration;
 
     /**
      * The energy storage for this machine.
@@ -184,6 +184,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         this.type = type;
         this.name = name;
 
+        this.configuration = MachineConfiguration.create(type);
+
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.setListener(this::setChanged);
         this.itemStorage = type.createItemStorage();
@@ -258,7 +260,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     protected boolean isActive() {
-        return this.getStatus().type().isActive();
+        return this.getStatus() != null && this.getStatus().getType().isActive();
     }
 
     /**
@@ -401,11 +403,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getRedstoneActivation()
      */
     public boolean isDisabled(@NotNull Level world) {
-        return switch (this.getRedstoneActivation()) {
-            case LOW -> world.hasNeighborSignal(this.worldPosition);
-            case HIGH -> !world.hasNeighborSignal(this.worldPosition);
-            case IGNORE -> false;
-        };
+        return !this.getRedstoneActivation().isActive(() -> world.hasNeighborSignal(this.worldPosition));
     }
 
     /**

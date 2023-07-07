@@ -30,6 +30,8 @@ import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Dictates how a machine behaves when it interacts with redstone.
  */
@@ -64,6 +66,14 @@ public enum RedstoneActivation implements StringRepresentable {
     @Contract(pure = true)
     RedstoneActivation(@NotNull Component name) {
         this.name = name;
+    }
+
+    public boolean isActive(BooleanSupplier powered) {
+        return switch (this) {
+            case IGNORE -> true;
+            case LOW -> !powered.getAsBoolean();
+            case HIGH -> powered.getAsBoolean();
+        };
     }
 
     public static @NotNull RedstoneActivation readTag(@NotNull ByteTag tag) {
