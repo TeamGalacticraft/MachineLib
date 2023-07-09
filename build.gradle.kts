@@ -78,6 +78,13 @@ java {
 
     withSourcesJar()
     withJavadocJar()
+
+    sourceSets {
+        register("testmod") {
+            runtimeClasspath += sourceSets.main.get().runtimeClasspath
+            compileClasspath += sourceSets.main.get().compileClasspath
+        }
+    }
 }
 
 loom {
@@ -85,25 +92,31 @@ loom {
         create("machinelib") {
             sourceSet(sourceSets.main.get())
         }
-        create("machinelib-test") {
+        create("machinelib_test") {
             sourceSet(sourceSets.test.get())
+        }
+        create("machinelib_testmod") {
+            sourceSet(sourceSets.getByName("testmod"))
         }
     }
 
-    createRemapConfigurations(sourceSets.test.get())
+    createRemapConfigurations(sourceSets.getByName("testmod"))
 
     runs {
         getByName("server") {
-            source(sourceSets.test.get())
+            name("Minecraft Server")
+            source(sourceSets.getByName("testmod"))
+            vmArgs("-ea")
         }
         getByName("client") {
-            source(sourceSets.test.get())
+            name("Minecraft Client")
+            source(sourceSets.getByName("testmod"))
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
         register("gametest") {
-            name("Game Test Server")
+            name("GameTest Server")
             server()
-            source(sourceSets.test.get())
+            source(sourceSets.getByName("testmod"))
             vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
         }
     }
@@ -133,21 +146,20 @@ dependencies {
         "fabric-api-lookup-api-v1",
         "fabric-gametest-api-v1",
         "fabric-models-v0",
-        "fabric-object-builder-api-v1",
-        "fabric-registry-sync-v0",
         "fabric-renderer-api-v1",
         "fabric-rendering-data-attachment-v1",
         "fabric-rendering-fluids-v1",
-        "fabric-resource-loader-v0",
         "fabric-screen-handler-api-v1",
         "fabric-transfer-api-v1",
         "fabric-transitive-access-wideners-v1"
     ).forEach {
-        modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}") { isTransitive = false }
+        modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
     modImplementation("lol.bai:badpackets:fabric-$badpackets")
+    "testmodImplementation"(sourceSets.main.get().output)
 
-    "modTestImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
+    "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
+    testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 }
 
 tasks.withType<ProcessResources> {
@@ -197,6 +209,10 @@ tasks.withType<Jar> {
     }
 }
 
+tasks.test {
+    useJUnitPlatform()
+    workingDir("run")
+}
 
 tasks.javadoc {
     options.apply {

@@ -61,14 +61,14 @@ public class TestModMachineTypes {
                     .group(TestModSlotGroupTypes.DIRT, SlotGroup.item()
                             .add(ItemResourceSlot.builder()
                                     .pos(16, 0)
-                                    .filter(ResourceFilters.ofResourceAnyNBT(Items.DIRT))
+                                    .filter(ResourceFilters.ofResource(Items.DIRT))
                                     ::build
                             )::build
                     )
                     .group(TestModSlotGroupTypes.DIAMONDS, SlotGroup.item()
                             .add(ItemResourceSlot.builder()
                                     .pos(32, 0)
-                                    .filter(ResourceFilters.ofResourceAnyNBT(Items.DIAMOND))
+                                    .filter(ResourceFilters.ofResource(Items.DIAMOND))
                                     ::build
                             )::build
                     )

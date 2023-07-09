@@ -40,10 +40,7 @@ import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
@@ -734,12 +731,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         if (configuredFace.getType() != ResourceType.NONE) {
             TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
-        if (configuredFace.getSelection() != null) {
-            TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.GROUP, configuredFace.getSelection().getGroup().name()).setStyle(Constant.Text.GRAY_STYLE));
-            if (configuredFace.getSelection().isSlot()) {
-                TOOLTIP_ARRAY.add(Component.translatable(Constant.TranslationKey.SLOT, Component.literal(String.valueOf(configuredFace.getSelection().getSlot())).setStyle(Constant.Text.AQUA_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
-            }
-        }
         graphics.renderComponentTooltip(this.font, TOOLTIP_ARRAY, mouseX, mouseY);
 
         TOOLTIP_ARRAY.clear();
@@ -905,33 +896,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 config = this.menu.configuration.getIOConfiguration().get(BlockFace.BOTTOM);
             }
             if (config != null && config.getType().willAcceptResource(ResourceType.ITEM)) {
-                if (config.getSelection() != null) {
-                    if (config.getSelection().isSlot()) {
-                        assert config.getType() == ResourceType.ITEM;
-                        ItemSlotDisplay slot = this.menu.itemStorage.getGroup(config.getSelection().getGroup()).getSlot(config.getSelection().getSlot()).getDisplay();
-                        int color = config.getSelection().getGroup().color().getValue();
-                        this.drawSlotOutline(graphics, slot.x(), slot.y(), color);
-                        this.drawSlotOverlay(graphics, slot.x(), slot.y(), color);
-                    } else {
-                        SlotGroupType type = config.getSelection().getGroup();
-                        int color = type.color().getValue();
-                        for (AutomatableSlot slot : this.menu.machineSlots) {
-                            if (slot.getType() == type) {
-                                if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
-                                    this.drawSlotOutline(graphics, slot.x, slot.y, color);
-                                    this.drawSlotOverlay(graphics, slot.x, slot.y, color);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (AutomatableSlot slot : this.menu.machineSlots) {
-                        SlotGroupType type = slot.getType();
-                        if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
-                            int color = type.color().getValue();
-                            this.drawSlotOutline(graphics, slot.x, slot.y, color);
-                            this.drawSlotOverlay(graphics, slot.x, slot.y, color);
-                        }
+                for (AutomatableSlot slot : this.menu.machineSlots) {
+                    SlotGroupType type = slot.getType();
+                    if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
+                        int color = type.color();
+                        this.drawSlotOutline(graphics, slot.x, slot.y, color);
+                        this.drawSlotOverlay(graphics, slot.x, slot.y, color);
                     }
                 }
             }
@@ -1059,10 +1029,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     private void modifyFace(int button, BlockFace face) {
-        switch (button) {
-            case 0 -> cycleFace(face, Screen.hasShiftDown(), Screen.hasControlDown());
-            case 1 -> cycleGroup(face, Screen.hasShiftDown(), Screen.hasControlDown());
-            case 2 -> cycleSlot(face, Screen.hasShiftDown(), Screen.hasControlDown());
+        if (button == 0) {
+            cycleFace(face, Screen.hasShiftDown(), Screen.hasControlDown());
         }
         this.playButtonSound();
     }
@@ -1079,7 +1047,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         MachineIOFace option = this.menu.configuration.getIOConfiguration().get(face);
         if (reset) {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-            option.setSelection(null);
             PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
@@ -1152,7 +1119,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             }
             if (i == 12) {
                 option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-                option.setSelection(null);
                 PacketSender.c2s().send(Constant.id("reset_face"),
                         new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                                 .writeByte(face.ordinal())
@@ -1165,7 +1131,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 type = ResourceType.getFromOrdinal(itype);
                 flow = ResourceFlow.getFromOrdinal(iflow);
                 option.setOption(type, flow);
-                option.setSelection(null);
                 PacketSender.c2s().send(Constant.id("face_type"),
                         new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(3, 3)
                                 .writeByte(face.ordinal())
@@ -1176,7 +1141,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             }
         } else {
             option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
-            option.setSelection(null);
             PacketSender.c2s().send(Constant.id("reset_face"),
                     new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
                             .writeByte(face.ordinal())
@@ -1185,113 +1149,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             );
         }
     }
-
-    private void cycleGroup(BlockFace face, boolean back, boolean reset) {
-        MachineIOFace sideOption = this.menu.configuration.getIOConfiguration().get(face);
-        if (!sideOption.getType().matchesGroups()) return;
-        if (reset) {
-            sideOption.setSelection(null);
-            PacketSender.c2s().send(Constant.id("reset_face"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                            .writeByte(face.ordinal())
-                            .writeBoolean(false)
-                    )
-            );
-            return;
-        }
-
-        List<SlotGroupType> groups = sideOption.getFlowMatchingGroups(this.menu.machine);
-        if (groups == null) return;
-
-        int index;
-        if (sideOption.getSelection() != null) {
-            index = groups.indexOf(sideOption.getSelection().getGroup());
-        } else {
-            index = groups.size();
-        }
-
-        if (back) {
-            index--;
-            if (index == -1) {
-                index = groups.size(); // no selection
-            }
-        } else {
-            index++;
-            if (index == groups.size() + 1) {
-                index = 0;
-            }
-        }
-
-        if (index == groups.size()) {
-            sideOption.setSelection(null);
-            PacketSender.c2s().send(Constant.id("reset_face"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                            .writeByte(face.ordinal())
-                            .writeBoolean(false)
-                    )
-            );
-        } else {
-            sideOption.setSelection(StorageSelection.create(groups.get(index)));
-
-            PacketSender.c2s().send(Constant.id("match_group"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
-                            .writeByte(face.ordinal())
-                            .writeInt(index))
-            );
-        }
-    }
-
-    private void cycleSlot(BlockFace face, boolean back, boolean reset) {
-        MachineIOFace sideOption = menu.configuration.getIOConfiguration().get(face);
-        if (!sideOption.getType().matchesSlots()) return;
-        if (reset) {
-            sideOption.setSelection(null);
-            PacketSender.c2s().send(Constant.id("reset_face"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                            .writeByte(face.ordinal())
-                            .writeBoolean(false)
-                    )
-            );
-            return;
-        }
-
-        StorageSelection selection = sideOption.getSelection();
-        if (selection == null) return;
-
-        SlotGroupType type = selection.getGroup();
-        ResourceStorage<?, ?, ?, ?> storage = this.getResourceStorage(sideOption.getType());
-        assert storage != null;
-        SlotGroup<?, ?, ?> group = storage.getGroup(type);
-        int index = selection.isSlot() ? selection.getSlot() : group.size();
-        if (back) {
-            if (index-- == 0) {
-                index = group.size();
-            }
-        } else {
-            if (index++ == group.size()) {
-                index = 0;
-            }
-        }
-
-        if (index == group.size()) {
-            sideOption.setSelection(StorageSelection.create(type));
-            PacketSender.c2s().send(Constant.id("reset_face"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(2, 2)
-                            .writeByte(face.ordinal())
-                            .writeBoolean(false)
-                    )
-            );
-        } else {
-            sideOption.setSelection(StorageSelection.create(type, index));
-
-            PacketSender.c2s().send(Constant.id("match_slot"),
-                    new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(5, 5)
-                            .writeByte(face.ordinal())
-                            .writeInt(index))
-            );
-        }
-    }
-
 
     /**
      * The four different types of configuration panel.

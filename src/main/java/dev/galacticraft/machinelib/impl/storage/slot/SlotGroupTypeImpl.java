@@ -24,12 +24,14 @@ package dev.galacticraft.machinelib.impl.storage.slot;
 
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public record SlotGroupTypeImpl(@NotNull TextColor color, @NotNull Component name,
+public record SlotGroupTypeImpl(int color, @NotNull Component name,
                                 @NotNull InputType inputType) implements SlotGroupType {
-
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
 }

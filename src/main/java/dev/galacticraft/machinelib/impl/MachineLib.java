@@ -22,13 +22,8 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.network.MachineLibC2SPackets;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
-import net.minecraft.core.MappedRegistry;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +31,6 @@ import org.slf4j.LoggerFactory;
 @ApiStatus.Internal
 public final class MachineLib implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(Constant.MOD_NAME);
-    public static final MappedRegistry<SlotGroupType> SLOT_GROUP_TYPE_REGISTRY = FabricRegistryBuilder.createSimple(SlotGroupType.class, new ResourceLocation(Constant.MOD_ID, "slot_group"))
-            .attribute(RegistryAttribute.SYNCED)
-            .buildAndRegister();
 
     @Override
     public void onInitialize() {

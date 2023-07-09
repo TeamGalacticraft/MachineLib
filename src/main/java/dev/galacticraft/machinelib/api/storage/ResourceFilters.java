@@ -74,9 +74,8 @@ public final class ResourceFilters {
     private ResourceFilters() {
     }
 
-    @Contract(pure = true)
-    public static <Resource> @NotNull ResourceFilter<Resource> ofResourceAnyNBT(@NotNull Resource resource) {
-        return (r, ignored) -> r == resource;
+    public static <Resource> @NotNull ResourceFilter<Resource> ofNBT(CompoundTag tag) {
+        return (resource, tag1) -> Utils.tagsEqual(tag, tag1);
     }
 
     @Contract(pure = true)
@@ -86,7 +85,7 @@ public final class ResourceFilters {
 
     @Contract(pure = true)
     public static <Resource> @NotNull ResourceFilter<Resource> ofResource(@NotNull Resource resource) {
-        return (r, tag) -> r == resource && Utils.tagsEqual(tag, null);
+        return (r, tag) -> r == resource;
     }
 
     @Contract(pure = true)
@@ -195,5 +194,17 @@ public final class ResourceFilters {
 
     public static <Resource> @NotNull ResourceFilter<Resource> none() {
         return (ResourceFilter<Resource>) NONE;
+    }
+
+    public static <Resource> @NotNull ResourceFilter<Resource> not(ResourceFilter<Resource> filter) {
+        return (resource, tag) -> !filter.test(resource, tag);
+    }
+
+    public static <Resource> @NotNull ResourceFilter<Resource> and(ResourceFilter<Resource> a, ResourceFilter<Resource> b) {
+        return (resource, tag) -> a.test(resource, tag) && b.test(resource, tag);
+    }
+
+    public static <Resource> @NotNull ResourceFilter<Resource> or(ResourceFilter<Resource> a, ResourceFilter<Resource> b) {
+        return (resource, tag) -> a.test(resource, tag) || b.test(resource, tag);
     }
 }

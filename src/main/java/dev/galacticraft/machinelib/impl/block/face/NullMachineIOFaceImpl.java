@@ -30,21 +30,15 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineIOFaceSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
@@ -54,9 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public final class NullMachineIOFaceImpl implements MachineIOFace {
@@ -79,15 +71,6 @@ public final class NullMachineIOFaceImpl implements MachineIOFace {
     @Override
     public @NotNull ResourceFlow getFlow() {
         return ResourceFlow.BOTH;
-    }
-
-    @Override
-    public @Nullable StorageSelection getSelection() {
-        return null;
-    }
-
-    @Override
-    public void setSelection(@Nullable StorageSelection selection) {
     }
 
     @Override

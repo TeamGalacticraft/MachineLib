@@ -30,7 +30,6 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
@@ -112,22 +111,6 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
      */
     @Contract(pure = true)
     @NotNull ResourceFlow getFlow();
-
-    /**
-     * Returns the filter of this face.
-     *
-     * @return The filter of this face.
-     */
-    @Contract(pure = true)
-    @Nullable StorageSelection getSelection();
-
-    /**
-     * Sets the filter of this face.
-     *
-     * @param matching the filter to set.
-     */
-    @Contract(mutates = "this")
-    void setSelection(@Nullable StorageSelection matching);
 
     @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage);
 

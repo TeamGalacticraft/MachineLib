@@ -134,27 +134,27 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public boolean canInsert(@NotNull Resource resource) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource);
+        return this.amount <= this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
+        return this.amount <= this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource);
+        return this.amount + amount <= this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
+        return this.amount + amount <= this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
@@ -216,7 +216,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        return this.amount > amount;
+        return this.amount >= amount;
     }
 
     @Override
@@ -430,7 +430,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     private boolean isSane() {
-        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount < this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
+        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount <= this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
     }
 
     private long doExtraction(long extracted) {

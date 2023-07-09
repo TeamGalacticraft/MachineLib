@@ -88,7 +88,6 @@ public final class MachineLibS2CPackets {
                         if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
-                            machineFace.setSelection(null);
                             client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
                         }
                     }

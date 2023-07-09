@@ -43,7 +43,7 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
 
     @Contract("_, _ -> new")
     static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
-        return create(display, filter, 64);
+        return create(display, filter, filter);
     }
 
     @Contract("_, _, _ -> new")

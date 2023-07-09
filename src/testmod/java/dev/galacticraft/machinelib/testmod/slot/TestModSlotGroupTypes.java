@@ -24,17 +24,15 @@ package dev.galacticraft.machinelib.testmod.slot;
 
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.storage.slot.InputType;
-import dev.galacticraft.machinelib.testmod.Constant;
-import net.minecraft.network.chat.TextColor;
 
 public class TestModSlotGroupTypes {
-    public static final SlotGroupType CHARGE = SlotGroupType.createAndRegister(Constant.id("charge"), TextColor.fromRgb(0xffff55), InputType.TRANSFER);
-    public static final SlotGroupType DIRT = SlotGroupType.createAndRegister(Constant.id("dirt"), TextColor.fromRgb(0x774422), InputType.INPUT);
-    public static final SlotGroupType DIAMONDS = SlotGroupType.createAndRegister(Constant.id("diamonds"), TextColor.fromRgb(0x55ffff), InputType.OUTPUT);
+    public static final SlotGroupType CHARGE = SlotGroupType.create("charge", 0xffff55, InputType.TRANSFER);
+    public static final SlotGroupType DIRT = SlotGroupType.create("dirt", 0x774422, InputType.INPUT);
+    public static final SlotGroupType DIAMONDS = SlotGroupType.create("diamonds", 0x55ffff, InputType.OUTPUT);
 
-    public static final SlotGroupType SOLID_FUEL = SlotGroupType.createAndRegister(Constant.id("solid_fuel"), TextColor.fromRgb(0x000000), InputType.INPUT);
-    public static final SlotGroupType TANK_IN = SlotGroupType.createAndRegister(Constant.id("tin"), TextColor.fromRgb(0xaa0000), InputType.INPUT);
-    public static final SlotGroupType WATER = SlotGroupType.createAndRegister(Constant.id("water"), TextColor.fromRgb(0x0000ff), InputType.INPUT);
+    public static final SlotGroupType SOLID_FUEL = SlotGroupType.create("solid_fuel", 0x000000, InputType.INPUT);
+    public static final SlotGroupType TANK_IN = SlotGroupType.create("tin", 0xaa0000, InputType.INPUT);
+    public static final SlotGroupType WATER = SlotGroupType.create("water", 0x0000ff, InputType.INPUT);
 
     public static void initialize() {
     }

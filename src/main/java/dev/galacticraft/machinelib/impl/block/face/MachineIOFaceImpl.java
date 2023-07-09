@@ -30,20 +30,16 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineIOFaceSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
@@ -55,7 +51,6 @@ import team.reborn.energy.api.EnergyStorage;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public final class MachineIOFaceImpl implements MachineIOFace {
@@ -67,12 +62,6 @@ public final class MachineIOFaceImpl implements MachineIOFace {
      * The flow direction of this face.
      */
     private @NotNull ResourceFlow flow;
-    /**
-     * The filter of this face.
-     * <p>
-     * When it is null, the face is not filtering.
-     */
-    private @Nullable StorageSelection selection = null;
 
     private @Nullable ExposedStorage<Item, ItemVariant> cachedItemStorage = null;
     private @Nullable ExposedStorage<Fluid, FluidVariant> cachedFluidStorage = null;
@@ -87,7 +76,6 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     public void setOption(@NotNull ResourceType type, @NotNull ResourceFlow flow) {
         this.type = type;
         this.flow = flow;
-        this.selection = null;
 
         this.cachedItemStorage = null;
         this.cachedFluidStorage = null;
@@ -105,23 +93,10 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable StorageSelection getSelection() {
-        return this.selection;
-    }
-
-    @Override
-    public void setSelection(@Nullable StorageSelection selection) {
-        this.selection = selection;
-        this.cachedItemStorage = null;
-        this.cachedFluidStorage = null;
-        this.cachedEnergyStorage = null;
-    }
-
-    @Override
     public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage) {
         if (this.getType().willAcceptResource(ResourceType.ITEM)) {
             if (this.cachedItemStorage == null) {
-                this.cachedItemStorage = ExposedStorage.createItem(storage, this.selection, this.flow);
+                this.cachedItemStorage = ExposedStorage.createItem(storage, this.flow);
             }
             return this.cachedItemStorage;
         } else {
@@ -134,7 +109,7 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage) {
         if (this.getType().willAcceptResource(ResourceType.FLUID)) {
             if (this.cachedFluidStorage == null) {
-                this.cachedFluidStorage = ExposedStorage.createFluid(storage, this.selection, this.flow);
+                this.cachedFluidStorage = ExposedStorage.createFluid(storage, this.flow);
             }
             return this.cachedFluidStorage;
         } else {
@@ -145,7 +120,7 @@ public final class MachineIOFaceImpl implements MachineIOFace {
 
     @Override
     public @Nullable EnergyStorage getExposedEnergyStorage(@NotNull MachineEnergyStorage storage) {
-        if (this.getType().willAcceptResource(ResourceType.ENERGY) && this.selection == null) {
+        if (this.getType().willAcceptResource(ResourceType.ENERGY)) {
             if (this.cachedEnergyStorage == null) {
                 this.cachedEnergyStorage = storage.getExposedStorage(this.flow);
             }
@@ -173,10 +148,6 @@ public final class MachineIOFaceImpl implements MachineIOFace {
         CompoundTag tag = new CompoundTag();
         tag.putByte(Constant.Nbt.FLOW, (byte) this.flow.ordinal());
         tag.putByte(Constant.Nbt.RESOURCE, (byte) this.type.ordinal());
-        if (this.selection != null) {
-            tag.putString(Constant.Nbt.GROUP, Objects.requireNonNull(MachineLib.SLOT_GROUP_TYPE_REGISTRY.getKey(this.selection.getGroup())).toString());
-            if (this.selection.isSlot()) tag.putInt(Constant.Nbt.SLOT, this.selection.getSlot());
-        }
 
         return tag;
     }
@@ -185,15 +156,6 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     public void readTag(@NotNull CompoundTag tag) {
         this.type = ResourceType.getFromOrdinal(tag.getByte(Constant.Nbt.RESOURCE));
         this.flow = ResourceFlow.getFromOrdinal(tag.getByte(Constant.Nbt.FLOW));
-        if (tag.contains(Constant.Nbt.GROUP, CompoundTag.TAG_STRING)) {
-            SlotGroupType group = MachineLib.SLOT_GROUP_TYPE_REGISTRY.get(new ResourceLocation(tag.getString(Constant.Nbt.GROUP)));
-            assert group != null;
-            if (tag.contains(Constant.Nbt.SLOT, Tag.TAG_INT)) {
-                this.selection = StorageSelection.create(group);
-            } else {
-                this.selection = StorageSelection.create(group, tag.getInt(Constant.Nbt.SLOT));
-            }
-        }
 
         this.cachedItemStorage = null;
         this.cachedFluidStorage = null;
@@ -202,32 +164,13 @@ public final class MachineIOFaceImpl implements MachineIOFace {
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        buf.writeByte(this.type.ordinal()).writeByte(this.flow.ordinal()).writeByte(this.selection != null ? this.selection.isSlot() ? 2 : 1 : 0);
-        if (this.selection != null) {
-            buf.writeUtf(Objects.requireNonNull(MachineLib.SLOT_GROUP_TYPE_REGISTRY.getKey(this.selection.getGroup())).toString());
-            if (this.selection.isSlot()) {
-                buf.writeInt(this.selection.getSlot());
-            }
-        }
+        buf.writeByte(this.type.ordinal()).writeByte(this.flow.ordinal());
     }
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
         this.type = ResourceType.getFromOrdinal(buf.readByte());
         this.flow = ResourceFlow.getFromOrdinal(buf.readByte());
-        byte b = buf.readByte();
-        if (b != 0) {
-            SlotGroupType group = MachineLib.SLOT_GROUP_TYPE_REGISTRY.get(new ResourceLocation(buf.readUtf()));
-            assert group != null;
-            if (b == 2) {
-                int slot = buf.readInt();
-                this.selection = StorageSelection.create(group, slot);
-            } else {
-                this.selection = StorageSelection.create(group);
-            }
-        } else {
-            this.selection = null;
-        }
 
         this.cachedItemStorage = null;
         this.cachedFluidStorage = null;

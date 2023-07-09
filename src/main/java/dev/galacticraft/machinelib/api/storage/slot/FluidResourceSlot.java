@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.FluidResourceSlotImpl;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
 
         private ResourceFilter<Fluid> filter = ResourceFilters.any();
         private ResourceFilter<Fluid> strictFilter = null;
-        private long capacity = 0;
+        private long capacity = FluidConstants.BUCKET;
 
         @Contract(pure = true)
         private Builder() {

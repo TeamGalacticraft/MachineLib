@@ -29,13 +29,9 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.io.StorageSelection;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -58,8 +54,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public final class MachineLibC2SPackets {
@@ -91,7 +85,6 @@ public final class MachineLibC2SPackets {
                                     PacketSender.s2c(tracking).send(Constant.id("reset_face"), buffer);
                                 }
                             }
-                            machineFace.setSelection(null);
                             machine.setChanged();
                             BlockState state = level.getBlockState(pos);
                             level.neighborChanged(pos.relative(face.toDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING))), state.getBlock(), pos);
@@ -121,7 +114,6 @@ public final class MachineLibC2SPackets {
 
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
-                            machineFace.setSelection(null);
                             machine.setChanged();
                             BlockState state = level.getBlockState(pos);
                             level.neighborChanged(pos.relative(face.toDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING))), state.getBlock(), pos);
@@ -131,61 +123,6 @@ public final class MachineLibC2SPackets {
                             );
                             for (ServerPlayer tracking : level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false)) {
                                 PacketSender.s2c(tracking).send(Constant.id("face_type"), buffer);
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        C2SPacketReceiver.register(Constant.id("match_slot"), (server, player, handler, buf, responseSender) -> {
-            byte b = buf.readByte();
-            int slot = buf.readInt();
-
-            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && slot >= 0) {
-                BlockFace face = Constant.Cache.BLOCK_FACES[b];
-                server.execute(() -> {
-                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                        MachineBlockEntity machine = sHandler.machine;
-                        if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFace machineFace = machine.getIOConfig().get(face);
-                            if (machineFace.getType().matchesSlots() && machineFace.getSelection() != null) {
-                                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(machineFace.getType());
-                                if (storage != null) {
-                                    SlotGroupType type = machineFace.getSelection().getGroup();
-                                    SlotGroup<?, ?, ?> group = storage.getGroup(type);
-                                    if (slot < group.size()) {
-                                        machineFace.setSelection(StorageSelection.create(type, slot));
-                                        machine.setChanged();
-                                    } else if (slot == group.size()) {
-                                        machineFace.setSelection(StorageSelection.create(type));
-                                        machine.setChanged();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        C2SPacketReceiver.register(Constant.id("match_group"), (server, player, handler, buf, responseSender) -> {
-            byte b = buf.readByte();
-            int group = buf.readInt();
-
-            if (b >= 0 && b < Constant.Cache.BLOCK_FACES.length && group >= 0) {
-                BlockFace face = Constant.Cache.BLOCK_FACES[b];
-                server.execute(() -> {
-                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                        MachineBlockEntity machine = sHandler.machine;
-                        if (machine.getSecurity().hasAccess(player)) {
-                            MachineIOFace machineFace = machine.getIOConfig().get(face);
-                            if (machineFace.getType().matchesGroups()) {
-                                List<SlotGroupType> groups = machineFace.getFlowMatchingGroups(machine);
-                                if (group < groups.size()) {
-                                    machineFace.setSelection(StorageSelection.create(groups.get(group)));
-                                    machine.setChanged();
-                                }
                             }
                         }
                     }
