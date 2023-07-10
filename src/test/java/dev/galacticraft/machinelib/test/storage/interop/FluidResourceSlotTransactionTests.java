@@ -68,7 +68,7 @@ public sealed class FluidResourceSlotTransactionTests implements JUnitTest {
                 assertEquals(0, this.slot.getAmount());
             }
 
-            assertTrue(this.slot.isEmpty());
+            assertFalse(this.slot.isEmpty());
         }
 
         @Test
