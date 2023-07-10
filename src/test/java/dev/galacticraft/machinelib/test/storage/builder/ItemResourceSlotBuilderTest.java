@@ -20,24 +20,25 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.test.builder;
+package dev.galacticraft.machinelib.test.storage.builder;
 
+import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
-import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.test.JUnitTest;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FluidResourceSlotBuilderTest implements JUnitTest {
-    private FluidResourceSlot.Builder builder;
+public class ItemResourceSlotBuilderTest implements JUnitTest {
+    private ItemResourceSlot.Builder builder;
     
     @BeforeEach
     public void setup() {
-        this.builder = FluidResourceSlot.builder();
+        this.builder = ItemResourceSlot.builder();
     }
 
     @Test
@@ -47,21 +48,22 @@ public class FluidResourceSlotBuilderTest implements JUnitTest {
 
     @Test
     public void capacity() {
-        FluidResourceSlot slot = builder.capacity(FluidConstants.BUCKET * 64).build();
+        ItemResourceSlot slot = builder.capacity(32).build();
 
-        assertEquals(FluidConstants.BUCKET * 64, slot.getCapacity());
+        assertEquals(32, slot.getCapacity());
     }
 
     @Test
-    public void height() {
-        FluidResourceSlot slot = builder.height(16).build();
+    public void icon() {
+        Pair<ResourceLocation, ResourceLocation> icon = new Pair<>(new ResourceLocation("null"), new ResourceLocation("null"));
+        ItemResourceSlot slot = builder.icon(icon).build();
 
-        assertEquals(16, slot.getDisplay().height());
+        assertEquals(icon, slot.getDisplay().icon());
     }
 
     @Test
     public void displayPosition() {
-        FluidResourceSlot slot = builder.pos(11, 43).build();
+        ItemResourceSlot slot = builder.pos(11, 43).build();
 
         assertEquals(11, slot.getDisplay().x());
         assertEquals(43, slot.getDisplay().y());
@@ -69,7 +71,7 @@ public class FluidResourceSlotBuilderTest implements JUnitTest {
 
     @Test
     public void displayPositionXY() {
-        FluidResourceSlot slot = builder.x(5).y(7).build();
+        ItemResourceSlot slot = builder.x(5).y(7).build();
 
         assertEquals(5, slot.getDisplay().x());
         assertEquals(7, slot.getDisplay().y());
@@ -77,23 +79,24 @@ public class FluidResourceSlotBuilderTest implements JUnitTest {
 
     @Test
     public void defaultFilter() {
-        FluidResourceSlot slot = builder.build();
+        ItemResourceSlot slot = builder.build();
 
         assertSame(ResourceFilters.any(), slot.getFilter());
     }
 
     @Test
     public void filter() {
-        FluidResourceSlot slot = builder.filter(ResourceFilters.none()).build();
+        ItemResourceSlot slot = builder.filter(ResourceFilters.none()).build();
 
         assertSame(ResourceFilters.none(), slot.getFilter());
-        assertEquals(0, slot.insert(Fluids.WATER, 1));
+        assertEquals(0, slot.insert(Items.DIRT, 1));
     }
 
     @Test
     public void strictFilter() {
-        FluidResourceSlot slot = builder.strictFilter(ResourceFilters.none()).build();
+        ItemResourceSlot slot = builder.strictFilter(ResourceFilters.none()).build();
 
-        assertEquals(1, slot.insert(Fluids.WATER, 1));
+        assertSame(ResourceFilters.none(), slot.getStrictFilter());
+        assertEquals(1, slot.insert(Items.DIRT, 1)); // only affects players
     }
 }

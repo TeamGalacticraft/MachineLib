@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.test.builder;
+package dev.galacticraft.machinelib.test.storage.builder;
 
 import dev.galacticraft.machinelib.api.gametest.annotation.UnitTest;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;

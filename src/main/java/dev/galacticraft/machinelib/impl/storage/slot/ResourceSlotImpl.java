@@ -33,6 +33,7 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 // assertions made:
 // if AMOUNT > 0 then RESOURCE is NOT NULL (and the inverse - if RESOURCE is NOT NULL then AMOUNT > 0)
@@ -429,7 +430,8 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || (this.resource == null && this.filter.test(resource, tag));
     }
 
-    private boolean isSane() {
+    @VisibleForTesting
+    public boolean isSane() {
         return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount <= this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
     }
 

@@ -45,4 +45,10 @@ public class Utils {
         compoundTag.putLong("UniqueId", counter++);
         return compoundTag;
     }
+
+    public static ItemStack itemStack(Item item, CompoundTag tag, int amount) {
+        ItemStack itemStack = new ItemStack(item, amount);
+        itemStack.setTag(tag);
+        return itemStack;
+    }
 }
