@@ -89,9 +89,11 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
         }
         if ((ref & 0b0100) != 0) {
             this.status = this.type.statusDomain().get(buf.readByte());
+            this.configuration.setStatus(this.status);
         }
         if ((ref & 0b1000) != 0) {
             this.redstone = RedstoneActivation.VALUES[buf.readByte()];
+            this.configuration.setRedstoneActivation(this.redstone);
         }
     }
 }

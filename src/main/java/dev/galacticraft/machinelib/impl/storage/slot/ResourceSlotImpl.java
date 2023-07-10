@@ -337,9 +337,11 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
         if (extracted > 0) {
             this.updateSnapshots(context);
-            this.resource = resource;
-            this.tag = stripTag(tag);
             this.amount -= extracted;
+            if (this.amount == 0) {
+                this.resource = null;
+                this.tag = null;
+            }
             return extracted;
         }
         return 0;
