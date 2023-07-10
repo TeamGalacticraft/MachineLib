@@ -30,6 +30,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.InfiniteEnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyItem;
@@ -52,6 +53,10 @@ public class TestModItems {
         });
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
             entries.accept(INFINITE_BATTERY);
+            entries.accept(BASIC_BATTERY);
+            ItemStack chargedBattery = new ItemStack(BASIC_BATTERY);
+            BASIC_BATTERY.setStoredEnergy(chargedBattery, BASIC_BATTERY.getEnergyCapacity(chargedBattery));
+            entries.accept(chargedBattery);
         });
     }
 }
