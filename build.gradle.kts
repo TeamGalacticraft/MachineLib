@@ -25,8 +25,8 @@ import java.time.format.DateTimeFormatter
 
 plugins {
     `maven-publish`
-    id("fabric-loom") version ("1.2-SNAPSHOT")
-    id("io.github.juuxel.loom-quiltflower") version ("1.8.0")
+    id("fabric-loom") version ("1.3-SNAPSHOT")
+    id("io.github.juuxel.loom-quiltflower") version ("1.10.0")
     id("org.cadixdev.licenser") version ("0.6.1")
     id("org.ajoberstar.grgit") version("5.2.0")
 }

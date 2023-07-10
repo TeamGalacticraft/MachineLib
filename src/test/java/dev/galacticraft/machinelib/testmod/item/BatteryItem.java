@@ -22,9 +22,15 @@
 
 package dev.galacticraft.machinelib.testmod.item;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.base.SimpleEnergyItem;
+
+import java.util.List;
 
 public class BatteryItem extends Item implements SimpleEnergyItem {
     private final long capacity;
@@ -32,6 +38,12 @@ public class BatteryItem extends Item implements SimpleEnergyItem {
     public BatteryItem(Properties properties, long capacity) {
         super(properties);
         this.capacity = capacity;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack itemStack, @Nullable Level level, List<Component> lines, TooltipFlag tooltipFlag) {
+        lines.add(Component.literal("Energy: " + getStoredEnergy(itemStack) + " / " + getEnergyCapacity(itemStack)));
+        super.appendHoverText(itemStack, level, lines, tooltipFlag);
     }
 
     @Override
