@@ -28,11 +28,13 @@ import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 public class TestModSlotGroupTypes {
     public static final SlotGroupType CHARGE = SlotGroupType.create("charge", 0xffff55, InputType.TRANSFER);
     public static final SlotGroupType DIRT = SlotGroupType.create("dirt", 0x774422, InputType.INPUT);
-    public static final SlotGroupType DIAMONDS = SlotGroupType.create("diamonds", 0x55ffff, InputType.OUTPUT);
+    public static final SlotGroupType OBSIDIAN = SlotGroupType.create("obsidian", 0x000000, InputType.OUTPUT);
 
     public static final SlotGroupType SOLID_FUEL = SlotGroupType.create("solid_fuel", 0x000000, InputType.INPUT);
-    public static final SlotGroupType TANK_IN = SlotGroupType.create("tin", 0xaa0000, InputType.INPUT);
+    public static final SlotGroupType TANK_IO = SlotGroupType.create("tank_io", 0xaa0000, InputType.TRANSFER);
     public static final SlotGroupType WATER = SlotGroupType.create("water", 0x0000ff, InputType.INPUT);
+    public static final SlotGroupType INPUTS = SlotGroupType.create("water", 0xffffff, InputType.INPUT);
+    public static final SlotGroupType LAVA = SlotGroupType.create("lava", 0xffffff, InputType.OUTPUT);
 
     public static void initialize() {
     }

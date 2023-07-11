@@ -147,9 +147,9 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected abstract void extractResourcesToWork();
 
     @Override
-    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    public @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         profiler.push("recipe_test");
-        MachineStatus recipeFailure = testInventoryRecipe(world, profiler);
+        MachineStatus recipeFailure = testInventoryRecipe(level, profiler);
         profiler.pop();
         if (recipeFailure != null) {
             return recipeFailure;

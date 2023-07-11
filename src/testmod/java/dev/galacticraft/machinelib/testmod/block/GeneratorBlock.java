@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.testmod.block;
 
 import dev.galacticraft.machinelib.api.block.MachineBlock;
-import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
+import dev.galacticraft.machinelib.testmod.block.entity.GeneratorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
@@ -33,11 +33,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
-public class SimpleMachineBlock extends MachineBlock<SimpleMachineBlockEntity> {
+public class GeneratorBlock extends MachineBlock<GeneratorBlockEntity> {
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
 
-    public SimpleMachineBlock(Block.Properties settings) {
-        super(settings, SimpleMachineBlockEntity::new);
+    public GeneratorBlock(Properties settings) {
+        super(settings, GeneratorBlockEntity::new);
         this.registerDefaultState(this.defaultBlockState().setValue(ACTIVE, false));
     }
 

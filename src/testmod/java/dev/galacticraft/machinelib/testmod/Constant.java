@@ -29,9 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public interface Constant {
-    String MOD_ID = "machinelib-test";
+    String MOD_ID = "machinelib_testmod";
     Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    String SIMPLE_MACHINE = "simple_machine";
+    String GENERATOR = "generator";
+    String MIXER = "mixer";
+    String MELTER = "melter";
 
     @Contract("_ -> new")
     static @NotNull ResourceLocation id(@NotNull String id) {

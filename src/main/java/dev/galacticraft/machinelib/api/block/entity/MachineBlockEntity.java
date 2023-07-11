@@ -260,7 +260,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @Contract(pure = true)
     protected boolean isActive() {
-        return this.getStatus() != null && this.getStatus().getType().isActive();
+        return this.getStatus().getType().isActive();
     }
 
     /**
@@ -397,19 +397,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns whether the current machine is enabled.
      *
-     * @param world the world this machine is in.
+     * @param level the world this machine is in.
      * @return whether the current machine is enabled.
      * @see RedstoneActivation
      * @see #getRedstoneActivation()
      */
-    public boolean isDisabled(@NotNull Level world) {
-        return !this.getRedstoneActivation().isActive(() -> world.hasNeighborSignal(this.worldPosition));
+    public boolean isDisabled(@NotNull Level level) {
+        return !this.getRedstoneActivation().isActive(() -> level.hasNeighborSignal(this.worldPosition));
     }
 
     /**
      * Updates the machine every tick.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
@@ -417,22 +417,22 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller) for the server-side logic that is always called.
      * @see #tickClient(Level, BlockPos, BlockState) for the client-side logic.
      */
-    public final void tickBase(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    public final void tickBase(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         this.setBlockState(state);
-        if (!world.isClientSide()) {
+        if (!level.isClientSide()) {
             profiler.push("constant");
-            ServerLevel serverWorld = (ServerLevel) world;
-            this.tickConstant(serverWorld, pos, state, profiler);
-            if (this.isDisabled(world)) {
+            ServerLevel serverLevel = (ServerLevel) level;
+            this.tickConstant(serverLevel, pos, state, profiler);
+            if (this.isDisabled(level)) {
                 profiler.popPush("disabled");
-                this.tickDisabled(serverWorld, pos, state, profiler);
+                this.tickDisabled(serverLevel, pos, state, profiler);
             } else {
                 profiler.popPush("active");
-                this.setStatus(this.tick(serverWorld, pos, state, profiler));
+                this.setStatus(this.tick(serverLevel, pos, state, profiler));
             }
         } else {
             profiler.push("client");
-            this.tickClient(world, pos, state);
+            this.tickClient(level, pos, state);
         }
         profiler.pop();
     }
@@ -441,39 +441,39 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Called every tick, even if the machine is not active/powered.
      * Use this to tick fuel consumption or transfer resources, for example.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
     }
 
     /**
      * Called every tick, when the machine is explicitly disabled (by redstone, for example).
      * Use this to clean-up resources leaked by {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected void tickDisabled(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
     }
 
     /**
      * Called every tick on the client.
      *
-     * @param world the world.
+     * @param level the world.
      * @param pos   the position of this machine.
      * @param state the block state of this machine.
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickClient(@NotNull /*Client*/Level world, @NotNull BlockPos pos, @NotNull BlockState state) {
+    protected void tickClient(@NotNull /*Client*/Level level, @NotNull BlockPos pos, @NotNull BlockState state) {
     } //todo: client/server split? what is this used for?
 
     /**
@@ -481,7 +481,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Use this to update crafting progress, for example.
      * Be sure to clean-up state in {@link #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
@@ -489,7 +489,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
 
     /**
      * Returns a controlled/throttled energy storage to expose to adjacent blocks.
@@ -572,7 +572,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedFluidStorage(Direction, Direction)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @Nullable Direction direction) {
         return this.getExposedFluidStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
@@ -585,7 +585,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedFluidStorage(BlockFace)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @Nullable Direction direction) {
         return this.getExposedFluidStorage(BlockFace.toFace(facing, direction));
     }
 
@@ -596,7 +596,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled fluid storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockFace face) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@Nullable BlockFace face) {
         return this.getIOConfig().get(face).getExposedFluidStorage(this.fluidStorage);
     }
 

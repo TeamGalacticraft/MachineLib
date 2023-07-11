@@ -37,7 +37,7 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -54,7 +54,7 @@ public class MachineFluidStorageImpl implements MachineFluidStorage {
         assert groups.length == types.length;
         this.groups = groups;
         this.types = types;
-        this.typeToGroup = new HashMap<>(this.groups.length);
+        this.typeToGroup = new IdentityHashMap<>(this.groups.length);
         int slots = 0;
         for (int i = 0; i < this.groups.length; i++) {
             SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.groups[i];

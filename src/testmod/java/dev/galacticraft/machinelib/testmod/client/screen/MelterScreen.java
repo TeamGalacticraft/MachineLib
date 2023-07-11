@@ -25,18 +25,18 @@ package dev.galacticraft.machinelib.testmod.client.screen;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.testmod.Constant;
-import dev.galacticraft.machinelib.testmod.block.entity.SimpleMachineBlockEntity;
+import dev.galacticraft.machinelib.testmod.block.entity.MelterBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleMachineScreen extends MachineScreen<SimpleMachineBlockEntity, MachineMenu<SimpleMachineBlockEntity>> {
-    private static final ResourceLocation TEXTURE = Constant.id("tex.png"); // todo: actual textures
+public class MelterScreen extends MachineScreen<MelterBlockEntity, MachineMenu<MelterBlockEntity>> {
+    private static final ResourceLocation TEXTURE = Constant.id("textures/gui/melter_screen.png");
 
-    public SimpleMachineScreen(@NotNull MachineMenu<SimpleMachineBlockEntity> menu, @NotNull Inventory inv, @NotNull Component title) {
+    public MelterScreen(@NotNull MachineMenu<MelterBlockEntity> menu, @NotNull Inventory inv, @NotNull Component title) {
         super(menu, title, TEXTURE);
         this.capacitorX = 8;
-        this.capacitorY = 8;
+        this.capacitorY = 30;
     }
 }

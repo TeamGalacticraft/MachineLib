@@ -36,12 +36,18 @@ import team.reborn.energy.api.base.InfiniteEnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyItem;
 
 public class TestModItems {
-    public static final Item SIMPLE_MACHINE_ITEM = new BlockItem(TestModBlocks.SIMPLE_MACHINE_BLOCK, new Item.Properties());
+    public static final Item GENERATOR = new BlockItem(TestModBlocks.GENERATOR, new Item.Properties());
+    public static final Item MIXER = new BlockItem(TestModBlocks.MIXER, new Item.Properties());
+    public static final Item MELTER = new BlockItem(TestModBlocks.MELTER, new Item.Properties());
+
     public static final Item INFINITE_BATTERY = new Item(new Item.Properties());
     public static final BatteryItem BASIC_BATTERY = new BatteryItem(new Item.Properties(), 1500);
 
     public static void register() {
-        Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.SIMPLE_MACHINE), TestModItems.SIMPLE_MACHINE_ITEM);
+        Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.GENERATOR), TestModItems.GENERATOR);
+        Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.MIXER), TestModItems.MIXER);
+        Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.MELTER), TestModItems.MELTER);
+
         Registry.register(BuiltInRegistries.ITEM, Constant.id("infinite_battery"), TestModItems.INFINITE_BATTERY);
         Registry.register(BuiltInRegistries.ITEM, Constant.id("battery"), TestModItems.BASIC_BATTERY);
 
@@ -49,8 +55,11 @@ public class TestModItems {
         EnergyStorage.ITEM.registerForItems((stack, context) -> SimpleEnergyItem.createStorage(context, BASIC_BATTERY.getEnergyCapacity(stack), BASIC_BATTERY.getEnergyMaxInput(stack), BASIC_BATTERY.getEnergyMaxOutput(stack)), BASIC_BATTERY);
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
-            entries.accept(SIMPLE_MACHINE_ITEM);
+            entries.accept(GENERATOR);
+            entries.accept(MIXER);
+            entries.accept(MELTER);
         });
+
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
             entries.accept(INFINITE_BATTERY);
             entries.accept(BASIC_BATTERY);

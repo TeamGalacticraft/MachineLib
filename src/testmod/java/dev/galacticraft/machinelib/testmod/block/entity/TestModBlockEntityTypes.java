@@ -31,11 +31,17 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public class TestModBlockEntityTypes {
-    public static final BlockEntityType<SimpleMachineBlockEntity> SIMPLE_MACHINE = FabricBlockEntityTypeBuilder.create(SimpleMachineBlockEntity::new, TestModBlocks.SIMPLE_MACHINE_BLOCK).build();
+    public static final BlockEntityType<GeneratorBlockEntity> GENERATOR = FabricBlockEntityTypeBuilder.create(GeneratorBlockEntity::new, TestModBlocks.GENERATOR).build();
+    public static final BlockEntityType<MixerBlockEntity> MIXER = FabricBlockEntityTypeBuilder.create(MixerBlockEntity::new, TestModBlocks.MIXER).build();
+    public static final BlockEntityType<MelterBlockEntity> MELTER = FabricBlockEntityTypeBuilder.create(MelterBlockEntity::new, TestModBlocks.MELTER).build();
 
     public static void register() {
-        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.SIMPLE_MACHINE), TestModBlockEntityTypes.SIMPLE_MACHINE);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.GENERATOR), TestModBlockEntityTypes.GENERATOR);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.MIXER), TestModBlockEntityTypes.MIXER);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.MELTER), TestModBlockEntityTypes.MELTER);
 
-        MachineBlockEntity.registerComponents(TestModBlocks.SIMPLE_MACHINE_BLOCK);
+        MachineBlockEntity.registerComponents(TestModBlocks.GENERATOR);
+        MachineBlockEntity.registerComponents(TestModBlocks.MIXER);
+        MachineBlockEntity.registerComponents(TestModBlocks.MELTER);
     }
 }

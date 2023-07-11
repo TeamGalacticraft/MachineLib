@@ -85,28 +85,16 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         return this.resource;
     }
 
-    protected void setResource(@Nullable Resource resource) {
-        this.resource = resource;
-    }
-
     @Override
     public long getAmount() {
         assert this.isSane();
         return this.amount;
     }
 
-    protected void setAmount(long amount) {
-        this.amount = amount;
-    }
-
     @Override
     public @Nullable CompoundTag getTag() {
         assert this.isSane();
         return this.tag;
-    }
-
-    protected void setTag(@Nullable CompoundTag tag) {
-        this.tag = tag;
     }
 
     @Override

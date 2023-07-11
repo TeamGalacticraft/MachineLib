@@ -20,20 +20,23 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod;
+package dev.galacticraft.machinelib.testmod.client.screen;
 
-import dev.galacticraft.machinelib.testmod.client.screen.GeneratorScreen;
-import dev.galacticraft.machinelib.testmod.client.screen.MelterScreen;
-import dev.galacticraft.machinelib.testmod.client.screen.MixerScreen;
-import dev.galacticraft.machinelib.testmod.menu.TestModMenuTypes;
-import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.gui.screens.MenuScreens;
+import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import dev.galacticraft.machinelib.testmod.Constant;
+import dev.galacticraft.machinelib.testmod.block.entity.GeneratorBlockEntity;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.NotNull;
 
-public class TestModClient implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        MenuScreens.register(TestModMenuTypes.GENERATOR, GeneratorScreen::new);
-        MenuScreens.register(TestModMenuTypes.MIXER, MixerScreen::new);
-        MenuScreens.register(TestModMenuTypes.MELTER, MelterScreen::new);
+public class GeneratorScreen extends MachineScreen<GeneratorBlockEntity, MachineMenu<GeneratorBlockEntity>> {
+    private static final ResourceLocation TEXTURE = Constant.id("textures/gui/generator_screen.png");
+
+    public GeneratorScreen(@NotNull MachineMenu<GeneratorBlockEntity> menu, @NotNull Inventory inv, @NotNull Component title) {
+        super(menu, title, TEXTURE);
+        this.capacitorX = 8;
+        this.capacitorY = 8;
     }
 }
