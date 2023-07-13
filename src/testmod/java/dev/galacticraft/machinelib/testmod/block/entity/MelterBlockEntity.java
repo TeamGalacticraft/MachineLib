@@ -46,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MelterBlockEntity extends MachineBlockEntity {
-    public static final long GENERATION_RATE = (FluidConstants.BUCKET / 4) * 3;
+    public static final long GENERATION_RATE = (FluidConstants.BUCKET / 4) * 3; // 75% efficiency
     public static final long ENERGY_USAGE = 250;
     public static final int PROCESSING_TIME = 200;
 
@@ -79,7 +79,7 @@ public class MelterBlockEntity extends MachineBlockEntity {
                     if (++this.progress == PROCESSING_TIME) {
                         this.progress = 0;
                         this.itemInput.extractOne();
-                        this.fluidOutput.insert(Fluids.LAVA, GENERATION_RATE); // 75% efficiency
+                        this.fluidOutput.insert(Fluids.LAVA, GENERATION_RATE);
                     }
                     return MachineStatuses.ACTIVE;
                 } else {

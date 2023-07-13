@@ -130,6 +130,11 @@ repositories {
             includeGroup("lol.bai")
         }
     }
+    maven("https://maven2.bai.lol") {
+        content {
+            includeGroup("lol.bai")
+        }
+    }
 }
 
 dependencies {
