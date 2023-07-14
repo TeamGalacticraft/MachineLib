@@ -24,8 +24,8 @@ package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.filter.ResourceFilter;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -139,12 +139,12 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
-    public boolean containsAny(@NotNull Fluid fluid) {
+    public boolean contains(@NotNull Fluid fluid) {
         return false;
     }
 
     @Override
-    public boolean containsAny(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
+    public boolean contains(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
         return false;
     }
 
@@ -289,12 +289,12 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
-    public boolean containsAny(int slot, @NotNull Fluid fluid) {
+    public boolean contains(int slot, @NotNull Fluid fluid) {
         throw new IndexOutOfBoundsException(slot);
     }
 
     @Override
-    public boolean containsAny(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag) {
+    public boolean contains(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag) {
         throw new IndexOutOfBoundsException(slot);
     }
 

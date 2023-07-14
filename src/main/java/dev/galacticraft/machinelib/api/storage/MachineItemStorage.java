@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.impl.storage.EmptyMachineItemStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
 import net.minecraft.world.Container;
@@ -69,7 +70,21 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemResourceSl
             return this;
         }
 
+        @Contract("_, _, _ -> this")
+        public @NotNull Builder add3x3Grid(InputType type, int xOffset, int yOffset) {
+            return this.addGrid(type, xOffset, yOffset, 3, 3);
+        }
 
+        @Contract("_, _, _, _, _ -> this")
+        public @NotNull Builder addGrid(InputType type, int xOffset, int yOffset, int width, int height) {
+            assert width > 0 && height > 0;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    this.add(ItemResourceSlot.builder(type).pos(x * 18 + xOffset, y * 18 + yOffset));
+                }
+            }
+            return this;
+        }
 
         public @NotNull MachineItemStorage build() {
             if (this.slots.isEmpty()) return empty();

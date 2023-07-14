@@ -23,89 +23,22 @@
 package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
+import dev.galacticraft.machinelib.api.misc.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.util.Deserializable;
-import net.minecraft.nbt.CompoundTag;
+import dev.galacticraft.machinelib.filter.ResourceFilter;
 import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> extends Iterable<Slot>, MutableModifiable, SlotProvider<Resource, Slot>, Deserializable<ListTag>, MenuSynchronizable {
+public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> extends Iterable<Slot>, MutableModifiable, SlottedStorageAccess<Resource, Slot>, Deserializable<ListTag>, MenuSynchronizable {
     void setListener(Runnable listener);
 
-    int size();
-
     Slot[] getSlots();
-
-    // START SLOT METHODS
 
     @NotNull Slot getSlot(int slot);
 
     @Nullable ResourceFilter<Resource> getFilter(int slot);
 
     @NotNull ResourceFilter<Resource> getStrictFilter(int slot);
-
-    @Nullable Resource getResource(int slot);
-
-    long getAmount(int slot);
-
-    @Nullable CompoundTag getTag(int slot);
-
-    @Nullable CompoundTag copyTag(int slot);
-
-    long getCapacity(int slot);
-
-    long getCapacityFor(int slot, @NotNull Resource resource);
-
-    long getRealCapacity(int slot);
-
-    boolean isEmpty(int slot);
-
-    boolean isFull(int slot);
-
-    boolean canInsert(int slot, @NotNull Resource resource);
-
-    boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
-
-    boolean canInsert(int slot, @NotNull Resource resource, long amount);
-
-    boolean canInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long tryInsert(int slot, @NotNull Resource resource, long amount);
-
-    long tryInsert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long insert(int slot, @NotNull Resource resource, long amount);
-
-    long insert(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    boolean containsAny(int slot, @NotNull Resource resource);
-
-    boolean containsAny(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
-
-    boolean canExtract(int slot, long amount);
-
-    boolean canExtract(int slot, @NotNull Resource resource, long amount);
-
-    boolean canExtract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long tryExtract(int slot, long amount);
-
-    long tryExtract(int slot, @Nullable Resource resource, long amount);
-
-    long tryExtract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
-
-    boolean extractOne(int slot);
-
-    boolean extractOne(int slot, @Nullable Resource resource);
-
-    boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag);
-
-    long extract(int slot, long amount);
-
-    long extract(int slot, @Nullable Resource resource, long amount);
-
-    long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
-
-    // END SLOT METHODS
 }

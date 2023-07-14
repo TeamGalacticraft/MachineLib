@@ -26,7 +26,7 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.Utils;
-import dev.galacticraft.machinelib.impl.storage.slot.ResourceStorageImpl;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -49,34 +49,44 @@ public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResour
 
     @Override
     public @NotNull ItemStack removeItem(int slot, int amount) {
-        Utils.breakpointMe("attempted to remove item from recipe test container!");
+        Utils.breakpointMe("attempted to remove item from vanilla compat container!");
         return ItemStack.EMPTY;
     }
 
     @Override
     public @NotNull ItemStack removeItemNoUpdate(int i) {
-        Utils.breakpointMe("attempted to remove item from recipe test container!");
+        Utils.breakpointMe("attempted to remove item from vanilla compat container!");
         return ItemStack.EMPTY;
     }
 
     @Override
     public void setItem(int i, ItemStack itemStack) {
-        Utils.breakpointMe("attempted to modify item from recipe test container!");
+        Utils.breakpointMe("attempted to modify item from vanilla compat container!");
     }
 
     @Override
     public void setChanged() {
-        Utils.breakpointMe("attempted to mark recipe test container as modified!");
+        Utils.breakpointMe("attempted to mark vanilla compat container as modified!");
     }
 
     @Override
     public boolean stillValid(Player player) {
-        Utils.breakpointMe("testing player validity of inv view");
+        Utils.breakpointMe("testing player validity of vanilla compat container");
+        return false;
+    }
+
+    @Override
+    public boolean canPlaceItem(int i, ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public boolean canTakeItem(Container container, int i, ItemStack itemStack) {
         return false;
     }
 
     @Override
     public void clearContent() {
-        Utils.breakpointMe("attempted to clear items in a recipe test container!");
+        Utils.breakpointMe("attempted to clear items in a vanilla compat container!");
     }
 }

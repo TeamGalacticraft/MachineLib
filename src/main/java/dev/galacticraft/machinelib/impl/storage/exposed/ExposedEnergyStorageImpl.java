@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.impl.storage.exposed;
 
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
+import dev.galacticraft.machinelib.api.compat.transfer.ExposedEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;

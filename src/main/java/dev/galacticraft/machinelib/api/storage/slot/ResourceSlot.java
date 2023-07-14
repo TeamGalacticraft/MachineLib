@@ -22,11 +22,11 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.MutableModifiable;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
-import dev.galacticraft.machinelib.api.storage.io.InputType;
-import dev.galacticraft.machinelib.api.util.Deserializable;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
+import dev.galacticraft.machinelib.api.misc.MutableModifiable;
+import dev.galacticraft.machinelib.api.storage.StorageAccess;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.filter.ResourceFilter;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 // NO I/O CONSTRAINTS
 // Resource must be comparable by identity
 // FILTER DOES NOT INCLUDE NULL/EMPTY
-public interface ResourceSlot<Resource> extends MutableModifiable, Deserializable<CompoundTag> {
+public interface ResourceSlot<Resource> extends StorageAccess<Resource>, MutableModifiable, Deserializable<CompoundTag> {
     InputType inputType();
 
     @Nullable Resource getResource();
@@ -57,59 +57,17 @@ public interface ResourceSlot<Resource> extends MutableModifiable, Deserializabl
 
     @NotNull ResourceFilter<Resource> getStrictFilter();
 
-    boolean isEmpty();
-
-    boolean isFull();
-
-    boolean canInsert(@NotNull Resource resource);
-
-    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag);
-
-    boolean canInsert(@NotNull Resource resource, long amount);
-
-    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long tryInsert(@NotNull Resource resource, long amount);
-
-    long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long insert(@NotNull Resource resource, long amount);
-
-    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
     boolean contains(@NotNull Resource resource);
 
     boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag);
 
     boolean canExtract(long amount);
 
-    boolean canExtract(@NotNull Resource resource, long amount);
-
-    boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
     long tryExtract(long amount);
-
-    long tryExtract(@Nullable Resource resource, long amount);
-
-    long tryExtract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
 
     boolean extractOne();
 
-    boolean extractOne(@Nullable Resource resource);
-
-    boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag);
-
     long extract(long amount);
-
-    long extract(@Nullable Resource resource, long amount);
-
-    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
-
-    // required for FAPI
-    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
-
-    // required for FAPI
-    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 
     @Contract("null, !null, _ -> fail")
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);

@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.RecipeMachineMenu;
 import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -52,6 +51,10 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * The type of recipe that this machine processes.
      */
     private final @NotNull RecipeType<R> recipeType;
+
+    private final @NotNull C craftingInv;
+
+    private final @NotNull MachineStatus workingStatus;
 
     /**
      * The number of times the machine's inventory has been modified.
@@ -94,6 +97,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected RecipeMachineBlockEntity(@NotNull MachineType<? extends RecipeMachineBlockEntity<C, R>, ? extends RecipeMachineMenu<C, R, ? extends RecipeMachineBlockEntity<C, R>>> type, @NotNull BlockPos pos, BlockState state, @NotNull RecipeType<R> recipeType) {
         super(type, pos, state);
         this.recipeType = recipeType;
+        this.craftingInv = this.createCraftingInv();
+        workingStatus = this.workingStatus();
     }
 
     /**
@@ -104,7 +109,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The crafting inventory of the machine.
      */
     @Contract(pure = true)
-    protected abstract @NotNull C craftingInv();
+    protected abstract @NotNull C createCraftingInv();
 
     /**
      * Inserts the recipe's output into the machine's inventory.
@@ -157,7 +162,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
         if (this.getActiveRecipe() != null) {
             profiler.push("working");
-            try (Transaction transaction = Transaction.openOuter()) {
+            try {
                 MachineStatus status = this.hasResourcesToWork();
                 if (status == null) {
                     this.extractResourcesToWork();
@@ -166,8 +171,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                         this.craft(profiler, this.getActiveRecipe());
                         profiler.pop();
                     }
-                    transaction.commit();
-                    return this.workingStatus();
+                    return this.workingStatus;
                 } else {
                     return status;
                 }
@@ -272,10 +276,10 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The first valid recipe in the machine's inventory.
      */
     protected @Nullable R findValidRecipe(@NotNull Level world) {
-        if (this.cachedRecipe != null && this.cachedRecipe.matches(this.craftingInv(), world)) {
+        if (this.cachedRecipe != null && this.cachedRecipe.matches(this.craftingInv, world)) {
             return this.cachedRecipe;
         }
-        return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world).orElse(null);
+        return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv, world).orElse(null);
     }
 
     @Override

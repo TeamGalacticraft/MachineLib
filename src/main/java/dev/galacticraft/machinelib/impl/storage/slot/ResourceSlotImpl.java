@@ -22,10 +22,10 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.MutableModifiable;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
-import dev.galacticraft.machinelib.api.storage.io.InputType;
+import dev.galacticraft.machinelib.api.misc.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.filter.ResourceFilter;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -184,6 +184,16 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
             return inserted;
         }
         return 0;
+    }
+
+    @Override
+    public long insertMatching(@NotNull Resource resource, long amount) {
+        return this.insert(resource, amount);
+    }
+
+    @Override
+    public long insertMatching(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.insert(resource, tag, amount);
     }
 
     @Override

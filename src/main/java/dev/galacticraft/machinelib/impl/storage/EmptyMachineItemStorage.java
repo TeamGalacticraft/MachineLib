@@ -24,8 +24,8 @@ package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.filter.ResourceFilter;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -175,12 +175,12 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
-    public boolean containsAny(@NotNull Item item) {
+    public boolean contains(@NotNull Item item) {
         return false;
     }
 
     @Override
-    public boolean containsAny(@NotNull Item item, @Nullable CompoundTag tag) {
+    public boolean contains(@NotNull Item item, @Nullable CompoundTag tag) {
         return false;
     }
 
@@ -325,12 +325,12 @@ public class EmptyMachineItemStorage implements MachineItemStorage {
     }
 
     @Override
-    public boolean containsAny(int slot, @NotNull Item item) {
+    public boolean contains(int slot, @NotNull Item item) {
         throw new IndexOutOfBoundsException(slot);
     }
 
     @Override
-    public boolean containsAny(int slot, @NotNull Item item, @Nullable CompoundTag tag) {
+    public boolean contains(int slot, @NotNull Item item, @Nullable CompoundTag tag) {
         throw new IndexOutOfBoundsException(slot);
     }
 

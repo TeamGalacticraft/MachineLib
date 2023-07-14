@@ -26,7 +26,7 @@ import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.SlotProvider;
+import dev.galacticraft.machinelib.api.storage.SlottedStorageAccess;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -42,10 +42,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineGameTest<Machine> {
-    private final @NotNull SlotProvider<Item, ItemResourceSlot> inputSlots;
-    private final @NotNull SlotProvider<Item, ItemResourceSlot> outputSlots;
+    private final @NotNull SlottedStorageAccess<Item, ItemResourceSlot> inputSlots;
+    private final @NotNull SlottedStorageAccess<Item, ItemResourceSlot> outputSlots;
 
-    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, @NotNull SlotProvider<Item, ItemResourceSlot> inputSlots, @NotNull SlotProvider<Item, ItemResourceSlot> outputSlots) {
+    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, @NotNull SlottedStorageAccess<Item, ItemResourceSlot> inputSlots, @NotNull SlottedStorageAccess<Item, ItemResourceSlot> outputSlots) {
         super(type);
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;

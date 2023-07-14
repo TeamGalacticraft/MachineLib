@@ -30,20 +30,20 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
-import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.io.InputType;
-import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
-import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
+import dev.galacticraft.machinelib.api.transfer.ResourceType;
+import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
+import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.ByteBufAllocator;
 import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
@@ -900,7 +900,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 config = this.menu.configuration.getIOConfiguration().get(BlockFace.BOTTOM);
             }
             if (config != null && config.getType().willAcceptResource(ResourceType.ITEM)) {
-                for (AutomatableSlot slot : this.menu.machineSlots) {
+                for (StorageSlot slot : this.menu.machineSlots) {
                     InputType type = slot.getSlot().inputType();
                     if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
                         this.drawSlotOverlay(graphics, slot.x, slot.y, type.colour());

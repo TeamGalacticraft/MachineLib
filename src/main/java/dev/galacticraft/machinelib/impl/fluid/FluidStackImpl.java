@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@Deprecated
 public final class FluidStackImpl implements FluidStack {
     public static final FluidStackImpl EMPTY = new FluidStackImpl(null, null, 0);
 

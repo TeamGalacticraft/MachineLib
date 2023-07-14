@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.test.storage.builder;
 
-import dev.galacticraft.machinelib.api.storage.ResourceFilters;
-import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.filter.ResourceFilters;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.level.material.Fluids;

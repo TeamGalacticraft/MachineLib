@@ -35,7 +35,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
+import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.Unpooled;
 import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
@@ -81,7 +81,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     /**
      * The machine this menu is for.
      */
-    public final AutomatableSlot[] machineSlots;
+    public final StorageSlot[] machineSlots;
     /**
      * The tanks contained in this menu.
      */
@@ -115,11 +115,11 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
         this.levelAccess = ContainerLevelAccess.create(machine.getLevel(), machine.getBlockPos());
 
-        this.machineSlots = new AutomatableSlot[this.itemStorage.size()];
+        this.machineSlots = new StorageSlot[this.itemStorage.size()];
 
         int index = 0;
         for (ItemResourceSlot slot : this.itemStorage) {
-            AutomatableSlot slot1 = new AutomatableSlot(this.itemStorage, slot, index, this.playerUUID);
+            StorageSlot slot1 = new StorageSlot(this.itemStorage, slot, index, this.playerUUID);
             this.addSlot(slot1);
             this.machineSlots[index++] = slot1;
         }
@@ -162,11 +162,11 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.fluidStorage = type.createFluidStorage();
         this.fluidStorage.readPacket(buf);
 
-        this.machineSlots = new AutomatableSlot[this.itemStorage.size()];
+        this.machineSlots = new StorageSlot[this.itemStorage.size()];
 
         int index = 0;
         for (ItemResourceSlot slot : this.itemStorage) {
-            AutomatableSlot slot1 = new AutomatableSlot(this.itemStorage, slot, index, this.playerUUID);
+            StorageSlot slot1 = new StorageSlot(this.itemStorage, slot, index, this.playerUUID);
             this.addSlot(slot1);
             this.machineSlots[index++] = slot1;
         }
@@ -230,17 +230,17 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         int size = this.machineSlots.length;
 
         if (slotId < size) {
-            assert slot instanceof AutomatableSlot;
-            ResourceSlot<Item> slot1 = ((AutomatableSlot) slot).getSlot();
+            assert slot instanceof StorageSlot;
+            ResourceSlot<Item> slot1 = ((StorageSlot) slot).getSlot();
             this.quickMoveIntoPlayerInventory(slot1);
             return ItemStackUtil.create(slot1);
         } else {
-            assert !(slot instanceof AutomatableSlot);
+            assert !(slot instanceof StorageSlot);
             ItemStack stack1 = slot.getItem();
             if (stack1.isEmpty()) return ItemStack.EMPTY;
 
             int insert = stack1.getCount();
-            for (AutomatableSlot slot1 : this.machineSlots) {
+            for (StorageSlot slot1 : this.machineSlots) {
                 if (slot1.getSlot().inputType().playerInsertion() && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
                     insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
                     if (insert == 0) break;
@@ -251,7 +251,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                 slot.set(ItemStack.EMPTY);
                 return ItemStack.EMPTY;
             } else {
-                for (AutomatableSlot slot1 : this.machineSlots) {
+                for (StorageSlot slot1 : this.machineSlots) {
                     if (slot1.mayPlace(stack1)) {
                         insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
                         if (insert == 0) break;
@@ -277,7 +277,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         int size = this.slots.size() - 1;
         for (int i = size; i >= this.machineSlots.length; i--) {
             Slot slot1 = this.slots.get(i);
-            assert !(slot1 instanceof AutomatableSlot);
+            assert !(slot1 instanceof StorageSlot);
             if (ItemStack.isSameItemSameTags(itemStack, slot1.getItem())) {
                 itemStack = slot1.safeInsert(itemStack);
                 if (itemStack.isEmpty()) break;
