@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.api.util;
 
+import dev.galacticraft.machinelib.api.storage.SlotProvider;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -44,7 +44,7 @@ public final class GenericApiUtil {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
-    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable SlotGroup<Resource, ?, ?> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable SlotProvider<Resource, ?> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
         StoragePreconditions.notNegative(maxAmount);
 
@@ -65,7 +65,7 @@ public final class GenericApiUtil {
         return 0;
     }
 
-    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable SlotGroup<Resource, ?, ?> to, long maxAmount, @Nullable TransactionContext context) {
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable SlotProvider<Resource, ?> to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
         StoragePreconditions.notNegative(maxAmount);
 
@@ -87,7 +87,7 @@ public final class GenericApiUtil {
     }
 
 
-    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable ResourceSlot<Resource, ?> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable ResourceSlot<Resource> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
         StoragePreconditions.notNegative(maxAmount);
 
@@ -108,7 +108,7 @@ public final class GenericApiUtil {
         return 0;
     }
 
-    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable ResourceSlot<Resource, ?> to, long maxAmount, @Nullable TransactionContext context) {
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable S from, @Nullable ResourceSlot<Resource> to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
         StoragePreconditions.notNegative(maxAmount);
 

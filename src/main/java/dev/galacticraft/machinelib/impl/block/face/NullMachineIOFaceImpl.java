@@ -22,8 +22,6 @@
 
 package dev.galacticraft.machinelib.impl.block.face;
 
-import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
@@ -31,8 +29,6 @@ import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineIOFaceSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -40,15 +36,12 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public final class NullMachineIOFaceImpl implements MachineIOFace {
@@ -74,7 +67,7 @@ public final class NullMachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage) {
+    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage) {
         if (this.cachedItemStorage == null) {
             this.cachedItemStorage = ExposedStorage.createFullItem(storage);
         }
@@ -82,7 +75,7 @@ public final class NullMachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage) {
+    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage) {
         if (this.cachedFluidStorage == null) {
             this.cachedFluidStorage = ExposedStorage.createFullFluid(storage);
         }
@@ -95,11 +88,6 @@ public final class NullMachineIOFaceImpl implements MachineIOFace {
             this.cachedEnergyStorage = storage.getExposedStorage(ResourceFlow.BOTH);
         }
         return this.cachedEnergyStorage;
-    }
-
-    @Override
-    public List<SlotGroupType> getFlowMatchingGroups(MachineBlockEntity machine) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

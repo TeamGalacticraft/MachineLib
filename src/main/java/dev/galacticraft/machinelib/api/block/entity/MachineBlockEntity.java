@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.api.block.entity;
 
 import dev.galacticraft.machinelib.api.block.MachineBlock;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
@@ -35,12 +34,8 @@ import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.cache.AdjacentBlockApiCache;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
@@ -231,7 +226,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
      *
      * @return The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
-     * @see #drainPowerToStack(SlotGroupType)
+     * @see #drainPowerToStack(int)
      * @see #getEnergyItemExtractionRate()
      */
     @Contract(pure = true)
@@ -243,7 +238,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
      *
      * @return The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
-     * @see #chargeFromStack(SlotGroupType)
+     * @see #chargeFromStack(int)
      * @see #getEnergyItemInsertionRate()
      */
     @Contract(pure = true)
@@ -378,21 +373,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.disableDrops;
     }
 
-    /**
-     * Returns the relevant storage when given an explicit resource type.
-     * Generic resource types like {@link ResourceType#ANY any} or {@link ResourceType#NONE} will return {@code null}
-     *
-     * @param type The type of resource to get a storage for.
-     * @return the relevant storage.
-     */
-    @Contract(pure = true)
-    public @Nullable ResourceStorage<?, ?, ?, ?> getResourceStorage(@NotNull ResourceType type) {
-        return switch (type) {
-            case ITEM -> this.itemStorage();
-            case FLUID -> this.fluidStorage();
-            default -> null;
-        };
-    }
 
     /**
      * Returns whether the current machine is enabled.
@@ -695,51 +675,44 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Tries to charge this machine from the item in the given slot in this {@link #itemStorage()}.
      */
-    protected void chargeFromStack(SlotGroupType type) {
+    protected void chargeFromStack(int slot) {
         if (this.energyStorage().isFull()) return;
 
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(type)) {
-            EnergyStorage energyStorage = slot.find(EnergyStorage.ITEM);
-            if (energyStorage != null && energyStorage.supportsExtraction()) {
-                EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), null);
-            }
+        EnergyStorage energyStorage = this.itemStorage.getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsExtraction()) {
+            EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), null);
         }
     }
 
     /**
      * Tries to drain some of this machine's power into the item in the given slot in this {@link #itemStorage}.
      */
-    protected void drainPowerToStack(SlotGroupType type) {
+    protected void drainPowerToStack(int slot) {
         if (this.energyStorage().isEmpty()) return;
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(type)) {
-            EnergyStorage energyStorage = slot.find(EnergyStorage.ITEM);
-            if (energyStorage != null && energyStorage.supportsInsertion()) {
-                EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), null);
-            }
+        EnergyStorage energyStorage = this.itemStorage.getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsInsertion()) {
+            EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), null);
         }
     }
 
-    protected void takeFluidFromStack(SlotGroupType slotType, SlotGroupType tankType, Fluid fluid) {
-        SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage().getGroup(tankType);
-        if (group.isFull()) return;
-
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(slotType)) {
-            Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
-            if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.move(FluidVariant.of(fluid), storage, group, Integer.MAX_VALUE, null);
-            }
+    protected void takeFluidFromStack(int inputSlot, int tankSlot, Fluid fluid) {
+        FluidResourceSlot tank = this.fluidStorage().getSlot(tankSlot);
+        if (tank.isFull()) return;
+        ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
+        Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
+        if (storage != null && storage.supportsExtraction()) {
+            GenericApiUtil.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
         }
     }
 
-    protected void insertFluidToStack(SlotGroupType slotType, SlotGroupType tankType, Fluid fluid) {
-        SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage().getGroup(tankType);
-        if (group.isEmpty()) return;
+    protected void insertFluidToStack(int inputSlot, int tankSlot, Fluid fluid) {
+        FluidResourceSlot tank = this.fluidStorage().getSlot(tankSlot);
+        if (tank.isEmpty()) return;
 
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(slotType)) {
-            Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
-            if (storage != null && storage.supportsInsertion()) {
-                GenericApiUtil.move(FluidVariant.of(fluid), group, storage, Integer.MAX_VALUE, null);
-            }
+        ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
+        Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
+        if (storage != null && storage.supportsInsertion()) {
+            GenericApiUtil.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
         }
     }
 

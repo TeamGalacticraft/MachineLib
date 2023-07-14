@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.test.storage.builder;
 
 import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import net.minecraft.resources.ResourceLocation;
@@ -38,7 +39,7 @@ public class ItemResourceSlotBuilderTest implements JUnitTest {
     
     @BeforeEach
     public void setup() {
-        this.builder = ItemResourceSlot.builder();
+        this.builder = ItemResourceSlot.builder(InputType.STORAGE);
     }
 
     @Test

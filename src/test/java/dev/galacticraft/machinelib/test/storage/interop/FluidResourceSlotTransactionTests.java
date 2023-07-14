@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.test.storage.interop;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
@@ -45,12 +46,12 @@ public sealed class FluidResourceSlotTransactionTests implements JUnitTest {
 
     @BeforeEach
     public void setup() {
-        this.slot = FluidResourceSlot.create(TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.slot).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.slot).isSane());
     }
 
     public static final class TransactionCancelledTests extends FluidResourceSlotTransactionTests {

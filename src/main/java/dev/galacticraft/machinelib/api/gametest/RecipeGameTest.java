@@ -26,26 +26,26 @@ import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.api.storage.SlotProvider;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Rotation;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineGameTest<Machine> {
-    private final @Nullable SlotGroupType inputSlots;
-    private final @Nullable SlotGroupType outputSlots;
+    private final @NotNull SlotProvider<Item, ItemResourceSlot> inputSlots;
+    private final @NotNull SlotProvider<Item, ItemResourceSlot> outputSlots;
 
-    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, @Nullable SlotGroupType inputSlots, @Nullable SlotGroupType outputSlots) {
+    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, @NotNull SlotProvider<Item, ItemResourceSlot> inputSlots, @NotNull SlotProvider<Item, ItemResourceSlot> outputSlots) {
         super(type);
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
@@ -56,20 +56,17 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
     protected abstract void createValidRecipe(@NotNull MachineItemStorage storage);
 
     protected boolean recipeCrafted(@NotNull MachineItemStorage storage) {
-        assert this.outputSlots != null;
-        return !storage.getGroup(this.outputSlots).isEmpty();
+        return !this.outputSlots.isEmpty();
     }
 
     protected void createInvalidRecipe(@NotNull MachineItemStorage storage) {
-        assert this.inputSlots != null;
-        for (ItemResourceSlot itemResourceSlot : storage.getGroup(this.inputSlots)) {
+        for (ItemResourceSlot itemResourceSlot : this.inputSlots) {
             itemResourceSlot.set(Items.BARRIER, 1);
         }
     }
 
     protected void fillOutputSlots(@NotNull MachineItemStorage storage) {
-        assert this.outputSlots != null;
-        for (ItemResourceSlot itemResourceSlot : storage.getGroup(this.outputSlots)) {
+        for (ItemResourceSlot itemResourceSlot : this.outputSlots) {
             itemResourceSlot.set(Items.BARRIER, 1);
         }
     }

@@ -28,7 +28,6 @@ import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
-import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -44,6 +43,9 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class GeneratorBlockEntity extends MachineBlockEntity {
+    public static final int BATTERY_SLOT = 0;
+    public static final int FUEL_SLOT = 1;
+
     public static final int GENERATION_RATE = 250;
     private final ItemResourceSlot fuelInput;
     private int burnTime = 0;
@@ -51,7 +53,7 @@ public class GeneratorBlockEntity extends MachineBlockEntity {
 
     public GeneratorBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.GENERATOR, pos, state);
-        this.fuelInput = this.itemStorage().getSlot(TestModSlotGroupTypes.SOLID_FUEL);
+        this.fuelInput = this.itemStorage().getSlot(FUEL_SLOT);
 
     }
 
@@ -59,7 +61,7 @@ public class GeneratorBlockEntity extends MachineBlockEntity {
     protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(level, pos, state, profiler);
         profiler.push("power_drain");
-        this.drainPowerToStack(TestModSlotGroupTypes.CHARGE);
+        this.drainPowerToStack(BATTERY_SLOT);
         profiler.pop();
         this.trySpreadEnergy(level, state);
     }

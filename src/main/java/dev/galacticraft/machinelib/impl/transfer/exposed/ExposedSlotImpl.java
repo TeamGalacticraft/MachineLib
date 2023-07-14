@@ -30,12 +30,12 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ExposedSlotImpl<Resource, Stack, Variant extends TransferVariant<Resource>> implements ExposedSlot<Resource, Variant> {
-    private final @NotNull ResourceSlot<Resource, Stack> slot;
+public abstract class ExposedSlotImpl<Resource, Variant extends TransferVariant<Resource>> implements ExposedSlot<Resource, Variant> {
+    private final @NotNull ResourceSlot<Resource> slot;
     private final boolean insertion;
     private final boolean extraction;
 
-    public ExposedSlotImpl(@NotNull ResourceSlot<Resource, Stack> slot, boolean insertion, boolean extraction) {
+    public ExposedSlotImpl(@NotNull ResourceSlot<Resource> slot, boolean insertion, boolean extraction) {
         this.slot = slot;
         this.insertion = insertion;
         this.extraction = extraction;

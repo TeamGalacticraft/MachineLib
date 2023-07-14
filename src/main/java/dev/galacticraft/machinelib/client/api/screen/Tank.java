@@ -23,13 +23,11 @@
 package dev.galacticraft.machinelib.client.api.screen;
 
 import com.google.common.base.Preconditions;
-import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.menu.TankImpl;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
@@ -129,7 +127,7 @@ public interface Tank {
     boolean acceptStack(@NotNull ContainerItemContext context);
 
     @ApiStatus.Internal
-    ResourceSlot<Fluid, FluidStack> getSlot();
+    ResourceSlot<Fluid> getSlot();
 
     InputType getInputType();
 }

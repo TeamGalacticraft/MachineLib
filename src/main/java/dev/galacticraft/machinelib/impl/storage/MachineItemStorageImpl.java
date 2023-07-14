@@ -22,177 +22,61 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
-import com.google.common.collect.Iterators;
-import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
+import dev.galacticraft.machinelib.impl.Utils;
+import dev.galacticraft.machinelib.impl.storage.slot.ResourceStorageImpl;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-public class MachineItemStorageImpl implements MachineItemStorage {
-    private final SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups;
-    private final SlotGroupType[] types;
-    private final Map<SlotGroupType, SlotGroup<Item, ItemStack, ItemResourceSlot>> typeToGroup;
-    private final ItemResourceSlot[] allSlots;
-    private long modifications = 0;
-    private Runnable listener;
-    private TransactionContext cachedTransaction;
-
-    public MachineItemStorageImpl(SlotGroupType[] types, SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
-        this.groups = groups;
-        this.types = types;
-        this.typeToGroup = new IdentityHashMap<>(this.groups.length);
-        int slots = 0;
-        for (int i = 0; i < this.groups.length; i++) {
-            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.groups[i];
-            group._setParent(this);
-            this.typeToGroup.put(this.types[i], group);
-            slots += group.getSlots().length;
-        }
-        this.allSlots = new ItemResourceSlot[slots];
-        slots = 0;
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            for (ItemResourceSlot slot : group.getSlots()) {
-                this.allSlots[slots++] = slot;
-            }
-        }
+public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResourceSlot> implements MachineItemStorage {
+    public MachineItemStorageImpl(@NotNull ItemResourceSlot @NotNull [] slots) {
+        super(slots);
     }
 
     @Override
-    public long getModifications() {
-        return this.modifications;
+    public int getContainerSize() {
+        return this.size();
     }
 
     @Override
-    public int groups() {
-        return this.groups.length;
+    public @NotNull ItemStack getItem(int i) {
+        return ItemStackUtil.copy(this.getSlot(i));
     }
 
     @Override
-    public @NotNull SlotGroup<Item, ItemStack, ItemResourceSlot> getGroup(@NotNull SlotGroupType type) {
-        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.typeToGroup.get(type);
-        assert group != null;
-        return group;
+    public @NotNull ItemStack removeItem(int slot, int amount) {
+        Utils.breakpointMe("attempted to remove item from recipe test container!");
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public @NotNull ItemResourceSlot getSlot(@NotNull SlotGroupType type) {
-        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.getGroup(type);
-        assert group.size() == 1;
-        return group.getSlot(0);
+    public @NotNull ItemStack removeItemNoUpdate(int i) {
+        Utils.breakpointMe("attempted to remove item from recipe test container!");
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public @NotNull SlotGroupType @NotNull [] getTypes() {
-        return this.types;
+    public void setItem(int i, ItemStack itemStack) {
+        Utils.breakpointMe("attempted to modify item from recipe test container!");
     }
 
     @Override
-    public int slots() {
-        return this.allSlots.length;
+    public void setChanged() {
+        Utils.breakpointMe("attempted to mark recipe test container as modified!");
     }
 
     @Override
-    public ItemResourceSlot[] getSlots() {
-        return this.allSlots;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<SlotGroup<Item, ItemStack, ItemResourceSlot>> iterator() {
-        return Iterators.forArray(this.groups);
+    public boolean stillValid(Player player) {
+        Utils.breakpointMe("testing player validity of inv view");
+        return false;
     }
 
     @Override
-    public void revertModification() {
-        this.modifications--;
-    }
-
-    @Override
-    public void markModified(@Nullable TransactionContext context) {
-        if (context != null) {
-            this.modifications++;
-            context.addCloseCallback((context1, result) -> {
-                if (result.wasAborted()) {
-                    this.modifications--;
-                } else {
-                    if (this.listener != null) {
-                        TransactionContext outer = context1.nestingDepth() != 0 ? context1.getOpenTransaction(0) : context1;
-                        if (this.cachedTransaction != outer) {
-                            this.cachedTransaction = outer;
-                            context.addOuterCloseCallback((result1) -> {
-                                if (result1.wasCommitted()) this.listener.run();
-                            });
-                        }
-                    }
-                }
-            });
-        } else {
-            this.markModified();
-        }
-    }
-
-    @Override
-    public void markModified() {
-        this.modifications++;
-        if (this.listener != null) this.listener.run();
-    }
-
-    @Override
-    public void setListener(Runnable listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public @NotNull ListTag createTag() {
-        ListTag tag = new ListTag();
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            tag.add(group.createTag());
-        }
-        return tag;
-    }
-
-    @Override
-    public void readTag(@NotNull ListTag tag) {
-        for (int i = 0; i < tag.size(); i++) {
-            this.groups[i].readTag(tag.getList(i));
-        }
-    }
-
-    @Override
-    public void writePacket(@NotNull FriendlyByteBuf buf) {
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            group.writePacket(buf);
-        }
-    }
-
-    @Override
-    public void readPacket(@NotNull FriendlyByteBuf buf) {
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            group.readPacket(buf);
-        }
-    }
-
-    @Override
-    public @NotNull Container getCraftingView(@NotNull SlotGroupType type) {
-        return ((Container) this.getGroup(type));
-    }
-
-    @Override
-    public @Nullable MenuSyncHandler createSyncHandler() {
-        return new ResourceStorageSyncHandler<>(this);
+    public void clearContent() {
+        Utils.breakpointMe("attempted to clear items in a recipe test container!");
     }
 }

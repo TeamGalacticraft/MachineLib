@@ -22,16 +22,15 @@
 
 package dev.galacticraft.machinelib.test.storage.extraction;
 
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import dev.galacticraft.machinelib.test.Utils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,20 +38,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public sealed class ItemSingletonSlotGroupExtractionTests implements JUnitTest {
-    protected SlotGroup<Item, ItemStack, ItemResourceSlot> group;
+public sealed class ItemStorageExtractionTests implements JUnitTest {
+    protected MachineItemStorage group;
 
     @BeforeEach
     public void setup() {
-        this.group = SlotGroup.ofItem(ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.any()));
+        this.group = MachineItemStorage.create(ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.any()));
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.group.getSlot(0)).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.group.getSlot(0)).isSane());
     }
 
-    public static final class ExtractionFailureTests extends ItemSingletonSlotGroupExtractionTests {
+    public static final class ExtractionFailureTests extends ItemStorageExtractionTests {
         @Test
         public void empty() {
             assertTrue(this.group.isEmpty());
@@ -119,7 +118,7 @@ public sealed class ItemSingletonSlotGroupExtractionTests implements JUnitTest {
         }
     }
 
-    public static final class ExtractionSuccessTests extends ItemSingletonSlotGroupExtractionTests {
+    public static final class ExtractionSuccessTests extends ItemStorageExtractionTests {
         @Test
         public void exact_typed() {
             this.group.getSlot(0).set(Items.GOLD_INGOT, 1);

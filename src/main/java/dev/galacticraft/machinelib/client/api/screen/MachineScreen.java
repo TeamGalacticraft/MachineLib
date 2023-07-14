@@ -34,15 +34,16 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
+import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
 import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
@@ -900,11 +901,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             }
             if (config != null && config.getType().willAcceptResource(ResourceType.ITEM)) {
                 for (AutomatableSlot slot : this.menu.machineSlots) {
-                    SlotGroupType type = slot.getType();
-                    if (type.inputType().getExternalFlow() != null && type.inputType().getExternalFlow().canFlowIn(config.getFlow())) {
-                        int color = type.color();
-                        this.drawSlotOutline(graphics, slot.x, slot.y, color);
-                        this.drawSlotOverlay(graphics, slot.x, slot.y, color);
+                    InputType type = slot.getSlot().inputType();
+                    if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
+                        this.drawSlotOverlay(graphics, slot.x, slot.y, type.colour());
                     }
                 }
             }
@@ -1019,8 +1018,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         // Format: NONE, any [any][out][in], fluid [any][out][in], item [any][out][in], energy [any][out][in]
         short bits = 0b0_000_000_000_000;
 
-        for (SlotGroupType groupType : this.menu.fluidStorage.getTypes()) {
-            InputType inputType = groupType.inputType();
+        for (FluidResourceSlot slot : this.menu.fluidStorage) {
+            InputType inputType = slot.inputType();
             if (inputType.externalInsertion()) bits |= 0b001;
             if (inputType.externalExtraction()) bits |= 0b010;
             if ((bits & 0b011) == 0b011) break;
@@ -1028,8 +1027,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         if ((bits & 0b011) == 0b011) bits |= 0b100;
         bits <<= 3;
 
-        for (SlotGroupType groupType : this.menu.itemStorage.getTypes()) {
-            InputType inputType = groupType.inputType();
+        for (ItemResourceSlot slot : this.menu.itemStorage) {
+            InputType inputType = slot.inputType();
             if (inputType.externalInsertion()) bits |= 0b001;
             if (inputType.externalExtraction()) bits |= 0b010;
             if ((bits & 0b011) == 0b011) break;

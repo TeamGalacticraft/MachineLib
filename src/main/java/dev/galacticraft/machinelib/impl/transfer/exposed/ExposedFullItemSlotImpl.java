@@ -26,12 +26,11 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExposedFullItemSlotImpl extends ExposedFullSlotImpl<Item, ItemStack, ItemVariant> {
-    public ExposedFullItemSlotImpl(@NotNull ResourceSlot<Item, ItemStack> slot) {
+public class ExposedFullItemSlotImpl extends ExposedFullSlotImpl<Item, ItemVariant> {
+    public ExposedFullItemSlotImpl(@NotNull ResourceSlot<Item> slot) {
         super(slot);
     }
 

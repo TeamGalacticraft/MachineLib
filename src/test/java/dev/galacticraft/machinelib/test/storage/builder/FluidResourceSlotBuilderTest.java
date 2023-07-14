@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.test.storage.builder;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
@@ -37,7 +38,7 @@ public class FluidResourceSlotBuilderTest implements JUnitTest {
     
     @BeforeEach
     public void setup() {
-        this.builder = FluidResourceSlot.builder();
+        this.builder = FluidResourceSlot.builder(InputType.STORAGE);
     }
 
     @Test

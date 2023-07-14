@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.test.storage.insertion;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
@@ -45,12 +45,12 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
 
     @BeforeEach
     public void setup() {
-        this.slot = FluidResourceSlot.create(TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.slot).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.slot).isSane());
     }
 
     public static final class InsertionFailureTests extends FluidResourceSlotInsertionTests {
@@ -61,7 +61,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.WATER, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
         }
 
         @Test
@@ -71,7 +70,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.LAVA, FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.LAVA, FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.LAVA, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.LAVA, FluidConstants.BUCKET)));
 
             assertEquals(this.slot.getAmount(), FluidConstants.BUCKET);
         }
@@ -83,7 +81,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET)));
 
             assertTrue(slot.isEmpty());
         }
@@ -95,7 +92,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET)));
 
             assertEquals(this.slot.getAmount(), FluidConstants.BUCKET);
         }
@@ -107,7 +103,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.WATER, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
 
             assertEquals(this.slot.getAmount(), FluidConstants.BUCKET);
         }
@@ -119,7 +114,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.slot.tryInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.slot.insert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insertStack(FluidStack.create(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET)));
 
             assertEquals(this.slot.getAmount(), FluidConstants.BUCKET);
         }
@@ -137,7 +131,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void empty_stack() {
-            assertEquals(FluidConstants.BUCKET, this.slot.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
 
             assertEquals(FluidConstants.BUCKET, this.slot.getAmount());
         }
@@ -153,7 +146,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void toCapacity_stack() {
-            assertEquals(CAPACITY, this.slot.insertStack(FluidStack.create(Fluids.WATER, CAPACITY)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -168,7 +160,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void overCapacity_stack() {
-            assertEquals(CAPACITY, this.slot.insertStack(FluidStack.create(Fluids.WATER, CAPACITY + FluidConstants.BOTTLE)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -198,7 +189,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
         public void preFill_stack() {
             CompoundTag tag = Utils.generateNbt();
             this.slot.set(Fluids.WATER, tag, FluidConstants.BUCKET);
-            assertEquals(FluidConstants.BUCKET * 6, this.slot.insertStack(FluidStack.create(Fluids.WATER, tag, FluidConstants.BUCKET * 6)));
 
             assertEquals(FluidConstants.BUCKET * 7, this.slot.getAmount());
         }
@@ -227,7 +217,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             CompoundTag tag = Utils.generateNbt();
             this.slot.set(Fluids.WATER, tag, FluidConstants.BUCKET * 12);
 
-            assertEquals(FluidConstants.BUCKET * 4, this.slot.insertStack(FluidStack.create(Fluids.WATER, tag, FluidConstants.BUCKET * 7)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }

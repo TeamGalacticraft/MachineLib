@@ -29,7 +29,6 @@ import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
-import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -46,6 +45,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MelterBlockEntity extends MachineBlockEntity {
+    public static final int BATTERY_SLOT = 0;
+    public static final int INPUT_SLOT = 1;
+    public static final int LAVA_OUTPUT_SLOT = 2;
+    public static final int LAVA_TANK = 0;
+
     public static final long GENERATION_RATE = (FluidConstants.BUCKET / 4) * 3; // 75% efficiency
     public static final long ENERGY_USAGE = 250;
     public static final int PROCESSING_TIME = 200;
@@ -57,15 +61,15 @@ public class MelterBlockEntity extends MachineBlockEntity {
 
     public MelterBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.MELTER, pos, state);
-        this.itemInput = this.itemStorage().getSlot(TestModSlotGroupTypes.INPUTS);
-        this.fluidOutput = this.fluidStorage().getSlot(TestModSlotGroupTypes.LAVA);
+        this.itemInput = this.itemStorage().getSlot(INPUT_SLOT);
+        this.fluidOutput = this.fluidStorage().getSlot(LAVA_TANK);
     }
 
     @Override
     protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(level, pos, state, profiler);
         profiler.push("charge_stack");
-        this.chargeFromStack(TestModSlotGroupTypes.CHARGE);
+        this.chargeFromStack(BATTERY_SLOT);
         profiler.pop();
         this.trySpreadFluids(level, state);
     }

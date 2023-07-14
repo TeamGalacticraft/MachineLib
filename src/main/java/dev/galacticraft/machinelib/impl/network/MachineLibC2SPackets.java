@@ -23,19 +23,18 @@
 package dev.galacticraft.machinelib.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import io.netty.buffer.ByteBufAllocator;
 import lol.bai.badpackets.api.C2SPacketReceiver;
 import lol.bai.badpackets.api.PacketSender;
@@ -172,7 +171,7 @@ public final class MachineLibC2SPackets {
     private static boolean acceptStack(@NotNull Tank tank, @NotNull ContainerItemContext context) {
         Storage<FluidVariant> storage = context.find(FluidStorage.ITEM);
         if (storage != null) {
-            ResourceSlot<Fluid, FluidStack> slot = tank.getSlot();
+            ResourceSlot<Fluid> slot = tank.getSlot();
             InputType type = tank.getInputType();
             if (storage.supportsExtraction() && type.playerInsertion()) {
                     FluidVariant storedResource;

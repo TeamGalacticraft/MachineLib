@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public interface MutableModifiable extends Modifiable {
-    void revertModification();
-
     void markModified(@Nullable TransactionContext context);
 
     void markModified();

@@ -20,23 +20,24 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.storage.slot;
+package dev.galacticraft.machinelib.api.storage.io;
 
-import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 public enum InputType {
-    INPUT(true, false, true), // external: insertion only, players: insertion and extraction allowed
-    OUTPUT(false, true, false), // external: extraction only, players: extraction only
-    STORAGE(true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
-    TRANSFER(false, false, true); // external: immutable, players: insertion and extraction allowed - e.g. battery slots
+    INPUT(0x009001, true, false, true), // external: insertion only, players: insertion and extraction allowed
+    OUTPUT(0xa7071e, false, true, false), // external: extraction only, players: extraction only
+    STORAGE(0x008d90, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
+    TRANSFER(0x908400, false, false, true); // external: immutable, players: insertion and extraction allowed - e.g. battery slots
 
+    private final int colour;
     private final boolean externalInsert;
     private final boolean externalExtract;
     private final boolean playerInsert;
 
-    InputType(boolean externalInsert, boolean externalExtract, boolean playerInsert) {
+    InputType(int colour, boolean externalInsert, boolean externalExtract, boolean playerInsert) {
+        this.colour = colour;
         this.externalInsert = externalInsert;
         this.externalExtract = externalExtract;
         this.playerInsert = playerInsert;
@@ -65,5 +66,9 @@ public enum InputType {
     @Contract(pure = true)
     public boolean playerExtraction() {
         return true;
+    }
+
+    public int colour() {
+        return this.colour;
     }
 }

@@ -22,27 +22,24 @@
 
 package dev.galacticraft.machinelib.api.transfer.exposed;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedStorageImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ExposedStorage<Resource, Variant extends TransferVariant<Resource>> extends Storage<Variant> {
     @Contract("_, _ -> new")
-    static @NotNull ExposedStorage<Item, ItemVariant> createItem(ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage, ResourceFlow flow) {
-        ResourceSlot<Item, ItemStack>[] rawSlots = storage.getSlots();
+    static @Nullable ExposedStorage<Item, ItemVariant> createItem(ResourceStorage<Item, ? extends ResourceSlot<Item>> storage, ResourceFlow flow) {
+        if (storage.size() == 0) return null;
+        ResourceSlot<Item>[] rawSlots = storage.getSlots();
         ExposedSlot<Item, ItemVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
             slots[i] = ExposedSlot.createItem(rawSlots[i], flow);
@@ -51,8 +48,9 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
     }
 
     @Contract("_, _ -> new")
-    static @NotNull ExposedStorage<Fluid, FluidVariant> createFluid(ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage, ResourceFlow flow) {
-        ResourceSlot<Fluid, FluidStack>[] rawSlots = storage.getSlots();
+    static @Nullable ExposedStorage<Fluid, FluidVariant> createFluid(ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage, ResourceFlow flow) {
+        if (storage.size() == 0) return null;
+        ResourceSlot<Fluid>[] rawSlots = storage.getSlots();
         ExposedSlot<Fluid, FluidVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
             slots[i] = ExposedSlot.createFluid(rawSlots[i], flow);
@@ -60,9 +58,9 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         return new ExposedStorageImpl<>(storage, slots);
     }
 
-    static @Nullable ExposedStorage<Item, ItemVariant> createFullItem(ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage) {
-        if (storage.slots() == 0) return null;
-        ResourceSlot<Item, ItemStack>[] rawSlots = storage.getSlots();
+    static @Nullable ExposedStorage<Item, ItemVariant> createFullItem(ResourceStorage<Item, ? extends ResourceSlot<Item>> storage) {
+        if (storage.size() == 0) return null;
+        ResourceSlot<Item>[] rawSlots = storage.getSlots();
         ExposedSlot<Item, ItemVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
             slots[i] = ExposedSlot.createFullItem(rawSlots[i]);
@@ -70,9 +68,9 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         return new ExposedStorageImpl<>(storage, slots);
     }
 
-    static @Nullable ExposedStorage<Fluid, FluidVariant> createFullFluid(ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage) {
-        if (storage.slots() == 0) return null;
-        ResourceSlot<Fluid, FluidStack>[] rawSlots = storage.getSlots();
+    static @Nullable ExposedStorage<Fluid, FluidVariant> createFullFluid(ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage) {
+        if (storage.size() == 0) return null;
+        ResourceSlot<Fluid>[] rawSlots = storage.getSlots();
         ExposedSlot<Fluid, FluidVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
             slots[i] = ExposedSlot.createFullFluid(rawSlots[i]);

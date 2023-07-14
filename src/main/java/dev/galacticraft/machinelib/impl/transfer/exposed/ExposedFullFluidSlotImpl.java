@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.impl.transfer.exposed;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.nbt.CompoundTag;
@@ -30,8 +29,8 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExposedFullFluidSlotImpl extends ExposedFullSlotImpl<Fluid, FluidStack, FluidVariant> {
-    public ExposedFullFluidSlotImpl(@NotNull ResourceSlot<Fluid, FluidStack> slot) {
+public class ExposedFullFluidSlotImpl extends ExposedFullSlotImpl<Fluid, FluidVariant> {
+    public ExposedFullFluidSlotImpl(@NotNull ResourceSlot<Fluid> slot) {
         super(slot);
     }
 

@@ -51,7 +51,7 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
     }
 
     @Contract(pure = true)
-    static @NotNull MachineEnergyStorage of(long energyCapacity, long insertion, long extraction, boolean externalInsertion, boolean externalExtraction) {
+    static @NotNull MachineEnergyStorage create(long energyCapacity, long insertion, long extraction, boolean externalInsertion, boolean externalExtraction) {
         if (energyCapacity == 0 || insertion == 0 || extraction == 0) return empty();
 
         StoragePreconditions.notNegative(energyCapacity);
@@ -62,7 +62,7 @@ public interface MachineEnergyStorage extends EnergyStorage, Deserializable<Long
     }
 
     @Contract(pure = true)
-    static @NotNull MachineEnergyStorage of(long energyCapacity, long ioRate, boolean externalInsertion, boolean externalExtraction) {
+    static @NotNull MachineEnergyStorage create(long energyCapacity, long ioRate, boolean externalInsertion, boolean externalExtraction) {
         if (energyCapacity == 0 || ioRate == 0) return empty();
 
         StoragePreconditions.notNegative(energyCapacity);

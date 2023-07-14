@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.testmod.block.TestModMachineTypes;
-import dev.galacticraft.machinelib.testmod.slot.TestModSlotGroupTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,6 +39,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MixerBlockEntity extends MachineBlockEntity {
+    public static final int BATTERY_SLOT = 0;
+    public static final int WATER_INPUT_SLOT = 1;
+    public static final int LAVA_INPUT_SLOT = 2;
+    public static final int OUTPUT_SLOT = 3;
+
+    public static final int WATER_TANK = 0;
+    public static final int LAVA_TANK = 1;
+
     public MixerBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.MIXER, pos, state);
     }
@@ -48,7 +55,7 @@ public class MixerBlockEntity extends MachineBlockEntity {
     protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(level, pos, state, profiler);
         profiler.push("charge_stack");
-        this.chargeFromStack(TestModSlotGroupTypes.CHARGE);
+        this.chargeFromStack(BATTERY_SLOT);
         profiler.pop();
     }
 

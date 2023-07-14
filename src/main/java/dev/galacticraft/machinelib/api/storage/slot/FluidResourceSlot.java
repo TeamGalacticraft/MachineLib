@@ -22,9 +22,9 @@
 
 package dev.galacticraft.machinelib.api.storage.slot;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.FluidResourceSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
@@ -33,26 +33,27 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
-    @Contract(" -> new")
-    static @NotNull Builder builder() {
-        return new Builder();
-    }
-
-    @Contract("_, _, _ -> new")
-    static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
-        return create(display, capacity, filter, filter);
+public interface FluidResourceSlot extends ResourceSlot<Fluid> {
+    @Contract("_ -> new")
+    static @NotNull Builder builder(@NotNull InputType inputType) {
+        return new Builder(inputType);
     }
 
     @Contract("_, _, _, _ -> new")
-    static @NotNull FluidResourceSlot create(@NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
+    static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
+        return create(inputType, display, capacity, filter, filter);
+    }
+
+    @Contract("_, _, _, _, _ -> new")
+    static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
         if (capacity < 0) throw new IllegalArgumentException();
-        return new FluidResourceSlotImpl(display, capacity, filter, externalFilter);
+        return new FluidResourceSlotImpl(inputType, display, capacity, filter, externalFilter);
     }
 
     @NotNull TankDisplay getDisplay();
 
     final class Builder {
+        private final InputType inputType;
         private int x = 0;
         private int y = 0;
         private int height = 48;
@@ -62,7 +63,8 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
         private long capacity = FluidConstants.BUCKET;
 
         @Contract(pure = true)
-        private Builder() {
+        private Builder(@NotNull InputType inputType) {
+            this.inputType = inputType;
         }
 
         @Contract("_, _ -> this")
@@ -113,7 +115,7 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid, FluidStack> {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
             if (this.height < 0) throw new IllegalArgumentException("height is negative");
 
-            return FluidResourceSlot.create(TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter, this.strictFilter == null ? this.filter : this.strictFilter);
+            return FluidResourceSlot.create(this.inputType, TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter, this.strictFilter == null ? this.filter : this.strictFilter);
         }
     }
 }

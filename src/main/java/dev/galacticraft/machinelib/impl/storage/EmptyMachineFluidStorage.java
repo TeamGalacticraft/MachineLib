@@ -22,13 +22,12 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
+import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.material.Fluid;
@@ -45,20 +44,23 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
+    public @Nullable MenuSyncHandler createSyncHandler() {
+        return null;
+    }
+
+    @Override
     public long getModifications() {
         return -1;
     }
 
     @Override
-    public void revertModification() {
-    }
-
-    @Override
     public void markModified(@Nullable TransactionContext context) {
+
     }
 
     @Override
     public void markModified() {
+
     }
 
     @Override
@@ -67,23 +69,313 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
-    public int groups() {
+    public int size() {
         return 0;
     }
 
     @Override
-    public @NotNull SlotGroup<Fluid, FluidStack, FluidResourceSlot> getGroup(@NotNull SlotGroupType type) {
-        throw new UnsupportedOperationException();
+    public boolean isEmpty() {
+        return true;
     }
 
     @Override
-    public @NotNull FluidResourceSlot getSlot(@NotNull SlotGroupType type) {
-        throw new UnsupportedOperationException();
+    public boolean isFull() {
+        return true;
     }
 
     @Override
-    public @NotNull SlotGroupType @NotNull [] getTypes() {
-        return new SlotGroupType[0];
+    public FluidResourceSlot[] getSlots() {
+        return new FluidResourceSlot[0];
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Fluid fluid) {
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Fluid fluid, long amount) {
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return false;
+    }
+
+    @Override
+    public long tryInsert(@NotNull Fluid fluid, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long tryInsert(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long insert(@NotNull Fluid fluid, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long insert(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long insertMatching(@NotNull Fluid fluid, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long insertMatching(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return 0;
+    }
+
+    @Override
+    public boolean containsAny(@NotNull Fluid fluid) {
+        return false;
+    }
+
+    @Override
+    public boolean containsAny(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
+        return false;
+    }
+
+    @Override
+    public boolean canExtract(@NotNull Fluid fluid, long amount) {
+        return false;
+    }
+
+    @Override
+    public boolean canExtract(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return false;
+    }
+
+    @Override
+    public long tryExtract(@NotNull Fluid fluid, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long tryExtract(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return 0;
+    }
+
+    @Override
+    public boolean extractOne(@NotNull Fluid fluid) {
+        return false;
+    }
+
+    @Override
+    public boolean extractOne(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
+        return false;
+    }
+
+    @Override
+    public long extract(@NotNull Fluid fluid, long amount) {
+        return 0;
+    }
+
+    @Override
+    public long extract(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        return 0;
+    }
+
+    @Override
+    public @NotNull FluidResourceSlot getSlot(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public @Nullable ResourceFilter<Fluid> getFilter(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public @NotNull ResourceFilter<Fluid> getStrictFilter(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public @Nullable Fluid getResource(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long getAmount(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public @Nullable CompoundTag getTag(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public @Nullable CompoundTag copyTag(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long getCapacity(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long getCapacityFor(int slot, @NotNull Fluid fluid) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long getRealCapacity(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean isEmpty(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean isFull(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Fluid fluid) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canInsert(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long tryInsert(int slot, @NotNull Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long tryInsert(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long insert(int slot, @NotNull Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long insert(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean containsAny(int slot, @NotNull Fluid fluid) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean containsAny(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canExtract(int slot, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canExtract(int slot, @NotNull Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean canExtract(int slot, @NotNull Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long tryExtract(int slot, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long tryExtract(int slot, @Nullable Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long tryExtract(int slot, @Nullable Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean extractOne(int slot) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean extractOne(int slot, @Nullable Fluid fluid) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public boolean extractOne(int slot, @Nullable Fluid fluid, @Nullable CompoundTag tag) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long extract(int slot, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long extract(int slot, @Nullable Fluid fluid, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long extract(int slot, @Nullable Fluid fluid, @Nullable CompoundTag tag, long amount) {
+        throw new IndexOutOfBoundsException(slot);
+    }
+
+    @Override
+    public long insert(@NotNull Fluid fluid, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        return 0;
+    }
+
+    @Override
+    public long extract(@Nullable Fluid fluid, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context) {
+        return 0;
+    }
+
+    @Override
+    public void readTag(@NotNull ListTag tag) {
+
+    }
+
+    @Override
+    public void readPacket(@NotNull FriendlyByteBuf buf) {
+
     }
 
     @Override
@@ -92,35 +384,13 @@ public class EmptyMachineFluidStorage implements MachineFluidStorage {
     }
 
     @Override
-    public void readTag(@NotNull ListTag tag) {
-    }
-
-    @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-    }
 
-    @Override
-    public void readPacket(@NotNull FriendlyByteBuf buf) {
-    }
-
-    @Override
-    public int slots() {
-        return 0;
-    }
-
-    @Override
-    public FluidResourceSlot[] getSlots() {
-        return new FluidResourceSlot[0];
     }
 
     @NotNull
     @Override
-    public Iterator<SlotGroup<Fluid, FluidStack, FluidResourceSlot>> iterator() {
+    public Iterator<FluidResourceSlot> iterator() {
         return Collections.emptyIterator();
-    }
-
-    @Override
-    public @Nullable MenuSyncHandler createSyncHandler() {
-        return null;
     }
 }

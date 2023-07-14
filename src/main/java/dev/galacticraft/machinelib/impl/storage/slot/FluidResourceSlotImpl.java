@@ -22,8 +22,8 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -34,11 +34,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 
-public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> implements FluidResourceSlot {
+public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements FluidResourceSlot {
     private final @NotNull TankDisplay display;
 
-    public FluidResourceSlotImpl(@NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
-        super(filter, externalFilter, capacity);
+    public FluidResourceSlotImpl(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
+        super(inputType, filter, externalFilter, capacity);
         this.display = display;
     }
 
@@ -55,37 +55,6 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
     @Override
     public long getCapacityFor(@NotNull Fluid fluid) {
         return this.getCapacity();
-    }
-
-    @Override
-    public @NotNull FluidStack createStack() {
-        return FluidStack.create(this.getResource(), this.getTag(), this.getAmount());
-    }
-
-    @Override
-    public @NotNull FluidStack copyStack() {
-        return FluidStack.create(this.getResource(), this.copyTag(), this.getAmount());
-    }
-
-    @Override
-    public boolean canInsertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return true;
-        assert stack.getFluid() != null;
-        return this.canInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
-    }
-
-    @Override
-    public long tryInsertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getFluid() != null;
-        return this.tryInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
-    }
-
-    @Override
-    public long insertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getFluid() != null;
-        return this.insert(stack.getFluid(), stack.getTag(), stack.getAmount());
     }
 
     @Override

@@ -25,41 +25,41 @@ package dev.galacticraft.machinelib.api.storage.slot;
 import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemResourceSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, ContainerItemContext {
-    @Contract(" -> new")
-    static @NotNull Builder builder() {
-        return new Builder();
-    }
-
-    @Contract("_, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
-        return create(display, filter, filter);
+public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemContext {
+    @Contract("_ -> new")
+    static @NotNull Builder builder(InputType inputType) {
+        return new Builder(inputType);
     }
 
     @Contract("_, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
-        return create(display, filter, filter, capacity);
-    }
-
-    @Contract("_, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter) {
-        return create(display, filter, strictFilter, 64);
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
+        return create(inputType, display, filter, filter);
     }
 
     @Contract("_, _, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter, int capacity) {
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
+        return create(inputType, display, filter, filter, capacity);
+    }
+
+    @Contract("_, _, _, _ -> new")
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter) {
+        return create(inputType, display, filter, strictFilter, 64);
+    }
+
+    @Contract("_, _, _, _, _ -> new")
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter, int capacity) {
         if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
-        return new ItemResourceSlotImpl(display, filter, strictFilter, capacity);
+        return new ItemResourceSlotImpl(inputType, display, filter, strictFilter, capacity);
     }
 
     @NotNull ItemSlotDisplay getDisplay();
@@ -68,6 +68,7 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
     long getAmount();
 
     final class Builder {
+        private final InputType inputType;
         private int x = 0;
         private int y = 0;
         private @Nullable Pair<ResourceLocation, ResourceLocation> icon = null;
@@ -77,7 +78,8 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
         private int capacity = 64;
 
         @Contract(pure = true)
-        private Builder() {
+        private Builder(InputType inputType) {
+            this.inputType = inputType;
         }
 
         @Contract("_, _ -> this")
@@ -127,7 +129,7 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
         public @NotNull ItemResourceSlot build() {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
 
-            return ItemResourceSlot.create(ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.strictFilter == null ? this.filter : this.strictFilter, this.capacity);
+            return ItemResourceSlot.create(this.inputType, ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.strictFilter == null ? this.filter : this.strictFilter, this.capacity);
         }
     }
 }

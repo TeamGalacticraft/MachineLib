@@ -24,22 +24,20 @@ package dev.galacticraft.machinelib.api.storage.slot;
 
 import dev.galacticraft.machinelib.api.storage.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.util.Deserializable;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // NO I/O CONSTRAINTS
 // Resource must be comparable by identity
-public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deserializable<CompoundTag> {
-    // FILTER DOES NOT INCLUDE NULL/EMPTY
-    @NotNull ResourceFilter<Resource> getFilter();
-
-    @NotNull ResourceFilter<Resource> getStrictFilter();
-
-    void _setParent(MutableModifiable parent);
+// FILTER DOES NOT INCLUDE NULL/EMPTY
+public interface ResourceSlot<Resource> extends MutableModifiable, Deserializable<CompoundTag> {
+    InputType inputType();
 
     @Nullable Resource getResource();
 
@@ -55,15 +53,13 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
 
     long getRealCapacity();
 
+    @NotNull ResourceFilter<Resource> getFilter();
+
+    @NotNull ResourceFilter<Resource> getStrictFilter();
+
     boolean isEmpty();
 
     boolean isFull();
-
-    // tag CANNOT be mutated!
-    @NotNull Stack createStack();
-
-    // tag can be mutated
-    @NotNull Stack copyStack();
 
     boolean canInsert(@NotNull Resource resource);
 
@@ -73,19 +69,13 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
 
     boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean canInsertStack(@NotNull Stack stack);
-
     long tryInsert(@NotNull Resource resource, long amount);
 
     long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    long tryInsertStack(@NotNull Stack stack);
-
     long insert(@NotNull Resource resource, long amount);
 
     long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
-
-    long insertStack(@NotNull Stack stack);
 
     boolean contains(@NotNull Resource resource);
 
@@ -124,4 +114,7 @@ public interface ResourceSlot<Resource, Stack> extends MutableModifiable, Deseri
     @Contract("null, !null, _ -> fail")
     void set(@Nullable Resource resource, @Nullable CompoundTag tag, long amount);
     void set(@Nullable Resource resource, long amount);
+
+    @ApiStatus.Internal
+    void _setParent(MutableModifiable parent);
 }

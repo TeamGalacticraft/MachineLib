@@ -22,14 +22,13 @@
 
 package dev.galacticraft.machinelib.impl.menu;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -57,7 +56,7 @@ import java.util.List;
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public final class TankImpl implements Tank {
-    public final ResourceSlot<Fluid, FluidStack> slot;
+    public final ResourceSlot<Fluid> slot;
     private final InputType inputType;
     private final int index;
     private final int x;
@@ -65,7 +64,7 @@ public final class TankImpl implements Tank {
     private final int height;
     public int id = -1;
 
-    public TankImpl(ResourceSlot<Fluid, FluidStack> slot, InputType inputType, int index, int x, int y, int height) {
+    public TankImpl(ResourceSlot<Fluid> slot, InputType inputType, int index, int x, int y, int height) {
         this.slot = slot;
         this.inputType = inputType;
         this.index = index;
@@ -194,7 +193,7 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public ResourceSlot<Fluid, FluidStack> getSlot() {
+    public ResourceSlot<Fluid> getSlot() {
         return this.slot;
     }
 

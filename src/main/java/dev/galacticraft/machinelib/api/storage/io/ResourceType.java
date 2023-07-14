@@ -22,19 +22,12 @@
 
 package dev.galacticraft.machinelib.api.storage.io;
 
-import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Defines the types of resource that are be stored in a storage
@@ -123,30 +116,6 @@ public enum ResourceType {
     @Contract(pure = true)
     public boolean matchesGroups() {
         return this != NONE && this != ENERGY;
-    }
-
-    public @Nullable List<@NotNull SlotGroupType> getStorageGroups(@NotNull MachineBlockEntity machine) {
-        switch (this) {
-            case ITEM, FLUID -> {
-                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(this);
-                assert storage != null;
-                return Arrays.asList(storage.getTypes());
-            }
-            case ANY -> {
-                ResourceStorage<?, ?, ?, ?> storage = machine.getResourceStorage(ResourceType.ITEM);
-                assert storage != null;
-                List<SlotGroupType> list = Arrays.asList(storage.getTypes());
-                storage = machine.getResourceStorage(ResourceType.FLUID);
-                assert storage != null;
-                for (SlotGroupType group : storage.getTypes()) {
-                    if (!list.contains(group)) list.add(group);
-                }
-                return list;
-            }
-            default -> {
-                return null;
-            }
-        }
     }
 
     /**

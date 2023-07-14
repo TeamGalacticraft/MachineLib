@@ -22,17 +22,16 @@
 
 package dev.galacticraft.machinelib.test.storage.insertion;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import dev.galacticraft.machinelib.test.Utils;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,22 +39,22 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
+public sealed class FluidStorageInsertionTests implements JUnitTest {
     private static final long CAPACITY = FluidConstants.BUCKET * 16;
     private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
-    protected SlotGroup<Fluid, FluidStack, FluidResourceSlot> group;
+    protected MachineFluidStorage group;
 
     @BeforeEach
     public void setup() {
-        this.group = SlotGroup.ofFluid(FluidResourceSlot.create(TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG))));
+        this.group = MachineFluidStorage.create(FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG))));
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.group.getSlot(0)).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.group.getSlot(0)).isSane());
     }
 
-    public static final class InsertionFailureTests extends FluidSingletonSlotGroupInsertionTests {
+    public static final class InsertionFailureTests extends FluidStorageInsertionTests {
         @Test
         public void full() {
             this.group.getSlot(0).set(Fluids.WATER, CAPACITY);
@@ -63,7 +62,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.WATER, FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
         }
 
         @Test
@@ -73,7 +71,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.LAVA, FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.LAVA, FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.LAVA, FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.LAVA, FluidConstants.BUCKET)));
 
             assertEquals(this.group.getAmount(0), FluidConstants.BUCKET);
         }
@@ -85,7 +82,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET)));
 
             assertTrue(group.isEmpty());
         }
@@ -97,7 +93,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET)));
 
             assertEquals(this.group.getAmount(0), FluidConstants.BUCKET);
         }
@@ -109,7 +104,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.WATER, FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.WATER, FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
 
             assertEquals(this.group.getAmount(0), FluidConstants.BUCKET);
         }
@@ -121,13 +115,12 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             assertFalse(this.group.canInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.group.tryInsert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.group.insert(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
-            assertEquals(0, this.group.insertStack(FluidStack.create(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET)));
 
             assertEquals(this.group.getAmount(0), FluidConstants.BUCKET);
         }
     }
 
-    public static final class InsertionSuccessTests extends FluidSingletonSlotGroupInsertionTests {
+    public static final class InsertionSuccessTests extends FluidStorageInsertionTests {
         @Test
         public void empty() {
             assertTrue(this.group.canInsert(Fluids.WATER, FluidConstants.BUCKET));
@@ -139,7 +132,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
 
         @Test
         public void empty_stack() {
-            assertEquals(FluidConstants.BUCKET, this.group.insertStack(FluidStack.create(Fluids.WATER, FluidConstants.BUCKET)));
 
             assertEquals(FluidConstants.BUCKET, this.group.getAmount(0));
         }
@@ -155,7 +147,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
 
         @Test
         public void toCapacity_stack() {
-            assertEquals(CAPACITY, this.group.insertStack(FluidStack.create(Fluids.WATER, CAPACITY)));
 
             assertEquals(CAPACITY, this.group.getAmount(0));
         }
@@ -170,7 +161,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
 
         @Test
         public void overCapacity_stack() {
-            assertEquals(CAPACITY, this.group.insertStack(FluidStack.create(Fluids.WATER, CAPACITY + FluidConstants.BOTTLE)));
 
             assertEquals(CAPACITY, this.group.getAmount(0));
         }
@@ -200,7 +190,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
         public void preFill_stack() {
             CompoundTag tag = Utils.generateNbt();
             this.group.getSlot(0).set(Fluids.WATER, tag, FluidConstants.BUCKET);
-            assertEquals(FluidConstants.BUCKET * 6, this.group.insertStack(FluidStack.create(Fluids.WATER, tag, FluidConstants.BUCKET * 6)));
 
             assertEquals(FluidConstants.BUCKET * 7, this.group.getAmount(0));
         }
@@ -229,7 +218,6 @@ public sealed class FluidSingletonSlotGroupInsertionTests implements JUnitTest {
             CompoundTag tag = Utils.generateNbt();
             this.group.getSlot(0).set(Fluids.WATER, tag, FluidConstants.BUCKET * 12);
 
-            assertEquals(FluidConstants.BUCKET * 4, this.group.insertStack(FluidStack.create(Fluids.WATER, tag, FluidConstants.BUCKET * 7)));
 
             assertEquals(CAPACITY, this.group.getAmount(0));
         }

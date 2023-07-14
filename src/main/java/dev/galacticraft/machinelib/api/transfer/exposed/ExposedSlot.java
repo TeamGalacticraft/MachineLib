@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.api.transfer.exposed;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.transfer.exposed.ExposedFluidSlotImpl;
@@ -34,28 +33,28 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExposedSlot<Resource, Variant extends TransferVariant<Resource>> extends ExposedStorage<Resource, Variant>, SingleSlotStorage<Variant> {
     @Contract("_, _ -> new")
-    static @NotNull ExposedSlot<Item, ItemVariant> createItem(@NotNull ResourceSlot<Item, ItemStack> slot, @NotNull ResourceFlow flow) {
+    static @NotNull ExposedSlot<Item, ItemVariant> createItem(@NotNull ResourceSlot<Item> slot, @NotNull ResourceFlow flow) {
         return new ExposedItemSlotImpl(slot, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
     }
 
     @Contract("_, _ -> new")
-    static @NotNull ExposedSlot<Fluid, FluidVariant> createFluid(@NotNull ResourceSlot<Fluid, FluidStack> slot, @NotNull ResourceFlow flow) {
+    static @NotNull ExposedSlot<Fluid, FluidVariant> createFluid(@NotNull ResourceSlot<Fluid> slot, @NotNull ResourceFlow flow) {
         return new ExposedFluidSlotImpl(slot, flow.canFlowIn(ResourceFlow.INPUT), flow.canFlowIn(ResourceFlow.OUTPUT));
     }
+
     @Contract("_ -> new")
-    static @NotNull ExposedSlot<Item, ItemVariant> createFullItem(@NotNull ResourceSlot<Item, ItemStack> slot) {
+    static @NotNull ExposedSlot<Item, ItemVariant> createFullItem(@NotNull ResourceSlot<Item> slot) {
         return new ExposedFullItemSlotImpl(slot);
     }
 
     @Contract("_ -> new")
-    static @NotNull ExposedSlot<Fluid, FluidVariant> createFullFluid(@NotNull ResourceSlot<Fluid, FluidStack> slot) {
+    static @NotNull ExposedSlot<Fluid, FluidVariant> createFullFluid(@NotNull ResourceSlot<Fluid> slot) {
         return new ExposedFullFluidSlotImpl(slot);
     }
 }

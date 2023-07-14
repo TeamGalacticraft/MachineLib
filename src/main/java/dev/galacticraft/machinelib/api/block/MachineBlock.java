@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
@@ -199,7 +200,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 List<ItemEntity> entities = new ArrayList<>();
                 for (ItemResourceSlot slot : inv.getSlots()) {
                     if (!slot.isEmpty()) {
-                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
+                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), ItemStackUtil.copy(slot)));
                         slot.set(null, null, 0);
                     }
                 }

@@ -23,9 +23,59 @@
 package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface SlotProvider<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>> {
-    int slots();
+public interface SlotProvider<Resource, Slot extends ResourceSlot<Resource>> extends Iterable<Slot>, Modifiable {
+    boolean isEmpty();
 
-    Slot[] getSlots();
+    boolean isFull();
+
+    boolean canInsert(@NotNull Resource resource);
+
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canInsert(@NotNull Resource resource, long amount);
+
+    boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryInsert(@NotNull Resource resource, long amount);
+
+    long tryInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insert(@NotNull Resource resource, long amount);
+
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insertMatching(@NotNull Resource resource, long amount);
+
+    long insertMatching(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean containsAny(@NotNull Resource resource);
+
+    boolean containsAny(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canExtract(@NotNull Resource resource, long amount);
+
+    boolean canExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryExtract(@NotNull Resource resource, long amount);
+
+    long tryExtract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean extractOne(@NotNull Resource resource);
+
+    boolean extractOne(@NotNull Resource resource, @Nullable CompoundTag tag);
+
+    long extract(@NotNull Resource resource, long amount);
+
+    long extract(@NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    // required for FAPI
+    long insert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
+
+    // required for FAPI
+    long extract(@Nullable Resource resource, @Nullable CompoundTag tag, long amount, @Nullable TransactionContext context);
 }

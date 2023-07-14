@@ -23,13 +23,13 @@
 package dev.galacticraft.machinelib.test.storage.insertion;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import dev.galacticraft.machinelib.test.Utils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +44,12 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
 
     @BeforeEach
     public void setup() {
-        this.slot = ItemResourceSlot.create(ItemSlotDisplay.create(0, 0), ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.slot).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.slot).isSane());
     }
 
     public static final class InsertionFailureTests extends ItemResourceSlotInsertionTests {
@@ -60,7 +60,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, 16));
-            assertEquals(0, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, 16)));
         }
 
         @Test
@@ -70,7 +69,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, 16));
-            assertEquals(0, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, 16)));
 
             assertEquals(this.slot.getAmount(), 16);
         }
@@ -82,7 +80,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-            assertEquals(0, this.slot.insertStack(Utils.itemStack(Items.GOLD_INGOT, FILTERED_TAG, 16)));
 
             assertTrue(slot.isEmpty());
         }
@@ -94,7 +91,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
-            assertEquals(0, this.slot.insertStack(Utils.itemStack(Items.GOLD_INGOT, Utils.generateNbt(), 16)));
 
             assertEquals(this.slot.getAmount(), 16);
         }
@@ -106,7 +102,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, 16));
-            assertEquals(0, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, 16)));
 
             assertEquals(this.slot.getAmount(), 16);
         }
@@ -118,7 +113,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertFalse(this.slot.canInsert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
             assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, Utils.generateNbt(), 16));
-            assertEquals(0, this.slot.insertStack(Utils.itemStack(Items.GOLD_INGOT, Utils.generateNbt(), 16)));
 
             assertEquals(this.slot.getAmount(), 16);
         }
@@ -136,7 +130,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void empty_stack() {
-            assertEquals(16, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, 16)));
 
             assertEquals(16, this.slot.getAmount());
         }
@@ -152,7 +145,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void toCapacity_stack() {
-            assertEquals(CAPACITY, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, CAPACITY)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -167,7 +159,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
 
         @Test
         public void overCapacity_stack() {
-            assertEquals(CAPACITY, this.slot.insertStack(new ItemStack(Items.GOLD_INGOT, CAPACITY + 8)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -197,7 +188,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
         public void preFill_stack() {
             CompoundTag tag = Utils.generateNbt();
             this.slot.set(Items.GOLD_INGOT, tag, 16);
-            assertEquals(48, this.slot.insertStack(Utils.itemStack(Items.GOLD_INGOT, tag, 48)));
 
             assertEquals(16 + 48, this.slot.getAmount());
         }
@@ -226,7 +216,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             CompoundTag tag = Utils.generateNbt();
             this.slot.set(Items.GOLD_INGOT, tag, 50);
 
-            assertEquals(14, this.slot.insertStack(Utils.itemStack(Items.GOLD_INGOT, tag, 16)));
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }

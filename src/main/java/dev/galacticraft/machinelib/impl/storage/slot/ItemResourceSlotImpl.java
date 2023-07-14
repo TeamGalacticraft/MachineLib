@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.impl.storage.slot;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.impl.Utils;
@@ -38,8 +39,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +46,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> implements ItemResourceSlot {
+public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements ItemResourceSlot {
     private final @NotNull ItemSlotDisplay display;
     private long cachedExpiry = -1;
     private SingleSlotStorage<ItemVariant> cachedStorage = null;
     private ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
     private Object cachedApi = null;
 
-    public ItemResourceSlotImpl(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
-        super(filter, externalFilter, capacity);
+    public ItemResourceSlotImpl(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
+        super(inputType, filter, externalFilter, capacity);
         this.display = display;
         assert capacity > 0 && capacity <= 64;
     }
@@ -68,43 +67,6 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
     @Override
     public long getCapacityFor(@NotNull Item item) {
         return Math.min(this.getCapacity(), item.getMaxStackSize());
-    }
-
-    @Override
-    public @NotNull ItemStack createStack() {
-        if (this.isEmpty()) return ItemStack.EMPTY;
-        ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
-        stack.setTag(this.getTag());
-        return stack;
-    }
-
-    @Override
-    public @NotNull ItemStack copyStack() {
-        if (this.isEmpty()) return ItemStack.EMPTY;
-        ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
-        stack.setTag(this.copyTag());
-        return stack;
-    }
-
-    @Override
-    public boolean canInsertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return true;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.canInsert(stack.getItem(), stack.getTag(), stack.getCount());
-    }
-
-    @Override
-    public long tryInsertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.tryInsert(stack.getItem(), stack.getTag(), stack.getCount());
-    }
-
-    @Override
-    public long insertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.insert(stack.getItem(), stack.getTag(), stack.getCount());
     }
 
     @Override

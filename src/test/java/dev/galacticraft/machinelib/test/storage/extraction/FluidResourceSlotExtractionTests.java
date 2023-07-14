@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.test.storage.extraction;
 
 import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.storage.io.InputType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.impl.storage.slot.ResourceSlotImpl;
@@ -42,12 +43,12 @@ public sealed class FluidResourceSlotExtractionTests implements JUnitTest {
 
     @BeforeEach
     public void setup() {
-        this.slot = FluidResourceSlot.create(TankDisplay.create(0, 0), FluidConstants.BUCKET * 16, ResourceFilters.any());
+        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), FluidConstants.BUCKET * 16, ResourceFilters.any());
     }
 
     @AfterEach
     public void verify() {
-        assertTrue(((ResourceSlotImpl<?, ?>) this.slot).isSane());
+        assertTrue(((ResourceSlotImpl<?>) this.slot).isSane());
     }
 
     public static final class ExtractionFailureTests extends FluidResourceSlotExtractionTests {

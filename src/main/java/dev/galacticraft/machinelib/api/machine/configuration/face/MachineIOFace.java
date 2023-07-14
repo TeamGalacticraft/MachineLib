@@ -24,15 +24,12 @@ package dev.galacticraft.machinelib.api.machine.configuration.face;
 
 import com.google.common.base.Preconditions;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
 import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
 import dev.galacticraft.machinelib.api.util.Deserializable;
 import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
@@ -41,14 +38,11 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
-
-import java.util.List;
 
 /**
  * Represents a face of a {@link MachineBlockEntity} that has been configured to
@@ -112,9 +106,9 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
     @Contract(pure = true)
     @NotNull ResourceFlow getFlow();
 
-    @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>, ? extends SlotGroup<Item, ItemStack, ? extends ResourceSlot<Item, ItemStack>>> storage);
+    @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage);
 
-    @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>, ? extends SlotGroup<Fluid, FluidStack, ? extends ResourceSlot<Fluid, FluidStack>>> storage);
+    @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage);
 
     /**
      * Returns the exposed energy storage of this face.
@@ -124,13 +118,4 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
      * @return The exposed energy storage of this face.
      */
     @Nullable EnergyStorage getExposedEnergyStorage(@NotNull MachineEnergyStorage storage);
-
-    /**
-     * Returns the matching slot groups for this face.
-     * Ignores face selection filtering.
-     *
-     * @param machine the machine to get the groups from.
-     * @return the matching slot groups for this face.
-     */
-    List<SlotGroupType> getFlowMatchingGroups(MachineBlockEntity machine);
 }

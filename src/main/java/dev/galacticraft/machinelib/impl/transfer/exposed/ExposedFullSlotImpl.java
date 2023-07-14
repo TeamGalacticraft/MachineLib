@@ -30,10 +30,10 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ExposedFullSlotImpl<Resource, Stack, Variant extends TransferVariant<Resource>> implements ExposedSlot<Resource, Variant> {
-    private final @NotNull ResourceSlot<Resource, Stack> slot;
+public abstract class ExposedFullSlotImpl<Resource, Variant extends TransferVariant<Resource>> implements ExposedSlot<Resource, Variant> {
+    private final @NotNull ResourceSlot<Resource> slot;
 
-    public ExposedFullSlotImpl(@NotNull ResourceSlot<Resource, Stack> slot) {
+    public ExposedFullSlotImpl(@NotNull ResourceSlot<Resource> slot) {
         this.slot = slot;
     }
 
