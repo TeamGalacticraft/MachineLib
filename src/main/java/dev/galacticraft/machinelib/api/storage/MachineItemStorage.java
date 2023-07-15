@@ -25,7 +25,6 @@ package dev.galacticraft.machinelib.api.storage;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.impl.storage.EmptyMachineItemStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
@@ -53,9 +52,14 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemResourceSl
         };
     }
 
+    @Contract(" -> new")
+    static @NotNull MachineItemStorage.Builder builder() {
+        return new Builder();
+    }
+
     @Contract(pure = true)
     static @NotNull MachineItemStorage empty() {
-        return EmptyMachineItemStorage.INSTANCE;
+        return MachineItemStorageImpl.EMPTY;
     }
 
     final class Builder implements Supplier<MachineItemStorage> {

@@ -141,11 +141,7 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
             }
         }
 
-        for (Slot slot : this.slots) {
-            inserted += slot.insert(resource, amount - inserted);
-            if (inserted == amount) break;
-        }
-        return inserted;
+        return this.insert(resource, amount - inserted) + inserted;
     }
 
     @Override
@@ -158,11 +154,7 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
             }
         }
 
-        for (Slot slot : this.slots) {
-            inserted += slot.insert(resource, tag, amount - inserted);
-            if (inserted == amount) break;
-        }
-        return inserted;
+        return this.insert(resource, tag, amount - inserted) + inserted;
     }
 
     @Override
@@ -431,6 +423,234 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
     @Override
     public long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
         return this.slots[slot].extract(resource, tag, amount);
+    }
+
+    @Override
+    public boolean isEmpty(int start, int len) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (!slot.isEmpty()) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean isFull(int start, int len) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (!slot.isFull()) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean canInsert(int start, int len, @NotNull Resource resource) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.canInsert(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.canInsert(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canInsert(int start, int len, @NotNull Resource resource, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.tryInsert(resource, amount - inserted);
+            if (inserted == amount) return true;
+        }
+        return inserted == amount;
+    }
+
+    @Override
+    public boolean canInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.tryInsert(resource, tag, amount - inserted);
+            if (inserted == amount) return true;
+        }
+        return inserted == amount;
+    }
+
+    @Override
+    public long tryInsert(int start, int len, @NotNull Resource resource, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.tryInsert(resource, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long tryInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.tryInsert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long insert(int start, int len, @NotNull Resource resource, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.insert(resource, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long insert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            inserted += slot.insert(resource, tag, amount - inserted);
+            if (inserted == amount) break;
+        }
+        return inserted;
+    }
+
+    @Override
+    public long insertMatching(int start, int len, @NotNull Resource resource, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.contains(resource)) {
+                inserted += slot.insert(resource, amount - inserted);
+                if (inserted == amount) return inserted;
+            }
+        }
+
+        return this.insert(start, len, resource, amount - inserted) + inserted;
+    }
+
+    @Override
+    public long insertMatching(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long inserted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.contains(resource, tag)) {
+                inserted += slot.insert(resource, tag, amount - inserted);
+                if (inserted == amount) return inserted;
+            }
+        }
+
+        return this.insert(start, len, resource, tag, amount - inserted) + inserted;
+    }
+
+    @Override
+    public boolean contains(int start, int len, @NotNull Resource resource) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.contains(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean contains(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.contains(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canExtract(int start, int len, @NotNull Resource resource, long amount) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.canExtract(resource, amount)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canExtract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.canExtract(resource, tag, amount)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long tryExtract(int start, int len, @NotNull Resource resource, long amount) {
+        long extracted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            extracted += slot.tryExtract(resource, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public boolean extractOne(int start, int len, @NotNull Resource resource) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.extractOne(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean extractOne(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag) {
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            if (slot.extractOne(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long tryExtract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long extracted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            extracted += slot.tryExtract(resource, tag, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public long extract(int start, int len, @NotNull Resource resource, long amount) {
+        long extracted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            extracted += slot.extract(resource, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
+    }
+
+    @Override
+    public long extract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        long extracted = 0;
+        for (int i = start; i < start + len; i++) {
+            Slot slot = this.slots[i];
+            extracted += slot.extract(resource, tag, amount - extracted);
+            if (extracted == amount) break;
+        }
+        return extracted;
     }
 
     @NotNull

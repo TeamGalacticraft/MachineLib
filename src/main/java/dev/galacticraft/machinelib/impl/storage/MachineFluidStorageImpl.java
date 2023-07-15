@@ -28,6 +28,8 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.NotNull;
 
 public class MachineFluidStorageImpl extends ResourceStorageImpl<Fluid, FluidResourceSlot> implements MachineFluidStorage {
+    public static final MachineFluidStorageImpl EMPTY = new MachineFluidStorageImpl(new FluidResourceSlot[0]);
+
     public MachineFluidStorageImpl(@NotNull FluidResourceSlot @NotNull [] slots) {
         super(slots);
     }

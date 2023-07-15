@@ -1,17 +1,10 @@
 package dev.galacticraft.machinelib.api.storage;
 
-import dev.galacticraft.machinelib.impl.storage.SubStorageImpl;
 import net.minecraft.nbt.CompoundTag;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface SlottedStorageAccess<Resource, Slot extends StorageAccess<Resource>> extends StorageAccess<Resource>, Iterable<Slot> {
-    @Contract(value = "_, _, _ -> new", pure = true)
-    static <Resource, Slot extends StorageAccess<Resource>> @NotNull SlottedStorageAccess<Resource, Slot> subStorage(SlottedStorageAccess<Resource, Slot> parent, int start, int len) {
-        return new SubStorageImpl<>(parent, start, len);
-    }
-
     int size();
 
     // START SLOT METHODS
@@ -79,4 +72,51 @@ public interface SlottedStorageAccess<Resource, Slot extends StorageAccess<Resou
     long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
 
     // END SLOT METHODS
+
+    // START RANGE METHODS
+    boolean isEmpty(int start, int len);
+
+    boolean isFull(int start, int len);
+
+    boolean canInsert(int start, int len, @NotNull Resource resource);
+
+    boolean canInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canInsert(int start, int len, @NotNull Resource resource, long amount);
+
+    boolean canInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryInsert(int start, int len, @NotNull Resource resource, long amount);
+
+    long tryInsert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insert(int start, int len, @NotNull Resource resource, long amount);
+
+    long insert(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long insertMatching(int start, int len, @NotNull Resource resource, long amount);
+
+    long insertMatching(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean contains(int start, int len, @NotNull Resource resource);
+
+    boolean contains(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag);
+
+    boolean canExtract(int start, int len, @NotNull Resource resource, long amount);
+
+    boolean canExtract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    long tryExtract(int start, int len, @NotNull Resource resource, long amount);
+
+    long tryExtract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    boolean extractOne(int start, int len, @NotNull Resource resource);
+
+    boolean extractOne(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag);
+
+    long extract(int start, int len, @NotNull Resource resource, long amount);
+
+    long extract(int start, int len, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
+
+    // END RANGE METHODS
 }

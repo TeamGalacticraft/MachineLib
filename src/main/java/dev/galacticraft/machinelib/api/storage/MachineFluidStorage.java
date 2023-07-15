@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.api.storage;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.impl.storage.EmptyMachineFluidStorage;
 import dev.galacticraft.machinelib.impl.storage.MachineFluidStorageImpl;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
@@ -51,6 +50,6 @@ public interface MachineFluidStorage extends ResourceStorage<Fluid, FluidResourc
 
     @Contract(pure = true)
     static @NotNull MachineFluidStorage empty() {
-        return EmptyMachineFluidStorage.INSTANCE;
+        return MachineFluidStorageImpl.EMPTY;
     }
 }

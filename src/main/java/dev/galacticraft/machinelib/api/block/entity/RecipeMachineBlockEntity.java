@@ -52,7 +52,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      */
     private final @NotNull RecipeType<R> recipeType;
 
-    private final @NotNull C craftingInv;
+    protected final @NotNull C craftingInv;
 
     private final @NotNull MachineStatus workingStatus;
 
@@ -98,7 +98,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         super(type, pos, state);
         this.recipeType = recipeType;
         this.craftingInv = this.createCraftingInv();
-        workingStatus = this.workingStatus();
+        this.workingStatus = this.workingStatus();
     }
 
     /**
@@ -244,7 +244,6 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         profiler.popPush("output_stacks");
         this.outputStacks(recipe);
         profiler.pop();
-        this.inventoryModCount = -1; // make sure everything is recalculated
         this.resetRecipe();
     }
 

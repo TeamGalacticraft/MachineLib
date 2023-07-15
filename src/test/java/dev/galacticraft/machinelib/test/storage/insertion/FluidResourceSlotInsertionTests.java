@@ -130,12 +130,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void empty_stack() {
-
-            assertEquals(FluidConstants.BUCKET, this.slot.getAmount());
-        }
-
-        @Test
         public void toCapacity() {
             assertTrue(this.slot.canInsert(Fluids.WATER, CAPACITY));
             assertEquals(CAPACITY, this.slot.tryInsert(Fluids.WATER, CAPACITY));
@@ -145,21 +139,9 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void toCapacity_stack() {
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
         public void overCapacity() {
             assertEquals(CAPACITY, this.slot.tryInsert(Fluids.WATER, CAPACITY + FluidConstants.BOTTLE));
             assertEquals(CAPACITY, this.slot.insert(Fluids.WATER, CAPACITY + FluidConstants.BOTTLE));
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
-        public void overCapacity_stack() {
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -186,14 +168,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void preFill_stack() {
-            CompoundTag tag = Utils.generateNbt();
-            this.slot.set(Fluids.WATER, tag, FluidConstants.BUCKET);
-
-            assertEquals(FluidConstants.BUCKET * 7, this.slot.getAmount());
-        }
-
-        @Test
         public void preFill_overCapacity() {
             this.slot.set(Fluids.WATER, FluidConstants.BUCKET * 12);
             assertEquals(FluidConstants.BUCKET * 4, this.slot.tryInsert(Fluids.WATER, FluidConstants.BUCKET * 7));
@@ -208,15 +182,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             this.slot.set(Fluids.WATER, tag, FluidConstants.BUCKET * 12);
             assertEquals(FluidConstants.BUCKET * 4, this.slot.tryInsert(Fluids.WATER, tag, FluidConstants.BUCKET * 7));
             assertEquals(FluidConstants.BUCKET * 4, this.slot.insert(Fluids.WATER, tag, FluidConstants.BUCKET * 7));
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
-        public void preFill_overCapacity_stack() {
-            CompoundTag tag = Utils.generateNbt();
-            this.slot.set(Fluids.WATER, tag, FluidConstants.BUCKET * 12);
-
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }

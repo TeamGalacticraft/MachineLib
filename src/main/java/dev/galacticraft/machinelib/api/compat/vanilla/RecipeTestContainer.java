@@ -1,13 +1,18 @@
 package dev.galacticraft.machinelib.api.compat.vanilla;
 
+import com.google.common.collect.Iterators;
 import dev.galacticraft.machinelib.api.misc.Modifiable;
+import dev.galacticraft.machinelib.api.storage.SlottedStorageAccess;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
 
 public class RecipeTestContainer implements Container, Modifiable {
     private final ItemResourceSlot[] slots;
@@ -17,6 +22,16 @@ public class RecipeTestContainer implements Container, Modifiable {
     @Contract(value = "_ -> new", pure = true)
     public static @NotNull RecipeTestContainer create(ItemResourceSlot @NotNull ... slots) {
         assert slots.length > 0;
+        return new RecipeTestContainer(slots);
+    }
+    @Contract(value = "_, _, _-> new", pure = true)
+    public static @NotNull RecipeTestContainer create(SlottedStorageAccess<Item, ItemResourceSlot> access, int start, int len) {
+        Iterator<ItemResourceSlot> iterator = access.iterator();
+        Iterators.advance(iterator, start);
+        ItemResourceSlot[] slots = new ItemResourceSlot[len];
+        for (int i = 0; i < len; i++) {
+            slots[i] = iterator.next();
+        }
         return new RecipeTestContainer(slots);
     }
 

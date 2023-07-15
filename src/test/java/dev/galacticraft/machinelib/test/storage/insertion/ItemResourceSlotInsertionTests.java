@@ -129,12 +129,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void empty_stack() {
-
-            assertEquals(16, this.slot.getAmount());
-        }
-
-        @Test
         public void toCapacity() {
             assertTrue(this.slot.canInsert(Items.GOLD_INGOT, CAPACITY));
             assertEquals(CAPACITY, this.slot.tryInsert(Items.GOLD_INGOT, CAPACITY));
@@ -144,21 +138,9 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void toCapacity_stack() {
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
         public void overCapacity() {
             assertEquals(CAPACITY, this.slot.tryInsert(Items.GOLD_INGOT, CAPACITY + 8));
             assertEquals(CAPACITY, this.slot.insert(Items.GOLD_INGOT, CAPACITY + 8));
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
-        public void overCapacity_stack() {
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }
@@ -185,14 +167,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
         }
 
         @Test
-        public void preFill_stack() {
-            CompoundTag tag = Utils.generateNbt();
-            this.slot.set(Items.GOLD_INGOT, tag, 16);
-
-            assertEquals(16 + 48, this.slot.getAmount());
-        }
-
-        @Test
         public void preFill_overCapacity() {
             this.slot.set(Items.GOLD_INGOT, 50);
             assertEquals(14, this.slot.tryInsert(Items.GOLD_INGOT, 16));
@@ -207,15 +181,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             this.slot.set(Items.GOLD_INGOT, tag, 50);
             assertEquals(14, this.slot.tryInsert(Items.GOLD_INGOT, tag, 16));
             assertEquals(14, this.slot.insert(Items.GOLD_INGOT, tag, 16));
-
-            assertEquals(CAPACITY, this.slot.getAmount());
-        }
-
-        @Test
-        public void preFill_overCapacity_stack() {
-            CompoundTag tag = Utils.generateNbt();
-            this.slot.set(Items.GOLD_INGOT, tag, 50);
-
 
             assertEquals(CAPACITY, this.slot.getAmount());
         }

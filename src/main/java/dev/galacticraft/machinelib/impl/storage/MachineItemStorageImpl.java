@@ -33,6 +33,8 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResourceSlot> implements MachineItemStorage {
+    public static final MachineItemStorageImpl EMPTY = new MachineItemStorageImpl(new ItemResourceSlot[0]);
+
     public MachineItemStorageImpl(@NotNull ItemResourceSlot @NotNull [] slots) {
         super(slots);
     }
