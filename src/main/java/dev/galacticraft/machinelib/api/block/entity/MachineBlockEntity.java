@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.block.entity;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
@@ -427,7 +428,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             this.tickConstant(serverWorld, pos, state, profiler);
             if (this.isDisabled(world)) {
                 profiler.popPush("disabled");
-                this.tickDisabled(serverWorld, pos, state, profiler);
+                this.setStatus(this.tickDisabled(serverWorld, pos, state, profiler));
             } else {
                 profiler.popPush("active");
                 this.setStatus(this.tick(serverWorld, pos, state, profiler));
@@ -464,7 +465,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected @NotNull MachineStatus tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        return MachineStatuses.OFF;
     }
 
     /**
