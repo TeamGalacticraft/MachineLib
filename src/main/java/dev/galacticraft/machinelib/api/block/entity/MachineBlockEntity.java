@@ -271,6 +271,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Contract(mutates = "this")
     public void setRedstone(@NotNull RedstoneActivation redstone) {
         this.configuration.setRedstoneActivation(redstone);
+        this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_IMMEDIATE);
     }
 
     /**
