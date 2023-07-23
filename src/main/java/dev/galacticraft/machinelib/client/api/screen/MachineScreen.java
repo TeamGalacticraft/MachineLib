@@ -453,7 +453,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += PANEL_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
-                Tab.REDSTONE.click();
+                Tab.REDSTONE.toggle();
                 return true;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
@@ -480,7 +480,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += TAB_WIDTH;
             mouseY -= SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                Tab.REDSTONE.click();
+                Tab.REDSTONE.toggle();
                 return true;
             }
         }
@@ -490,7 +490,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += PANEL_WIDTH;
             mouseY -= TAB_HEIGHT + SPACING + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
-                Tab.CONFIGURATION.click();
+                Tab.CONFIGURATION.toggle();
                 return true;
             }
             if (button >= GLFW.GLFW_MOUSE_BUTTON_LEFT && button <= GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
@@ -522,7 +522,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 mouseY -= TAB_HEIGHT + SPACING + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                Tab.CONFIGURATION.click();
+                Tab.CONFIGURATION.toggle();
                 return true;
             }
         }
@@ -532,12 +532,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
-                Tab.STATS.click();
+                Tab.STATS.toggle();
                 return true;
             }
         } else {
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                Tab.STATS.click();
+                Tab.STATS.toggle();
                 return true;
             }
         }
@@ -547,7 +547,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         if (Tab.SECURITY.isOpen()) {
             mouseY -= TAB_HEIGHT + SPACING + SPACING;
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
-                Tab.SECURITY.click();
+                Tab.SECURITY.toggle();
                 return true;
             }
 
@@ -575,7 +575,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 mouseY -= TAB_HEIGHT + SPACING + SPACING;
             }
             if (DrawableUtil.isWithin(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                Tab.SECURITY.click();
+                Tab.SECURITY.toggle();
             }
         }
         return false;
@@ -997,6 +997,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     private void modifyFace(int button, BlockFace face) {
+        if (this.menu.machine.isFaceLocked(face)) return;
         if (button == 0) {
             cycleFace(face, Screen.hasShiftDown(), Screen.hasControlDown());
         }
@@ -1150,7 +1151,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             return open;
         }
 
-        public void click() {
+        public void toggle() {
             this.open = !this.open;
             if (this.open) {
                 Tab.values()[this.ordinal() + 1 - this.ordinal() % 2 * 2].open = false;

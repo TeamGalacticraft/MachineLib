@@ -106,7 +106,7 @@ public final class MachineLibC2SPackets {
                 server.execute(() -> {
                     if (player.containerMenu instanceof MachineMenu<?> sHandler) {
                         MachineBlockEntity machine = sHandler.machine;
-                        if (machine.getSecurity().hasAccess(player)) {
+                        if (machine.getSecurity().hasAccess(player) && !machine.isFaceLocked(face)) {
                             ServerLevel level = (ServerLevel) machine.getLevel();
                             BlockPos pos = machine.getBlockPos();
                             assert level != null;
