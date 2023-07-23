@@ -151,7 +151,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
      * Sets the game profile of the owner of the linked machine.
      *
      * @param uuid The uuid to set.
-     * @param name The name of the player
+     * @param name The text of the player
      */
     @Override
     public void setOwner(@Nullable UUID uuid, String name) {
@@ -177,7 +177,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
 
     @Override
     public void setTeam(ResourceLocation team, String name) { //todo: team validation
-        if (team == null && name != null) throw new IllegalArgumentException("Team name without linked team??");
+        if (team == null && name != null) throw new IllegalArgumentException("Team text without linked team??");
         this.team = team;
         this.teamName = name;
     }

@@ -52,14 +52,14 @@ public enum ResourceFlow {
     public static final ResourceFlow[] VALUES = ResourceFlow.values();
 
     /**
-     * The name of the flow direction.
+     * The text of the flow direction.
      */
     private final @NotNull Component name;
 
     /**
      * Creates a new resource flow.
      *
-     * @param name The name of the flow direction.
+     * @param name The text of the flow direction.
      */
     @Contract(pure = true)
     ResourceFlow(@NotNull Component name) {
@@ -71,9 +71,9 @@ public enum ResourceFlow {
     }
 
     /**
-     * Returns the name of the flow direction.
+     * Returns the text of the flow direction.
      *
-     * @return The name of the flow direction.
+     * @return The text of the flow direction.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {

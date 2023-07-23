@@ -78,7 +78,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -285,7 +284,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
                     menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                            this.menu.configuration.getRedstoneActivation().isActive(() -> this.menu.levelAccess.evaluate(Level::hasNeighborSignal).orElse(false)) ?
+                            this.menu.configuration.getRedstoneActivation().isActive(this.menu.state.isPowered()) ?
                                     Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                     : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                     .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
@@ -376,7 +375,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
         MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
         if (this.model != null) {
-            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine, null, machineFace.getType(), machineFace.getFlow()));
+            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine.getRenderAttachmentData(), machineFace.getType(), machineFace.getFlow()));
         }
     }
 
@@ -793,8 +792,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
-                MachineStatus status = this.menu.configuration.getStatus();
-                lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getName()));
+                MachineStatus status = this.menu.state.getStatus();
+                if (status != null) {
+                    lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getText()));
+                }
                 lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
                 this.appendEnergyTooltip(lines);
 

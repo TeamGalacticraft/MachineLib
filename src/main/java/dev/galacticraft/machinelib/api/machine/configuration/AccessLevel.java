@@ -48,7 +48,7 @@ public enum AccessLevel implements StringRepresentable {
     public static final AccessLevel[] VALUES = AccessLevel.values();
 
     /**
-     * The name of the access level.
+     * The text of the access level.
      */
     private final @NotNull Component name;
 
@@ -79,9 +79,9 @@ public enum AccessLevel implements StringRepresentable {
     }
 
     /**
-     * Returns the name of the access level.
+     * Returns the text of the access level.
      *
-     * @return The name of the access level.
+     * @return The text of the access level.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {

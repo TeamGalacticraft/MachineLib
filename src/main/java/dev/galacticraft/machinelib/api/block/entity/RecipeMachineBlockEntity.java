@@ -179,9 +179,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                 profiler.pop();
             }
         } else {
-            if (this.getStatus() == MachineStatuses.OUTPUT_FULL)
-                return MachineStatuses.OUTPUT_FULL; //preserve full state
-            return MachineStatuses.INVALID_RECIPE;
+            return this.getState().getStatus();
         }
     }
 

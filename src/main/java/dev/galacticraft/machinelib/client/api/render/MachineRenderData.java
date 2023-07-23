@@ -20,15 +20,10 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.filter;
+package dev.galacticraft.machinelib.client.api.render;
 
-import net.minecraft.nbt.CompoundTag;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
 
-@FunctionalInterface
-public
-interface ResourceFilter<Resource> {
-    @Contract(pure = true)
-    boolean test(@Nullable Resource resource, @Nullable CompoundTag tag);
+public interface MachineRenderData {
+    MachineIOConfig getIOConfig();
 }

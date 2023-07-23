@@ -56,14 +56,14 @@ public enum ResourceType {
     ANY(Component.translatable(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
 
     /**
-     * The name of the resource type.
+     * The text of the resource type.
      */
     private final @NotNull Component name;
 
     /**
      * Constructs a new resource type.
      *
-     * @param name the name of the resource.
+     * @param name the text of the resource.
      */
     @Contract(pure = true)
     ResourceType(@NotNull Component name) {
@@ -89,9 +89,9 @@ public enum ResourceType {
     }
 
     /**
-     * Returns the name of the resource type.
+     * Returns the text of the resource type.
      *
-     * @return The name of the resource type.
+     * @return The text of the resource type.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {

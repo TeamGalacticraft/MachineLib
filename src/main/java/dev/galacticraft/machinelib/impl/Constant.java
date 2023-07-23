@@ -66,22 +66,19 @@ public interface Constant {
         String ACCESS_LEVEL = "AccessLevel";
         String SECURITY = "Security";
         String CONFIGURATION = "Configuration";
-        String VALUE = "Value";
         String ENERGY = "Energy";
         String REDSTONE_ACTIVATION = "RedstoneActivation";
-        String MATCH = "Match";
-        String IS_SLOT_ID = "IsSlotId";
         String MAX_PROGRESS = "MaxProgress";
         String RESOURCE = "Resource";
         String FLOW = "Flow";
-        String AMOUNT = "Amount";
         String ENERGY_STORAGE = "EnergyStorage";
         String ITEM_STORAGE = "ItemStorage";
         String FLUID_STORAGE = "FluidStorage";
         String USERNAME = "Username";
         String TEAM_NAME = "TeamName";
-        String GROUP = "Group";
-        String SLOT = "Slot";
+        String STATE = "State";
+        String STATUS = "Status";
+        String POWERED = "Powered";
     }
 
     interface ScreenTexture {

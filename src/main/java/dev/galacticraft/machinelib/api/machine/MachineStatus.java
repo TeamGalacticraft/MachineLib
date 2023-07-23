@@ -37,7 +37,7 @@ public interface MachineStatus {
     /**
      * Creates a new machine status.
      *
-     * @param name The name of the machine status.
+     * @param name The text of the machine status.
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */
@@ -52,11 +52,11 @@ public interface MachineStatus {
     }
 
      /**
-     * Returns the name of the machine status.
+     * Returns the text of the machine status.
      *
-     * @return The name of the machine status.
+     * @return The text of the machine status.
      */
-    @NotNull Component getName();
+    @NotNull Component getText();
 
     /**
      * Returns the type of the machine status.

@@ -78,9 +78,9 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     void setUsername(@Nullable String username);
 
     /**
-     * Returns the name of the team or {@code null} if it has not been cached.
+     * Returns the text of the team or {@code null} if it has not been cached.
      *
-     * @return the name of the team.
+     * @return the text of the team.
      */
     @Contract(pure = true)
     @ApiStatus.Experimental
@@ -132,7 +132,7 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
      * Sets the game profile of the owner of the linked machine.
      *
      * @param owner The uuid of the owner.
-     * @param name  The name of the owner.
+     * @param name  The text of the owner.
      */
     @Contract(mutates = "this")
     void setOwner(@Nullable UUID owner, String name);
@@ -148,7 +148,7 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
      * Sets the team linked to these security settings
      *
      * @param team the team to be granted access to the linked machine can be {@code null}.
-     * @param name the name of the team to be granted access to the linked machine.
+     * @param name the text of the team to be granted access to the linked machine.
      */
     @ApiStatus.Experimental
     @Contract(mutates = "this", value = "null, !null -> fail")

@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.testmod.block;
 
 import com.google.common.collect.ImmutableList;
+import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
@@ -32,7 +33,6 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.filter.ResourceFilters;
 import dev.galacticraft.machinelib.testmod.block.entity.GeneratorBlockEntity;
 import dev.galacticraft.machinelib.testmod.block.entity.MelterBlockEntity;
 import dev.galacticraft.machinelib.testmod.block.entity.MixerBlockEntity;

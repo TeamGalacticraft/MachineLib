@@ -20,20 +20,32 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.machine;
+package dev.galacticraft.machinelib.api.machine;
 
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import net.minecraft.network.chat.Component;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
+import dev.galacticraft.machinelib.impl.machine.MachineStateImpl;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public record MachineStatusImpl(@NotNull Component text, @NotNull MachineStatus.Type type) implements MachineStatus {
-    @Override
-    public @NotNull Component getText() {
-        return this.text;
+public interface MachineState extends MenuSynchronizable, Deserializable<CompoundTag> {
+    static @NotNull MachineState create(@NotNull MachineType<?, ?> type) {
+        return new MachineStateImpl(type);
     }
 
-    @Override
-    public @NotNull MachineStatus.Type getType() {
-        return this.type;
-    }
+    @Nullable MachineStatus getStatus();
+
+    void setStatus(@Nullable MachineStatus status);
+
+    boolean isActive();
+
+    void writePacket(@NotNull FriendlyByteBuf buf);
+
+    void readPacket(@NotNull FriendlyByteBuf buf);
+
+    boolean isPowered();
+
+    void setPowered(boolean b);
 }

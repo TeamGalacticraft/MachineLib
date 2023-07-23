@@ -22,8 +22,6 @@
 
 package dev.galacticraft.machinelib.impl.machine;
 
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
@@ -43,13 +41,9 @@ import java.util.Objects;
 public final class MachineConfigurationImpl implements MachineConfiguration {
     private final MachineIOConfig configuration = MachineIOConfig.create();
     private final SecuritySettings security = SecuritySettings.create();
-    private final MachineType<?, ?> type;
-    private @NotNull MachineStatus status;
     private @NotNull RedstoneActivation redstone = RedstoneActivation.IGNORE;
 
-    public MachineConfigurationImpl(MachineType<?, ?> type) {
-        this.type = type;
-        this.status = type.statusDomain().get(0); //fixme
+    public MachineConfigurationImpl() {
     }
 
     @Override
@@ -63,16 +57,6 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public @NotNull MachineStatus getStatus() {
-        return this.status;
-    }
-
-    @Override
-    public void setStatus(@NotNull MachineStatus status) {
-        this.status = status;
-    }
-
-    @Override
     public @NotNull RedstoneActivation getRedstoneActivation() {
         return this.redstone;
     }
@@ -80,11 +64,6 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     @Override
     public void setRedstoneActivation(@NotNull RedstoneActivation redstone) {
         this.redstone = redstone;
-    }
-
-    @Override
-    public MachineType<?, ?> getType() {
-        return this.type;
     }
 
     @Override
@@ -111,7 +90,6 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         this.security.writePacket(buf);
         this.configuration.writePacket(buf);
         this.redstone.writePacket(buf);
-        this.status.writePacket(this.type, buf);
     }
 
     @Override
@@ -119,7 +97,6 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         this.security.readPacket(buf);
         this.configuration.readPacket(buf);
         this.redstone = RedstoneActivation.readPacket(buf);
-        this.status = MachineStatus.readPacket(this.type, buf);
     }
 
     @Override

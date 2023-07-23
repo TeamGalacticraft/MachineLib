@@ -23,10 +23,10 @@
 package dev.galacticraft.machinelib.api.storage.slot;
 
 import com.mojang.datafixers.util.Pair;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
+import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.filter.ResourceFilter;
-import dev.galacticraft.machinelib.filter.ResourceFilters;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemResourceSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.minecraft.resources.ResourceLocation;

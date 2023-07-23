@@ -23,9 +23,9 @@
 package dev.galacticraft.machinelib.test.storage.builder;
 
 import com.mojang.datafixers.util.Pair;
+import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.filter.ResourceFilters;
 import dev.galacticraft.machinelib.test.JUnitTest;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;

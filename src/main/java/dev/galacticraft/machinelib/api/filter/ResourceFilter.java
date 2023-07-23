@@ -20,20 +20,15 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.machine;
+package dev.galacticraft.machinelib.api.filter;
 
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
-public record MachineStatusImpl(@NotNull Component text, @NotNull MachineStatus.Type type) implements MachineStatus {
-    @Override
-    public @NotNull Component getText() {
-        return this.text;
-    }
-
-    @Override
-    public @NotNull MachineStatus.Type getType() {
-        return this.type;
-    }
+@FunctionalInterface
+public
+interface ResourceFilter<Resource> {
+    @Contract(pure = true)
+    boolean test(@Nullable Resource resource, @Nullable CompoundTag tag);
 }

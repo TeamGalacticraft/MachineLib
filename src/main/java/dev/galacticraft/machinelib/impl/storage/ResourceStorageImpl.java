@@ -23,10 +23,10 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import com.google.common.collect.Iterators;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.filter.ResourceFilter;
 import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;

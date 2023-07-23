@@ -61,7 +61,7 @@ public enum BlockFace {
     BOTTOM(Component.translatable(Constant.TranslationKey.BOTTOM), false);
 
     /**
-     * The name of the face
+     * The text of the face
      */
     private final Component name;
     /**
@@ -128,9 +128,9 @@ public enum BlockFace {
     }
 
     /**
-     * The name of this face.
+     * The text of this face.
      *
-     * @return The name of this face.
+     * @return The text of this face.
      */
     @Contract(pure = true)
     public Component getName() {

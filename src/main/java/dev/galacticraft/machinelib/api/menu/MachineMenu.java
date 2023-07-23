@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.api.menu;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
@@ -74,6 +75,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     public final @NotNull UUID playerUUID;
 
     public final @NotNull MachineConfiguration configuration;
+    public final @NotNull MachineState state;
     public final @NotNull MachineEnergyStorage energyStorage;
     public final @NotNull MachineItemStorage itemStorage;
     public final @NotNull MachineFluidStorage fluidStorage;
@@ -109,6 +111,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.playerUUID = player.getUUID();
 
         this.configuration = machine.getConfiguration();
+        this.state = machine.getState();
         this.energyStorage = machine.energyStorage();
         this.itemStorage = machine.itemStorage();
         this.fluidStorage = machine.fluidStorage();
@@ -153,8 +156,10 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         BlockPos blockPos = buf.readBlockPos();
         this.machine = (Machine) inventory.player.level().getBlockEntity(blockPos); //todo: actually stop using the BE on the client side
         this.levelAccess = ContainerLevelAccess.create(inventory.player.level(), blockPos);
-        this.configuration = MachineConfiguration.create(this.type);
+        this.configuration = MachineConfiguration.create();
         this.configuration.readPacket(buf);
+        this.state = MachineState.create(this.type);
+        this.state.readPacket(buf);
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.readPacket(buf);
         this.itemStorage = type.createItemStorage();

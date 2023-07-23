@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.block.entity;
 
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.compat.transfer.ExposedStorage;
+import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
@@ -39,6 +40,7 @@ import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
@@ -101,6 +103,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     private final MachineConfiguration configuration;
 
+    private final MachineState state;
+
     /**
      * The energy storage for this machine.
      *
@@ -122,9 +126,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     private final @NotNull MachineFluidStorage fluidStorage;
     /**
-     * The name of the machine, to be passed to the screen handler factory for display.
+     * The text of the machine, to be passed to the screen handler factory for display.
      * <p>
-     * By default, this is the name of the block.
+     * By default, this is the text of the block.
      */
     @ApiStatus.Internal
     private final @NotNull Component name;
@@ -155,7 +159,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     private boolean disableDrops = false;
 
     /**
-     * Constructs a new machine block entity with the name automatically derived from the passed {@link BlockState}.
+     * Constructs a new machine block entity with the text automatically derived from the passed {@link BlockState}.
      *
      * @param type  The type of block entity.
      * @param pos   The position of the machine in the level.
@@ -172,14 +176,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param type  The type of block entity.
      * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
-     * @param name  The name of the machine, to be passed to the screen handler.
+     * @param name  The text of the machine, to be passed to the screen handler.
      */
     protected MachineBlockEntity(@NotNull MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
         super(type.getBlockEntityType(), pos, state);
         this.type = type;
         this.name = name;
 
-        this.configuration = MachineConfiguration.create(type);
+        this.configuration = MachineConfiguration.create();
+        this.state = MachineState.create(this.type);
 
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.setListener(this::setChanged);
@@ -247,18 +252,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Returns whether this machine is currently running.
-     *
-     * @return Whether this machine is currently running.
-     * @see #getStatus() for the status of this machine.
-     * @see MachineStatus.Type for the different types of statuses.
-     */
-    @Contract(pure = true)
-    protected boolean isActive() {
-        return this.getStatus().getType().isActive();
-    }
-
-    /**
      * Sets the redstone activation mode of this machine.
      *
      * @param redstone the redstone activation mode to use.
@@ -269,26 +262,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         this.configuration.setRedstoneActivation(redstone);
     }
 
-    /**
-     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)},
-     * but may be modified manually by calling {@link #setStatus(MachineStatus)}.
-     *
-     * @return the status of this machine.
-     * @see MachineConfiguration
-     */
-    public @NotNull MachineStatus getStatus() {
-        return this.configuration.getStatus();
-    }
-
-    /**
-     * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)} to
-     * calculate the status of this machine, rather than setting it manually.
-     *
-     * @param status the status to set.
-     * @see #getStatus()
-     */
-    public void setStatus(@NotNull MachineStatus status) {
-        this.configuration.setStatus(status);
+    public @NotNull MachineState getState() {
+        return this.state;
     }
 
     /**
@@ -377,13 +352,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Returns whether the current machine is enabled.
      *
-     * @param level the world this machine is in.
      * @return whether the current machine is enabled.
      * @see RedstoneActivation
      * @see #getRedstoneActivation()
      */
-    public boolean isDisabled(@NotNull Level level) {
-        return !this.getRedstoneActivation().isActive(() -> level.hasNeighborSignal(this.worldPosition));
+    public boolean isDisabled() {
+        return !this.getRedstoneActivation().isActive(this.state.isPowered());
     }
 
     /**
@@ -403,12 +377,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             profiler.push("constant");
             ServerLevel serverLevel = (ServerLevel) level;
             this.tickConstant(serverLevel, pos, state, profiler);
-            if (this.isDisabled(level)) {
+            if (this.isDisabled()) {
                 profiler.popPush("disabled");
                 this.tickDisabled(serverLevel, pos, state, profiler);
             } else {
                 profiler.popPush("active");
-                this.setStatus(this.tick(serverLevel, pos, state, profiler));
+                this.state.setStatus(this.tick(serverLevel, pos, state, profiler));
             }
         } else {
             profiler.push("client");
@@ -592,6 +566,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.createTag());
         nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.createTag());
         nbt.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
+        nbt.put(Constant.Nbt.STATE, this.state.createTag());
         nbt.putBoolean(Constant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
@@ -605,6 +580,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         super.load(nbt);
         if (nbt.contains(Constant.Nbt.CONFIGURATION, Tag.TAG_COMPOUND))
             this.configuration.readTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
+        if (nbt.contains(Constant.Nbt.STATE, Tag.TAG_COMPOUND))
+            this.state.readTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
             this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
@@ -716,7 +693,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
-
     /**
      * Returns whether the given face can be configured for input or output.
      *
@@ -751,7 +727,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public Object getRenderAttachmentData() {
+    public @NotNull MachineRenderData getRenderAttachmentData() {
         return this.getIOConfig();
     }
 
@@ -762,9 +738,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return tag;
     }
 
+    @Override
+    public void setLevel(Level level) {
+        super.setLevel(level);
+        this.setRedstoneState(level.hasNeighborSignal(this.getBlockPos()));
+    }
+
     @Nullable
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    public void setRedstoneState(boolean b) {
+        this.state.setPowered(b);
     }
 }

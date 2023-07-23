@@ -28,32 +28,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 public class GeneratorBlock extends MachineBlock<GeneratorBlockEntity> {
-    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
-
     public GeneratorBlock(Properties settings) {
         super(settings, GeneratorBlockEntity::new);
-        this.registerDefaultState(this.defaultBlockState().setValue(ACTIVE, false));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
-        builder.add(ACTIVE);
     }
 
     @Override
     public void animateTick(BlockState blockState, Level level, BlockPos blockPos, RandomSource randomSource) {
-        if (blockState.getValue(ACTIVE)) {
+        if (level.getBlockEntity(blockPos) instanceof GeneratorBlockEntity generator && generator.getState().isActive()) {
             double d = blockPos.getX() + 0.4 + randomSource.nextFloat() * 0.2;
             double e = blockPos.getY() + 0.7 + randomSource.nextFloat() * 0.3;
             double f = blockPos.getZ() + 0.4 + randomSource.nextFloat() * 0.2;
-            level.addParticle(ParticleTypes.SMOKE, d, e, f, 0.0, 0.0, 0.0);
+            level.addParticle(ParticleTypes.SMOKE, d, e, f, randomSource.nextFloat() * 0.07, randomSource.nextFloat() * 0.05, randomSource.nextFloat() * 0.07);
         }
     }
 }

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.filter;
+package dev.galacticraft.machinelib.api.filter;
 
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;

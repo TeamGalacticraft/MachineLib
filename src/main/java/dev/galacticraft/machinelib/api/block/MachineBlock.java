@@ -61,7 +61,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -91,7 +90,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
      * @param factory
      */
     public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
-        super(settings.pushReaction(PushReaction.BLOCK));
+        super(settings);
         this.factory = factory;
     }
 
@@ -112,10 +111,20 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (!world.isClientSide && placer instanceof ServerPlayer player) {
-            if (world.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+        super.neighborChanged(state, level, pos, block, fromPos, notify);
+        if (!level.isClientSide) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                machine.setRedstoneState(level.hasNeighborSignal(pos));
+            }
+        }
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.setPlacedBy(level, pos, state, placer, itemStack);
+        if (!level.isClientSide && placer instanceof ServerPlayer player) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getConfiguration().getSecurity();
                 if (!security.hasOwner()) {
                     security.setOwner(player.getUUID(), player.getGameProfile().getName());
@@ -129,8 +138,11 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         return RenderShape.MODEL;
     }
 
+    /**
+     * @see #shiftDescription
+     */
     @Override
-    public final void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
+    public void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
         Component text = this.shiftDescription(stack, view, context);
         if (text != null) {
             if (Screen.hasShiftDown()) {
@@ -200,7 +212,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 List<ItemEntity> entities = new ArrayList<>();
                 for (ItemResourceSlot slot : inv.getSlots()) {
                     if (!slot.isEmpty()) {
-                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), ItemStackUtil.copy(slot)));
+                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), ItemStackUtil.create(slot)));
                         slot.set(null, null, 0);
                     }
                 }
