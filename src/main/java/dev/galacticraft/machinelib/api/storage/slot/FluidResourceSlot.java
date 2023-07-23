@@ -31,7 +31,6 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface FluidResourceSlot extends ResourceSlot<Fluid> {
     @Contract("_ -> new")
@@ -41,13 +40,8 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
 
     @Contract("_, _, _, _ -> new")
     static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
-        return create(inputType, display, capacity, filter, filter);
-    }
-
-    @Contract("_, _, _, _, _ -> new")
-    static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
         if (capacity < 0) throw new IllegalArgumentException();
-        return new FluidResourceSlotImpl(inputType, display, capacity, filter, externalFilter);
+        return new FluidResourceSlotImpl(inputType, display, capacity, filter);
     }
 
     @NotNull TankDisplay getDisplay();
@@ -59,7 +53,6 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
         private int height = 48;
 
         private ResourceFilter<Fluid> filter = ResourceFilters.any();
-        private ResourceFilter<Fluid> strictFilter = null;
         private long capacity = FluidConstants.BUCKET;
 
         @Contract(pure = true)
@@ -99,12 +92,6 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
         }
 
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull FluidResourceSlot.Builder strictFilter(@Nullable ResourceFilter<Fluid> strictFilter) {
-            this.strictFilter = strictFilter;
-            return this;
-        }
-
-        @Contract(value = "_ -> this", mutates = "this")
         public @NotNull FluidResourceSlot.Builder capacity(long capacity) {
             this.capacity = capacity;
             return this;
@@ -115,7 +102,7 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
             if (this.height < 0) throw new IllegalArgumentException("height is negative");
 
-            return FluidResourceSlot.create(this.inputType, TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter, this.strictFilter == null ? this.filter : this.strictFilter);
+            return FluidResourceSlot.create(this.inputType, TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter);
         }
     }
 }

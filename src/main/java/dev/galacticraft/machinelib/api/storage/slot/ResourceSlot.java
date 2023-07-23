@@ -55,8 +55,6 @@ public interface ResourceSlot<Resource> extends StorageAccess<Resource>, Mutable
 
     @NotNull ResourceFilter<Resource> getFilter();
 
-    @NotNull ResourceFilter<Resource> getStrictFilter();
-
     boolean contains(@NotNull Resource resource);
 
     boolean contains(@NotNull Resource resource, @Nullable CompoundTag tag);

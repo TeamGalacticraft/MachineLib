@@ -43,23 +43,13 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
 
     @Contract("_, _, _ -> new")
     static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
-        return create(inputType, display, filter, filter);
+        return create(inputType, display, filter, 64);
     }
 
     @Contract("_, _, _, _ -> new")
     static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
-        return create(inputType, display, filter, filter, capacity);
-    }
-
-    @Contract("_, _, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter) {
-        return create(inputType, display, filter, strictFilter, 64);
-    }
-
-    @Contract("_, _, _, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter, int capacity) {
         if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
-        return new ItemResourceSlotImpl(inputType, display, filter, strictFilter, capacity);
+        return new ItemResourceSlotImpl(inputType, display, filter, capacity);
     }
 
     @NotNull ItemSlotDisplay getDisplay();
@@ -74,7 +64,6 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
         private @Nullable Pair<ResourceLocation, ResourceLocation> icon = null;
 
         private ResourceFilter<Item> filter = ResourceFilters.any();
-        private ResourceFilter<Item> strictFilter = null;
         private int capacity = 64;
 
         @Contract(pure = true)
@@ -114,12 +103,6 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
         }
 
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Builder strictFilter(@Nullable ResourceFilter<Item> strictFilter) {
-            this.strictFilter = strictFilter;
-            return this;
-        }
-
-        @Contract(value = "_ -> this", mutates = "this")
         public @NotNull Builder capacity(int capacity) {
             this.capacity = capacity;
             return this;
@@ -129,7 +112,7 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
         public @NotNull ItemResourceSlot build() {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
 
-            return ItemResourceSlot.create(this.inputType, ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.strictFilter == null ? this.filter : this.strictFilter, this.capacity);
+            return ItemResourceSlot.create(this.inputType, ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.capacity);
         }
     }
 }

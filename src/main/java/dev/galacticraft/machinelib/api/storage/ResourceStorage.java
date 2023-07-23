@@ -29,7 +29,6 @@ import dev.galacticraft.machinelib.api.misc.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> extends Iterable<Slot>, MutableModifiable, SlottedStorageAccess<Resource, Slot>, Deserializable<ListTag>, MenuSynchronizable {
     void setListener(Runnable listener);
@@ -37,8 +36,6 @@ public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> 
     Slot[] getSlots();
 
     @NotNull Slot getSlot(int slot);
-
-    @Nullable ResourceFilter<Resource> getFilter(int slot);
 
     @NotNull ResourceFilter<Resource> getStrictFilter(int slot);
 }

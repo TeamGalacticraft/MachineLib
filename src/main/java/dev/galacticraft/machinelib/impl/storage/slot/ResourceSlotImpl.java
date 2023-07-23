@@ -46,7 +46,6 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     protected static final String TAG_KEY = "Tag";
 
     private final InputType inputType;
-    private final ResourceFilter<Resource> filter;
     private final ResourceFilter<Resource> externalFilter;
     private final long capacity;
     private MutableModifiable parent;
@@ -55,9 +54,8 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     private long amount = 0;
     private long modifications = 0;
 
-    protected ResourceSlotImpl(InputType inputType, ResourceFilter<Resource> filter, ResourceFilter<Resource> externalFilter, long capacity) {
+    protected ResourceSlotImpl(InputType inputType, ResourceFilter<Resource> externalFilter, long capacity) {
         this.inputType = inputType;
-        this.filter = filter;
         this.externalFilter = externalFilter;
         this.capacity = capacity;
     }
@@ -98,11 +96,6 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
 
     @Override
     public @NotNull ResourceFilter<Resource> getFilter() {
-        return this.filter;
-    }
-
-    @Override
-    public @NotNull ResourceFilter<Resource> getStrictFilter() {
         return this.externalFilter;
     }
 
@@ -424,7 +417,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
 
     @Contract(pure = true)
     private boolean canAccept(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || (this.resource == null && this.filter.test(resource, tag));
+        return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || this.resource == null;
     }
 
     @VisibleForTesting

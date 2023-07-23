@@ -43,11 +43,6 @@ public final class ResourceFilters {
     public static final ResourceFilter<Item> CAN_EXTRACT_ENERGY = (item, tag) -> {
         if (item == null) return false;
         EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
-        return storage != null && storage.supportsExtraction();
-    };
-    public static final ResourceFilter<Item> CAN_EXTRACT_ENERGY_STRICT = (item, tag) -> {
-        if (item == null) return false;
-        EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
         if (storage == null || !storage.supportsExtraction()) return false;
         try (Transaction test = Transaction.openNested(Transaction.getCurrentUnsafe())) { // SAFE: the transaction is immediately cancelled
             if (storage.extract(1, test) == 1) return true;
@@ -55,11 +50,6 @@ public final class ResourceFilters {
         return false;
     };
     public static final ResourceFilter<Item> CAN_INSERT_ENERGY = (item, tag) -> {
-        if (item == null) return false;
-        EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
-        return storage != null && storage.supportsInsertion();
-    };
-    public static final ResourceFilter<Item> CAN_INSERT_ENERGY_STRICT = (item, tag) -> {
         if (item == null) return false;
         EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
         if (storage == null || !storage.supportsInsertion()) return false;
@@ -89,7 +79,7 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> itemTagAnyNBT(@NotNull TagKey<Item> tag) {
+    public static @NotNull ResourceFilter<Item> itemTag(@NotNull TagKey<Item> tag) {
         return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag);
     }
 
@@ -99,23 +89,13 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> itemTag(@NotNull TagKey<Item> tag) {
-        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbt, null);
-    }
-
-    @Contract(pure = true)
-    public static @NotNull ResourceFilter<Fluid> fluidTagAnyNBT(@NotNull TagKey<Fluid> tag) {
+    public static @NotNull ResourceFilter<Fluid> fluidTag(@NotNull TagKey<Fluid> tag) {
         return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag);
     }
 
     @Contract(pure = true)
     public static @NotNull ResourceFilter<Fluid> fluidTag(@NotNull TagKey<Fluid> tag, @Nullable CompoundTag nbt) {
         return (r, nbtC) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbtC, nbt);
-    }
-
-    @Contract(pure = true)
-    public static @NotNull ResourceFilter<Fluid> fluidTag(@NotNull TagKey<Fluid> tag) {
-        return (r, nbt) -> r != null && r.builtInRegistryHolder().is(tag) && Utils.tagsEqual(nbt, null);
     }
 
     @Contract(pure = true)
@@ -128,7 +108,7 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> canExtractFluidStrict(@NotNull Fluid fluid) {
+    public static @NotNull ResourceFilter<Item> canExtractFluid(@NotNull Fluid fluid) {
         return (r, nbt) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
@@ -143,7 +123,7 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> canExtractFluidStrict(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
+    public static @NotNull ResourceFilter<Item> canExtractFluid(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
         return (r, nbtC) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
@@ -158,7 +138,7 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> canInsertFluidStrict(@NotNull Fluid fluid) {
+    public static @NotNull ResourceFilter<Item> canInsertFluid(@NotNull Fluid fluid) {
         return (r, nbt) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
@@ -173,7 +153,7 @@ public final class ResourceFilters {
     }
 
     @Contract(pure = true)
-    public static @NotNull ResourceFilter<Item> canInsertFluidStrict(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
+    public static @NotNull ResourceFilter<Item> canInsertFluid(@NotNull Fluid fluid, @Nullable CompoundTag nbt) {
         return (r, nbtC) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);

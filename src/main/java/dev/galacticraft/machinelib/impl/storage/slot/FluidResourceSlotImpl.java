@@ -37,8 +37,8 @@ import org.jetbrains.annotations.NotNull;
 public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements FluidResourceSlot {
     private final @NotNull TankDisplay display;
 
-    public FluidResourceSlotImpl(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
-        super(inputType, filter, externalFilter, capacity);
+    public FluidResourceSlotImpl(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter) {
+        super(inputType, filter, capacity);
         this.display = display;
     }
 

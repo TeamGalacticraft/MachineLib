@@ -66,7 +66,7 @@ public class StorageSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return this.slot.inputType().playerInsertion() && (stack.isEmpty() || this.slot.getStrictFilter().test(stack.getItem(), stack.getTag()));
+        return this.slot.inputType().playerInsertion() && (stack.isEmpty() || this.slot.getFilter().test(stack.getItem(), stack.getTag()));
     }
 
     @Override

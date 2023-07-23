@@ -59,13 +59,8 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
     }
 
     @Override
-    public @Nullable ResourceFilter<Resource> getFilter(int slot) {
-        return this.slots[slot].getFilter();
-    }
-
-    @Override
     public @NotNull ResourceFilter<Resource> getStrictFilter(int slot) {
-        return this.slots[slot].getStrictFilter();
+        return this.slots[slot].getFilter();
     }
 
     @NotNull

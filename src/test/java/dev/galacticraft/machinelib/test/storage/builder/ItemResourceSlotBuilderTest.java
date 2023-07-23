@@ -90,14 +90,6 @@ public class ItemResourceSlotBuilderTest implements JUnitTest {
         ItemResourceSlot slot = builder.filter(ResourceFilters.none()).build();
 
         assertSame(ResourceFilters.none(), slot.getFilter());
-        assertEquals(0, slot.insert(Items.DIRT, 1));
-    }
-
-    @Test
-    public void strictFilter() {
-        ItemResourceSlot slot = builder.strictFilter(ResourceFilters.none()).build();
-
-        assertSame(ResourceFilters.none(), slot.getStrictFilter());
-        assertEquals(1, slot.insert(Items.DIRT, 1)); // only affects players
+        assertEquals(1, slot.insert(Items.DIRT, 1)); // filters only affect players
     }
 }

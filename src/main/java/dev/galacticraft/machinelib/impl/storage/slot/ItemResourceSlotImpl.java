@@ -53,8 +53,8 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
     private ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
     private Object cachedApi = null;
 
-    public ItemResourceSlotImpl(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
-        super(inputType, filter, externalFilter, capacity);
+    public ItemResourceSlotImpl(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
+        super(inputType, externalFilter, capacity);
         assert capacity > 0 && capacity <= 64;
         this.display = display;
     }

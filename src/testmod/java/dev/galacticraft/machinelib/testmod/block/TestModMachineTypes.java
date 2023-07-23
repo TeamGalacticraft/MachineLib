@@ -54,7 +54,6 @@ public class TestModMachineTypes {
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(8, 62)
                             .filter(ResourceFilters.CAN_INSERT_ENERGY)
-                            .strictFilter(ResourceFilters.CAN_INSERT_ENERGY_STRICT)
                             .capacity(32),
                     ItemResourceSlot.builder(InputType.INPUT)
                             .pos(80, 49)
@@ -73,14 +72,13 @@ public class TestModMachineTypes {
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(8, 8)
                             .filter(ResourceFilters.CAN_EXTRACT_ENERGY)
-                            .strictFilter(ResourceFilters.CAN_EXTRACT_ENERGY_STRICT)
                             .capacity(32),
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(48, 8)
-                            .strictFilter(ResourceFilters.canExtractFluidStrict(Fluids.WATER)),
+                            .filter(ResourceFilters.canExtractFluid(Fluids.WATER)),
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(70, 8)
-                            .strictFilter(ResourceFilters.canExtractFluidStrict(Fluids.LAVA)),
+                            .filter(ResourceFilters.canExtractFluid(Fluids.LAVA)),
                     ItemResourceSlot.builder(InputType.OUTPUT)
                             .pos(147, 43)
                             .filter(ResourceFilters.ofResource(Items.OBSIDIAN))
@@ -107,14 +105,13 @@ public class TestModMachineTypes {
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(8, 8)
                             .filter(ResourceFilters.CAN_EXTRACT_ENERGY)
-                            .strictFilter(ResourceFilters.CAN_EXTRACT_ENERGY_STRICT)
                             .capacity(32),
                     ItemResourceSlot.builder(InputType.INPUT)
                             .pos(59, 42)
                             .filter(ResourceFilters.ofResource(Items.COBBLESTONE)),
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(152, 62)
-                            .strictFilter(ResourceFilters.canInsertFluidStrict(Fluids.LAVA))
+                            .filter(ResourceFilters.canInsertFluid(Fluids.LAVA))
             ),
             MachineFluidStorage.of(FluidResourceSlot.builder(InputType.OUTPUT)
                     .pos(152, 8)
