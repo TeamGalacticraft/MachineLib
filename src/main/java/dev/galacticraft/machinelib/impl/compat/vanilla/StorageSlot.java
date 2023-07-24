@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @ApiStatus.Internal
@@ -111,6 +112,11 @@ public class StorageSlot extends Slot {
     }
 
     @Override
+    public Optional<ItemStack> tryRemove(int i, int j, Player player) {
+        return super.tryRemove(i, j, player);
+    }
+
+    @Override
     public int getMaxStackSize() {
         return Math.toIntExact(this.slot.getCapacity());
     }
@@ -134,10 +140,9 @@ public class StorageSlot extends Slot {
 
     @Override //return failed
     public @NotNull ItemStack safeInsert(@NotNull ItemStack stack, int count) {
-        assert stack.getCount() >= count;
         if (this.mayPlace(stack)) {
-            long inserted = this.slot.insert(stack.getItem(), stack.getTag(), stack.getCount());
-            stack.setCount(Math.toIntExact(stack.getCount() - inserted));
+            long inserted = this.slot.insert(stack.getItem(), stack.getTag(), Math.min(count, stack.getCount()));
+            stack.shrink((int) inserted);
             return stack;
         }
         return stack;
