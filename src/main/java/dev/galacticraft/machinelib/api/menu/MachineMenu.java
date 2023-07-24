@@ -213,6 +213,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     @MustBeInvokedByOverriders
     public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
         consumer.accept(this.configuration.createSyncHandler());
+        consumer.accept(this.state.createSyncHandler());
         consumer.accept(this.itemStorage.createSyncHandler()); //todo: probably synced by vanilla - is this necessary?
         consumer.accept(this.fluidStorage.createSyncHandler());
         consumer.accept(this.energyStorage.createSyncHandler());

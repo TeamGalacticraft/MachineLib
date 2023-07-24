@@ -386,8 +386,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             } else {
                 profiler.popPush("active");
                 this.state.setStatus(this.tick(serverLevel, pos, state, profiler));
-                if (!this.active && this.state.isActive()) {
-                    MachineBlock.updateActiveState(level, pos, state, this.active = true);
+                if (!this.active) {
+                    if (this.state.isActive()) {
+                        MachineBlock.updateActiveState(level, pos, state, this.active = true);
+                    }
+                } else {
+                    if (!this.state.isActive()) {
+                        MachineBlock.updateActiveState(level, pos, state, this.active = false);
+                    }
                 }
             }
         } else {
