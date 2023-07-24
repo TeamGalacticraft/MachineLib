@@ -47,11 +47,13 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
 
     private final InputType inputType;
     private final ResourceFilter<Resource> externalFilter;
-    private final long capacity;
+    protected final long capacity;
     private MutableModifiable parent;
-    private @Nullable Resource resource = null;
-    private @Nullable CompoundTag tag = null;
-    private long amount = 0;
+
+    protected @Nullable Resource resource = null;
+    protected @Nullable CompoundTag tag = null;
+    protected long amount = 0;
+
     private long modifications = 0;
 
     protected ResourceSlotImpl(InputType inputType, ResourceFilter<Resource> externalFilter, long capacity) {
@@ -247,16 +249,17 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     }
 
     @Override
-    public boolean extractOne() {
+    public @Nullable Resource extractOne() {
         if (!this.isEmpty()) {
+            Resource res = this.resource;
             if (--this.amount == 0) {
                 this.resource = null;
                 this.tag = null;
             }
             this.markModified();
-            return true;
+            return res;
         }
-        return false;
+        return null;
     }
 
     @Override

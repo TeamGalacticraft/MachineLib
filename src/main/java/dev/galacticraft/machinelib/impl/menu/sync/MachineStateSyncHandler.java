@@ -44,7 +44,7 @@ public class MachineStateSyncHandler implements MenuSyncHandler {
 
     @Override
     public boolean needsSyncing() {
-        return this.status != this.state.getStatus();
+        return this.status != this.state.getStatus() || this.powered != this.state.isPowered();
     }
 
     @Override

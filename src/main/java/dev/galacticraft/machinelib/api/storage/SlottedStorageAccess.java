@@ -77,21 +77,21 @@ public interface SlottedStorageAccess<Resource, Slot extends StorageAccess<Resou
 
     long tryExtract(int slot, long amount);
 
-    long tryExtract(int slot, @Nullable Resource resource, long amount);
+    long tryExtract(int slot, @NotNull Resource resource, long amount);
 
-    long tryExtract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
+    long tryExtract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
-    boolean extractOne(int slot);
+    @Nullable Resource extractOne(int slot);
 
-    boolean extractOne(int slot, @Nullable Resource resource);
+    boolean extractOne(int slot, @NotNull Resource resource);
 
-    boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag);
+    boolean extractOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag);
 
     long extract(int slot, long amount);
 
-    long extract(int slot, @Nullable Resource resource, long amount);
+    long extract(int slot, @NotNull Resource resource, long amount);
 
-    long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount);
+    long extract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount);
 
     // END SLOT METHODS
 

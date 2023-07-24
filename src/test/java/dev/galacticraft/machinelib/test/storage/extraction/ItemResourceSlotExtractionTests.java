@@ -71,7 +71,7 @@ public sealed class ItemResourceSlotExtractionTests implements JUnitTest {
             assertEquals(0, this.slot.tryExtract(Items.GOLD_INGOT, Utils.generateNbt(), 1));
             assertEquals(0, this.slot.extract(Items.GOLD_INGOT, Utils.generateNbt(), 1));
 
-            assertFalse(this.slot.extractOne());
+            assertNull(this.slot.extractOne());
         }
 
         @Test

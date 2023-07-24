@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemResourceSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Contract;
@@ -51,6 +52,18 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
         if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
         return new ItemResourceSlotImpl(inputType, display, filter, capacity);
     }
+
+    @Nullable Item consumeOne();
+
+    boolean consumeOne(@NotNull Item resource);
+
+    boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag);
+
+    long consume(long amount);
+
+    long consume(@NotNull Item resource, long amount);
+
+    long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount);
 
     @NotNull ItemSlotDisplay getDisplay();
 

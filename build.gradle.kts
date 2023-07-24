@@ -150,6 +150,7 @@ dependencies {
         "fabric-api-base",
         "fabric-api-lookup-api-v1",
         "fabric-gametest-api-v1",
+        "fabric-item-api-v1",
         "fabric-models-v0",
         "fabric-renderer-api-v1",
         "fabric-rendering-data-attachment-v1",

@@ -26,10 +26,12 @@ import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.impl.storage.MachineItemStorageImpl;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,40 @@ public interface MachineItemStorage extends ResourceStorage<Item, ItemResourceSl
     static @NotNull MachineItemStorage empty() {
         return MachineItemStorageImpl.EMPTY;
     }
+
+    // ITEM EXTENSIONS
+
+    boolean consumeOne(@NotNull Item resource);
+
+    boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag);
+
+    long consume(@NotNull Item resource, long amount);
+
+    long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount);
+
+    // SLOT METHODS
+
+    @Nullable Item consumeOne(int slot);
+
+    boolean consumeOne(int slot, @NotNull Item resource);
+
+    boolean consumeOne(int slot, @NotNull Item resource, @Nullable CompoundTag tag);
+
+    long consume(int slot, long amount);
+
+    long consume(int slot, @NotNull Item resource, long amount);
+
+    long consume(int slot, @NotNull Item resource, @Nullable CompoundTag tag, long amount);
+
+    // RANGE METHODS
+
+    boolean consumeOne(int start, int len, @NotNull Item resource);
+
+    boolean consumeOne(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag);
+
+    long consume(int start, int len, @NotNull Item resource, long amount);
+
+    long consume(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag, long amount);
 
     final class Builder implements Supplier<MachineItemStorage> {
         private final List<ItemResourceSlot.Builder> slots = new ArrayList<>();

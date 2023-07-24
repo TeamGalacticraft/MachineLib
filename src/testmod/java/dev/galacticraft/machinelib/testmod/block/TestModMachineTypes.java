@@ -57,7 +57,10 @@ public class TestModMachineTypes {
                             .capacity(32),
                     ItemResourceSlot.builder(InputType.INPUT)
                             .pos(80, 49)
-                            .filter((item, tag) -> FuelRegistry.INSTANCE.get(item) > 0)
+                            .filter((item, tag) -> {
+                                Integer time = FuelRegistry.INSTANCE.get(item);
+                                return time != null && time > 0;
+                            })
             ),
             MachineFluidStorage::empty
     );

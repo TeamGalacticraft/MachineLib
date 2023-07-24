@@ -44,6 +44,8 @@ import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -60,7 +62,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -73,10 +74,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
@@ -157,6 +155,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private boolean disableDrops = false;
+
+    private boolean active = false;
 
     /**
      * Constructs a new machine block entity with the text automatically derived from the passed {@link BlockState}.
@@ -378,11 +378,17 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
             ServerLevel serverLevel = (ServerLevel) level;
             this.tickConstant(serverLevel, pos, state, profiler);
             if (this.isDisabled()) {
+                if (this.active) {
+                    MachineBlock.updateActiveState(level, pos, state, this.active = false);
+                }
                 profiler.popPush("disabled");
                 this.tickDisabled(serverLevel, pos, state, profiler);
             } else {
                 profiler.popPush("active");
                 this.state.setStatus(this.tick(serverLevel, pos, state, profiler));
+                if (!this.active && this.state.isActive()) {
+                    MachineBlock.updateActiveState(level, pos, state, this.active = true);
+                }
             }
         } else {
             profiler.push("client");
@@ -444,6 +450,13 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
     protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+
+    /**
+     * Not to be used while ticking
+     */
+    public boolean isActive() {
+        return active;
+    }
 
     /**
      * Returns a controlled/throttled energy storage to expose to adjacent blocks.
@@ -710,7 +723,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
 
         buf.writeBlockPos(this.getBlockPos());
-        this.getConfiguration().writePacket(buf);
+        this.configuration.writePacket(buf);
+        this.state.writePacket(buf);
         this.energyStorage.writePacket(buf);
         this.itemStorage.writePacket(buf);
         this.fluidStorage.writePacket(buf);
@@ -738,19 +752,31 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return tag;
     }
 
-    @Override
-    public void setLevel(Level level) {
-        super.setLevel(level);
-        this.setRedstoneState(level.hasNeighborSignal(this.getBlockPos()));
-    }
-
     @Nullable
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeBlockPos(this.getBlockPos());
+        this.writeRenderData(buf);
+        System.out.println("write update packet");
+        return ServerPlayNetworking.createS2CPacket(Constant.id("be_render_data"), buf);
+    }
+
+    @MustBeInvokedByOverriders
+    public void readRenderData(FriendlyByteBuf buf) {
+        System.out.println("READ");
+        this.configuration.getIOConfiguration().readPacket(buf);
+
+    }
+
+    @MustBeInvokedByOverriders
+    public void writeRenderData(FriendlyByteBuf buf) {
+        System.out.println("WRITE");
+        this.configuration.getIOConfiguration().writePacket(buf);
     }
 
     public void setRedstoneState(boolean b) {
         this.state.setPowered(b);
     }
+
 }

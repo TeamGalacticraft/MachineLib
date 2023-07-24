@@ -26,7 +26,7 @@ import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineStateImpl;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +41,8 @@ public interface MachineState extends MenuSynchronizable, Deserializable<Compoun
 
     boolean isActive();
 
-    void writePacket(@NotNull FriendlyByteBuf buf);
-
-    void readPacket(@NotNull FriendlyByteBuf buf);
-
     boolean isPowered();
 
+    @ApiStatus.Internal
     void setPowered(boolean b);
 }

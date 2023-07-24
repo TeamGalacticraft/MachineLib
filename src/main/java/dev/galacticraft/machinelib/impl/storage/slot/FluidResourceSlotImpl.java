@@ -32,6 +32,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
 
 public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements FluidResourceSlot {
@@ -59,11 +60,12 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements Fl
 
     @Override
     public @NotNull CompoundTag createTag() {
+        assert this.isSane();
         CompoundTag tag = new CompoundTag();
         if (this.isEmpty()) return tag;
-        tag.putString(RESOURCE_KEY, BuiltInRegistries.FLUID.getKey(this.getResource()).toString());
-        tag.putInt(AMOUNT_KEY, (int) this.getAmount());
-        if (this.getTag() != null && !this.getTag().isEmpty()) tag.put(TAG_KEY, this.getTag());
+        tag.putString(RESOURCE_KEY, BuiltInRegistries.FLUID.getKey(this.resource).toString());
+        tag.putLong(AMOUNT_KEY, this.amount);
+        if (this.tag != null && !this.tag.isEmpty()) tag.put(TAG_KEY, this.tag);
         return tag;
     }
 
@@ -72,24 +74,25 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements Fl
         if (tag.isEmpty()) {
             this.setEmpty();
         } else {
-            this.set(BuiltInRegistries.FLUID.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getInt(AMOUNT_KEY));
+            this.set(BuiltInRegistries.FLUID.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getLong(AMOUNT_KEY));
         }
     }
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        if (this.getAmount() > 0) {
-            buf.writeInt((int) this.getAmount());
-            buf.writeUtf(BuiltInRegistries.FLUID.getKey(this.getResource()).toString());
-            buf.writeNbt(this.getTag());
+        assert this.isSane();
+        if (this.amount > 0) {
+            buf.writeLong(this.amount);
+            buf.writeUtf(BuiltInRegistries.FLUID.getKey(this.resource).toString());
+            buf.writeNbt(this.tag);
         } else {
-            buf.writeInt(0);
+            buf.writeLong(0);
         }
     }
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
-        int amount = buf.readInt();
+        long amount = buf.readLong();
         if (amount == 0) {
             this.setEmpty();
         } else {
@@ -97,5 +100,10 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements Fl
             CompoundTag tag = buf.readNbt();
             this.set(resource, tag, amount);
         }
+    }
+
+    @Override
+    public boolean isSane() {
+        return super.isSane() && this.resource != Fluids.EMPTY;
     }
 }

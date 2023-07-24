@@ -73,13 +73,19 @@ public class GeneratorBlockEntity extends MachineBlockEntity {
             this.energyStorage().insert(GENERATION_RATE);
             this.burnTime--;
         }
-        if (this.burnTime == 0) {
-            Item item = this.fuelInput.getResource();
-            if (!this.energyStorage().isFull() && this.fuelInput.extractOne()) {
-                this.burnTime = FuelRegistry.INSTANCE.get(item);
-            } else {
-                return MachineStatuses.IDLE;
+        if (!this.energyStorage().isFull()) {
+            if (this.burnTime == 0) {
+                Item item = this.fuelInput.consumeOne();
+                if (item != null) {
+                    Integer time = FuelRegistry.INSTANCE.get(item);
+                    if (time == null) return MachineStatuses.IDLE;
+                    this.burnTime = time;
+                } else {
+                    return MachineStatuses.IDLE;
+                }
             }
+        } else {
+            return MachineStatuses.IDLE;
         }
         return MachineStatuses.ACTIVE;
     }

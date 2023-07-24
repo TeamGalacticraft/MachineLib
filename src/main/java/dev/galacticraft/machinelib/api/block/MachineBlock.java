@@ -61,6 +61,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -78,6 +79,7 @@ import java.util.Objects;
  * @see MachineBlockEntity
  */
 public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
     private static final Component PRESS_SHIFT = Component.translatable(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE);
 
     private final MachineBlockEntityFactory<Machine> factory;
@@ -92,12 +94,21 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
         super(settings);
         this.factory = factory;
+        this.registerDefaultState(this.getStateDefinition().any().setValue(ACTIVE, false));
+    }
+
+    public static void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
+        level.setBlock(pos, state.setValue(ACTIVE, b), 2);
+    }
+
+    public static boolean isActive(@NotNull BlockState state) {
+        return state.getValue(ACTIVE);
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(BlockStateProperties.HORIZONTAL_FACING);
+        builder.add(BlockStateProperties.HORIZONTAL_FACING, ACTIVE);
     }
 
     @Override
@@ -113,6 +124,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
         super.neighborChanged(state, level, pos, block, fromPos, notify);
+        System.out.println("NEGPN");
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 machine.setRedstoneState(level.hasNeighborSignal(pos));
@@ -129,6 +141,17 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 if (!security.hasOwner()) {
                     security.setOwner(player.getUUID(), player.getGameProfile().getName());
                 }
+            }
+        }
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState blockState2, boolean bl) {
+        super.onPlace(state, level, pos, blockState2, bl);
+        System.out.println("PLACE");
+        if (!level.isClientSide) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                machine.setRedstoneState(level.hasNeighborSignal(pos));
             }
         }
     }

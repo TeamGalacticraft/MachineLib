@@ -23,9 +23,11 @@
 package dev.galacticraft.machinelib.api.util;
 
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ItemStackUtil {
     public static @NotNull ItemStack create(ResourceSlot<Item> slot) {
@@ -42,5 +44,15 @@ public class ItemStackUtil {
         ItemStack stack = new ItemStack(slot.getResource(), (int) slot.getAmount());
         stack.setTag(slot.copyTag());
         return stack;
+    }
+
+    public static ItemStack of(@NotNull Item resource, @Nullable CompoundTag tag, int amount) {
+        ItemStack stack = new ItemStack(resource, amount);
+        stack.setTag(tag);
+        return stack;
+    }
+
+    public static ItemStack of(@NotNull Item resource, int amount) {
+        return new ItemStack(resource, amount);
     }
 }

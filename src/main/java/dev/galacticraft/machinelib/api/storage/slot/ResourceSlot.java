@@ -63,7 +63,7 @@ public interface ResourceSlot<Resource> extends StorageAccess<Resource>, Mutable
 
     long tryExtract(long amount);
 
-    boolean extractOne();
+    @Nullable Resource extractOne();
 
     long extract(long amount);
 

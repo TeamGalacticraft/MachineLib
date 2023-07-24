@@ -386,27 +386,27 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
     }
 
     @Override
-    public long tryExtract(int slot, @Nullable Resource resource, long amount) {
+    public long tryExtract(int slot, @NotNull Resource resource, long amount) {
         return this.slots[slot].tryExtract(resource, amount);
     }
 
     @Override
-    public long tryExtract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+    public long tryExtract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         return this.slots[slot].tryExtract(resource, tag, amount);
     }
 
     @Override
-    public boolean extractOne(int slot) {
+    public @Nullable Resource extractOne(int slot) {
         return this.slots[slot].extractOne();
     }
 
     @Override
-    public boolean extractOne(int slot, @Nullable Resource resource) {
+    public boolean extractOne(int slot, @NotNull Resource resource) {
         return this.slots[slot].extractOne(resource);
     }
 
     @Override
-    public boolean extractOne(int slot, @Nullable Resource resource, @Nullable CompoundTag tag) {
+    public boolean extractOne(int slot, @NotNull Resource resource, @Nullable CompoundTag tag) {
         return this.slots[slot].extractOne(resource, tag);
     }
 
@@ -416,12 +416,12 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
     }
 
     @Override
-    public long extract(int slot, @Nullable Resource resource, long amount) {
+    public long extract(int slot, @NotNull Resource resource, long amount) {
         return this.slots[slot].extract(resource, amount);
     }
 
     @Override
-    public long extract(int slot, @Nullable Resource resource, @Nullable CompoundTag tag, long amount) {
+    public long extract(int slot, @NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         return this.slots[slot].extract(resource, tag, amount);
     }
 

@@ -26,11 +26,13 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.Utils;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResourceSlot> implements MachineItemStorage {
     public static final MachineItemStorageImpl EMPTY = new MachineItemStorageImpl(new ItemResourceSlot[0]);
@@ -90,5 +92,111 @@ public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResour
     @Override
     public void clearContent() {
         Utils.breakpointMe("attempted to clear items in a vanilla compat container!");
+    }
+
+    @Override
+    public boolean consumeOne(@NotNull Item resource) {
+        for (ItemResourceSlot slot : this.slots) {
+            if (slot.consumeOne(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag) {
+        for (ItemResourceSlot slot : this.slots) {
+            if (slot.consumeOne(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long consume(@NotNull Item resource, long amount) {
+        long consumed = 0;
+        for (ItemResourceSlot slot : this.slots) {
+            consumed += slot.consume(resource, amount - consumed);
+            if (consumed == amount) break;
+        }
+        return consumed;
+    }
+
+    @Override
+    public long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        long consumed = 0;
+        for (ItemResourceSlot slot : this.slots) {
+            consumed += slot.consume(resource, tag, amount - consumed);
+            if (consumed == amount) break;
+        }
+        return consumed;
+    }
+
+    @Override
+    public @Nullable Item consumeOne(int slot) {
+        return this.slots[slot].consumeOne();
+    }
+
+    @Override
+    public boolean consumeOne(int slot, @NotNull Item resource) {
+        return this.slots[slot].consumeOne(resource);
+    }
+
+    @Override
+    public boolean consumeOne(int slot, @NotNull Item resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].consumeOne(resource, tag);
+    }
+
+    @Override
+    public long consume(int slot, long amount) {
+        return this.slots[slot].consume(amount);
+    }
+
+    @Override
+    public long consume(int slot, @NotNull Item resource, long amount) {
+        return this.slots[slot].consume(resource, amount);
+    }
+
+    @Override
+    public long consume(int slot, @NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].consume(resource, tag, amount);
+    }
+
+    @Override
+    public boolean consumeOne(int start, int len, @NotNull Item resource) {
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            if (slot.consumeOne(resource)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean consumeOne(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag) {
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            if (slot.consumeOne(resource, tag)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public long consume(int start, int len, @NotNull Item resource, long amount) {
+        long consumed = 0;
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            consumed += slot.consume(resource, amount - consumed);
+            if (consumed == amount) break;
+        }
+        return consumed;
+    }
+
+    @Override
+    public long consume(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        long consumed = 0;
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            consumed += slot.consume(resource, tag, amount - consumed);
+            if (consumed == amount) break;
+        }
+        return consumed;
     }
 }

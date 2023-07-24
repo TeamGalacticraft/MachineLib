@@ -72,7 +72,7 @@ public sealed class FluidResourceSlotExtractionTests implements JUnitTest {
             assertEquals(0, this.slot.tryExtract(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
             assertEquals(0, this.slot.extract(Fluids.WATER, Utils.generateNbt(), FluidConstants.BUCKET));
 
-            assertFalse(this.slot.extractOne());
+            assertNull(this.slot.extractOne());
         }
 
         @Test
