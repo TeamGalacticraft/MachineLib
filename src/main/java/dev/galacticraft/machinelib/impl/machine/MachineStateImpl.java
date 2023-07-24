@@ -60,14 +60,22 @@ public class MachineStateImpl implements MachineState {
     @Override
     public @NotNull CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
-        tag.putByte(Constant.Nbt.STATUS, (byte) this.type.statusDomain().indexOf(this.status));
+        if (this.status == null) {
+            tag.putByte(Constant.Nbt.STATUS, (byte) -1);
+        } else {
+            tag.putByte(Constant.Nbt.STATUS, (byte) this.type.statusDomain().indexOf(this.status));
+        }
         tag.putBoolean(Constant.Nbt.POWERED, this.powered);
         return tag;
     }
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        buf.writeByte(this.type.statusDomain().indexOf(this.status));
+        if (this.status == null) {
+            buf.writeByte(-1);
+        } else {
+            buf.writeByte(this.type.statusDomain().indexOf(this.status));
+        }
         buf.writeBoolean(this.powered);
     }
 

@@ -764,20 +764,16 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(this.getBlockPos());
         this.writeRenderData(buf);
-        System.out.println("write update packet");
         return ServerPlayNetworking.createS2CPacket(Constant.id("be_render_data"), buf);
     }
 
     @MustBeInvokedByOverriders
     public void readRenderData(FriendlyByteBuf buf) {
-        System.out.println("READ");
         this.configuration.getIOConfiguration().readPacket(buf);
-
     }
 
     @MustBeInvokedByOverriders
     public void writeRenderData(FriendlyByteBuf buf) {
-        System.out.println("WRITE");
         this.configuration.getIOConfiguration().writePacket(buf);
     }
 

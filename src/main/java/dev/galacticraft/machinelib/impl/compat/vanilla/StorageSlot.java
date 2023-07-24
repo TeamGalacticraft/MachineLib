@@ -128,6 +128,7 @@ public class StorageSlot extends Slot {
 
     @Override
     public @NotNull ItemStack remove(int amount) {
+        if (this.slot.isEmpty()) return ItemStack.EMPTY;
         ItemStack extract = ItemStackUtil.copy(this.slot);
         extract.setCount((int) this.slot.extract(amount));
         return extract;

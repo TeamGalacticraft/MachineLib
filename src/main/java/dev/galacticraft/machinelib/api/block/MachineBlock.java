@@ -124,7 +124,6 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
         super.neighborChanged(state, level, pos, block, fromPos, notify);
-        System.out.println("NEGPN");
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 machine.setRedstoneState(level.hasNeighborSignal(pos));
@@ -148,7 +147,6 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState blockState2, boolean bl) {
         super.onPlace(state, level, pos, blockState2, bl);
-        System.out.println("PLACE");
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 machine.setRedstoneState(level.hasNeighborSignal(pos));
@@ -170,7 +168,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         if (text != null) {
             if (Screen.hasShiftDown()) {
                 if (this.description == null) {
-                    this.description = DisplayUtil.wrapText(text, 64);
+                    this.description = DisplayUtil.wrapText(text, 128);
                 }
                 tooltip.addAll(this.description);
             } else {

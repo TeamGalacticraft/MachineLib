@@ -53,6 +53,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.impl.transfer.context.PlayerContainerItemContext;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -792,15 +793,20 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
             if (DrawableUtil.isWithin(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
-                MachineStatus status = this.menu.state.getStatus();
-                if (status != null) {
-                    lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getText()));
-                }
-                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
-                this.appendEnergyTooltip(lines);
+                if (!this.menu.machine.isDisabled()) {
+                    MachineStatus status = this.menu.state.getStatus();
+                    if (status != null) {
+                        lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getText()));
+                    }
+                    lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
+                    this.appendEnergyTooltip(lines);
 
-                assert this.minecraft != null;
-                assert this.minecraft.screen != null;
+                    assert this.minecraft != null;
+                    assert this.minecraft.screen != null;
+                } else {
+                    lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(Component.translatable("ui.machinelib.machine.redstone_activation.status.disabled").withStyle(ChatFormatting.RED)));
+                    lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
+                }
                 graphics.pose().translate(0.0D, 0.0D, 1.0D);
                 graphics.renderComponentTooltip(this.minecraft.font, lines, mouseX, mouseY);
                 graphics.pose().translate(0.0D, 0.0D, -1.0D);
