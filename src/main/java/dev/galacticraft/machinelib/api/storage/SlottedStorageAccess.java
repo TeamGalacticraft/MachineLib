@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public interface SlottedStorageAccess<Resource, Slot extends StorageAccess<Resource>> extends StorageAccess<Resource>, Iterable<Slot> {
     int size();
 
+    SlottedStorageAccess<Resource, Slot> subStorage(int start, int len);
+    SlottedStorageAccess<Resource, Slot> subStorage(int... slots);
+
     // START SLOT METHODS
 
     @Nullable Resource getResource(int slot);

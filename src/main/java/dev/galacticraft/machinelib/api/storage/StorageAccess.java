@@ -22,13 +22,12 @@
 
 package dev.galacticraft.machinelib.api.storage;
 
-import dev.galacticraft.machinelib.api.misc.Modifiable;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface StorageAccess<Resource> extends Modifiable {
+public interface StorageAccess<Resource> {
     boolean isEmpty();
 
     boolean isFull();

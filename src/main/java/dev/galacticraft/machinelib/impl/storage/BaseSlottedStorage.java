@@ -30,12 +30,13 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
 
-public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot<Resource>> implements SlottedStorageAccess<Resource, Slot> {
+public class BaseSlottedStorage<Resource, Slot extends ResourceSlot<Resource>> implements SlottedStorageAccess<Resource, Slot> {
     protected final @NotNull Slot @NotNull [] slots;
 
-    public AbstractSlottedStorage(@NotNull Slot @NotNull [] slots) {
+    public BaseSlottedStorage(@NotNull Slot @NotNull [] slots) {
         this.slots = slots;
     }
 
@@ -268,6 +269,22 @@ public abstract class AbstractSlottedStorage<Resource, Slot extends ResourceSlot
     @Override
     public int size() {
         return this.slots.length;
+    }
+
+    @Override
+    public SlottedStorageAccess<Resource, Slot> subStorage(int start, int len) {
+        Slot[] slots1 = (Slot[]) Array.newInstance(this.slots.getClass().componentType(), len);
+        System.arraycopy(this.slots, start, slots1,  0, len);
+        return new BaseSlottedStorage<>(slots1);
+    }
+
+    @Override
+    public SlottedStorageAccess<Resource, Slot> subStorage(int... slots) {
+        Slot[] slots1 = (Slot[]) Array.newInstance(this.slots.getClass().componentType(), slots.length);
+        for (int i = 0; i < slots.length; i++) {
+            slots1[i] = this.slots[slots[i]];
+        }
+        return new BaseSlottedStorage<>(slots1);
     }
 
     @Override

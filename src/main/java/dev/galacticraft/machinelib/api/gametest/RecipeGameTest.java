@@ -42,13 +42,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineGameTest<Machine> {
-    private final @NotNull SlottedStorageAccess<Item, ItemResourceSlot> inputSlots;
-    private final @NotNull SlottedStorageAccess<Item, ItemResourceSlot> outputSlots;
+    private final int inputSlotsStart;
+    private final int inputSlotsLength;
+    private final int outputSlotsStart;
+    private final int outputSlotsLength;
 
-    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, @NotNull SlottedStorageAccess<Item, ItemResourceSlot> inputSlots, @NotNull SlottedStorageAccess<Item, ItemResourceSlot> outputSlots) {
+    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, int inputSlot, int outputSlot) {
+        this(type, inputSlot, 1, outputSlot);
+    }
+
+    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, int inputSlotsStart, int inputSlotsLength, int outputSlot) {
+        this(type, inputSlotsStart, inputSlotsLength, outputSlot, 1);
+    }
+
+    protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, int inputSlotsStart, int inputSlotsLength, int outputSlotsStart, int outputSlotsLength) {
         super(type);
-        this.inputSlots = inputSlots;
-        this.outputSlots = outputSlots;
+        this.inputSlotsStart = inputSlotsStart;
+        this.inputSlotsLength = inputSlotsLength;
+        this.outputSlotsStart = outputSlotsStart;
+        this.outputSlotsLength = outputSlotsLength;
     }
 
     protected abstract void fulfillRunRequirements(@NotNull Machine machine);
@@ -56,18 +68,18 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
     protected abstract void createValidRecipe(@NotNull MachineItemStorage storage);
 
     protected boolean recipeCrafted(@NotNull MachineItemStorage storage) {
-        return !this.outputSlots.isEmpty();
+        return !storage.isEmpty(this.outputSlotsStart, this.outputSlotsLength);
     }
 
     protected void createInvalidRecipe(@NotNull MachineItemStorage storage) {
-        for (ItemResourceSlot itemResourceSlot : this.inputSlots) {
-            itemResourceSlot.set(Items.BARRIER, 1);
+        for (int i = 0; i < this.inputSlotsLength; i++) {
+            storage.getSlot(this.inputSlotsStart + i).set(Items.BARRIER, 1);
         }
     }
 
     protected void fillOutputSlots(@NotNull MachineItemStorage storage) {
-        for (ItemResourceSlot itemResourceSlot : this.outputSlots) {
-            itemResourceSlot.set(Items.BARRIER, 1);
+        for (int i = 0; i < this.outputSlotsLength; i++) {
+            storage.getSlot(this.outputSlotsStart + i).set(Items.BARRIER, 1);
         }
     }
 

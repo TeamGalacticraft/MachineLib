@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Resource>> extends AbstractSlottedStorage<Resource, Slot> implements ResourceStorage<Resource, Slot> {
+public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Resource>> extends BaseSlottedStorage<Resource, Slot> implements ResourceStorage<Resource, Slot> {
     private long modifications = 0;
     private TransactionContext cachedTransaction = null;
     private Runnable listener;
