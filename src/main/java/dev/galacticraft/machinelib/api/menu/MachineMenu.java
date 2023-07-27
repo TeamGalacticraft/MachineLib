@@ -36,6 +36,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.Unpooled;
 import lol.bai.badpackets.api.PacketSender;
@@ -359,6 +360,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                     MenuSyncHandler handler = this.syncHandlers.get(i);
                     if (handler.needsSyncing()) {
                         buf.writeVarInt(i);
+                        MachineLib.LOGGER.trace("Writing sync handler {} at {}", handler, buf.writerIndex());
                         handler.sync(buf);
                     }
                 }
@@ -376,7 +378,9 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     public void receiveState(@NotNull FriendlyByteBuf buf) {
         int sync = buf.readVarInt();
         for (int i = 0; i < sync; i++) {
-            this.syncHandlers.get(buf.readVarInt()).read(buf);
+            MenuSyncHandler handler = this.syncHandlers.get(buf.readVarInt());
+            MachineLib.LOGGER.trace("Reading sync handler {} at {}", handler, buf.readerIndex());
+            handler.read(buf);
         }
     }
 

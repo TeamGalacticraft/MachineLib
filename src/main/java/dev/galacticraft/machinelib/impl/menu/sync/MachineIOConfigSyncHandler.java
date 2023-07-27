@@ -67,7 +67,7 @@ public class MachineIOConfigSyncHandler implements MenuSyncHandler {
         byte total = buf.readByte();
         for (byte i = 0; i < total; i++) {
             byte b = buf.readByte();
-            this.syncHandlers[b].sync(buf);
+            this.syncHandlers[b].read(buf);
         }
     }
 }

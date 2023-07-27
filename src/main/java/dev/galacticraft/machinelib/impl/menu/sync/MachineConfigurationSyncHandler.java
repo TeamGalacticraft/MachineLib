@@ -50,7 +50,7 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
 
     @Override
     public void sync(@NotNull FriendlyByteBuf buf) {
-        byte ref = 0b0000;
+        byte ref = 0b000;
         if (this.ioConfig.needsSyncing()) ref |= 0b001;
         if (this.security.needsSyncing()) ref |= 0b010;
         if (this.redstone != this.configuration.getRedstoneActivation()) ref |= 0b100;
@@ -63,6 +63,7 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
         if (this.security.needsSyncing()) {
             this.security.sync(buf);
         }
+
         if (this.redstone != this.configuration.getRedstoneActivation()) {
             this.redstone = this.configuration.getRedstoneActivation();
             buf.writeByte(this.configuration.getRedstoneActivation().ordinal());
