@@ -26,8 +26,24 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents objects that can be serialized to NBT or a packet.
+ *
+ * @param <T> The type of tag that represents the serialized object.
+ * @see Deserializable
+ */
 public interface Serializable<T extends Tag> {
+    /**
+     * Serializes this object as a tag.
+     *
+     * @return the created tag
+     */
     @NotNull T createTag();
 
+    /**
+     * Serializes this object into a buffer.
+     *
+     * @param buf the buffer to write into
+     */
     void writePacket(@NotNull FriendlyByteBuf buf);
 }

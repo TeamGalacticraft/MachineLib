@@ -42,7 +42,7 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
     private final @NotNull MachineIOFace right = MachineIOFace.blank();
     private final @NotNull MachineIOFace top = MachineIOFace.blank();
     private final @NotNull MachineIOFace bottom = MachineIOFace.blank();
-    private final @NotNull MachineIOFace nullFace = MachineIOFace.nullFace();
+    private final @NotNull MachineIOFace nullFace = MachineIOFace.directionless();
 
     @Override
     public @NotNull MachineIOFace get(@Nullable BlockFace face) {

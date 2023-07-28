@@ -24,6 +24,13 @@ package dev.galacticraft.machinelib.api.menu.sync;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents an object that can be synchronized in a menu.
+ */
 public interface MenuSynchronizable {
+    /**
+     * Creates a sync handler for this object.
+     * @return a new sync handler that manages this object.
+     */
     @Nullable MenuSyncHandler createSyncHandler();
 }

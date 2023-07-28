@@ -44,12 +44,12 @@ import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 @ApiStatus.Internal
-public final class NullMachineIOFaceImpl implements MachineIOFace {
+public final class DirectionlessMachineIOFaceImpl implements MachineIOFace {
     private @Nullable ExposedStorage<Item, ItemVariant> cachedItemStorage = null;
     private @Nullable ExposedStorage<Fluid, FluidVariant> cachedFluidStorage = null;
     private @Nullable EnergyStorage cachedEnergyStorage = null;
 
-    public NullMachineIOFaceImpl() {
+    public DirectionlessMachineIOFaceImpl() {
     }
 
     @Override

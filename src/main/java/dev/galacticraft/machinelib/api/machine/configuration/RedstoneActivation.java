@@ -59,7 +59,7 @@ public enum RedstoneActivation implements StringRepresentable {
     /**
      * Constructs a redstone activation type with the given text.
      *
-     * @param name the text of the interaction.
+     * @param name the name of the interaction.
      */
     @Contract(pure = true)
     RedstoneActivation(@NotNull Component name) {
@@ -74,16 +74,29 @@ public enum RedstoneActivation implements StringRepresentable {
         };
     }
 
+    /**
+     * Deserializes an activation state from NBT.
+     *
+     * @param tag the NBT.
+     * @return the activation state.
+     * @see #createTag()
+     */
     public static @NotNull RedstoneActivation readTag(@NotNull ByteTag tag) {
         return VALUES[tag.getAsByte()];
     }
 
+    /**
+     * Deserializes an activation state from a packet.
+     * @param buf the buffer to read from
+     * @return the activation state
+     * @see #writePacket(FriendlyByteBuf)
+     */
     public static @NotNull RedstoneActivation readPacket(@NotNull FriendlyByteBuf buf) {
         return VALUES[buf.readByte()];
     }
 
     /**
-     * Returns the text of the redstone activation state.
+     * Returns the name of the redstone activation state.
      *
      * @return The text of the redstone activation state.
      */
@@ -102,10 +115,20 @@ public enum RedstoneActivation implements StringRepresentable {
         };
     }
 
+    /**
+     * Serializes this state as a NBT.
+     * @return this activation state as a tag.
+     * @see #readTag(ByteTag)
+     */
     public @NotNull ByteTag createTag() {
         return ByteTag.valueOf((byte) this.ordinal());
     }
 
+    /**
+     * Serializes this state to a packet.
+     * @param buf the buffer to write to
+     * @see #readPacket(FriendlyByteBuf)
+     */
     public void writePacket(@NotNull FriendlyByteBuf buf) {
         buf.writeByte(this.ordinal());
     }

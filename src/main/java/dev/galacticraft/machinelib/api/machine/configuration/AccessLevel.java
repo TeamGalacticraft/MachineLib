@@ -74,12 +74,18 @@ public enum AccessLevel implements StringRepresentable {
         };
     }
 
+    /**
+     * Returns the access level corresponding to the given ordinal value.
+     *
+     * @param ordinal the ordinal value of the access level
+     * @return the access level corresponding to the given ordinal value
+     */
     public static @NotNull AccessLevel getByOrdinal(byte ordinal) {
         return VALUES[ordinal];
     }
 
     /**
-     * Returns the text of the access level.
+     * Returns the name of the access level.
      *
      * @return The text of the access level.
      */

@@ -26,8 +26,26 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents an object that can be deserialized from a specific tag or a packet.
+ *
+ * @param <T> the type of tag used for deserialization
+ * @see Serializable
+ */
 public interface Deserializable<T extends Tag> extends Serializable<T> {
+    /**
+     * Deserializes this object's state from a tag.
+     *
+     * @param tag the tag to be read.
+     * @see #createTag()
+     */
     void readTag(@NotNull T tag);
 
+    /**
+     * Deserializes this object's state from a buffer.
+     *
+     * @param buf the buffer to read from.
+     * @see #writePacket(FriendlyByteBuf)
+     */
     void readPacket(@NotNull FriendlyByteBuf buf);
 }

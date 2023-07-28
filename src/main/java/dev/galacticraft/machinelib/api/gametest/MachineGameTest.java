@@ -46,6 +46,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * A class for testing machines.
+ *
+ * @param <Machine> the type of machine block entity
+ * @see InstantTest
+ * @see ProcessingTest
+ */
 public abstract class MachineGameTest<Machine extends MachineBlockEntity> implements FabricGameTest {
     private static final Function<String, String> NAME_CONVERSION = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE);
 

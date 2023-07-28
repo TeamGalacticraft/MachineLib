@@ -107,8 +107,8 @@ public class MachineStateImpl implements MachineState {
     }
 
     @Override
-    public void setPowered(boolean b) {
-        this.powered = b;
+    public void setPowered(boolean powered) {
+        this.powered = powered;
     }
 
     @Override

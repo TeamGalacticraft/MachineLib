@@ -36,16 +36,47 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
+/**
+ * A container for testing recipes using the vanilla recipe system.
+ *
+ * @see net.minecraft.world.item.crafting.RecipeManager
+ */
 public class RecipeTestContainer implements Container, Modifiable {
+    /**
+     * The slots contained in this container
+     */
     private final ItemResourceSlot[] slots;
+    /**
+     * The modification counts of each slot
+     */
     private final long[] modifications;
+
+    /**
+     * The modification count of this container
+     * Only incremented when the modification count is requested
+     */
     private long modCount = 0;
 
+    /**
+     * Creates a new container with the given slots.
+     *
+     * @param slots the slots to use
+     * @return a new test container
+     */
     @Contract(value = "_ -> new", pure = true)
     public static @NotNull RecipeTestContainer create(ItemResourceSlot @NotNull ... slots) {
         assert slots.length > 0;
         return new RecipeTestContainer(slots);
     }
+
+    /**
+     * Creates a new container with the slots specified by a slice of the given storage access
+     *
+     * @param access the storage access providing the slots
+     * @param start the index of the first slot to include in the container
+     * @param len the number of slots to include in the container
+     * @return a new test container
+     */
     @Contract(value = "_, _, _-> new", pure = true)
     public static @NotNull RecipeTestContainer create(SlottedStorageAccess<Item, ItemResourceSlot> access, int start, int len) {
         Iterator<ItemResourceSlot> iterator = access.iterator();
@@ -57,6 +88,11 @@ public class RecipeTestContainer implements Container, Modifiable {
         return new RecipeTestContainer(slots);
     }
 
+    /**
+     * Constructs a new RecipeTestContainer with the provided slots.
+     *
+     * @param slots the slots to be included in the container
+     */
     private RecipeTestContainer(ItemResourceSlot[] slots) {
         this.slots = slots;
         this.modifications = new long[this.slots.length];

@@ -102,9 +102,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     }
 
     /**
-     * The crafting inventory of the machine.
-     * Used to determine the machine's active recipe via the vanilla recipe search system.
-     * Should never be modified through this method (modify the inventory directly instead).
+     * Creates an inventory for use in finding vanilla recipes for this machine.
+     * NOTE: This inventory can assume that it is never modified - do not modify it!
      *
      * @return The crafting inventory of the machine.
      */
@@ -112,13 +111,19 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected abstract @NotNull C createCraftingInv();
 
     /**
-     * Inserts the recipe's output into the machine's inventory.
+     * Inserts the active recipe's output into the machine's inventory.
      *
      * @param recipe The recipe to output.
      */
     @MustBeInvokedByOverriders
     protected abstract void outputStacks(@NotNull R recipe);
 
+    /**
+     * Checks if the machine can output stacks for the given recipe.
+     *
+     * @param recipe The recipe to check.
+     * @return {@code true} if the machine can output stacks for the recipe, {@code false} otherwise.
+     */
     @MustBeInvokedByOverriders
     protected abstract boolean canOutputStacks(@NotNull R recipe);
 
@@ -132,7 +137,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * Returns the machine status to use when the machine is working.
-     * A machine is working if it has an active recipe and the recipe's progress is less than the maximum progress.
+     * A machine is working if it has an active recipe and the maximum progress is greater than zero.j
      *
      * @return The machine status to use when the machine is working.
      */
@@ -140,14 +145,21 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected abstract @NotNull MachineStatus workingStatus();
 
     /**
-     * Extracts the necessary resources to run this machine.
+     * Tests if the necessary resources to run this machine are available.
      * This can be energy, fuel, or any other resource (or nothing!).
      *
      * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
+     * @see #extractResourcesToWork()
      */
     @MustBeInvokedByOverriders
     protected abstract @Nullable MachineStatus hasResourcesToWork();
 
+    /**
+     * Extracts the necessary resources to run this machine.
+     * This can be energy, fuel, or any other resource (or nothing!).
+     *
+     * @see #hasResourcesToWork()
+     */
     @MustBeInvokedByOverriders
     protected abstract void extractResourcesToWork();
 
@@ -179,7 +191,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                 profiler.pop();
             }
         } else {
-            return this.getState().getStatus();
+            return this.getState().getStatus() == null ? MachineStatuses.INVALID_RECIPE : this.getState().getStatus();
         }
     }
 

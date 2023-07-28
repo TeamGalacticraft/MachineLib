@@ -59,6 +59,9 @@ public final class MachineStatuses {
      */
     public static final MachineStatus OFF = MachineStatus.create(Constant.TranslationKey.STATUS_OFF, ChatFormatting.RED, MachineStatus.Type.OTHER);
 
+    /**
+     * This class should not be instantiated.
+     */
     @Contract(value = " -> fail", pure = true)
     private MachineStatuses() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");

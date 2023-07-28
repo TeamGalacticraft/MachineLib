@@ -33,7 +33,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
-import dev.galacticraft.machinelib.impl.block.face.NullMachineIOFaceImpl;
+import dev.galacticraft.machinelib.impl.block.face.DirectionlessMachineIOFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.nbt.CompoundTag;
@@ -76,9 +76,13 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
         return new MachineIOFaceImpl(type, flow);
     }
 
+    /**
+     * Returns a new machine face to be used when there is directionless access/
+     * @return a new machine face.
+     */
     @Contract(value = " -> new", pure = true)
-    static @NotNull MachineIOFace nullFace() {
-        return new NullMachineIOFaceImpl();
+    static @NotNull MachineIOFace directionless() {
+        return new DirectionlessMachineIOFaceImpl();
     }
 
     /**
@@ -106,8 +110,20 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
     @Contract(pure = true)
     @NotNull ResourceFlow getFlow();
 
+    /**
+     * Returns the exposed item storage associated with the given resource storage.
+     *
+     * @param storage The resource storage to expose.
+     * @return The exposed item storage, or null if access is denied.
+     */
     @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage);
 
+    /**
+     * Returns the exposed fluid storage associated with the given resource storage.
+     *
+     * @param storage The resource storage to expose.
+     * @return The exposed fluid storage, or null if access is denied.
+     */
     @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage);
 
     /**

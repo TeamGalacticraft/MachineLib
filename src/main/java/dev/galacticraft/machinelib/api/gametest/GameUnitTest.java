@@ -41,6 +41,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * An abstract class representing a game unit test.
+ *
+ * @param <T> the type of the game unit being tested
+ */
 public abstract class GameUnitTest<T> implements FabricGameTest {
     private static final Function<String, String> NAME_CONVERSION = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE);
     private final @NotNull String id;

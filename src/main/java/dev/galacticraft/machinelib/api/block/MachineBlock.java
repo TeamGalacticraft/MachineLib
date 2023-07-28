@@ -79,17 +79,36 @@ import java.util.Objects;
  * @see MachineBlockEntity
  */
 public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    /**
+     * Represents a boolean property for specifying the active state of the machine.
+     * @see MachineBlockEntity#isActive() for the definition of 'active'
+     */
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
+
+    /**
+     * Tooltip prompt text. Shown instead of the long-form description when shift is not pressed.
+     *
+     * @see #shiftDescription(ItemStack, BlockGetter, TooltipFlag)
+     */
     private static final Component PRESS_SHIFT = Component.translatable(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE);
 
+    /**
+     * Factory that constructs the relevant machine block entity for this block.
+     */
     private final MachineBlockEntityFactory<Machine> factory;
+
+    /**
+     * The line-wrapped long description of this machine.
+     *
+     * @see #shiftDescription(ItemStack, BlockGetter, TooltipFlag)
+     */
     private List<Component> description = null;
 
     /**
      * Creates a new machine block.
      *
      * @param settings The settings for the block.
-     * @param factory
+     * @param factory the machine block entity factory
      */
     public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
         super(settings);
@@ -97,10 +116,24 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         this.registerDefaultState(this.getStateDefinition().any().setValue(ACTIVE, false));
     }
 
+    /**
+     * Updates the active state of a machine block in the specified level at a given position.
+     *
+     * @param level The level in which the machine block exists.
+     * @param pos The position of the machine block.
+     * @param state The current state of the machine block.
+     * @param b The new value for the active state.
+     */
     public static void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
         level.setBlock(pos, state.setValue(ACTIVE, b), 2);
     }
 
+    /**
+     * Determines whether a machine block is active or not based on its state.
+     *
+     * @param state The state of the machine block.
+     * @return {@code true} if the machine block is active, {@code false} otherwise.
+     */
     public static boolean isActive(@NotNull BlockState state) {
         return state.getValue(ACTIVE);
     }
@@ -126,7 +159,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         super.neighborChanged(state, level, pos, block, fromPos, notify);
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                machine.setRedstoneState(level.hasNeighborSignal(pos));
+                machine.getState().setPowered(level.hasNeighborSignal(pos));
             }
         }
     }
@@ -149,7 +182,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         super.onPlace(state, level, pos, blockState2, bl);
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                machine.setRedstoneState(level.hasNeighborSignal(pos));
+                machine.getState().setPowered(level.hasNeighborSignal(pos));
             }
         }
     }
@@ -265,24 +298,29 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         return stack;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public <B extends BlockEntity> BlockEntityTicker<B> getTicker(Level world, BlockState state, BlockEntityType<B> type) {
-        return MachineBlockEntityTicker.getInstance();
+        return !world.isClientSide ? MachineBlockEntityTicker.getInstance() : null;
     }
 
     /**
      * Returns this machine's description for the tooltip when left shift is pressed.
      *
-     * @param stack    The item stack (the contained item is this block).
-     * @param view     The world.
-     * @param context Whether advanced tooltips are enabled.
+     * @param stack The item stack (the contained item is this block).
+     * @param view The world.
+     * @param context Extra tooltip information.
      * @return This machine's description.
      */
     public @Nullable Component shiftDescription(ItemStack stack, BlockGetter view, TooltipFlag context) {
         return Component.translatable(this.getDescriptionId() + ".description");
     }
 
+    /**
+     * Factory for creating {@link MachineBlockEntity}s.
+     *
+     * @param <Machine> the type of machine this factory creates
+     */
     @FunctionalInterface
     public interface MachineBlockEntityFactory<Machine extends MachineBlockEntity> {
         @Nullable Machine create(@NotNull BlockPos pos, @NotNull BlockState state);

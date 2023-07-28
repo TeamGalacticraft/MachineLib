@@ -30,19 +30,53 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Stores the state of a machine.
+ */
 public interface MachineState extends MenuSynchronizable, Deserializable<CompoundTag> {
+    /**
+     * Creates a new state instance of the specified type.
+     *
+     * @param type the type of machine
+     * @return a new MachineState instance
+     */
     static @NotNull MachineState create(@NotNull MachineType<?, ?> type) {
         return new MachineStateImpl(type);
     }
 
+    /**
+     * Returns the current status of the machine. Can be null if not set.
+     *
+     * @return the current status of the machine.
+     */
     @Nullable MachineStatus getStatus();
 
+    /**
+     * Sets the status of the machine.
+     *
+     * @param status the status to set for the machine.
+     */
     void setStatus(@Nullable MachineStatus status);
 
+    /**
+     * Checks if the machine is currently active (status-wise).
+     *
+     * @return true if the machine is active, false otherwise.
+     */
     boolean isActive();
 
+    /**
+     * Checks if the machine is currently receiving redstone signal.
+     *
+     * @return true if the machine is receiving redstone signal, false otherwise.
+     */
     boolean isPowered();
 
+    /**
+     * Sets the redstone power state.
+     *
+     * @param powered the new redstone power state
+     */
     @ApiStatus.Internal
-    void setPowered(boolean b);
+    void setPowered(boolean powered);
 }

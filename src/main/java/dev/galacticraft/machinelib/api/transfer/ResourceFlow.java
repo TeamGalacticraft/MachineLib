@@ -71,7 +71,7 @@ public enum ResourceFlow {
     }
 
     /**
-     * Returns the text of the flow direction.
+     * Returns the name of the flow direction.
      *
      * @return The text of the flow direction.
      */

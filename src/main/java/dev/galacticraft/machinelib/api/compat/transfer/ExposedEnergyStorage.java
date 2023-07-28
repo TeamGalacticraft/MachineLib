@@ -31,8 +31,16 @@ import team.reborn.energy.api.EnergyStorage;
  * An {@link EnergyStorage} that can be configured to restrict input and output.
  */
 public interface ExposedEnergyStorage extends EnergyStorage {
+    /**
+     * Creates a new exposed energy storage.
+     *
+     * @param parent The parent storage object.
+     * @param maxInsertion The maximum amount of energy that can be inserted in one transaction.
+     * @param maxExtraction The maximum amount of energy that can be extracted in one transaction.
+     * @return A new exposed energy storage.
+     */
     @Contract("_, _, _ -> new")
-    static @NotNull ExposedEnergyStorage create(@NotNull EnergyStorage parent, boolean insertion, boolean extraction) {
-        return new ExposedEnergyStorageImpl(parent, insertion, extraction);
+    static @NotNull ExposedEnergyStorage create(@NotNull EnergyStorage parent, long maxInsertion, long maxExtraction) {
+        return new ExposedEnergyStorageImpl(parent, maxInsertion, maxExtraction);
     }
 }

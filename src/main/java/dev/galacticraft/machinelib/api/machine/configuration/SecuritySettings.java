@@ -75,12 +75,17 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Contract(pure = true)
     @Nullable String getUsername();
 
+    /**
+     * Sets the username of the owner.
+     *
+     * @param username the username to set as the owner.
+     */
     void setUsername(@Nullable String username);
 
     /**
-     * Returns the text of the team or {@code null} if it has not been cached.
+     * Returns the name of the team or {@code null} if it has not been cached.
      *
-     * @return the text of the team.
+     * @return the name of the team.
      */
     @Contract(pure = true)
     @ApiStatus.Experimental
@@ -148,11 +153,16 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
      * Sets the team linked to these security settings
      *
      * @param team the team to be granted access to the linked machine can be {@code null}.
-     * @param name the text of the team to be granted access to the linked machine.
+     * @param name the name of the team to be granted access to the linked machine.
      */
     @ApiStatus.Experimental
     @Contract(mutates = "this", value = "null, !null -> fail")
     void setTeam(@Nullable ResourceLocation team, @Nullable String name);
 
+    /**
+     * Checks if the machine has an owner.
+     *
+     * @return true if the machine has an owner, false otherwise.
+     */
     boolean hasOwner();
 }

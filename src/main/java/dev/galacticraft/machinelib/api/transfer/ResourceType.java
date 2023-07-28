@@ -63,7 +63,7 @@ public enum ResourceType {
     /**
      * Constructs a new resource type.
      *
-     * @param name the text of the resource.
+     * @param name the name of the resource.
      */
     @Contract(pure = true)
     ResourceType(@NotNull Component name) {
@@ -89,7 +89,7 @@ public enum ResourceType {
     }
 
     /**
-     * Returns the text of the resource type.
+     * Returns the name of the resource type.
      *
      * @return The text of the resource type.
      */

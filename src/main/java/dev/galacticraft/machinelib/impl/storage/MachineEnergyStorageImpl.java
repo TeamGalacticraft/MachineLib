@@ -67,27 +67,27 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
     @Override
     public boolean supportsInsertion() {
-        return this.maxInput > 0;
+        return true;
     }
 
     @Override
     public boolean canExtract(long amount) {
-        return this.amount >= amount && amount <= this.maxOutput;
+        return this.amount >= amount;
     }
 
     @Override
     public boolean canInsert(long amount) {
-        return this.amount <= amount && amount <= this.maxInput;
+        return this.amount <= amount;
     }
 
     @Override
     public long tryExtract(long amount) {
-        return Math.min(this.maxOutput, Math.min(this.amount, amount));
+        return Math.min(this.amount, amount);
     }
 
     @Override
     public long tryInsert(long amount) {
-        return Math.min(this.maxInput, Math.min(this.amount + amount, this.capacity) - this.amount);
+        return Math.min(this.amount + amount, this.capacity) - this.amount;
     }
 
     @Override
@@ -175,7 +175,7 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
     @Override
     public boolean isFull() {
-        return this.amount == this.capacity;
+        return this.amount >= this.capacity;
     }
 
     @Override
@@ -191,6 +191,7 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
 
     @Override
     public void setEnergy(long amount) {
+        assert amount >= 0;
         this.amount = amount;
     }
 
@@ -199,13 +200,13 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
         switch (flow) {
             case INPUT -> {
                 if (this.insert) {
-                    return ExposedEnergyStorage.create(this, true, false);
+                    return ExposedEnergyStorage.create(this, this.maxInput, 0);
                 }
                 return null;
             }
             case OUTPUT -> {
                 if (this.extract) {
-                    return ExposedEnergyStorage.create(this, false, true);
+                    return ExposedEnergyStorage.create(this, 0, this.maxOutput);
                 }
                 return null;
             }
@@ -214,10 +215,10 @@ public final class MachineEnergyStorageImpl extends SnapshotParticipant<Long> im
                     if (this.extract) {
                         return this;
                     } else {
-                        return ExposedEnergyStorage.create(this, true, false);
+                        return ExposedEnergyStorage.create(this, this.maxInput, 0);
                     }
                 } else if (this.extract) {
-                    return ExposedEnergyStorage.create(this, false, true);
+                    return ExposedEnergyStorage.create(this, 0, this.maxOutput);
                 }
                 return null;
             }

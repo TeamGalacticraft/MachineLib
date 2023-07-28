@@ -36,21 +36,56 @@ import java.util.function.*;
  * Handles syncing of storage contents between the server and client.
  */
 public interface MenuSyncHandler {
+    /**
+     * Constructs a sync handler that synchronizes long values.
+     * Obtains values from the supplier on the server, and stores values on the client with the ocnsumer
+     *
+     * @param supplier the data source
+     * @param consumer the data output
+     * @return a new sync handler
+     */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull MenuSyncHandler simple(LongSupplier supplier, LongConsumer consumer) {
         return new LongMenuSyncHandler(supplier, consumer);
     }
 
+    /**
+     * Constructs a sync handler that synchronizes int values.
+     * Obtains values from the supplier on the server, and stores values on the client with the consumer.
+     *
+     * @param supplier the data source
+     * @param consumer the data output
+     * @return a new sync handler
+     */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull MenuSyncHandler simple(IntSupplier supplier, IntConsumer consumer) {
         return new IntMenuSyncHandler(supplier, consumer);
     }
 
+    /**
+     * Constructs a sync handler that synchronizes enum values.
+     * Obtains values from the supplier on the server, and stores values on the client with the consumer.
+     * The handler only accepts values that are present in the specified enum array.
+     *
+     * @param supplier the data source
+     * @param consumer the data output
+     * @param world the allowed enum values
+     * @param <E> the enum type
+     * @return a new sync handler
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     static @NotNull <E extends Enum<E>> MenuSyncHandler simple(Supplier<E> supplier, Consumer<E> consumer, E[] world) {
         return new EnumMenuSyncHandler<>(supplier, consumer, world);
     }
 
+    /**
+     * Constructs a sync handler that synchronizes boolean arrays.
+     * Obtains values from the input array on the server, and stores values in the output array on the client.
+     *
+     * @param input the data source array
+     * @param output the data output array
+     * @return a new sync handler
+     */
     @Contract(value = "_, _ -> new", pure = true)
     static @NotNull MenuSyncHandler booleans(boolean[] input, boolean[] output) {
         return new BooleansMenuSyncHandler(input, output);

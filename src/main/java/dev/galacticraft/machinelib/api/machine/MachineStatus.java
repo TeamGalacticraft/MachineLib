@@ -37,7 +37,7 @@ public interface MachineStatus {
     /**
      * Creates a new machine status.
      *
-     * @param name The text of the machine status.
+     * @param name The name of the machine status.
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */
@@ -46,13 +46,21 @@ public interface MachineStatus {
         return new MachineStatusImpl(name, type);
     }
 
+    /**
+     * Creates a new machine status.
+     *
+     * @param key The translation key of the machine status name.
+     * @param color The colour to use for the status text.
+     * @param type The type of the machine status.
+     * @return The newly created machine status.
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     static @NotNull MachineStatus create(@NotNull String key, ChatFormatting color, @NotNull MachineStatus.Type type) {
         return create(Component.translatable(key).setStyle(Style.EMPTY.withColor(color)), type);
     }
 
      /**
-     * Returns the text of the machine status.
+     * Returns the name of the machine status.
      *
      * @return The text of the machine status.
      */
@@ -65,10 +73,21 @@ public interface MachineStatus {
      */
     @NotNull MachineStatus.Type getType();
 
+    /**
+     * Serializes this machine status to a packet, based on the machine type
+     * @param type the type of machine in use
+     * @param buf the buffer to write to
+     */
     default void writePacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
         buf.writeByte(type.statusDomain().indexOf(this));
     }
 
+    /**
+     * Deserializes this machine status form a packet, based on the machine in use
+     * @param type the type of machine in sue
+     * @param buf the buffer to write to
+     * @return the deserialized machine status
+     */
     static @NotNull MachineStatus readPacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
         return type.statusDomain().get(buf.readByte());
     }
@@ -115,6 +134,9 @@ public interface MachineStatus {
          */
         OTHER(false);
 
+        /**
+         * Whether the machine is considered working with this status type.
+         */
         private final boolean active;
 
         @Contract(pure = true)

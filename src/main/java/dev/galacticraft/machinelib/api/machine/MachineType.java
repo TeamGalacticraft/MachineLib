@@ -37,6 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Represents a type of machine.
+ * Stores status information and item/fluid/energy storage data.
+ *
+ * @param <Machine> The type of machine block entity associated with this machine type.
+ * @param <Menu> The type of menu associated with this machine type.
+ */
 public interface MachineType<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
     @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
     static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull List<MachineStatus> statusDomain, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier) {

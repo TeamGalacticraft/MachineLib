@@ -27,6 +27,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Represents a test that has to wait a specified number of ticks for results.
+ * Annotated methods should have initial setup in their body,
+ * and return a {@link Runnable} that verifies state at the end.
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ProcessingTest {

@@ -41,6 +41,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Provides a base implementation for testing recipe-based machines.
+ *
+ * @param <C> the type of container used by the recipe
+ * @param <R> the type of recipe used by the recipe
+ * @param <Machine> the type of machine used in the game test
+ *
+ * @see RecipeMachineBlockEntity
+ */
 public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineGameTest<Machine> {
     private final int inputSlotsStart;
     private final int inputSlotsLength;

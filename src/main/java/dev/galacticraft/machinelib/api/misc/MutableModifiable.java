@@ -26,9 +26,21 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Extension of a mutable object, allowing for the manual marking of modification.
+ */
 @ApiStatus.Internal
 public interface MutableModifiable extends Modifiable {
+    /**
+     * Marks this object as modified within the transaction's lifetime.
+     * Should the transaction be aborted, the modification state will revert itself.
+     *
+     * @param context The transaction context. It can be null if there is no active transaction.
+     */
     void markModified(@Nullable TransactionContext context);
 
+    /**
+     * Marks this object as modified.
+     */
     void markModified();
 }

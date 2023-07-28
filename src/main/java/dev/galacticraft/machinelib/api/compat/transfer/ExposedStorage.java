@@ -35,10 +35,25 @@ import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a resource storage exposed to adjacent blocks or items.
+ *
+ * @param <Resource> the type of resource stored in the storage
+ * @param <Variant> the type of variant associated with the resource
+ */
 public interface ExposedStorage<Resource, Variant extends TransferVariant<Resource>> extends Storage<Variant> {
+    /**
+     * Creates an exposed item storage.
+     *
+     * @param storage the backing resource storage
+     * @param flow the flow restrictions on the storage
+     * @return an exposed item storage
+     */
     @Contract("_, _ -> new")
     static @Nullable ExposedStorage<Item, ItemVariant> createItem(ResourceStorage<Item, ? extends ResourceSlot<Item>> storage, ResourceFlow flow) {
         if (storage.size() == 0) return null;
+        if (flow == ResourceFlow.BOTH) return createFullItem(storage);
+
         ResourceSlot<Item>[] rawSlots = storage.getSlots();
         ExposedSlot<Item, ItemVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
@@ -47,9 +62,18 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         return new ExposedStorageImpl<>(storage, slots);
     }
 
+    /**
+     * Creates an exposed fluid storage.
+     *
+     * @param storage the backing resource storage
+     * @param flow the flow restrictions on the storage
+     * @return an exposed fluid storage
+     */
     @Contract("_, _ -> new")
     static @Nullable ExposedStorage<Fluid, FluidVariant> createFluid(ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage, ResourceFlow flow) {
         if (storage.size() == 0) return null;
+        if (flow == ResourceFlow.BOTH) return createFullFluid(storage);
+
         ResourceSlot<Fluid>[] rawSlots = storage.getSlots();
         ExposedSlot<Fluid, FluidVariant>[] slots = new ExposedSlot[rawSlots.length];
         for (int i = 0; i < rawSlots.length; i++) {
@@ -58,6 +82,12 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         return new ExposedStorageImpl<>(storage, slots);
     }
 
+    /**
+     * Creates an exposed item storage with no additional I/O restrictions.
+     *
+     * @param storage the backing resource storage
+     * @return an exposed item storage
+     */
     static @Nullable ExposedStorage<Item, ItemVariant> createFullItem(ResourceStorage<Item, ? extends ResourceSlot<Item>> storage) {
         if (storage.size() == 0) return null;
         ResourceSlot<Item>[] rawSlots = storage.getSlots();
@@ -68,6 +98,12 @@ public interface ExposedStorage<Resource, Variant extends TransferVariant<Resour
         return new ExposedStorageImpl<>(storage, slots);
     }
 
+    /**
+     * Creates an exposed fluid storage with no additional I/O restrictions.
+     *
+     * @param storage the backing resource storage
+     * @return an exposed fluid storage
+     */
     static @Nullable ExposedStorage<Fluid, FluidVariant> createFullFluid(ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage) {
         if (storage.size() == 0) return null;
         ResourceSlot<Fluid>[] rawSlots = storage.getSlots();

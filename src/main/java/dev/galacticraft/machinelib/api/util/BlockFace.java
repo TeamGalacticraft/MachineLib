@@ -70,6 +70,12 @@ public enum BlockFace {
      */
     private final boolean side;
 
+    /**
+     * Constructs a block face.
+     *
+     * @param name The name of the block face.
+     * @param side Whether the block face is a side face or not.
+     */
     BlockFace(@NotNull MutableComponent name, boolean side) {
         this.name = name.setStyle(Constant.Text.GOLD_STYLE);
         this.side = side;

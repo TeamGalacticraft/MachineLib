@@ -64,21 +64,59 @@ import java.util.function.Supplier;
  * @param <Machine> The type of machine block entity this menu is linked to.
  */
 public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractContainerMenu {
+    /**
+     * The machine type associated with this menu.
+     */
     public final @NotNull MachineType<?, ?> type;
 
+    /**
+     * The machine that is the source of this menu.
+     */
     @ApiStatus.Internal
     public final @NotNull Machine machine;
+    /**
+     * Whether the menu exists on the logical server.
+     */
     public final boolean server;
 
+    /**
+     * The level this menu exists in
+     */
     public final @NotNull ContainerLevelAccess levelAccess;
+    /**
+     * The player interacting with this menu.
+     * Always null on the logical client, never null on the logical server.
+     */
     public final @Nullable ServerPlayer player;
+
+    /**
+     * The inventory of the player opening this menu
+     */
     public final @NotNull Inventory playerInventory;
+    /**
+     * The UUID of the player interacting with this menu.
+     */
     public final @NotNull UUID playerUUID;
 
+    /**
+     * The configuration of the machine associated with this menu
+     */
     public final @NotNull MachineConfiguration configuration;
+    /**
+     * The state of the machine associated with this menu
+     */
     public final @NotNull MachineState state;
+    /**
+     * The energy storage of the machine associated with this menu
+     */
     public final @NotNull MachineEnergyStorage energyStorage;
+    /**
+     * The item storage of the machine associated with this menu
+     */
     public final @NotNull MachineItemStorage itemStorage;
+    /**
+     * The fluid storage of the machine associated with this menu
+     */
     public final @NotNull MachineFluidStorage fluidStorage;
 
     /**
@@ -96,6 +134,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
     /**
      * Constructs a new menu for a machine.
+     * Called on the logical server
      *
      * @param syncId  The sync id for this menu.
      * @param player  The player who is interacting with this menu.
@@ -139,6 +178,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
     /**
      * Constructs a new menu for a machine.
+     * Called on the logical client
      *
      * @param syncId    The sync id for this menu.
      * @param buf       The synchronization buffer from the server. Should contain exactly one block pos.
@@ -186,31 +226,77 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.registerSyncHandlers(this::addSyncHandler);
     }
 
+    /**
+     * Creates a new menu type for a machine.
+     *
+     * @param factory       The factory used to create the machine menu.
+     * @param typeSupplier  The supplier for the machine type.
+     * @param <Machine>     The type of the machine block entity.
+     * @param <Menu>        The type of the machine menu.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull MachineMenuFactory<Machine, Menu> factory, Supplier<MachineType<Machine, Menu>> typeSupplier) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> factory.create(syncId, inventory, buf, typeSupplier.get()));
     }
 
+    /**
+     * Creates a new menu type for a machine with a basic factory.
+     *
+     * @param factory The factory used to create the machine menu.
+     * @param <Machine> The type of the machine block entity.
+     * @param <Menu> The type of the machine menu.
+     * @return The created menu type.
+     */
     @Contract(value = "_ -> new", pure = true)
     public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull BasicMachineMenuFactory<Machine, Menu> factory) {
         return new ExtendedScreenHandlerType<>(factory::create);
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param invX The x-coordinate of the top-left player inventory slot.
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invX, int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new MachineMenu<>(syncId, inventory, buf, invX, invY, typeSupplier.get()));
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return createSimple(8, invY, typeSupplier);
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return createSimple(84, typeSupplier);
     }
 
+    /**
+     * Registers the sync handlers for the menu.
+     *
+     * @param consumer The consumer to accept the menu sync handlers.
+     */
     @MustBeInvokedByOverriders
     public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
         consumer.accept(this.configuration.createSyncHandler());
@@ -220,15 +306,15 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         consumer.accept(this.energyStorage.createSyncHandler());
     }
 
+    /**
+     * Adds a sync handler to the menu.
+     *
+     * @param syncHandler The sync handler to add. Ignored if null.
+     */
     private void addSyncHandler(@Nullable MenuSyncHandler syncHandler) {
         if (syncHandler != null) {
             this.syncHandlers.add(syncHandler);
         }
-    }
-
-    @Override
-    public void clicked(int i, int j, ClickType clickType, Player player) {
-        super.clicked(i, j, clickType, player);
     }
 
     @Override
@@ -277,6 +363,10 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         }
     }
 
+    /**
+     * Quick-moves a stack from the machine's inventory into the player's inventory
+     * @param slot the slot that was shift-clicked
+     */
     private void quickMoveIntoPlayerInventory(ResourceSlot<Item> slot) {
         if (slot.isEmpty()) return;
         ItemStack itemStack = ItemStackUtil.copy(slot);
@@ -308,7 +398,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     }
 
     @Override
-    protected boolean moveItemStackTo(ItemStack itemStack, int startIndex, int endIndex, boolean reverse) {
+    protected boolean moveItemStackTo(ItemStack stack, int startIndex, int endIndex, boolean reverse) {
         throw new UnsupportedOperationException("you shouldn't call this.");
     }
 
@@ -338,14 +428,16 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
-        this.syncStorages();
+        this.synchronizeState();
     }
 
     /**
-     * Syncs the storages in this menu.
+     * Synchronizes this menu's state from the server to the client.
+     *
+     * @see #receiveState(FriendlyByteBuf)
      */
     @ApiStatus.Internal
-    private void syncStorages() {
+    private void synchronizeState() {
         if (this.player != null) {
             int sync = 0;
             for (MenuSyncHandler syncHandler : this.syncHandlers) {
@@ -370,9 +462,10 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     }
 
     /**
-     * Receives and deserialized storage sync packets from the server.
+     * Receives and deserializes sync packets from the server (called on the client).
      *
      * @param buf The packet buffer.
+     * @see #synchronizeState()
      */
     @ApiStatus.Internal
     public void receiveState(@NotNull FriendlyByteBuf buf) {
@@ -394,13 +487,43 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.tanks.add(tank);
     }
 
+    /**
+     * A factory for creating machine menus.
+     *
+     * @param <Machine> The type of machine block entity.
+     * @param <Menu> The type of machine menu.
+     */
     @FunctionalInterface
     public interface MachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        /**
+         * Creates a new menu.
+         *
+         * @param syncId the synchronization ID
+         * @param inventory the player's inventory
+         * @param buf the byte buffer containing data for the menu
+         * @param type the type of the machine associated with the menu
+         * @return the created menu
+         */
         Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<Machine, Menu> type);
     }
 
+
+    /**
+     * A factory for creating machine menus (without extra type information).
+     *
+     * @param <Machine> The type of machine block entity.
+     * @param <Menu> The type of machine menu.
+     */
     @FunctionalInterface
     public interface BasicMachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        /**
+         * Creates a new menu.
+         *
+         * @param syncId the synchronization ID of the menu
+         * @param inventory the player's inventory
+         * @param buf the byte buffer containing data for the menu
+         * @return the created menu
+         */
         Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf);
     }
 }
