@@ -23,8 +23,8 @@
 package dev.galacticraft.machinelib.client.api.screen;
 
 import com.google.common.base.Preconditions;
-import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.menu.TankImpl;
@@ -46,10 +46,10 @@ import org.jetbrains.annotations.Nullable;
  * @see ResourceType#FLUID
  */
 public interface Tank {
-    @Contract(value = "_, _, _ -> new", pure = true)
-    static @NotNull Tank create(@NotNull FluidResourceSlot slot, InputType inputType, int index) {
+    @Contract(value = "_, _, _, _ -> new", pure = true)
+    static @NotNull Tank create(@NotNull ResourceSlot<Fluid> slot, @NotNull TankDisplay display, @NotNull InputType inputType, int index) {
         Preconditions.checkNotNull(slot);
-        return new TankImpl(slot, inputType, index, slot.getDisplay().x(), slot.getDisplay().y(), slot.getDisplay().height());
+        return new TankImpl(slot, inputType, index, display.x(), display.y(), display.width(), display.height());
     }
 
     /**

@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.api.compat.vanilla;
 
 import com.google.common.collect.Iterators;
-import dev.galacticraft.machinelib.api.misc.Modifiable;
 import dev.galacticraft.machinelib.api.storage.SlottedStorageAccess;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
@@ -41,21 +40,11 @@ import java.util.Iterator;
  *
  * @see net.minecraft.world.item.crafting.RecipeManager
  */
-public class RecipeTestContainer implements Container, Modifiable {
+public class RecipeTestContainer implements Container {
     /**
      * The slots contained in this container
      */
     private final ItemResourceSlot[] slots;
-    /**
-     * The modification counts of each slot
-     */
-    private final long[] modifications;
-
-    /**
-     * The modification count of this container
-     * Only incremented when the modification count is requested
-     */
-    private long modCount = 0;
 
     /**
      * Creates a new container with the given slots.
@@ -95,7 +84,6 @@ public class RecipeTestContainer implements Container, Modifiable {
      */
     private RecipeTestContainer(ItemResourceSlot[] slots) {
         this.slots = slots;
-        this.modifications = new long[this.slots.length];
     }
 
     @Override
@@ -153,14 +141,4 @@ public class RecipeTestContainer implements Container, Modifiable {
 
     @Override
     public void clearContent() {}
-
-    @Override
-    public long getModifications() {
-        for (int i = 0; i < this.slots.length; i++) {
-            if (this.modifications[i] != (this.modifications[i] = this.slots[i].getModifications())) {
-                this.modCount++;
-            }
-        }
-        return this.modCount;
-    }
 }

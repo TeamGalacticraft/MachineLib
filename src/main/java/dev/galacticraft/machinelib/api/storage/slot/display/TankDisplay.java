@@ -53,7 +53,13 @@ public interface TankDisplay {
      */
     @Contract("_, _, _ -> new")
     static @NotNull TankDisplay create(int x, int y, int height) {
-        return new TankDisplayImpl(x, y, height);
+        return create(x, y, 16, height);
+    }
+
+    @Contract("_, _, _, _ -> new")
+    static @NotNull TankDisplay create(int x, int y, int width, int height) {
+        if (width <= 0 || height <= 0) throw new IllegalArgumentException("Invalid size!");
+        return new TankDisplayImpl(x, y, width, height);
     }
 
     /**
@@ -69,6 +75,14 @@ public interface TankDisplay {
      * @return the y-position of the tank.
      */
     int y();
+
+    /**
+     * Returns the width of the tank.
+     *
+     * @return the width of the tank
+     */
+    int width();
+
 
     /**
      * Returns the height of the tank.

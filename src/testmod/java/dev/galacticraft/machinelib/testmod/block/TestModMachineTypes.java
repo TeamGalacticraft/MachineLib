@@ -82,7 +82,7 @@ public class TestModMachineTypes {
                     ItemResourceSlot.builder(InputType.TRANSFER)
                             .pos(70, 8)
                             .filter(ResourceFilters.canExtractFluid(Fluids.LAVA)),
-                    ItemResourceSlot.builder(InputType.OUTPUT)
+                    ItemResourceSlot.builder(InputType.RECIPE_OUTPUT)
                             .pos(147, 43)
                             .filter(ResourceFilters.ofResource(Items.OBSIDIAN))
             ),
@@ -116,7 +116,7 @@ public class TestModMachineTypes {
                             .pos(152, 62)
                             .filter(ResourceFilters.canInsertFluid(Fluids.LAVA))
             ),
-            MachineFluidStorage.of(FluidResourceSlot.builder(InputType.OUTPUT)
+            MachineFluidStorage.of(FluidResourceSlot.builder(InputType.RECIPE_OUTPUT)
                     .pos(152, 8)
                     .capacity(FluidConstants.BUCKET * 16)
                     .filter(ResourceFilters.ofResource(Fluids.LAVA))

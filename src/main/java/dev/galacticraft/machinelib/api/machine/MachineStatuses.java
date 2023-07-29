@@ -54,10 +54,6 @@ public final class MachineStatuses {
      * The machine is running.
      */
     public static final MachineStatus ACTIVE = MachineStatus.create(Constant.TranslationKey.STATUS_ACTIVE, ChatFormatting.GREEN, MachineStatus.Type.WORKING);
-    /**
-     * Disabled by redstone
-     */
-    public static final MachineStatus OFF = MachineStatus.create(Constant.TranslationKey.STATUS_OFF, ChatFormatting.RED, MachineStatus.Type.OTHER);
 
     /**
      * This class should not be instantiated.

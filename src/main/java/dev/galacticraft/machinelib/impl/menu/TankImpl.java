@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
-import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
@@ -62,14 +61,16 @@ public final class TankImpl implements Tank {
     private final int x;
     private final int y;
     private final int height;
+    private final int width;
     public int id = -1;
 
-    public TankImpl(ResourceSlot<Fluid> slot, InputType inputType, int index, int x, int y, int height) {
+    public TankImpl(ResourceSlot<Fluid> slot, InputType inputType, int index, int x, int y, int width, int height) {
         this.slot = slot;
         this.inputType = inputType;
         this.index = index;
         this.x = x;
         this.y = y;
+        this.width = width;
         this.height = height;
     }
 
@@ -130,7 +131,7 @@ public final class TankImpl implements Tank {
 
     @Override
     public int getWidth() {
-        return 16;
+        return this.width;
     }
 
     @Override
@@ -146,7 +147,7 @@ public final class TankImpl implements Tank {
     @Override
     public void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY) { //todo: client/server split
         graphics.pose().translate(0, 0, 1);
-        if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
+        if (mouseIn(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Component> lines = new ArrayList<>(2);
             assert client.screen != null;
             if (this.isEmpty()) {
@@ -200,5 +201,9 @@ public final class TankImpl implements Tank {
     @Override
     public InputType getInputType() {
         return this.inputType;
+    }
+
+    private static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
+        return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
     }
 }

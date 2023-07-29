@@ -36,6 +36,8 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -45,18 +47,19 @@ import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements ItemResourceSlot {
-    private final @NotNull ItemSlotDisplay display;
+    private static final String RECIPES_KEY = "Recipes";
+    private final @Nullable ItemSlotDisplay display;
     private long cachedExpiry = -1;
-    private SingleSlotStorage<ItemVariant> cachedStorage = null;
-    private ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
-    private Object cachedApi = null;
 
-    public ItemResourceSlotImpl(@NotNull InputType inputType, @NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
+    private @Nullable SingleSlotStorage<ItemVariant> cachedStorage = null;
+    private @Nullable ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
+    private @Nullable Object cachedApi = null;
+    private @Nullable Set<ResourceLocation> recipes;
+
+    public ItemResourceSlotImpl(@NotNull InputType inputType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
         super(inputType, externalFilter, capacity);
         assert capacity > 0 && capacity <= 64;
         this.display = display;
@@ -149,7 +152,7 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
     }
 
     @Override
-    public @NotNull ItemSlotDisplay getDisplay() {
+    public @Nullable ItemSlotDisplay getDisplay() {
         return this.display;
     }
 
@@ -160,6 +163,13 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
         tag.putString(RESOURCE_KEY, BuiltInRegistries.ITEM.getKey(this.resource).toString());
         tag.putInt(AMOUNT_KEY, (int) this.amount);
         if (this.tag != null && !this.tag.isEmpty()) tag.put(TAG_KEY, this.tag);
+        if (this.recipes != null) {
+            ListTag recipeTag = new ListTag();
+            for (ResourceLocation entry : this.recipes) {
+                recipeTag.add(StringTag.valueOf(entry.toString()));
+            }
+            tag.put(RECIPES_KEY, recipeTag);
+        }
         return tag;
     }
 
@@ -169,6 +179,19 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
             this.setEmpty();
         } else {
             this.set(BuiltInRegistries.ITEM.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getInt(AMOUNT_KEY));
+            if (this.inputType() == InputType.RECIPE_OUTPUT && tag.contains(RECIPES_KEY, Tag.TAG_COMPOUND)) {
+                ListTag list = tag.getList(RECIPES_KEY, Tag.TAG_STRING);
+                if (!list.isEmpty()) {
+                    if (this.recipes == null) {
+                        this.recipes = new HashSet<>();
+                    } else {
+                        this.recipes.clear();
+                    }
+                    for (int i = 0; i < list.size(); i++) {
+                        this.recipes.add(new ResourceLocation(list.getString(i)));
+                    }
+                }
+            }
         }
     }
 
@@ -303,5 +326,24 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
     @Override
     public boolean isSane() {
         return super.isSane() && this.resource != Items.AIR;
+    }
+
+    @Override
+    public @Nullable Set<ResourceLocation> takeRecipes() {
+        Set<ResourceLocation> recipes1 = this.recipes;
+        this.recipes = null;
+        return recipes1;
+    }
+
+    @Override
+    public void recipeCrafted(@NotNull ResourceLocation id) {
+        if (this.recipes == null) {
+            if (this.inputType() == InputType.RECIPE_OUTPUT) {
+                this.recipes = new HashSet<>();
+            } else {
+                return;
+            }
+        }
+        this.recipes.add(id);
     }
 }

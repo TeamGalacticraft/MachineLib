@@ -34,17 +34,23 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements FluidResourceSlot {
-    private final @NotNull TankDisplay display;
+    private final @Nullable TankDisplay display;
 
-    public FluidResourceSlotImpl(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter) {
+    public FluidResourceSlotImpl(@NotNull InputType inputType, @Nullable TankDisplay display, long capacity, ResourceFilter<Fluid> filter) {
         super(inputType, filter, capacity);
         this.display = display;
     }
 
     @Override
-    public @NotNull TankDisplay getDisplay() {
+    public boolean isHidden() {
+        return this.display == null;
+    }
+
+    @Override
+    public @Nullable TankDisplay getDisplay() {
         return this.display;
     }
 

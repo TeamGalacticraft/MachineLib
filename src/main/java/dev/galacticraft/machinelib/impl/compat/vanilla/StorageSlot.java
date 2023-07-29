@@ -24,20 +24,18 @@ package dev.galacticraft.machinelib.impl.compat.vanilla;
 
 import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @ApiStatus.Internal
@@ -48,14 +46,14 @@ public class StorageSlot extends Slot {
     private @Nullable ItemStack watchedStack = null;
     private long watchModCount = Long.MIN_VALUE;
 
-    public StorageSlot(Container group, @NotNull ItemResourceSlot slot, int index, @NotNull UUID player) {
-        super(group, index, slot.getDisplay().x(), slot.getDisplay().y());
-        this.icon = slot.getDisplay().icon();
+    public StorageSlot(Container group, @NotNull ItemResourceSlot slot, @NotNull ItemSlotDisplay display, int index, @NotNull UUID player) {
+        super(group, index, display.x(), display.y());
+        this.icon = display.icon();
         this.slot = slot;
         this.player = player;
     }
 
-    public @NotNull ResourceSlot<Item> getSlot() {
+    public @NotNull ItemResourceSlot getSlot() {
         return this.slot;
     }
 
@@ -109,11 +107,6 @@ public class StorageSlot extends Slot {
             }
             this.watchModCount = this.slot.getModifications();
         }
-    }
-
-    @Override
-    public Optional<ItemStack> tryRemove(int i, int j, Player player) {
-        return super.tryRemove(i, j, player);
     }
 
     @Override

@@ -33,10 +33,14 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import dev.galacticraft.machinelib.impl.compat.vanilla.RecipeOutputStorageSlot;
 import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.Unpooled;
 import lol.bai.badpackets.api.PacketSender;
@@ -162,14 +166,26 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
         int index = 0;
         for (ItemResourceSlot slot : this.itemStorage) {
-            StorageSlot slot1 = new StorageSlot(this.itemStorage, slot, index, this.playerUUID);
-            this.addSlot(slot1);
-            this.machineSlots[index++] = slot1;
+            ItemSlotDisplay display = slot.getDisplay();
+            if (display != null) {
+                StorageSlot slot1;
+                if (slot.inputType() == InputType.RECIPE_OUTPUT) {
+                    slot1 = new RecipeOutputStorageSlot(this.itemStorage, slot, display, index, player, machine);
+                } else {
+                    slot1 = new StorageSlot(this.itemStorage, slot, display, index, this.playerUUID);
+                }
+                this.addSlot(slot1);
+                this.machineSlots[index++] = slot1;
+            }
         }
 
         index = 0;
         for (FluidResourceSlot slot : this.fluidStorage) {
-            this.addTank(Tank.create(slot, slot.inputType(), index++));
+            if (!slot.isHidden()) {
+                TankDisplay display = slot.getDisplay();
+                assert display != null;
+                this.addTank(Tank.create(slot, display, slot.inputType(), index++));
+            }
         }
 
         this.addPlayerInventorySlots(player.getInventory(), 0, 0); // its the server
@@ -212,14 +228,26 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
         int index = 0;
         for (ItemResourceSlot slot : this.itemStorage) {
-            StorageSlot slot1 = new StorageSlot(this.itemStorage, slot, index, this.playerUUID);
-            this.addSlot(slot1);
-            this.machineSlots[index++] = slot1;
+            ItemSlotDisplay display = slot.getDisplay();
+            if (display != null) {
+                StorageSlot slot1;
+                if (slot.inputType() == InputType.RECIPE_OUTPUT) {
+                    slot1 = new RecipeOutputStorageSlot(this.itemStorage, slot, display, index, inventory.player, machine);
+                } else {
+                    slot1 = new StorageSlot(this.itemStorage, slot, display, index, this.playerUUID);
+                }
+                this.addSlot(slot1);
+                this.machineSlots[index++] = slot1;
+            }
         }
 
         index = 0;
         for (FluidResourceSlot slot : this.fluidStorage) {
-            this.addTank(Tank.create(slot, slot.inputType(), index++));
+            if (!slot.isHidden()) {
+                TankDisplay display = slot.getDisplay();
+                assert display != null;
+                this.addTank(Tank.create(slot, display, slot.inputType(), index++));
+            }
         }
 
         this.addPlayerInventorySlots(inventory, invX, invY);

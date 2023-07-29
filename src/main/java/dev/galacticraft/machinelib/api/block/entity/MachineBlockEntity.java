@@ -62,10 +62,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -78,7 +80,10 @@ import org.jetbrains.annotations.*;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * A block entity that represents a machine.
@@ -822,5 +827,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @MustBeInvokedByOverriders
     public void writeRenderData(FriendlyByteBuf buf) {
         this.configuration.getIOConfiguration().writePacket(buf);
+    }
+
+    public void awardUsedRecipes(@NotNull ServerPlayer player, @NotNull Set<ResourceLocation> recipes) {
+        for (ResourceLocation id : recipes) {
+            Optional<? extends Recipe<?>> optional = player.serverLevel().getRecipeManager().byKey(id);
+            if (optional.isPresent()) {
+                player.awardRecipes(Collections.singleton(optional.get()));
+                player.triggerRecipeCrafted(optional.get(), Collections.emptyList());
+            }
+        }
     }
 }

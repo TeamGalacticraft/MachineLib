@@ -31,6 +31,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface FluidResourceSlot extends ResourceSlot<Fluid> {
     @Contract("_ -> new")
@@ -39,17 +40,23 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
     }
 
     @Contract("_, _, _, _ -> new")
-    static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @NotNull TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
-        if (capacity < 0) throw new IllegalArgumentException();
+    static @NotNull FluidResourceSlot create(@NotNull InputType inputType, @Nullable TankDisplay display, long capacity, @NotNull ResourceFilter<Fluid> filter) {
+        if (capacity < 0) throw new IllegalArgumentException("capacity < 0");
         return new FluidResourceSlotImpl(inputType, display, capacity, filter);
     }
 
-    @NotNull TankDisplay getDisplay();
+    boolean isHidden();
+
+    @Nullable TankDisplay getDisplay();
 
     final class Builder {
         private final InputType inputType;
+
+        private boolean hidden = false;
+
         private int x = 0;
         private int y = 0;
+        private int width = 16;
         private int height = 48;
 
         private ResourceFilter<Fluid> filter = ResourceFilters.any();
@@ -67,20 +74,36 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
             return this;
         }
 
+        @Contract(value = "-> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder hidden() {
+            this.hidden = true;
+            return this;
+        }
+
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull FluidResourceSlot.Builder x(int x) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.x = x;
             return this;
         }
 
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull FluidResourceSlot.Builder y(int y) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.y = y;
             return this;
         }
 
         @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull FluidResourceSlot.Builder width(int width) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
+            this.width = width;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
         public @NotNull FluidResourceSlot.Builder height(int height) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.height = height;
             return this;
         }
@@ -101,8 +124,11 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
         public @NotNull FluidResourceSlot build() {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
             if (this.height < 0) throw new IllegalArgumentException("height is negative");
+            if (this.hidden) {
+                if (this.x != 0 || this.y != 0 || this.width != 16 || this.height != 48) throw new UnsupportedOperationException("Display properties changed while hidden!");
+            }
 
-            return FluidResourceSlot.create(this.inputType, TankDisplay.create(this.x, this.y, this.height), this.capacity, this.filter);
+            return FluidResourceSlot.create(this.inputType, this.hidden ? null : TankDisplay.create(this.x, this.y, this.width, this.height), this.capacity, this.filter);
         }
     }
 }

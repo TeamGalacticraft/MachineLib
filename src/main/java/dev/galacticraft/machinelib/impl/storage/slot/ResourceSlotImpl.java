@@ -253,8 +253,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
         if (!this.isEmpty()) {
             Resource res = this.resource;
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return res;
@@ -266,8 +265,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     public boolean extractOne(@Nullable Resource resource) {
         if (resource == null ? !this.isEmpty() : this.contains(resource)) {
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return true;
@@ -279,8 +277,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     public boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag) {
         if (resource == null ? !this.isEmpty() : this.contains(resource, tag)) {
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return true;
@@ -331,8 +328,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
             this.updateSnapshots(context);
             this.amount -= extracted;
             if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             return extracted;
         }
@@ -432,8 +428,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
         if (extracted > 0) {
             this.amount -= extracted;
             if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return extracted;
