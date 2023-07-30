@@ -38,6 +38,7 @@ import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
 import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
@@ -68,7 +69,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -566,7 +566,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@Nullable BlockFace face) {
-        return this.getIOConfig().get(face).getExposedItemStorage(this.itemStorage);
+        return this.getIOConfig().get(face).getExposedItemStorage(this::createExposedItemStorage);
+    }
+
+    protected ExposedStorage<Item, ItemVariant> createExposedItemStorage(ResourceFlow flow) {
+        return ExposedStorage.createItem(this.itemStorage(), flow);
     }
 
     /**
@@ -602,7 +606,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@Nullable BlockFace face) {
-        return this.getIOConfig().get(face).getExposedFluidStorage(this.fluidStorage);
+        return this.getIOConfig().get(face).getExposedFluidStorage(this::createExposedFluidStorage);
+    }
+
+    protected ExposedStorage<Fluid, FluidVariant> createExposedFluidStorage(ResourceFlow flow) {
+        return ExposedStorage.createFluid(this.fluidStorage(), flow);
     }
 
     /**

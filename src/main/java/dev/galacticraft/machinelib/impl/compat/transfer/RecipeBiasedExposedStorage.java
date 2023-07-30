@@ -20,9 +20,15 @@
  * SOFTWARE.
  */
 
-/**
- * Classes to aid in the testing of machines (using the GameTest framework)
- *
- * @see net.minecraft.gametest.framework
- */
-package dev.galacticraft.machinelib.api.gametest;
+package dev.galacticraft.machinelib.impl.compat.transfer;
+
+import dev.galacticraft.machinelib.api.compat.transfer.ExposedSlot;
+import dev.galacticraft.machinelib.api.misc.Modifiable;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.minecraft.world.item.Item;
+
+public class RecipeBiasedExposedStorage extends ExposedStorageImpl<Item, ItemVariant> {
+    public RecipeBiasedExposedStorage(Modifiable modifiable, ExposedSlot<Item, ItemVariant>[] slots) {
+        super(modifiable, slots);
+    }
+}

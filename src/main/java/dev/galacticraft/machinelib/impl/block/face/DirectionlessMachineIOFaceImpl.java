@@ -26,8 +26,6 @@ import dev.galacticraft.machinelib.api.compat.transfer.ExposedStorage;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineIOFaceSyncHandler;
@@ -67,17 +65,17 @@ public final class DirectionlessMachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage) {
+    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull StorageProvider<Item, ItemVariant> provider) {
         if (this.cachedItemStorage == null) {
-            this.cachedItemStorage = ExposedStorage.createFullItem(storage);
+            this.cachedItemStorage = provider.createExposedStorage(ResourceFlow.BOTH);
         }
         return this.cachedItemStorage;
     }
 
     @Override
-    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage) {
+    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull StorageProvider<Fluid, FluidVariant> provider) {
         if (this.cachedFluidStorage == null) {
-            this.cachedFluidStorage = ExposedStorage.createFullFluid(storage);
+            this.cachedFluidStorage = provider.createExposedStorage(ResourceFlow.BOTH);
         }
         return this.cachedFluidStorage;
     }

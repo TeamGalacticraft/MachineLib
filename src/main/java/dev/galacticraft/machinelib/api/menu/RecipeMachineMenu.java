@@ -82,8 +82,12 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
     protected RecipeMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, int invX, int invY, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(syncId, inventory, buf, invX, invY, type);
 
-        this.progress = buf.readInt();
         this.maxProgress = buf.readInt();
+        if (this.maxProgress > 0) {
+            this.progress = buf.readInt();
+        } else {
+            this.progress = 0;
+        }
     }
 
     /**
@@ -136,7 +140,10 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
         super.registerSyncHandlers(consumer);
 
         consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
-        consumer.accept(MenuSyncHandler.simple(this.machine::getMaxProgress, this::setMaxProgress));
+        consumer.accept(MenuSyncHandler.simple(() -> {
+            R recipe = this.machine.getActiveRecipe();
+            return recipe != null ? this.machine.getProcessingTime(recipe) : 0;
+        }, this::setMaxProgress));
     }
 
     /**

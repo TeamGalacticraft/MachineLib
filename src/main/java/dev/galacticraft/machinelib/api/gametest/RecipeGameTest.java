@@ -26,13 +26,10 @@ import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.SlottedStorageAccess;
-import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.Container;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Rotation;
@@ -97,7 +94,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         this.fulfillRunRequirements(machine);
         this.createValidRecipe(machine.itemStorage());
         return () -> {
-            if (machine.getMaxProgress() == 0) {
+            if (machine.getActiveRecipe() == null) {
                 throw new GameTestAssertException("Failed to find recipe!");
             }
         };
@@ -108,7 +105,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         this.fulfillRunRequirements(machine);
         this.createInvalidRecipe(machine.itemStorage());
         return () -> {
-            if (machine.getMaxProgress() != 0) {
+            if (machine.getActiveRecipe() != null) {
                 throw new GameTestAssertException("Crafting something despite recipe being invalid!");
             }
         };
@@ -120,7 +117,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         this.fillOutputSlots(machine.itemStorage());
         this.createValidRecipe(machine.itemStorage());
         return () -> {
-            if (machine.getMaxProgress() != 0) {
+            if (machine.getActiveRecipe() != null) {
                 throw new GameTestAssertException("Crafting something despite the output being full!");
             }
         };
@@ -140,7 +137,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
     public Runnable resourcesNoRecipe(Machine machine) {
         this.fulfillRunRequirements(machine);
         return () -> {
-            if (machine.getMaxProgress() != 0) {
+            if (machine.getActiveRecipe() != null) {
                 throw new GameTestAssertException("Machine is doing something, despite not having a recipe!");
             }
         };
@@ -150,11 +147,11 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
     @MustBeInvokedByOverriders
     public @NotNull List<TestFunction> generateTests() {
         List<TestFunction> functions = super.generateTests();
-        functions.add(new TestFunction(this.getBaseId(), this.getBaseId() + ".craft", EMPTY_STRUCTURE, Rotation.NONE, this.getRecipeRuntime(), 1, true, 1, 1, helper -> {
+        functions.add(new TestFunction(this.getBaseId(), this.getBaseId() + ".craft", EMPTY_STRUCTURE, Rotation.NONE, this.getRecipeRuntime() + 1, 1, true, 1, 1, helper -> {
             Machine machine = createMachine(helper);
             this.fulfillRunRequirements(machine);
             this.createValidRecipe(machine.itemStorage());
-            helper.runAfterDelay(this.getRecipeRuntime(), () -> {
+            helper.runAfterDelay(this.getRecipeRuntime() + 1, () -> {
                 if (!this.recipeCrafted(machine.itemStorage())) {
                     helper.fail("Failed to craft recipe!", BlockPos.ZERO);
                 }

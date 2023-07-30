@@ -26,8 +26,6 @@ import dev.galacticraft.machinelib.api.compat.transfer.ExposedStorage;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -85,10 +83,10 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage) {
-        if (this.getType().willAcceptResource(ResourceType.ITEM)) {
+    public @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull StorageProvider<Item, ItemVariant> provider) {
+        if (this.type.willAcceptResource(ResourceType.ITEM)) {
             if (this.cachedItemStorage == null) {
-                this.cachedItemStorage = ExposedStorage.createItem(storage, this.flow);
+                this.cachedItemStorage = provider.createExposedStorage(this.flow);
             }
             return this.cachedItemStorage;
         } else {
@@ -98,10 +96,10 @@ public final class MachineIOFaceImpl implements MachineIOFace {
     }
 
     @Override
-    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage) {
-        if (this.getType().willAcceptResource(ResourceType.FLUID)) {
+    public @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull StorageProvider<Fluid, FluidVariant> provider) {
+        if (this.type.willAcceptResource(ResourceType.FLUID)) {
             if (this.cachedFluidStorage == null) {
-                this.cachedFluidStorage = ExposedStorage.createFluid(storage, this.flow);
+                this.cachedFluidStorage = provider.createExposedStorage(this.flow);
             }
             return this.cachedFluidStorage;
         } else {
@@ -112,7 +110,7 @@ public final class MachineIOFaceImpl implements MachineIOFace {
 
     @Override
     public @Nullable EnergyStorage getExposedEnergyStorage(@NotNull MachineEnergyStorage storage) {
-        if (this.getType().willAcceptResource(ResourceType.ENERGY)) {
+        if (this.type.willAcceptResource(ResourceType.ENERGY)) {
             if (this.cachedEnergyStorage == null) {
                 this.cachedEnergyStorage = storage.getExposedStorage(this.flow);
             }

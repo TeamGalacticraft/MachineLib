@@ -28,14 +28,13 @@ import dev.galacticraft.machinelib.api.compat.transfer.ExposedStorage;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
-import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
 import dev.galacticraft.machinelib.impl.block.face.DirectionlessMachineIOFaceImpl;
+import dev.galacticraft.machinelib.impl.block.face.MachineIOFaceImpl;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Fluid;
@@ -113,18 +112,18 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
     /**
      * Returns the exposed item storage associated with the given resource storage.
      *
-     * @param storage The resource storage to expose.
+     * @param provider The source of the storage.
      * @return The exposed item storage, or null if access is denied.
      */
-    @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull ResourceStorage<Item, ? extends ResourceSlot<Item>> storage);
+    @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@NotNull StorageProvider<Item, ItemVariant> provider);
 
     /**
      * Returns the exposed fluid storage associated with the given resource storage.
      *
-     * @param storage The resource storage to expose.
+     * @param provider The source of the storage.
      * @return The exposed fluid storage, or null if access is denied.
      */
-    @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull ResourceStorage<Fluid, ? extends ResourceSlot<Fluid>> storage);
+    @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull StorageProvider<Fluid, FluidVariant> provider);
 
     /**
      * Returns the exposed energy storage of this face.
@@ -134,4 +133,9 @@ public interface MachineIOFace extends Deserializable<CompoundTag>, MenuSynchron
      * @return The exposed energy storage of this face.
      */
     @Nullable EnergyStorage getExposedEnergyStorage(@NotNull MachineEnergyStorage storage);
+
+    @FunctionalInterface
+    interface StorageProvider<Resource, Variant extends TransferVariant<Resource>> {
+        ExposedStorage<Resource, Variant> createExposedStorage(@NotNull ResourceFlow flow);
+    }
 }

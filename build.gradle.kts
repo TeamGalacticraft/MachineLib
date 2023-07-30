@@ -141,6 +141,7 @@ dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$loader")
+    testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 
     modApi("teamreborn:energy:$energy") {
         isTransitive = false
@@ -161,11 +162,11 @@ dependencies {
     ).forEach {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
-    modImplementation("lol.bai:badpackets:fabric-$badpackets")
-    "testmodImplementation"(sourceSets.main.get().output)
 
+    modImplementation("lol.bai:badpackets:fabric-$badpackets")
+
+    "testmodImplementation"(sourceSets.main.get().output)
     "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
-    testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 }
 
 tasks.withType<ProcessResources> {
