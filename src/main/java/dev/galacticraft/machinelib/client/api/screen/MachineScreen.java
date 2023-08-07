@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.client.api.screen;
 
+import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -759,9 +760,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(Component.translatable("ui.machinelib.machine.redstone_activation.status.disabled").withStyle(ChatFormatting.RED)));
                     lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
                 }
-                graphics.pose().translate(0.0D, 0.0D, 1.0D);
-                graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
-                graphics.pose().translate(0.0D, 0.0D, -1.0D);
+                this.setTooltipForNextRenderPass(Lists.transform(lines, Component::getVisualOrderText));
             }
         }
     }
