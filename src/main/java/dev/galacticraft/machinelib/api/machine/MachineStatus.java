@@ -22,39 +22,18 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
-import dev.galacticraft.machinelib.api.util.Serializable;
-import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.MachineLib;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;
-import net.minecraft.core.Registry;
-import net.minecraft.nbt.StringTag;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the status of a machine.
  */
-public interface MachineStatus extends Serializable<StringTag> {
-    /**
-     * Default machine status.
-     */
-    MachineStatus INVALID = createAndRegister(Constant.id("invalid"), Component.translatable(Constant.TranslationKey.STATUS_INVALID), Type.OTHER);
-
-    /**
-     * Creates a new machine status and registers it in the registry.
-     *
-     * @param id   The ID of the machine status.
-     * @param name The name of the machine status.
-     * @param type The type of the machine status.
-     * @return The newly created machine status.
-     */
-    static @NotNull MachineStatus createAndRegister(@NotNull ResourceLocation id, @NotNull Component name, @NotNull MachineStatus.Type type) {
-        return Registry.register(MachineLib.MACHINE_STATUS_REGISTRY, id, create(name, type));
-    }
-
+public interface MachineStatus {
     /**
      * Creates a new machine status.
      *
@@ -67,23 +46,51 @@ public interface MachineStatus extends Serializable<StringTag> {
         return new MachineStatusImpl(name, type);
     }
 
-    static @NotNull MachineStatus readPacket(@NotNull FriendlyByteBuf buf) {
-        return MachineStatusImpl.readPacket(buf);
+    /**
+     * Creates a new machine status.
+     *
+     * @param key The translation key of the machine status name.
+     * @param color The colour to use for the status text.
+     * @param type The type of the machine status.
+     * @return The newly created machine status.
+     */
+    @Contract(value = "_, _, _ -> new", pure = true)
+    static @NotNull MachineStatus create(@NotNull String key, ChatFormatting color, @NotNull MachineStatus.Type type) {
+        return create(Component.translatable(key).setStyle(Style.EMPTY.withColor(color)), type);
     }
 
-    /**
+     /**
      * Returns the name of the machine status.
      *
-     * @return The name of the machine status.
+     * @return The text of the machine status.
      */
-    @NotNull Component name();
+    @NotNull Component getText();
 
     /**
      * Returns the type of the machine status.
      *
      * @return The type of the machine status.
      */
-    @NotNull MachineStatus.Type type();
+    @NotNull MachineStatus.Type getType();
+
+    /**
+     * Serializes this machine status to a packet, based on the machine type
+     * @param type the type of machine in use
+     * @param buf the buffer to write to
+     */
+    default void writePacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
+        buf.writeByte(type.statusDomain().indexOf(this));
+    }
+
+    /**
+     * Deserializes this machine status form a packet, based on the machine in use
+     * @param type the type of machine in sue
+     * @param buf the buffer to write to
+     * @return the deserialized machine status
+     */
+    static @NotNull MachineStatus readPacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
+        return type.statusDomain().get(buf.readByte());
+    }
 
     /**
      * Represents the types of machine statuses.
@@ -127,6 +134,9 @@ public interface MachineStatus extends Serializable<StringTag> {
          */
         OTHER(false);
 
+        /**
+         * Whether the machine is considered working with this status type.
+         */
         private final boolean active;
 
         @Contract(pure = true)

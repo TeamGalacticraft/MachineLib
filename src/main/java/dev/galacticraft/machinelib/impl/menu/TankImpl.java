@@ -22,16 +22,14 @@
 
 package dev.galacticraft.machinelib.impl.menu;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
-import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
-import dev.galacticraft.machinelib.client.impl.util.DrawableUtil;
+import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -57,20 +55,22 @@ import java.util.List;
  * Resources can be inserted into the tank and extracted from it via the gui.
  */
 public final class TankImpl implements Tank {
-    public final ResourceSlot<Fluid, FluidStack> slot;
+    public final ResourceSlot<Fluid> slot;
     private final InputType inputType;
     private final int index;
     private final int x;
     private final int y;
     private final int height;
+    private final int width;
     public int id = -1;
 
-    public TankImpl(ResourceSlot<Fluid, FluidStack> slot, InputType inputType, int index, int x, int y, int height) {
+    public TankImpl(ResourceSlot<Fluid> slot, InputType inputType, int index, int x, int y, int width, int height) {
         this.slot = slot;
         this.inputType = inputType;
         this.index = index;
         this.x = x;
         this.y = y;
+        this.width = width;
         this.height = height;
     }
 
@@ -131,7 +131,7 @@ public final class TankImpl implements Tank {
 
     @Override
     public int getWidth() {
-        return 16;
+        return this.width;
     }
 
     @Override
@@ -147,7 +147,7 @@ public final class TankImpl implements Tank {
     @Override
     public void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY) { //todo: client/server split
         graphics.pose().translate(0, 0, 1);
-        if (DrawableUtil.isWithin(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
+        if (mouseIn(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
             List<Component> lines = new ArrayList<>(2);
             assert client.screen != null;
             if (this.isEmpty()) {
@@ -156,8 +156,8 @@ public final class TankImpl implements Tank {
             }
             long amount = this.getAmount();
             MutableComponent text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                    Component.literal(DisplayUtil.truncateDecimal(amount / 81.0, 0) + "mB")
-                    : Component.literal(DisplayUtil.truncateDecimal(amount / 81000.0, 2) + "B");
+                    Component.literal(DisplayUtil.truncateDecimal(amount / (FluidConstants.BUCKET / 1000.0), 0) + "mB")
+                    : Component.literal(DisplayUtil.truncateDecimal(amount / (double) FluidConstants.BUCKET, 2) + "B");
 
             MutableComponent translatableText;
             translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
@@ -194,12 +194,16 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public ResourceSlot<Fluid, FluidStack> getSlot() {
+    public ResourceSlot<Fluid> getSlot() {
         return this.slot;
     }
 
     @Override
     public InputType getInputType() {
         return this.inputType;
+    }
+
+    private static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
+        return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
     }
 }

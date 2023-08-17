@@ -22,28 +22,35 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> implements FluidResourceSlot {
-    private final @NotNull TankDisplay display;
+public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid> implements FluidResourceSlot {
+    private final @Nullable TankDisplay display;
 
-    public FluidResourceSlotImpl(@NotNull TankDisplay display, long capacity, ResourceFilter<Fluid> filter, @NotNull ResourceFilter<Fluid> externalFilter) {
-        super(filter, externalFilter, capacity);
+    public FluidResourceSlotImpl(@NotNull InputType inputType, @Nullable TankDisplay display, long capacity, ResourceFilter<Fluid> filter) {
+        super(inputType, filter, capacity);
         this.display = display;
     }
 
     @Override
-    public @NotNull TankDisplay getDisplay() {
+    public boolean isHidden() {
+        return this.display == null;
+    }
+
+    @Override
+    public @Nullable TankDisplay getDisplay() {
         return this.display;
     }
 
@@ -58,43 +65,13 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
     }
 
     @Override
-    public @NotNull FluidStack createStack() {
-        return FluidStack.create(this.getResource(), this.getTag(), this.getAmount());
-    }
-
-    @Override
-    public @NotNull FluidStack copyStack() {
-        return FluidStack.create(this.getResource(), this.copyTag(), this.getAmount());
-    }
-
-    @Override
-    public boolean canInsertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return true;
-        assert stack.getFluid() != null;
-        return this.canInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
-    }
-
-    @Override
-    public long tryInsertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getFluid() != null;
-        return this.tryInsert(stack.getFluid(), stack.getTag(), stack.getAmount());
-    }
-
-    @Override
-    public long insertStack(@NotNull FluidStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getFluid() != null;
-        return this.insert(stack.getFluid(), stack.getTag(), stack.getAmount());
-    }
-
-    @Override
     public @NotNull CompoundTag createTag() {
+        assert this.isSane();
         CompoundTag tag = new CompoundTag();
         if (this.isEmpty()) return tag;
-        tag.putString(RESOURCE_KEY, BuiltInRegistries.FLUID.getKey(this.getResource()).toString());
-        tag.putInt(AMOUNT_KEY, (int) this.getAmount());
-        if (this.getTag() != null && !this.getTag().isEmpty()) tag.put(TAG_KEY, this.getTag());
+        tag.putString(RESOURCE_KEY, BuiltInRegistries.FLUID.getKey(this.resource).toString());
+        tag.putLong(AMOUNT_KEY, this.amount);
+        if (this.tag != null && !this.tag.isEmpty()) tag.put(TAG_KEY, this.tag);
         return tag;
     }
 
@@ -103,24 +80,25 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
         if (tag.isEmpty()) {
             this.setEmpty();
         } else {
-            this.set(BuiltInRegistries.FLUID.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getInt(AMOUNT_KEY));
+            this.set(BuiltInRegistries.FLUID.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getLong(AMOUNT_KEY));
         }
     }
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        if (this.getAmount() > 0) {
-            buf.writeInt((int) this.getAmount());
-            buf.writeUtf(BuiltInRegistries.FLUID.getKey(this.getResource()).toString());
-            buf.writeNbt(this.getTag());
+        assert this.isSane();
+        if (this.amount > 0) {
+            buf.writeLong(this.amount);
+            buf.writeUtf(BuiltInRegistries.FLUID.getKey(this.resource).toString());
+            buf.writeNbt(this.tag);
         } else {
-            buf.writeInt(0);
+            buf.writeLong(0);
         }
     }
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
-        int amount = buf.readInt();
+        long amount = buf.readLong();
         if (amount == 0) {
             this.setEmpty();
         } else {
@@ -128,5 +106,10 @@ public class FluidResourceSlotImpl extends ResourceSlotImpl<Fluid, FluidStack> i
             CompoundTag tag = buf.readNbt();
             this.set(resource, tag, amount);
         }
+    }
+
+    @Override
+    public boolean isSane() {
+        return super.isSane() && this.resource != Fluids.EMPTY;
     }
 }

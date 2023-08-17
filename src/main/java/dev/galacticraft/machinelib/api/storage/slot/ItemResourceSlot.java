@@ -23,84 +23,101 @@
 package dev.galacticraft.machinelib.api.storage.slot;
 
 import com.mojang.datafixers.util.Pair;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
-import dev.galacticraft.machinelib.api.storage.ResourceFilters;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
+import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.impl.compat.vanilla.FakeRecipeHolder;
 import dev.galacticraft.machinelib.impl.storage.slot.ItemResourceSlotImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, ContainerItemContext {
-    @Contract(" -> new")
-    static @NotNull Builder builder() {
-        return new Builder();
-    }
-
-    @Contract("_, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
-        return create(display, filter, 64);
+public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemContext, FakeRecipeHolder {
+    @Contract("_ -> new")
+    static @NotNull Builder builder(InputType inputType) {
+        return new Builder(inputType);
     }
 
     @Contract("_, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
-        return create(display, filter, filter, capacity);
-    }
-
-    @Contract("_, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter) {
-        return create(display, filter, strictFilter, 64);
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
+        return create(inputType, display, filter, 64);
     }
 
     @Contract("_, _, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> strictFilter, int capacity) {
+    static @NotNull ItemResourceSlot create(@NotNull InputType inputType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
         if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
-        return new ItemResourceSlotImpl(display, filter, strictFilter, capacity);
+        return new ItemResourceSlotImpl(inputType, display, filter, capacity);
     }
 
-    @NotNull ItemSlotDisplay getDisplay();
+    @Nullable Item consumeOne();
+
+    boolean consumeOne(@NotNull Item resource);
+
+    boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag);
+
+    long consume(long amount);
+
+    long consume(@NotNull Item resource, long amount);
+
+    long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount);
+
+    @Nullable ItemSlotDisplay getDisplay();
 
     @Override
     long getAmount();
 
     final class Builder {
+        private final InputType inputType;
+
+        private boolean hidden = false;
         private int x = 0;
         private int y = 0;
         private @Nullable Pair<ResourceLocation, ResourceLocation> icon = null;
 
         private ResourceFilter<Item> filter = ResourceFilters.any();
-        private ResourceFilter<Item> strictFilter = null;
         private int capacity = 64;
 
         @Contract(pure = true)
-        private Builder() {
+        private Builder(InputType inputType) {
+            this.inputType = inputType;
         }
 
         @Contract("_, _ -> this")
         public @NotNull Builder pos(int x, int y) {
-            this.x(x);
-            this.y(y);
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
+            this.x = x;
+            this.y = y;
+            return this;
+        }
+
+        @Contract(value = "-> this", mutates = "this")
+        public @NotNull Builder hidden() {
+            this.hidden = true;
             return this;
         }
 
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull Builder x(int x) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.x = x;
             return this;
         }
 
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull Builder y(int y) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.y = y;
             return this;
         }
 
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull Builder icon(@Nullable Pair<ResourceLocation, ResourceLocation> icon) {
+            if (this.hidden) throw new UnsupportedOperationException("hidden");
             this.icon = icon;
             return this;
         }
@@ -108,12 +125,6 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
         @Contract(value = "_ -> this", mutates = "this")
         public @NotNull Builder filter(@NotNull ResourceFilter<Item> filter) {
             this.filter = filter;
-            return this;
-        }
-
-        @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Builder strictFilter(@Nullable ResourceFilter<Item> strictFilter) {
-            this.strictFilter = strictFilter;
             return this;
         }
 
@@ -126,8 +137,11 @@ public interface ItemResourceSlot extends ResourceSlot<Item, ItemStack>, Contain
         @Contract(pure = true)
         public @NotNull ItemResourceSlot build() {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
+            if (this.hidden) {
+                if (this.x != 0 || this.y != 0 || this.icon != null) throw new UnsupportedOperationException("Display prop while hidden");
+            }
 
-            return ItemResourceSlot.create(ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.strictFilter == null ? this.filter : this.strictFilter, this.capacity);
+            return ItemResourceSlot.create(this.inputType, this.hidden ? null : ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.capacity);
         }
     }
 }

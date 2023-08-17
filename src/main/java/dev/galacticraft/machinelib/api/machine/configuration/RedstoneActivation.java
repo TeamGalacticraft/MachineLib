@@ -52,12 +52,12 @@ public enum RedstoneActivation implements StringRepresentable {
     public static final RedstoneActivation[] VALUES = RedstoneActivation.values();
 
     /**
-     * The name of the redstone activation state.
+     * The text of the redstone activation state.
      */
     private final @NotNull Component name;
 
     /**
-     * Constructs a redstone activation type with the given name.
+     * Constructs a redstone activation type with the given text.
      *
      * @param name the name of the interaction.
      */
@@ -66,10 +66,31 @@ public enum RedstoneActivation implements StringRepresentable {
         this.name = name;
     }
 
+    public boolean isActive(boolean powered) {
+        return switch (this) {
+            case IGNORE -> true;
+            case LOW -> !powered;
+            case HIGH -> powered;
+        };
+    }
+
+    /**
+     * Deserializes an activation state from NBT.
+     *
+     * @param tag the NBT.
+     * @return the activation state.
+     * @see #createTag()
+     */
     public static @NotNull RedstoneActivation readTag(@NotNull ByteTag tag) {
         return VALUES[tag.getAsByte()];
     }
 
+    /**
+     * Deserializes an activation state from a packet.
+     * @param buf the buffer to read from
+     * @return the activation state
+     * @see #writePacket(FriendlyByteBuf)
+     */
     public static @NotNull RedstoneActivation readPacket(@NotNull FriendlyByteBuf buf) {
         return VALUES[buf.readByte()];
     }
@@ -77,7 +98,7 @@ public enum RedstoneActivation implements StringRepresentable {
     /**
      * Returns the name of the redstone activation state.
      *
-     * @return The name of the redstone activation state.
+     * @return The text of the redstone activation state.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {
@@ -94,10 +115,20 @@ public enum RedstoneActivation implements StringRepresentable {
         };
     }
 
+    /**
+     * Serializes this state as a NBT.
+     * @return this activation state as a tag.
+     * @see #readTag(ByteTag)
+     */
     public @NotNull ByteTag createTag() {
         return ByteTag.valueOf((byte) this.ordinal());
     }
 
+    /**
+     * Serializes this state to a packet.
+     * @param buf the buffer to write to
+     * @see #readPacket(FriendlyByteBuf)
+     */
     public void writePacket(@NotNull FriendlyByteBuf buf) {
         buf.writeByte(this.ordinal());
     }

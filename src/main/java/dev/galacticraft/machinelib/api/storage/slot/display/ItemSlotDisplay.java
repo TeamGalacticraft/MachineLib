@@ -33,19 +33,50 @@ import org.jetbrains.annotations.Nullable;
  * Display information for an item slot.
  */
 public interface ItemSlotDisplay {
+    /**
+     * Creates a new slot display with the specified coordinates (and no icon).
+     *
+     * @param x the x-coordinate of the item slot display
+     * @param y the y-coordinate of the item slot display
+     * @return a new slot display
+     */
     @Contract("_, _ -> new")
     static @NotNull ItemSlotDisplay create(int x, int y) {
         return create(x, y, null);
     }
 
+    /**
+     * Creates a new slot display with the specified coordinates and icon.
+     *
+     * @param x    the x-coordinate of the item slot display
+     * @param y    the y-coordinate of the item slot display
+     * @param icon the icon of the item slot display (can be null)
+     * @return a new slot display
+     */
     @Contract("_, _, _ -> new")
     static @NotNull ItemSlotDisplay create(int x, int y, @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
         return new ItemSlotDisplayImpl(x, y, icon);
     }
 
+    /**
+     * Returns the x-position of this slot
+     *
+     * @return the x-position of this slot
+     */
     int x();
 
+    /**
+     * Returns the y-position of this slot
+     *
+     * @return the y-position of this slot
+     */
     int y();
 
+    /**
+     * Returns the icon for this slot.
+     * The first ID represents the texture atlas, while the second ID is the sprite (on the atlas).
+     *
+     * @return The icon for this slot. Returns {@code null} if no icon is assigned to this slot.
+     */
     @Nullable Pair<ResourceLocation, ResourceLocation> icon();
 }

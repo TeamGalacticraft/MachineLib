@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.api.machine.configuration;
 
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
-import dev.galacticraft.machinelib.api.util.Deserializable;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.SecuritySettingsImpl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -75,6 +75,11 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Contract(pure = true)
     @Nullable String getUsername();
 
+    /**
+     * Sets the username of the owner.
+     *
+     * @param username the username to set as the owner.
+     */
     void setUsername(@Nullable String username);
 
     /**
@@ -132,7 +137,7 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
      * Sets the game profile of the owner of the linked machine.
      *
      * @param owner The uuid of the owner.
-     * @param name  The name of the owner.
+     * @param name  The text of the owner.
      */
     @Contract(mutates = "this")
     void setOwner(@Nullable UUID owner, String name);
@@ -154,5 +159,10 @@ public interface SecuritySettings extends Deserializable<CompoundTag>, MenuSynch
     @Contract(mutates = "this", value = "null, !null -> fail")
     void setTeam(@Nullable ResourceLocation team, @Nullable String name);
 
+    /**
+     * Checks if the machine has an owner.
+     *
+     * @return true if the machine has an owner, false otherwise.
+     */
     boolean hasOwner();
 }

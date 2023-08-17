@@ -25,35 +25,22 @@ package dev.galacticraft.machinelib.impl.menu.sync;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ResourceStorageSyncHandler<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>, Group extends SlotGroup<Resource, Stack, Slot>> implements MenuSyncHandler {
-    private final List<Slot> slots = new ArrayList<>();
+public class ResourceStorageSyncHandler<Resource, Slot extends ResourceSlot<Resource>> implements MenuSyncHandler {
+    private final Slot[] slots;
     private final long[] modifications;
 
-    public ResourceStorageSyncHandler(ResourceStorage<Resource, Stack, Slot, Group> storage) {
-        LongList list = new LongArrayList();
-
-        for (Group group : storage) {
-            for (Slot slot : group) {
-                list.add(slot.getModifications());
-                this.slots.add(slot);
-            }
-        }
-        this.modifications = list.toLongArray();
+    public ResourceStorageSyncHandler(ResourceStorage<Resource, Slot> storage) {
+        this.slots = storage.getSlots();
+        this.modifications = new long[storage.size()];
     }
 
     @Override
     public boolean needsSyncing() {
-        for (int i = 0; i < this.slots.size(); i++) {
-            if (this.slots.get(i).getModifications() != this.modifications[i]) return true;
+        for (int i = 0; i < this.slots.length; i++) {
+            if (this.slots[i].getModifications() != this.modifications[i]) return true;
         }
         return false;
     }
@@ -61,12 +48,12 @@ public class ResourceStorageSyncHandler<Resource, Stack, Slot extends ResourceSl
     @Override
     public void sync(@NotNull FriendlyByteBuf buf) {
         int total = 0;
-        for (int i = 0; i < this.slots.size(); i++) {
-            if (this.slots.get(i).getModifications() != this.modifications[i]) total++;
+        for (int i = 0; i < this.slots.length; i++) {
+            if (this.slots[i].getModifications() != this.modifications[i]) total++;
         }
         buf.writeVarInt(total);
-        for (int i = 0; i < this.slots.size(); i++) {
-            Slot slot = this.slots.get(i);
+        for (int i = 0; i < this.slots.length; i++) {
+            Slot slot = this.slots[i];
             if (slot.getModifications() != this.modifications[i]) {
                 this.modifications[i] = slot.getModifications();
                 buf.writeVarInt(i);
@@ -80,7 +67,7 @@ public class ResourceStorageSyncHandler<Resource, Stack, Slot extends ResourceSl
         int total = buf.readVarInt();
         for (int i = 0; i < total; i++) {
             int j = buf.readVarInt();
-            Slot slot = this.slots.get(j);
+            Slot slot = this.slots[j];
             slot.readPacket(buf);
             slot.markModified(); // modification count on the server and client do not have to match - it just needs to change.
         }

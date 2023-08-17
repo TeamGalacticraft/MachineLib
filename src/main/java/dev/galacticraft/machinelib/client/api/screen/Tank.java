@@ -23,13 +23,11 @@
 package dev.galacticraft.machinelib.client.api.screen;
 
 import com.google.common.base.Preconditions;
-import com.mojang.blaze3d.vertex.PoseStack;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
-import dev.galacticraft.machinelib.api.storage.io.ResourceType;
-import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.menu.TankImpl;
-import dev.galacticraft.machinelib.impl.storage.slot.InputType;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
@@ -48,10 +46,10 @@ import org.jetbrains.annotations.Nullable;
  * @see ResourceType#FLUID
  */
 public interface Tank {
-    @Contract(value = "_, _, _ -> new", pure = true)
-    static @NotNull Tank create(@NotNull FluidResourceSlot slot, InputType inputType, int index) {
+    @Contract(value = "_, _, _, _ -> new", pure = true)
+    static @NotNull Tank create(@NotNull ResourceSlot<Fluid> slot, @NotNull TankDisplay display, @NotNull InputType inputType, int index) {
         Preconditions.checkNotNull(slot);
-        return new TankImpl(slot, inputType, index, slot.getDisplay().x(), slot.getDisplay().y(), slot.getDisplay().height());
+        return new TankImpl(slot, inputType, index, display.x(), display.y(), display.width(), display.height());
     }
 
     /**
@@ -129,7 +127,7 @@ public interface Tank {
     boolean acceptStack(@NotNull ContainerItemContext context);
 
     @ApiStatus.Internal
-    ResourceSlot<Fluid, FluidStack> getSlot();
+    ResourceSlot<Fluid> getSlot();
 
     InputType getInputType();
 }

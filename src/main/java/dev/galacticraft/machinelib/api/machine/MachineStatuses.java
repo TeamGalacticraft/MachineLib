@@ -24,52 +24,42 @@ package dev.galacticraft.machinelib.api.machine;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 
 /**
- * Default builtin machine statuses.
+ * Default/builtin machine statuses.
  */
 public final class MachineStatuses {
     /**
      * The machine does not have enough energy to run.
      */
-    public static final MachineStatus NOT_ENOUGH_ENERGY = MachineStatus.createAndRegister(Constant.id("not_enough_energy"), Component.translatable(Constant.TranslationKey.STATUS_NOT_ENOUGH_ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.MISSING_ENERGY);
+    public static final MachineStatus NOT_ENOUGH_ENERGY = MachineStatus.create(Constant.TranslationKey.STATUS_NOT_ENOUGH_ENERGY, ChatFormatting.RED, MachineStatus.Type.MISSING_ENERGY);
     /**
      * The machine does not have the proper recipe inputs.
      */
-    public static final MachineStatus INVALID_RECIPE = MachineStatus.createAndRegister(Constant.id("invalid_recipe"), Component.translatable(Constant.TranslationKey.STATUS_INVALID_RECIPE).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.MISSING_ITEMS);
+    public static final MachineStatus INVALID_RECIPE = MachineStatus.create(Constant.TranslationKey.STATUS_INVALID_RECIPE, ChatFormatting.RED, MachineStatus.Type.MISSING_ITEMS);
     /**
      * The output slot is full.
      */
-    public static final MachineStatus OUTPUT_FULL = MachineStatus.createAndRegister(Constant.id("output_full"), Component.translatable(Constant.TranslationKey.STATUS_OUTPUT_FULL).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    public static final MachineStatus OUTPUT_FULL = MachineStatus.create(Constant.TranslationKey.STATUS_OUTPUT_FULL, ChatFormatting.GOLD, MachineStatus.Type.OUTPUT_FULL);
     /**
      * The energy storage is full.
      */
-    public static final MachineStatus CAPACITOR_FULL = MachineStatus.createAndRegister(Constant.id("capacitor_full"), Component.translatable(Constant.TranslationKey.STATUS_CAPACITOR_FULL).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.OUTPUT_FULL);
+    public static final MachineStatus CAPACITOR_FULL = MachineStatus.create(Constant.TranslationKey.STATUS_CAPACITOR_FULL, ChatFormatting.GOLD, MachineStatus.Type.OUTPUT_FULL);
     /**
      * The machine is not running.
      */
-    public static final MachineStatus IDLE = MachineStatus.createAndRegister(Constant.id("idle"), Component.translatable(Constant.TranslationKey.STATUS_IDLE).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)), MachineStatus.Type.MISSING_RESOURCE);
+    public static final MachineStatus IDLE = MachineStatus.create(Constant.TranslationKey.STATUS_IDLE, ChatFormatting.GOLD, MachineStatus.Type.MISSING_RESOURCE);
     /**
      * The machine is running.
      */
-    public static final MachineStatus ACTIVE = MachineStatus.createAndRegister(Constant.id("active"), Component.translatable(Constant.TranslationKey.STATUS_ACTIVE).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)), MachineStatus.Type.WORKING);
-    /**
-     * Disabled by redstone
-     */
-    public static final MachineStatus OFF = MachineStatus.createAndRegister(Constant.id("off"), Component.translatable(Constant.TranslationKey.STATUS_OFF).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)), MachineStatus.Type.OTHER);
+    public static final MachineStatus ACTIVE = MachineStatus.create(Constant.TranslationKey.STATUS_ACTIVE, ChatFormatting.GREEN, MachineStatus.Type.WORKING);
 
+    /**
+     * This class should not be instantiated.
+     */
     @Contract(value = " -> fail", pure = true)
     private MachineStatuses() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
-    }
-
-    /**
-     * Utility method to initialize the class
-     */
-    @Contract(pure = true)
-    public static void initialize() {
     }
 }

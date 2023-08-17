@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "machinelib_testmod:models/block/generator"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "block.machinelib_testmod.generator": "Generator",
+  "block.machinelib_testmod.mixer": "Mixer",
+  "block.machinelib_testmod.melter": "Melter"
+}

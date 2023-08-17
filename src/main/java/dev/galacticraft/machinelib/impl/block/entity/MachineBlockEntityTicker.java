@@ -23,7 +23,9 @@
 package dev.galacticraft.machinelib.impl.block.entity;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -46,7 +48,7 @@ public final class MachineBlockEntityTicker<T extends BlockEntity> implements Bl
     }
 
     @Override
-    public void tick(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull T machine) {
-        ((MachineBlockEntity) machine).tickBase(world, pos, state, world.getProfiler());
+    public void tick(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull T machine) {
+        ((MachineBlockEntity) machine).tickBase(((ServerLevel) level), pos, state, level.getProfiler());
     }
 }

@@ -23,30 +23,36 @@
 package dev.galacticraft.machinelib.api.menu;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.slot.*;
+import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
-import dev.galacticraft.machinelib.impl.storage.slot.AutomatableSlot;
+import dev.galacticraft.machinelib.impl.MachineLib;
+import dev.galacticraft.machinelib.impl.compat.vanilla.RecipeOutputStorageSlot;
+import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.Unpooled;
 import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
@@ -62,26 +68,65 @@ import java.util.function.Supplier;
  * @param <Machine> The type of machine block entity this menu is linked to.
  */
 public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractContainerMenu {
+    /**
+     * The machine type associated with this menu.
+     */
     public final @NotNull MachineType<?, ?> type;
 
+    /**
+     * The machine that is the source of this menu.
+     */
     @ApiStatus.Internal
     public final @NotNull Machine machine;
+    /**
+     * Whether the menu exists on the logical server.
+     */
     public final boolean server;
 
+    /**
+     * The level this menu exists in
+     */
     public final @NotNull ContainerLevelAccess levelAccess;
+    /**
+     * The player interacting with this menu.
+     * Always null on the logical client, never null on the logical server.
+     */
     public final @Nullable ServerPlayer player;
+
+    /**
+     * The inventory of the player opening this menu
+     */
     public final @NotNull Inventory playerInventory;
+    /**
+     * The UUID of the player interacting with this menu.
+     */
     public final @NotNull UUID playerUUID;
 
+    /**
+     * The configuration of the machine associated with this menu
+     */
     public final @NotNull MachineConfiguration configuration;
+    /**
+     * The state of the machine associated with this menu
+     */
+    public final @NotNull MachineState state;
+    /**
+     * The energy storage of the machine associated with this menu
+     */
     public final @NotNull MachineEnergyStorage energyStorage;
+    /**
+     * The item storage of the machine associated with this menu
+     */
     public final @NotNull MachineItemStorage itemStorage;
+    /**
+     * The fluid storage of the machine associated with this menu
+     */
     public final @NotNull MachineFluidStorage fluidStorage;
 
     /**
      * The machine this menu is for.
      */
-    public final AutomatableSlot[] machineSlots;
+    public final StorageSlot[] machineSlots;
     /**
      * The tanks contained in this menu.
      */
@@ -93,6 +138,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
     /**
      * Constructs a new menu for a machine.
+     * Called on the logical server
      *
      * @param syncId  The sync id for this menu.
      * @param player  The player who is interacting with this menu.
@@ -109,36 +155,36 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.playerUUID = player.getUUID();
 
         this.configuration = machine.getConfiguration();
+        this.state = machine.getState();
         this.energyStorage = machine.energyStorage();
         this.itemStorage = machine.itemStorage();
         this.fluidStorage = machine.fluidStorage();
 
         this.levelAccess = ContainerLevelAccess.create(machine.getLevel(), machine.getBlockPos());
 
-        int totalSize = 0;
-        for (SlotGroupType itemStorageType : this.itemStorage.getTypes()) {
-            totalSize += this.itemStorage.getGroup(itemStorageType).size();
-        }
-
-        this.machineSlots = new AutomatableSlot[totalSize];
+        this.machineSlots = new StorageSlot[this.itemStorage.size()];
 
         int index = 0;
-        for (SlotGroupType groupType : this.itemStorage.getTypes()) {
-            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.itemStorage.getGroup(groupType);
-            ItemResourceSlot[] groupSlots = group.getSlots();
-            for (int i = 0; i < groupSlots.length; i++) {
-                AutomatableSlot slot1 = new AutomatableSlot((Container) group, groupSlots[i], groupType, i, this.playerUUID);
+        for (ItemResourceSlot slot : this.itemStorage) {
+            ItemSlotDisplay display = slot.getDisplay();
+            if (display != null) {
+                StorageSlot slot1;
+                if (slot.inputType() == InputType.RECIPE_OUTPUT) {
+                    slot1 = new RecipeOutputStorageSlot(this.itemStorage, slot, display, index, player, machine);
+                } else {
+                    slot1 = new StorageSlot(this.itemStorage, slot, display, index, this.playerUUID);
+                }
                 this.addSlot(slot1);
                 this.machineSlots[index++] = slot1;
             }
         }
 
-        for (SlotGroupType groupType : this.fluidStorage.getTypes()) {
-            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage.getGroup(groupType);
-            FluidResourceSlot[] groupSlots = group.getSlots();
-            for (int i = 0; i < groupSlots.length; i++) {
-                FluidResourceSlot slot = groupSlots[i];
-                this.addTank(Tank.create(slot, groupType.inputType(), i));
+        index = 0;
+        for (FluidResourceSlot slot : this.fluidStorage) {
+            if (!slot.isHidden()) {
+                TankDisplay display = slot.getDisplay();
+                assert display != null;
+                this.addTank(Tank.create(slot, display, slot.inputType(), index++));
             }
         }
 
@@ -148,6 +194,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
 
     /**
      * Constructs a new menu for a machine.
+     * Called on the logical client
      *
      * @param syncId    The sync id for this menu.
      * @param buf       The synchronization buffer from the server. Should contain exactly one block pos.
@@ -168,6 +215,8 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.levelAccess = ContainerLevelAccess.create(inventory.player.level(), blockPos);
         this.configuration = MachineConfiguration.create();
         this.configuration.readPacket(buf);
+        this.state = MachineState.create(this.type);
+        this.state.readPacket(buf);
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.readPacket(buf);
         this.itemStorage = type.createItemStorage();
@@ -175,30 +224,29 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.fluidStorage = type.createFluidStorage();
         this.fluidStorage.readPacket(buf);
 
-        int totalSize = 0;
-        for (SlotGroupType itemStorageType : this.itemStorage.getTypes()) {
-            totalSize += this.itemStorage.getGroup(itemStorageType).size();
-        }
-
-        this.machineSlots = new AutomatableSlot[totalSize];
+        this.machineSlots = new StorageSlot[this.itemStorage.size()];
 
         int index = 0;
-        for (SlotGroupType groupType : this.itemStorage.getTypes()) {
-            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.itemStorage.getGroup(groupType);
-            ItemResourceSlot[] groupSlots = group.getSlots();
-            for (int i = 0; i < groupSlots.length; i++) {
-                AutomatableSlot slot1 = new AutomatableSlot((Container) group, groupSlots[i], groupType, i, this.playerUUID);
+        for (ItemResourceSlot slot : this.itemStorage) {
+            ItemSlotDisplay display = slot.getDisplay();
+            if (display != null) {
+                StorageSlot slot1;
+                if (slot.inputType() == InputType.RECIPE_OUTPUT) {
+                    slot1 = new RecipeOutputStorageSlot(this.itemStorage, slot, display, index, inventory.player, machine);
+                } else {
+                    slot1 = new StorageSlot(this.itemStorage, slot, display, index, this.playerUUID);
+                }
                 this.addSlot(slot1);
                 this.machineSlots[index++] = slot1;
             }
         }
 
-        for (SlotGroupType groupType : this.fluidStorage.getTypes()) {
-            SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage.getGroup(groupType);
-            FluidResourceSlot[] groupSlots = group.getSlots();
-            for (int i = 0; i < groupSlots.length; i++) {
-                FluidResourceSlot slot = groupSlots[i];
-                this.addTank(Tank.create(slot, groupType.inputType(), i));
+        index = 0;
+        for (FluidResourceSlot slot : this.fluidStorage) {
+            if (!slot.isHidden()) {
+                TankDisplay display = slot.getDisplay();
+                assert display != null;
+                this.addTank(Tank.create(slot, display, slot.inputType(), index++));
             }
         }
 
@@ -206,48 +254,95 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.registerSyncHandlers(this::addSyncHandler);
     }
 
+    /**
+     * Creates a new menu type for a machine.
+     *
+     * @param factory       The factory used to create the machine menu.
+     * @param typeSupplier  The supplier for the machine type.
+     * @param <Machine>     The type of the machine block entity.
+     * @param <Menu>        The type of the machine menu.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull MachineMenuFactory<Machine, Menu> factory, Supplier<MachineType<Machine, Menu>> typeSupplier) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> factory.create(syncId, inventory, buf, typeSupplier.get()));
     }
 
+    /**
+     * Creates a new menu type for a machine with a basic factory.
+     *
+     * @param factory The factory used to create the machine menu.
+     * @param <Machine> The type of the machine block entity.
+     * @param <Menu> The type of the machine menu.
+     * @return The created menu type.
+     */
     @Contract(value = "_ -> new", pure = true)
     public static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MenuType<Menu> createType(@NotNull BasicMachineMenuFactory<Machine, Menu> factory) {
         return new ExtendedScreenHandlerType<>(factory::create);
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param invX The x-coordinate of the top-left player inventory slot.
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invX, int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new MachineMenu<>(syncId, inventory, buf, invX, invY, typeSupplier.get()));
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(int invY, Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return createSimple(8, invY, typeSupplier);
     }
 
+    /**
+     * Creates a new menu type for a machine with a simple factory.
+     *
+     * @param typeSupplier The supplier for the machine type.
+     * @param <Machine> The type of the machine block entity.
+     * @return The created menu type.
+     */
     @Contract(value = "_ -> new", pure = true)
     public static <Machine extends MachineBlockEntity> @NotNull MenuType<MachineMenu<Machine>> createSimple(Supplier<MachineType<Machine, MachineMenu<Machine>>> typeSupplier) {
         return createSimple(84, typeSupplier);
     }
 
+    /**
+     * Registers the sync handlers for the menu.
+     *
+     * @param consumer The consumer to accept the menu sync handlers.
+     */
     @MustBeInvokedByOverriders
     public void registerSyncHandlers(Consumer<MenuSyncHandler> consumer) {
         consumer.accept(this.configuration.createSyncHandler());
+        consumer.accept(this.state.createSyncHandler());
         consumer.accept(this.itemStorage.createSyncHandler()); //todo: probably synced by vanilla - is this necessary?
         consumer.accept(this.fluidStorage.createSyncHandler());
         consumer.accept(this.energyStorage.createSyncHandler());
     }
 
+    /**
+     * Adds a sync handler to the menu.
+     *
+     * @param syncHandler The sync handler to add. Ignored if null.
+     */
     private void addSyncHandler(@Nullable MenuSyncHandler syncHandler) {
         if (syncHandler != null) {
             this.syncHandlers.add(syncHandler);
         }
-    }
-
-    @Override
-    public void clicked(int i, int j, ClickType clickType, Player player) {
-        super.clicked(i, j, clickType, player);
     }
 
     @Override
@@ -256,18 +351,18 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         int size = this.machineSlots.length;
 
         if (slotId < size) {
-            assert slot instanceof AutomatableSlot;
-            ResourceSlot<Item, ItemStack> slot1 = ((AutomatableSlot) slot).getSlot();
+            assert slot instanceof StorageSlot;
+            ResourceSlot<Item> slot1 = ((StorageSlot) slot).getSlot();
             this.quickMoveIntoPlayerInventory(slot1);
-            return slot1.createStack();
+            return ItemStackUtil.create(slot1);
         } else {
-            assert !(slot instanceof AutomatableSlot);
+            assert !(slot instanceof StorageSlot);
             ItemStack stack1 = slot.getItem();
             if (stack1.isEmpty()) return ItemStack.EMPTY;
 
             int insert = stack1.getCount();
-            for (AutomatableSlot slot1 : this.machineSlots) {
-                if (slot1.getType().inputType().playerInsertion() && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
+            for (StorageSlot slot1 : this.machineSlots) {
+                if (slot1.getSlot().inputType().playerInsertion() && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
                     insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
                     if (insert == 0) break;
                 }
@@ -277,7 +372,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                 slot.set(ItemStack.EMPTY);
                 return ItemStack.EMPTY;
             } else {
-                for (AutomatableSlot slot1 : this.machineSlots) {
+                for (StorageSlot slot1 : this.machineSlots) {
                     if (slot1.mayPlace(stack1)) {
                         insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
                         if (insert == 0) break;
@@ -296,14 +391,18 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         }
     }
 
-    private void quickMoveIntoPlayerInventory(ResourceSlot<Item, ItemStack> slot) {
+    /**
+     * Quick-moves a stack from the machine's inventory into the player's inventory
+     * @param slot the slot that was shift-clicked
+     */
+    private void quickMoveIntoPlayerInventory(ResourceSlot<Item> slot) {
         if (slot.isEmpty()) return;
-        ItemStack itemStack = slot.copyStack();
+        ItemStack itemStack = ItemStackUtil.copy(slot);
         int extracted = itemStack.getCount();
         int size = this.slots.size() - 1;
         for (int i = size; i >= this.machineSlots.length; i--) {
             Slot slot1 = this.slots.get(i);
-            assert !(slot1 instanceof AutomatableSlot);
+            assert !(slot1 instanceof StorageSlot);
             if (ItemStack.isSameItemSameTags(itemStack, slot1.getItem())) {
                 itemStack = slot1.safeInsert(itemStack);
                 if (itemStack.isEmpty()) break;
@@ -327,7 +426,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     }
 
     @Override
-    protected boolean moveItemStackTo(ItemStack itemStack, int startIndex, int endIndex, boolean reverse) {
+    protected boolean moveItemStackTo(ItemStack stack, int startIndex, int endIndex, boolean reverse) {
         throw new UnsupportedOperationException("you shouldn't call this.");
     }
 
@@ -357,14 +456,16 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
-        this.syncStorages();
+        this.synchronizeState();
     }
 
     /**
-     * Syncs the storages in this menu.
+     * Synchronizes this menu's state from the server to the client.
+     *
+     * @see #receiveState(FriendlyByteBuf)
      */
     @ApiStatus.Internal
-    private void syncStorages() {
+    private void synchronizeState() {
         if (this.player != null) {
             int sync = 0;
             for (MenuSyncHandler syncHandler : this.syncHandlers) {
@@ -379,6 +480,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                     MenuSyncHandler handler = this.syncHandlers.get(i);
                     if (handler.needsSyncing()) {
                         buf.writeVarInt(i);
+                        MachineLib.LOGGER.trace("Writing sync handler {} at {}", handler, buf.writerIndex());
                         handler.sync(buf);
                     }
                 }
@@ -388,15 +490,18 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
     }
 
     /**
-     * Receives and deserialized storage sync packets from the server.
+     * Receives and deserializes sync packets from the server (called on the client).
      *
      * @param buf The packet buffer.
+     * @see #synchronizeState()
      */
     @ApiStatus.Internal
     public void receiveState(@NotNull FriendlyByteBuf buf) {
         int sync = buf.readVarInt();
         for (int i = 0; i < sync; i++) {
-            this.syncHandlers.get(buf.readVarInt()).read(buf);
+            MenuSyncHandler handler = this.syncHandlers.get(buf.readVarInt());
+            MachineLib.LOGGER.trace("Reading sync handler {} at {}", handler, buf.readerIndex());
+            handler.read(buf);
         }
     }
 
@@ -410,13 +515,43 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         this.tanks.add(tank);
     }
 
+    /**
+     * A factory for creating machine menus.
+     *
+     * @param <Machine> The type of machine block entity.
+     * @param <Menu> The type of machine menu.
+     */
     @FunctionalInterface
     public interface MachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        /**
+         * Creates a new menu.
+         *
+         * @param syncId the synchronization ID
+         * @param inventory the player's inventory
+         * @param buf the byte buffer containing data for the menu
+         * @param type the type of the machine associated with the menu
+         * @return the created menu
+         */
         Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, @NotNull MachineType<Machine, Menu> type);
     }
 
+
+    /**
+     * A factory for creating machine menus (without extra type information).
+     *
+     * @param <Machine> The type of machine block entity.
+     * @param <Menu> The type of machine menu.
+     */
     @FunctionalInterface
     public interface BasicMachineMenuFactory<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
+        /**
+         * Creates a new menu.
+         *
+         * @param syncId the synchronization ID of the menu
+         * @param inventory the player's inventory
+         * @param buf the byte buffer containing data for the menu
+         * @return the created menu
+         */
         Menu create(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf);
     }
 }

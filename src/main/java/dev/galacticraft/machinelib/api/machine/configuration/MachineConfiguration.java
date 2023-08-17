@@ -22,9 +22,8 @@
 
 package dev.galacticraft.machinelib.api.machine.configuration;
 
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
-import dev.galacticraft.machinelib.api.util.Deserializable;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineConfigurationImpl;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
@@ -60,22 +59,6 @@ public interface MachineConfiguration extends Deserializable<CompoundTag>, MenuS
      */
     @Contract(pure = true)
     @NotNull SecuritySettings getSecurity();
-
-    /**
-     * Returns the status of the machine.
-     *
-     * @return The status of the machine.
-     */
-    @Contract(pure = true)
-    @NotNull MachineStatus getStatus();
-
-    /**
-     * Sets the status of the machine.
-     *
-     * @param status The status of the machine.
-     */
-    @Contract(mutates = "this")
-    void setStatus(@NotNull MachineStatus status);
 
     /**
      * Returns the redstone activation of the machine.

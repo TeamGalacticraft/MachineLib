@@ -29,10 +29,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * The {@code DefaultedMetadata} annotation is used
+ * to mark a test class with default metadata values for all test methods.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface DefaultedMetadata {
+    /**
+     * Returns the default group to use for the contained tests
+     * @return the default group to use for the contained tests
+     */
     String group() default "";
 
+    /**
+     * Returns the structure to use for the tests
+     * @return the structure to use for the tests
+     */
     String structure() default FabricGameTest.EMPTY_STRUCTURE;
 }

@@ -48,7 +48,7 @@ public enum AccessLevel implements StringRepresentable {
     public static final AccessLevel[] VALUES = AccessLevel.values();
 
     /**
-     * The name of the access level.
+     * The text of the access level.
      */
     private final @NotNull Component name;
 
@@ -74,6 +74,12 @@ public enum AccessLevel implements StringRepresentable {
         };
     }
 
+    /**
+     * Returns the access level corresponding to the given ordinal value.
+     *
+     * @param ordinal the ordinal value of the access level
+     * @return the access level corresponding to the given ordinal value
+     */
     public static @NotNull AccessLevel getByOrdinal(byte ordinal) {
         return VALUES[ordinal];
     }
@@ -81,7 +87,7 @@ public enum AccessLevel implements StringRepresentable {
     /**
      * Returns the name of the access level.
      *
-     * @return The name of the access level.
+     * @return The text of the access level.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {

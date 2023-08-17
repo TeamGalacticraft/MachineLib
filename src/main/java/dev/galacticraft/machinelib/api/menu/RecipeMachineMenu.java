@@ -47,7 +47,15 @@ import java.util.function.Supplier;
  * @see MachineMenu
  */
 public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> extends MachineMenu<Machine> {
+    /**
+     * The amount of progress the machine has made in crafting a recipe.
+     * Counts from zero to {@link #maxProgress}, if {@link #maxProgress} > 0.
+     */
     private int progress = 0;
+    /**
+     * The number of ticks a machine must work before crafting something.
+     * If zero, no recipe is active.
+     */
     private int maxProgress = 0;
 
     /**
@@ -61,23 +69,67 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
         super(syncId, player, machine);
     }
 
+    /**
+     * Constructs a new recipe menu for a machine.
+     *
+     * @param syncId    The sync id for this menu.
+     * @param inventory The inventory of the player interacting with this menu.
+     * @param buf       The data buffer containing the information needed to initialize the menu.
+     * @param invX      The x-coordinate of the top-left player inventory slot.
+     * @param invY      The y-coordinate of the top-left player inventory slot.
+     * @param type      The type of machine associated with this menu.
+     */
     protected RecipeMachineMenu(int syncId, @NotNull Inventory inventory, @NotNull FriendlyByteBuf buf, int invX, int invY, @NotNull MachineType<Machine, ? extends MachineMenu<Machine>> type) {
         super(syncId, inventory, buf, invX, invY, type);
 
-        this.progress = buf.readInt();
         this.maxProgress = buf.readInt();
+        if (this.maxProgress > 0) {
+            this.progress = buf.readInt();
+        } else {
+            this.progress = 0;
+        }
     }
 
+    /**
+     * Creates a new menu type.
+     *
+     * @param selfReference A supplier that provides the machine type associated with this menu.
+     * @return The created menu type.
+     * @param <C> The container associated with the machine's recipe type.
+     * @param <R> The recipe type associated with the machine.
+     * @param <Machine> The type of machine associated with this menu.
+     */
     @Contract(value = "_ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference) {
         return createType(selfReference, 84);
     }
 
+    /**
+     * Creates a new menu type with the specified inventory Y coordinate.
+     *
+     * @param selfReference A supplier that provides the machine type associated with this menu.
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @return The created menu type.
+     * @param <C> The container associated with the machine's recipe type.
+     * @param <R> The recipe type associated with the machine.
+     * @param <Machine> The type of machine associated with this menu.
+     */
     @Contract(value = "_, _ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference, int invY) {
         return createType(selfReference, 8, invY);
     }
 
+    /**
+     * Creates a new menu type with the specified inventory X and Y coordinates.
+     *
+     * @param selfReference A supplier that provides the machine type associated with this menu.
+     * @param invX The x-coordinate of the top-left player inventory slot.
+     * @param invY The y-coordinate of the top-left player inventory slot.
+     * @return The created menu type.
+     * @param <C> The container associated with the machine's recipe type.
+     * @param <R> The recipe type associated with the machine.
+     * @param <Machine> The type of machine associated with this menu.
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <C extends Container, R extends Recipe<C>, Machine extends RecipeMachineBlockEntity<C, R>> @NotNull MenuType<RecipeMachineMenu<C, R, Machine>> createType(@NotNull Supplier<MachineType<Machine, ? extends RecipeMachineMenu<C, R, Machine>>> selfReference, int invX, int invY) {
         return new ExtendedScreenHandlerType<>((syncId, inventory, buf) -> new RecipeMachineMenu<>(syncId, inventory, buf, invX, invY, selfReference.get()));
@@ -88,21 +140,44 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
         super.registerSyncHandlers(consumer);
 
         consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
-        consumer.accept(MenuSyncHandler.simple(this.machine::getMaxProgress, this::setMaxProgress));
+        consumer.accept(MenuSyncHandler.simple(() -> {
+            R recipe = this.machine.getActiveRecipe();
+            return recipe != null ? this.machine.getProcessingTime(recipe) : 0;
+        }, this::setMaxProgress));
     }
 
+    /**
+     * Returns the current progress of the machine.
+     *
+     * @return The progress value.
+     */
     public int getProgress() {
         return this.progress;
     }
 
+    /**
+     * Sets the progress value of the machine.
+     *
+     * @param progress The new progress value.
+     */
     public void setProgress(int progress) {
         this.progress = progress;
     }
 
+    /**
+     * Gets the maximum progress value of the machine.
+     *
+     * @return The maximum progress value.
+     */
     public int getMaxProgress() {
         return this.maxProgress;
     }
 
+    /**
+     * Sets the maximum progress value of the machine.
+     *
+     * @param maxProgress The new maximum progress value.
+     */
     public void setMaxProgress(int maxProgress) {
         this.maxProgress = maxProgress;
     }

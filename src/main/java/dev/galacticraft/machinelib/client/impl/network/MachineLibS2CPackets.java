@@ -23,15 +23,17 @@
 package dev.galacticraft.machinelib.client.impl.network;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
-import dev.galacticraft.machinelib.api.machine.configuration.face.MachineIOFace;
+import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
-import dev.galacticraft.machinelib.api.storage.io.ResourceFlow;
-import dev.galacticraft.machinelib.api.storage.io.ResourceType;
+import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
+import dev.galacticraft.machinelib.api.transfer.ResourceType;
+import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.impl.Constant;
+import io.netty.buffer.ByteBuf;
 import lol.bai.badpackets.api.S2CPacketReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
@@ -88,12 +90,27 @@ public final class MachineLibS2CPackets {
                         if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
                             machineFace.setOption(Constant.Cache.RESOURCE_TYPES[type], ResourceFlow.VALUES[flow]);
-                            machineFace.setSelection(null);
                             client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 0);
                         }
                     }
                 });
             }
+        });
+
+
+        //todo: badpackets?
+        ClientPlayNetworking.registerGlobalReceiver(Constant.id("be_render_data"), (client, handler, buf, responseSender) -> {
+            BlockPos pos = buf.readBlockPos();
+
+            ByteBuf copy = buf.copy();
+            client.execute(() -> {
+                if (client.level != null && client.level.isLoaded(pos)) {
+                    if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                        machine.readRenderData(new FriendlyByteBuf(copy));
+                        client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 8);
+                    }
+                }
+            });
         });
     }
 }

@@ -22,9 +22,10 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.MutableModifiable;
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
+import dev.galacticraft.machinelib.api.misc.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -33,49 +34,37 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 // assertions made:
 // if AMOUNT > 0 then RESOURCE is NOT NULL (and the inverse - if RESOURCE is NOT NULL then AMOUNT > 0)
 // the associated TAG will either be NULL or contain a value - it will never be EMPTY
 // EVERY aborted transaction will unwind - if it skips then MODIFICATIONS will be off
-public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticipant<ResourceSlotImpl.Snapshot<Resource>> implements ResourceSlot<Resource, Stack> {
+public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<ResourceSlotImpl.Snapshot<Resource>> implements ResourceSlot<Resource> {
     protected static final String RESOURCE_KEY = "Resource";
     protected static final String AMOUNT_KEY = "Amount";
     protected static final String TAG_KEY = "Tag";
 
-    private final ResourceFilter<Resource> filter;
+    private final InputType inputType;
     private final ResourceFilter<Resource> externalFilter;
-    private final long capacity;
+    protected final long capacity;
     private MutableModifiable parent;
-    private @Nullable Resource resource = null;
-    private @Nullable CompoundTag tag = null;
-    private long amount = 0;
+
+    protected @Nullable Resource resource = null;
+    protected @Nullable CompoundTag tag = null;
+    protected long amount = 0;
+
     private long modifications = 0;
 
-    protected ResourceSlotImpl(ResourceFilter<Resource> filter, ResourceFilter<Resource> externalFilter, long capacity) {
-        this.filter = filter;
+    protected ResourceSlotImpl(InputType inputType, ResourceFilter<Resource> externalFilter, long capacity) {
+        this.inputType = inputType;
         this.externalFilter = externalFilter;
         this.capacity = capacity;
     }
 
-    @Contract("null -> null")
-    private static @Nullable CompoundTag stripTag(@Nullable CompoundTag tag) {
-        return tag == null ? null : (tag.isEmpty() ? null : tag);
-    }
-
     @Override
-    public @NotNull ResourceFilter<Resource> getFilter() {
-        return this.filter;
-    }
-
-    @Override
-    public @NotNull ResourceFilter<Resource> getStrictFilter() {
-        return this.externalFilter;
-    }
-
-    @Override
-    public void _setParent(MutableModifiable parent) {
-        this.parent = parent;
+    public InputType inputType() {
+        return this.inputType;
     }
 
     @Override
@@ -84,28 +73,16 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         return this.resource;
     }
 
-    protected void setResource(@Nullable Resource resource) {
-        this.resource = resource;
-    }
-
     @Override
     public long getAmount() {
         assert this.isSane();
         return this.amount;
     }
 
-    protected void setAmount(long amount) {
-        this.amount = amount;
-    }
-
     @Override
     public @Nullable CompoundTag getTag() {
         assert this.isSane();
         return this.tag;
-    }
-
-    protected void setTag(@Nullable CompoundTag tag) {
-        this.tag = tag;
     }
 
     @Override
@@ -117,6 +94,11 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public long getCapacity() {
         return this.capacity;
+    }
+
+    @Override
+    public @NotNull ResourceFilter<Resource> getFilter() {
+        return this.externalFilter;
     }
 
     @Override
@@ -134,27 +116,27 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public boolean canInsert(@NotNull Resource resource) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource);
+        return this.amount <= this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag) {
         assert this.isSane();
-        return this.amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
+        return this.amount <= this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource);
+        return this.amount + amount <= this.getCapacityFor(resource) && this.canAccept(resource);
     }
 
     @Override
     public boolean canInsert(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
-        return this.amount + amount < this.getCapacityFor(resource) && this.canAccept(resource, tag);
+        return this.amount + amount <= this.getCapacityFor(resource) && this.canAccept(resource, tag);
     }
 
     @Override
@@ -200,6 +182,16 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
+    public long insertMatching(@NotNull Resource resource, long amount) {
+        return this.insert(resource, amount);
+    }
+
+    @Override
+    public long insertMatching(@NotNull Resource resource, @Nullable CompoundTag tag, long amount) {
+        return this.insert(resource, tag, amount);
+    }
+
+    @Override
     public boolean contains(@NotNull Resource resource) {
         assert this.isSane();
         return this.resource == resource;
@@ -216,7 +208,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         StoragePreconditions.notNegative(amount);
         assert this.isSane();
 
-        return this.amount > amount;
+        return this.amount >= amount;
     }
 
     @Override
@@ -257,24 +249,23 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     }
 
     @Override
-    public boolean extractOne() {
+    public @Nullable Resource extractOne() {
         if (!this.isEmpty()) {
+            Resource res = this.resource;
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
-            return true;
+            return res;
         }
-        return false;
+        return null;
     }
 
     @Override
     public boolean extractOne(@Nullable Resource resource) {
         if (resource == null ? !this.isEmpty() : this.contains(resource)) {
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return true;
@@ -286,8 +277,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     public boolean extractOne(@Nullable Resource resource, @Nullable CompoundTag tag) {
         if (resource == null ? !this.isEmpty() : this.contains(resource, tag)) {
             if (--this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return true;
@@ -338,8 +328,7 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
             this.updateSnapshots(context);
             this.amount -= extracted;
             if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             return extracted;
         }
@@ -349,12 +338,6 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
     @Override
     public long getModifications() {
         return this.modifications;
-    }
-
-    @Override
-    public void revertModification() {
-        this.modifications--;
-        if (this.parent != null) this.parent.revertModification();
     }
 
     @Override
@@ -421,6 +404,11 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
         assert this.isSane();
     }
 
+    @Override
+    public void _setParent(MutableModifiable parent) {
+        this.parent = parent;
+    }
+
     @Contract(pure = true)
     private boolean canAccept(@NotNull Resource resource) {
         return this.canAccept(resource, null);
@@ -428,24 +416,29 @@ public abstract class ResourceSlotImpl<Resource, Stack> extends SnapshotParticip
 
     @Contract(pure = true)
     private boolean canAccept(@NotNull Resource resource, @Nullable CompoundTag tag) {
-        return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || (this.resource == null && this.filter.test(resource, tag));
+        return (this.resource == resource && Utils.tagsEqual(this.tag, tag)) || this.resource == null;
     }
 
-    private boolean isSane() {
-        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount < this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
+    @VisibleForTesting
+    public boolean isSane() {
+        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount <= this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
     }
 
     private long doExtraction(long extracted) {
         if (extracted > 0) {
             this.amount -= extracted;
             if (this.amount == 0) {
-                this.resource = null;
-                this.tag = null;
+                this.setEmpty();
             }
             this.markModified();
             return extracted;
         }
         return 0;
+    }
+
+    @Contract("null -> null")
+    private static @Nullable CompoundTag stripTag(@Nullable CompoundTag tag) {
+        return tag == null ? null : (tag.isEmpty() ? null : tag);
     }
 
     protected record Snapshot<Resource>(@Nullable Resource resource, long amount, @Nullable CompoundTag tag) {

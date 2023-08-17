@@ -22,21 +22,20 @@
 
 package dev.galacticraft.machinelib.api.storage;
 
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
+import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
+import dev.galacticraft.machinelib.api.misc.Deserializable;
+import dev.galacticraft.machinelib.api.misc.MutableModifiable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.api.util.Deserializable;
 import net.minecraft.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 
-public interface ResourceStorage<Resource, Stack, Slot extends ResourceSlot<Resource, Stack>, Group extends SlotGroup<Resource, Stack, Slot>> extends Iterable<Group>, MutableModifiable, SlotProvider<Resource, Stack, Slot>, Deserializable<ListTag> {
-    int groups();
-
-    @NotNull Group getGroup(@NotNull SlotGroupType type);
-
-    @NotNull Slot getSlot(@NotNull SlotGroupType type);
-
-    @NotNull SlotGroupType @NotNull [] getTypes();
-
+public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> extends Iterable<Slot>, MutableModifiable, SlottedStorageAccess<Resource, Slot>, Deserializable<ListTag>, MenuSynchronizable {
     void setListener(Runnable listener);
+
+    Slot[] getSlots();
+
+    @NotNull Slot getSlot(int slot);
+
+    @NotNull ResourceFilter<Resource> getStrictFilter(int slot);
 }

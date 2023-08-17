@@ -22,9 +22,11 @@
 
 package dev.galacticraft.machinelib.impl.storage.slot;
 
-import dev.galacticraft.machinelib.api.storage.ResourceFilter;
+import dev.galacticraft.machinelib.api.filter.ResourceFilter;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.Utils;
 import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -34,6 +36,8 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -43,72 +47,112 @@ import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> implements ItemResourceSlot {
-    private final @NotNull ItemSlotDisplay display;
+public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements ItemResourceSlot {
+    private static final String RECIPES_KEY = "Recipes";
+    private final @Nullable ItemSlotDisplay display;
     private long cachedExpiry = -1;
-    private SingleSlotStorage<ItemVariant> cachedStorage = null;
-    private ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
-    private Object cachedApi = null;
 
-    public ItemResourceSlotImpl(@NotNull ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
-        super(filter, externalFilter, capacity);
-        this.display = display;
+    private @Nullable SingleSlotStorage<ItemVariant> cachedStorage = null;
+    private @Nullable ItemApiLookup<?, ContainerItemContext> cachedLookup = null;
+    private @Nullable Object cachedApi = null;
+    private @Nullable Set<ResourceLocation> recipes;
+
+    public ItemResourceSlotImpl(@NotNull InputType inputType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> externalFilter, int capacity) {
+        super(inputType, externalFilter, capacity);
         assert capacity > 0 && capacity <= 64;
+        this.display = display;
     }
 
     @Override
     public long getRealCapacity() {
-        return Math.min(this.getCapacity(), this.getResource() == null ? 64 : this.getResource().getMaxStackSize());
+        assert this.isSane();
+        return Math.min(this.capacity, this.resource == null ? 64 : this.resource.getMaxStackSize());
     }
 
     @Override
     public long getCapacityFor(@NotNull Item item) {
-        return Math.min(this.getCapacity(), item.getMaxStackSize());
+        return Math.min(this.capacity, item.getMaxStackSize());
     }
 
     @Override
-    public @NotNull ItemStack createStack() {
-        if (this.isEmpty()) return ItemStack.EMPTY;
-        ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
-        stack.setTag(this.getTag());
-        return stack;
+    public @Nullable Item consumeOne() {
+        CompoundTag tag = this.tag;
+        Item resource = this.extractOne();
+        if (resource == null) return null;
+        if (resource.hasCraftingRemainingItem()) {
+            this.insertRemainder(resource, tag, 1);
+        }
+        return resource;
     }
 
     @Override
-    public @NotNull ItemStack copyStack() {
-        if (this.isEmpty()) return ItemStack.EMPTY;
-        ItemStack stack = new ItemStack(this.getResource(), (int) this.getAmount());
-        stack.setTag(this.copyTag());
-        return stack;
+    public boolean consumeOne(@NotNull Item resource) {
+        CompoundTag tag = this.tag;
+        if (this.extractOne(resource)) {
+            this.insertRemainder(resource, tag, 1);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public boolean canInsertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return true;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.canInsert(stack.getItem(), stack.getTag(), stack.getCount());
+    public boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag) {
+        if (this.extractOne(resource, tag)) {
+            this.insertRemainder(resource, tag, 1);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public long tryInsertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.tryInsert(stack.getItem(), stack.getTag(), stack.getCount());
+    public long consume(long amount) {
+        Item item = this.resource;
+        if (item == null) return 0;
+        CompoundTag tag = this.tag;
+        long consumed = this.extract(amount);
+        if (consumed > 0) {
+            this.insertRemainder(item, tag, 1);
+            return consumed;
+        }
+        return consumed;
     }
 
     @Override
-    public long insertStack(@NotNull ItemStack stack) {
-        if (stack.isEmpty()) return 0;
-        assert stack.getItem() != Items.AIR && stack.getCount() > 0;
-        return this.insert(stack.getItem(), stack.getTag(), stack.getCount());
+    public long consume(@NotNull Item resource, long amount) {
+        CompoundTag tag = this.tag;
+        long consumed = this.extract(resource, amount);
+        if (consumed > 0) {
+            this.insertRemainder(resource, tag, (int) consumed);
+        }
+        return consumed;
     }
 
     @Override
-    public @NotNull ItemSlotDisplay getDisplay() {
+    public long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        long consumed = this.extract(resource, tag, amount);
+        if (consumed > 0) {
+            this.insertRemainder(resource, tag, (int) consumed);
+        }
+        return consumed;
+    }
+
+    private void insertRemainder(@NotNull Item resource, @Nullable CompoundTag tag, int extracted) {
+        if (resource.hasCraftingRemainingItem()) {
+            if (this.isEmpty()) {
+                ItemStack remainder = resource.getRecipeRemainder(ItemStackUtil.of(resource, tag, extracted));
+                if (!remainder.isEmpty()) {
+                    this.insert(remainder.getItem(), remainder.getTag(), remainder.getCount());
+                }
+            }
+        }
+    }
+
+    @Override
+    public @Nullable ItemSlotDisplay getDisplay() {
         return this.display;
     }
 
@@ -116,9 +160,16 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
     public @NotNull CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
         if (this.isEmpty()) return tag;
-        tag.putString(RESOURCE_KEY, BuiltInRegistries.ITEM.getKey(this.getResource()).toString());
-        tag.putInt(AMOUNT_KEY, (int) this.getAmount());
-        if (this.getTag() != null && !this.getTag().isEmpty()) tag.put(TAG_KEY, this.getTag());
+        tag.putString(RESOURCE_KEY, BuiltInRegistries.ITEM.getKey(this.resource).toString());
+        tag.putInt(AMOUNT_KEY, (int) this.amount);
+        if (this.tag != null && !this.tag.isEmpty()) tag.put(TAG_KEY, this.tag);
+        if (this.recipes != null) {
+            ListTag recipeTag = new ListTag();
+            for (ResourceLocation entry : this.recipes) {
+                recipeTag.add(StringTag.valueOf(entry.toString()));
+            }
+            tag.put(RECIPES_KEY, recipeTag);
+        }
         return tag;
     }
 
@@ -128,15 +179,28 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
             this.setEmpty();
         } else {
             this.set(BuiltInRegistries.ITEM.get(new ResourceLocation(tag.getString(RESOURCE_KEY))), tag.contains(TAG_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(TAG_KEY) : null, tag.getInt(AMOUNT_KEY));
+            if (this.inputType() == InputType.RECIPE_OUTPUT && tag.contains(RECIPES_KEY, Tag.TAG_COMPOUND)) {
+                ListTag list = tag.getList(RECIPES_KEY, Tag.TAG_STRING);
+                if (!list.isEmpty()) {
+                    if (this.recipes == null) {
+                        this.recipes = new HashSet<>();
+                    } else {
+                        this.recipes.clear();
+                    }
+                    for (int i = 0; i < list.size(); i++) {
+                        this.recipes.add(new ResourceLocation(list.getString(i)));
+                    }
+                }
+            }
         }
     }
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        if (this.getAmount() > 0) {
-            buf.writeInt((int) this.getAmount());
-            buf.writeUtf(BuiltInRegistries.ITEM.getKey(this.getResource()).toString());
-            buf.writeNbt(this.getTag());
+        if (this.amount > 0) {
+            buf.writeInt((int) this.amount);
+            buf.writeUtf(BuiltInRegistries.ITEM.getKey(this.resource).toString());
+            buf.writeNbt(this.tag);
         } else {
             buf.writeInt(0);
         }
@@ -185,7 +249,7 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
 
                 @Override
                 public ItemVariant getResource() {
-                    return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.getResource()), ItemResourceSlotImpl.this.getTag());
+                    return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.resource), ItemResourceSlotImpl.this.tag);
                 }
 
                 @Override
@@ -219,7 +283,7 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
 
     @Override
     public ItemVariant getItemVariant() {
-        return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.getResource()), ItemResourceSlotImpl.this.getTag());
+        return ItemResourceSlotImpl.this.isEmpty() ? ItemVariant.blank() : ItemVariant.of(Objects.requireNonNull(ItemResourceSlotImpl.this.resource), ItemResourceSlotImpl.this.tag);
     }
 
     @Override
@@ -231,11 +295,11 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
     public long exchange(ItemVariant newVariant, long maxAmount, TransactionContext transaction) {
         StoragePreconditions.notBlankNotNegative(newVariant, maxAmount);
 
-        if (newVariant.getItem() == this.getResource() && Utils.tagsEqual(this.getTag(), newVariant.getNbt())) {
-            return Math.min(this.getAmount(), maxAmount);
+        if (newVariant.getItem() == this.resource && Utils.tagsEqual(this.tag, newVariant.getNbt())) {
+            return Math.min(this.amount, maxAmount);
         }
 
-        if (this.getAmount() == maxAmount && this.getCapacityFor(newVariant.getItem()) >= maxAmount) {
+        if (this.amount == maxAmount && this.getCapacityFor(newVariant.getItem()) >= maxAmount) {
             this.updateSnapshots(transaction);
             this.set(newVariant.getItem(), newVariant.getNbt(), maxAmount);
             return maxAmount;
@@ -257,5 +321,29 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item, ItemStack> impl
     @Override
     public List<SingleSlotStorage<ItemVariant>> getAdditionalSlots() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isSane() {
+        return super.isSane() && this.resource != Items.AIR;
+    }
+
+    @Override
+    public @Nullable Set<ResourceLocation> takeRecipes() {
+        Set<ResourceLocation> recipes1 = this.recipes;
+        this.recipes = null;
+        return recipes1;
+    }
+
+    @Override
+    public void recipeCrafted(@NotNull ResourceLocation id) {
+        if (this.recipes == null) {
+            if (this.inputType() == InputType.RECIPE_OUTPUT) {
+                this.recipes = new HashSet<>();
+            } else {
+                return;
+            }
+        }
+        this.recipes.add(id);
     }
 }

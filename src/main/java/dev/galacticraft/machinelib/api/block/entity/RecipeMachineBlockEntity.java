@@ -27,7 +27,6 @@ import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.RecipeMachineMenu;
 import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,7 +38,10 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A machine block entity that processes recipes.
@@ -59,6 +61,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      */
     @ApiStatus.Internal
     private long inventoryModCount = -1;
+    @ApiStatus.Internal
+    private MachineStatus cachedRecipeState = null;
 
     /**
      * The machine's active recipe. If there is no active recipe, this will be {@code null}.
@@ -74,14 +78,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
 
     /**
      * The progress of the machine's current recipe.
-     * Counts upwards until it reaches {@link #maxProgress maximum progress}.
      */
     private int progress = 0;
-
-    /**
-     * The time it takes to complete the recipe (in ticks).
-     */
-    private int maxProgress = 0;
 
     /**
      * Constructs a new machine block entity that processes recipes.
@@ -97,9 +95,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     }
 
     /**
-     * The crafting inventory of the machine.
-     * Used to determine the machine's active recipe via the vanilla recipe search system.
-     * Should never be modified through this method (modify the inventory directly instead).
+     * An inventory for use in finding vanilla recipes for this machine.
+     * NOTE: This inventory can assume that it is never modified - do not modify it!
      *
      * @return The crafting inventory of the machine.
      */
@@ -107,14 +104,18 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     protected abstract @NotNull C craftingInv();
 
     /**
-     * Inserts the recipe's output into the machine's inventory.
+     * Inserts the active recipe's output into the machine's inventory.
      *
      * @param recipe The recipe to output.
      */
-    @MustBeInvokedByOverriders
     protected abstract void outputStacks(@NotNull R recipe);
 
-    @MustBeInvokedByOverriders
+    /**
+     * Checks if the machine can output stacks for the given recipe.
+     *
+     * @param recipe The recipe to check.
+     * @return {@code true} if the machine can output stacks for the recipe, {@code false} otherwise.
+     */
     protected abstract boolean canOutputStacks(@NotNull R recipe);
 
     /**
@@ -122,63 +123,58 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      *
      * @param recipe The recipe to extract.
      */
-    @MustBeInvokedByOverriders
     protected abstract void extractCraftingMaterials(@NotNull R recipe);
 
     /**
-     * Returns the machine status to use when the machine is working.
-     * A machine is working if it has an active recipe and the recipe's progress is less than the maximum progress.
+     * Returns the machine status to use when the machine is working on a certain recipe.
      *
-     * @return The machine status to use when the machine is working.
+     * @return The machine status to use when the machine is working on a certain recipe.
      */
     @Contract(pure = true)
-    protected abstract @NotNull MachineStatus workingStatus();
+    protected abstract @NotNull MachineStatus workingStatus(R recipe);
+
+    /**
+     * Tests if the necessary resources to run this machine are available.
+     * This can be energy, fuel, or any other resource (or nothing!).
+     *
+     * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
+     * @see #extractResourcesToWork()
+     */
+    protected abstract @Nullable MachineStatus hasResourcesToWork();
 
     /**
      * Extracts the necessary resources to run this machine.
      * This can be energy, fuel, or any other resource (or nothing!).
      *
-     * @return {@code null} if the machine can run, or a {@link MachineStatus machine status} describing why it cannot.
+     * @see #hasResourcesToWork()
      */
-    @MustBeInvokedByOverriders
-    protected abstract @Nullable MachineStatus hasResourcesToWork();
-
-    @MustBeInvokedByOverriders
     protected abstract void extractResourcesToWork();
 
     @Override
-    public @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
-        profiler.push("recipe_test");
-        MachineStatus recipeFailure = testInventoryRecipe(world, profiler);
+    public @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        profiler.push("resources");
+        MachineStatus status = this.hasResourcesToWork();
         profiler.pop();
-        if (recipeFailure != null) {
+        if (status == null) {
+            profiler.push("recipe");
+            MachineStatus recipeFailure = this.testInventoryRecipe(level, profiler);
+            profiler.pop();
+            if (recipeFailure == null) {
+                R recipe = this.getActiveRecipe();
+                assert recipe != null;
+                profiler.push("working");
+                this.extractResourcesToWork();
+                if (++this.progress > this.getProcessingTime(recipe)) {
+                    profiler.push("crafting");
+                    this.craft(profiler, recipe);
+                    profiler.pop();
+                }
+                profiler.pop();
+                return this.workingStatus(recipe);
+            }
             return recipeFailure;
         }
-
-        if (this.getActiveRecipe() != null) {
-            profiler.push("working");
-            try (Transaction transaction = Transaction.openOuter()) {
-                MachineStatus status = this.hasResourcesToWork();
-                if (status == null) {
-                    this.extractResourcesToWork();
-                    if (++this.progress >= this.getMaxProgress()) {
-                        profiler.push("crafting");
-                        this.craft(profiler, this.getActiveRecipe());
-                        profiler.pop();
-                    }
-                    transaction.commit();
-                    return this.workingStatus();
-                } else {
-                    return status;
-                }
-            } finally {
-                profiler.pop();
-            }
-        } else {
-            if (this.getStatus() == MachineStatuses.OUTPUT_FULL)
-                return MachineStatuses.OUTPUT_FULL; //preserve full state
-            return MachineStatuses.INVALID_RECIPE;
-        }
+        return status;
     }
 
     /**
@@ -197,35 +193,19 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
             profiler.pop();
             if (recipe != null) {
                 if (this.canOutputStacks(recipe)) {
-                    this.updateRecipe(recipe);
+                    this.setActiveRecipe(recipe);
+                    this.cachedRecipeState = null;
                 } else {
-                    this.resetRecipe();
-                    return MachineStatuses.OUTPUT_FULL;
+                    this.setActiveRecipe(null);
+                    this.cachedRecipeState = MachineStatuses.OUTPUT_FULL;
                 }
             } else {
-                this.resetRecipe();
-                return MachineStatuses.INVALID_RECIPE;
+                this.setActiveRecipe(null);
+                this.cachedRecipeState = MachineStatuses.INVALID_RECIPE;
             }
         }
-        return null;
-    }
 
-    /**
-     * Sets the current recipe to the given recipe.
-     * If the recipe is different from the current recipe, the progress is reset.
-     *
-     * @param recipe The recipe to set.
-     *               If {@code null}, the recipe will be reset.
-     */
-    @Contract(mutates = "this")
-    private void updateRecipe(@Nullable R recipe) {
-        if (recipe == null) {
-            this.resetRecipe();
-        } else if (this.getActiveRecipe() != recipe) {
-            this.setActiveRecipe(recipe);
-            this.setMaxProgress(this.getProcessTime(recipe));
-            this.setProgress(0);
-        }
+        return this.cachedRecipeState;
     }
 
     /**
@@ -240,18 +220,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         profiler.popPush("output_stacks");
         this.outputStacks(recipe);
         profiler.pop();
-        this.inventoryModCount = -1; // make sure everything is recalculated
-        this.resetRecipe();
-    }
-
-    /**
-     * Resets the progress of the machine and clears the active recipe.
-     */
-    @Contract(mutates = "this")
-    protected void resetRecipe() {
         this.setActiveRecipe(null);
-        this.setProgress(0);
-        this.setMaxProgress(0);
     }
 
     /**
@@ -281,8 +250,12 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     @Override
     public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
         super.writeScreenOpeningData(player, buf);
-        buf.writeInt(this.progress);
-        buf.writeInt(this.maxProgress);
+        if (this.activeRecipe != null) {
+            buf.writeInt(this.getProcessingTime(this.activeRecipe));
+            buf.writeInt(this.progress);
+        } else {
+            buf.writeInt(0);
+        }
     }
 
     /**
@@ -292,7 +265,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The process time of the given recipe.
      */
     @Contract(pure = true)
-    protected abstract int getProcessTime(@NotNull R recipe);
+    public abstract int getProcessingTime(@NotNull R recipe);
 
     /**
      * Returns the progress of the machine.
@@ -327,53 +300,29 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * Sets the active recipe of the machine.
      *
-     * @param activeRecipe The recipe to set.
+     * @param recipe The recipe to set.
      */
     @Contract(mutates = "this")
-    protected void setActiveRecipe(@Nullable R activeRecipe) {
-        if (activeRecipe != null) this.cachedRecipe = activeRecipe;
-        this.activeRecipe = activeRecipe;
-    }
+    protected void setActiveRecipe(@Nullable R recipe) {
+        if (recipe != null) this.cachedRecipe = recipe;
 
-    /**
-     * Returns the maximum progress of the machine.
-     *
-     * @return The maximum progress of the machine.
-     */
-    @Contract(pure = true)
-    public int getMaxProgress() {
-        return this.maxProgress;
-    }
-
-    /**
-     * Sets the maximum progress of the machine.
-     *
-     * @param maxProgress The maximum progress to set.
-     */
-    @Contract(mutates = "this")
-    public void setMaxProgress(int maxProgress) {
-        this.maxProgress = maxProgress;
+        if (this.activeRecipe != recipe) {
+            this.activeRecipe = recipe;
+            this.setProgress(0);
+        } else if (recipe == null) {
+            this.setProgress(0);
+        }
     }
 
     @Override
     protected void saveAdditional(@NotNull CompoundTag nbt) {
         super.saveAdditional(nbt);
         nbt.putInt(Constant.Nbt.PROGRESS, this.getProgress());
-        nbt.putInt(Constant.Nbt.MAX_PROGRESS, this.getMaxProgress());
     }
 
     @Override
     public void load(@NotNull CompoundTag nbt) {
         super.load(nbt);
         this.progress = nbt.getInt(Constant.Nbt.PROGRESS);
-        this.maxProgress = nbt.getInt(Constant.Nbt.MAX_PROGRESS);
-    }
-
-    @Override
-    public void setLevel(Level world) {
-        super.setLevel(world);
-        if (!world.isClientSide) {
-            this.cachedRecipe = this.activeRecipe = this.findValidRecipe(world);
-        }
     }
 }

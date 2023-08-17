@@ -28,8 +28,6 @@ import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
 import dev.galacticraft.machinelib.api.gametest.annotation.ProcessingTest;
 import dev.galacticraft.machinelib.api.gametest.annotation.container.DefaultedMetadata;
 import dev.galacticraft.machinelib.api.machine.MachineType;
-import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,6 +46,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * A class for testing machines.
+ *
+ * @param <Machine> the type of machine block entity
+ * @see InstantTest
+ * @see ProcessingTest
+ */
 public abstract class MachineGameTest<Machine extends MachineBlockEntity> implements FabricGameTest {
     private static final Function<String, String> NAME_CONVERSION = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE);
 
@@ -142,12 +147,10 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
         return tests;
     }
 
-    public @NotNull TestFunction createChargeFromEnergyItemTest(@NotNull SlotGroupType slotType, Item infiniteBattery) {
+    public @NotNull TestFunction createChargeFromEnergyItemTest(int slot, Item infiniteBattery) {
         return new TestFunction(this.getBaseId(), this.getBaseId() + "/charge_from_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
             Machine machine = this.createMachine(helper);
-            for (ItemResourceSlot slot : machine.itemStorage().getGroup(slotType)) {
-                slot.set(infiniteBattery, 1);
-            }
+            machine.itemStorage().getSlot(slot).set(infiniteBattery, 1);
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isEmpty()) {
                     helper.fail("Machine did not charge from the stack!", BlockPos.ZERO);
@@ -157,14 +160,12 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
         });
     }
 
-    public @NotNull TestFunction createDrainToEnergyItemTest(@NotNull SlotGroupType slotType, Item battery) {
+    public @NotNull TestFunction createDrainToEnergyItemTest(int slot, Item battery) {
         return new TestFunction(this.getBaseId(), this.getBaseId() + "/drain_to_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
             Machine machine = this.createMachine(helper);
             machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
-            for (ItemResourceSlot slot : machine.itemStorage().getGroup(slotType)) {
-                slot.set(battery, 1);
-            }
+            machine.itemStorage().getSlot(slot).set(battery, 1);
 
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isFull()) {

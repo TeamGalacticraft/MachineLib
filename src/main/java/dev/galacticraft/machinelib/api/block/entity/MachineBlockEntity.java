@@ -23,7 +23,8 @@
 package dev.galacticraft.machinelib.api.block.entity;
 
 import dev.galacticraft.machinelib.api.block.MachineBlock;
-import dev.galacticraft.machinelib.api.fluid.FluidStack;
+import dev.galacticraft.machinelib.api.compat.transfer.ExposedStorage;
+import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
@@ -31,23 +32,22 @@ import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguratio
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.misc.AdjacentBlockApiCache;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
-import dev.galacticraft.machinelib.api.storage.io.ResourceType;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.api.transfer.cache.AdjacentBlockApiCache;
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedStorage;
+import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
+import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -64,12 +64,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -77,14 +77,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.EnergyStorageUtil;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * A block entity that represents a machine.
@@ -97,7 +97,14 @@ import java.util.Objects;
  * @see MachineScreen
  */
 public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderAttachmentBlockEntity {
+    /**
+     * The {@link MachineType type} of this machine.
+     * It controls the storage configurations and applicable statuses for this machine.
+     *
+     * @see #getMachineType()
+     */
     private final MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type;
+
     /**
      * The configuration for this machine.
      * This is used to store the {@link #getRedstoneActivation() redstone activation}, {@link #getIOConfig() I/O configuration},
@@ -105,7 +112,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      *
      * @see MachineConfiguration
      */
-    private final MachineConfiguration configuration = MachineConfiguration.create();
+    private final MachineConfiguration configuration;
+
+    /**
+     * The {@link MachineState state} of this machine.
+     * Stores the status and redstone power data
+     *
+     * @see #getState()
+     */
+    private final MachineState state;
 
     /**
      * The energy storage for this machine.
@@ -127,13 +142,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #fluidStorage()
      */
     private final @NotNull MachineFluidStorage fluidStorage;
+
     /**
-     * The name of the machine, to be passed to the screen handler factory for display.
+     * The text of the machine, to be passed to the screen handler factory for display.
      * <p>
      * By default, this is the name of the block.
      */
     @ApiStatus.Internal
     private final @NotNull Component name;
+
     /**
      * Caches energy storages available from adjacent blocks.
      */
@@ -152,7 +169,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     /**
      * Whether the machine will not drop items when broken.
      * <p>
-     * Used for machines that are placed in structures to prevent players from obtaining too many free resources.
+     * Used for machines that are placed in structures to prevent players from obtaining too many resources for free.
      * Set via NBT.
      *
      * @see Constant.Nbt#DISABLE_DROPS
@@ -161,7 +178,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     private boolean disableDrops = false;
 
     /**
-     * Constructs a new machine block entity with the name automatically derived from the passed {@link BlockState}.
+     * Whether the machine is currently active/working.
+     * This covers both working/state active and redstone activity control.
+     *
+     * @see #isActive()
+     */
+    private boolean active = false;
+
+    /**
+     * Constructs a new machine block entity with the text automatically derived from the passed {@link BlockState}.
      *
      * @param type  The type of block entity.
      * @param pos   The position of the machine in the level.
@@ -178,12 +203,15 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param type  The type of block entity.
      * @param pos   The position of the machine in the level.
      * @param state The block state of the machine.
-     * @param name  The name of the machine, to be passed to the screen handler.
+     * @param name  The text of the machine, to be passed to the screen handler.
      */
     protected MachineBlockEntity(@NotNull MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> type, @NotNull BlockPos pos, BlockState state, @NotNull Component name) {
         super(type.getBlockEntityType(), pos, state);
         this.type = type;
         this.name = name;
+
+        this.configuration = MachineConfiguration.create();
+        this.state = MachineState.create(this.type);
 
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.setListener(this::setChanged);
@@ -222,7 +250,13 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }, blocks);
     }
 
-    public MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> getMachineType() {
+    /**
+     * Returns the machine type of this block entity.
+     *
+     * @return the machine type of this block entity.
+     * @see #type
+     */
+    public @NotNull MachineType<? extends MachineBlockEntity, ? extends MachineMenu<? extends MachineBlockEntity>> getMachineType() {
         return this.type;
     }
 
@@ -230,7 +264,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
      *
      * @return The maximum amount of energy that the machine can insert into items in its inventory (per transaction).
-     * @see #drainPowerToStack(SlotGroupType)
+     * @see #drainPowerToStack(int)
      * @see #getEnergyItemExtractionRate()
      */
     @Contract(pure = true)
@@ -242,24 +276,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
      *
      * @return The maximum amount of energy that the machine can extract from items in its inventory (per transaction).
-     * @see #chargeFromStack(SlotGroupType)
+     * @see #chargeFromStack(int)
      * @see #getEnergyItemInsertionRate()
      */
     @Contract(pure = true)
     public long getEnergyItemExtractionRate() {
         return (long) (this.energyStorage.getCapacity() / 160.0);
-    }
-
-    /**
-     * Returns whether this machine is currently running.
-     *
-     * @return Whether this machine is currently running.
-     * @see #getStatus() for the status of this machine.
-     * @see MachineStatus.Type for the different types of statuses.
-     */
-    @Contract(pure = true)
-    protected boolean isActive() {
-        return this.getStatus().type().isActive();
     }
 
     /**
@@ -272,28 +294,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     public void setRedstone(@NotNull RedstoneActivation redstone) {
         this.configuration.setRedstoneActivation(redstone);
         this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_IMMEDIATE);
-    }
-
-    /**
-     * Returns the status of this machine. Machine status is calculated in {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)},
-     * but may be modified manually by calling {@link #setStatus(MachineStatus)}.
-     *
-     * @return the status of this machine.
-     * @see MachineConfiguration
-     */
-    public @NotNull MachineStatus getStatus() {
-        return this.configuration.getStatus();
-    }
-
-    /**
-     * Sets the status of this machine. It is recommended to use {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)} to
-     * calculate the status of this machine, rather than setting it manually.
-     *
-     * @param status the status to set.
-     * @see #getStatus()
-     */
-    public void setStatus(@NotNull MachineStatus status) {
-        this.configuration.setStatus(status);
     }
 
     /**
@@ -364,8 +364,23 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.configuration.getIOConfiguration();
     }
 
+    /**
+     * Returns the configuration of this machine.
+     *
+     * @return the configuration of this machine.
+     */
     public @NotNull MachineConfiguration getConfiguration() {
         return this.configuration;
+    }
+
+    /**
+     * Returns the state of this machine.
+     *
+     * @return the state of this machine.
+     * @see #state
+     */
+    public @NotNull MachineState getState() {
+        return this.state;
     }
 
     /**
@@ -378,115 +393,91 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         return this.disableDrops;
     }
 
-    /**
-     * Returns the relevant storage when given an explicit resource type.
-     * Generic resource types like {@link ResourceType#ANY any} or {@link ResourceType#NONE} will return {@code null}
-     *
-     * @param type The type of resource to get a storage for.
-     * @return the relevant storage.
-     */
-    @Contract(pure = true)
-    public @Nullable ResourceStorage<?, ?, ?, ?> getResourceStorage(@NotNull ResourceType type) {
-        return switch (type) {
-            case ITEM -> this.itemStorage();
-            case FLUID -> this.fluidStorage();
-            default -> null;
-        };
-    }
 
     /**
      * Returns whether the current machine is enabled.
      *
-     * @param world the world this machine is in.
      * @return whether the current machine is enabled.
      * @see RedstoneActivation
      * @see #getRedstoneActivation()
      */
-    public boolean isDisabled(@NotNull Level world) {
-        return switch (this.getRedstoneActivation()) {
-            case LOW -> world.hasNeighborSignal(this.worldPosition);
-            case HIGH -> !world.hasNeighborSignal(this.worldPosition);
-            case IGNORE -> false;
-        };
+    public boolean isDisabled() {
+        return !this.getRedstoneActivation().isActive(this.state.isPowered());
     }
 
     /**
      * Updates the machine every tick.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller) for server-side logic that can be disabled (not called) arbitrarily.
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller) for the server-side logic that is always called.
-     * @see #tickClient(Level, BlockPos, BlockState) for the client-side logic.
      */
-    public final void tickBase(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    public final void tickBase(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         this.setBlockState(state);
-        if (!world.isClientSide()) {
-            profiler.push("constant");
-            ServerLevel serverWorld = (ServerLevel) world;
-            this.tickConstant(serverWorld, pos, state, profiler);
-            if (this.isDisabled(world)) {
-                profiler.popPush("disabled");
-                this.setStatus(this.tickDisabled(serverWorld, pos, state, profiler));
-            } else {
-                profiler.popPush("active");
-                this.setStatus(this.tick(serverWorld, pos, state, profiler));
-            }
-        } else {
-            profiler.push("client");
-            this.tickClient(world, pos, state);
-        }
+        profiler.push("constant");
+        this.tickConstant(level, pos, state, profiler);
         profiler.pop();
+        if (this.isDisabled()) {
+            if (this.active) {
+                MachineBlock.updateActiveState(level, pos, state, this.active = false);
+            }
+            profiler.push("disabled");
+            this.state.setStatus(this.tickDisabled(level, pos, state, profiler));
+            profiler.pop();
+        } else {
+            profiler.push("active");
+            this.state.setStatus(this.tick(level, pos, state, profiler));
+            profiler.pop();
+            if (!this.active) {
+                if (this.state.isActive()) {
+                    MachineBlock.updateActiveState(level, pos, state, this.active = true);
+                }
+            } else {
+                if (!this.state.isActive()) {
+                    MachineBlock.updateActiveState(level, pos, state, this.active = false);
+                }
+            }
+        }
     }
 
     /**
      * Called every tick, even if the machine is not active/powered.
      * Use this to tick fuel consumption or transfer resources, for example.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
-     * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
+     * @see #tickBase(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected void tickConstant(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
     }
 
     /**
      * Called every tick, when the machine is explicitly disabled (by redstone, for example).
      * Use this to clean-up resources leaked by {@link #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
-     * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
+     * @see #tickBase(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      * @see #tick(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected @NotNull MachineStatus tickDisabled(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected @NotNull MachineStatus tickDisabled(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         return MachineStatuses.OFF;
     }
-
-    /**
-     * Called every tick on the client.
-     *
-     * @param world the world.
-     * @param pos   the position of this machine.
-     * @param state the block state of this machine.
-     * @see #tickBase(Level, BlockPos, BlockState, ProfilerFiller)
-     */
-    protected void tickClient(@NotNull /*Client*/Level world, @NotNull BlockPos pos, @NotNull BlockState state) {
-    } //todo: client/server split? what is this used for?
 
     /**
      * Called every tick on the server, when the machine is active.
      * Use this to update crafting progress, for example.
      * Be sure to clean-up state in {@link #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)}.
      *
-     * @param world    the world.
+     * @param level    the world.
      * @param pos      the position of this machine.
      * @param state    the block state of this machine.
      * @param profiler the world profiler.
@@ -494,7 +485,19 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #tickDisabled(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
-    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+    protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+
+    /**
+     * Returns whether the machine is currently active or not.
+     * Not to be used while ticking.
+     * A machine is active when its state is "working" AND redstone activity control allows activity.
+     *
+     * @return {@code true} if the machine is active, {@code false} otherwise.
+     * @see #active
+     */
+    public boolean isActive() {
+        return active;
+    }
 
     /**
      * Returns a controlled/throttled energy storage to expose to adjacent blocks.
@@ -566,7 +569,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      */
     @ApiStatus.Internal
     private @Nullable ExposedStorage<Item, ItemVariant> getExposedItemStorage(@Nullable BlockFace face) {
-        return this.getIOConfig().get(face).getExposedItemStorage(this.itemStorage);
+        return this.getIOConfig().get(face).getExposedItemStorage(this::createExposedItemStorage);
+    }
+
+    protected ExposedStorage<Item, ItemVariant> createExposedItemStorage(ResourceFlow flow) {
+        return ExposedStorage.createItem(this.itemStorage(), flow);
     }
 
     /**
@@ -577,7 +584,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedFluidStorage(Direction, Direction)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockState state, @Nullable Direction direction) {
         return this.getExposedFluidStorage(state.getValue(BlockStateProperties.HORIZONTAL_FACING), direction);
     }
 
@@ -590,7 +597,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @see #getExposedFluidStorage(BlockFace)
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @NotNull Direction direction) {
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull Direction facing, @Nullable Direction direction) {
         return this.getExposedFluidStorage(BlockFace.toFace(facing, direction));
     }
 
@@ -601,8 +608,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @return a controlled/throttled fluid storage to expose to adjacent blocks.
      */
     @ApiStatus.Internal
-    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@NotNull BlockFace face) {
-        return this.getIOConfig().get(face).getExposedFluidStorage(this.fluidStorage);
+    private @Nullable ExposedStorage<Fluid, FluidVariant> getExposedFluidStorage(@Nullable BlockFace face) {
+        return this.getIOConfig().get(face).getExposedFluidStorage(this::createExposedFluidStorage);
+    }
+
+    protected ExposedStorage<Fluid, FluidVariant> createExposedFluidStorage(ResourceFlow flow) {
+        return ExposedStorage.createFluid(this.fluidStorage(), flow);
     }
 
     /**
@@ -617,6 +628,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         nbt.put(Constant.Nbt.ITEM_STORAGE, this.itemStorage.createTag());
         nbt.put(Constant.Nbt.FLUID_STORAGE, this.fluidStorage.createTag());
         nbt.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
+        nbt.put(Constant.Nbt.STATE, this.state.createTag());
         nbt.putBoolean(Constant.Nbt.DISABLE_DROPS, this.disableDrops);
     }
 
@@ -630,6 +642,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         super.load(nbt);
         if (nbt.contains(Constant.Nbt.CONFIGURATION, Tag.TAG_COMPOUND))
             this.configuration.readTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
+        if (nbt.contains(Constant.Nbt.STATE, Tag.TAG_COMPOUND))
+            this.state.readTag(nbt.getCompound(Constant.Nbt.CONFIGURATION));
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
             this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
@@ -698,56 +712,68 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Tries to charge this machine from the item in the given slot in this {@link #itemStorage()}.
+     * Tries to extract energy from an item in the specified slot into this machine.
+     *
+     * @param slot the index of the input slot.
      */
-    protected void chargeFromStack(SlotGroupType type) {
+    protected void chargeFromStack(int slot) {
         if (this.energyStorage().isFull()) return;
 
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(type)) {
-            EnergyStorage energyStorage = slot.find(EnergyStorage.ITEM);
-            if (energyStorage != null && energyStorage.supportsExtraction()) {
-                EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), null);
-            }
+        EnergyStorage energyStorage = this.itemStorage.getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsExtraction()) {
+            EnergyStorageUtil.move(energyStorage, this.energyStorage, this.getEnergyItemExtractionRate(), null);
         }
     }
 
     /**
-     * Tries to drain some of this machine's power into the item in the given slot in this {@link #itemStorage}.
+     * Tries to drain power from this machine's energy storage and insert it into the item in the given slot.
+     *
+     * @param slot the index of the input slot.
      */
-    protected void drainPowerToStack(SlotGroupType type) {
+    protected void drainPowerToStack(int slot) {
         if (this.energyStorage().isEmpty()) return;
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(type)) {
-            EnergyStorage energyStorage = slot.find(EnergyStorage.ITEM);
-            if (energyStorage != null && energyStorage.supportsInsertion()) {
-                EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), null);
-            }
+        EnergyStorage energyStorage = this.itemStorage.getSlot(slot).find(EnergyStorage.ITEM);
+        if (energyStorage != null && energyStorage.supportsInsertion()) {
+            EnergyStorageUtil.move(this.energyStorage, energyStorage, this.getEnergyItemInsertionRate(), null);
         }
     }
 
-    protected void takeFluidFromStack(SlotGroupType slotType, SlotGroupType tankType, Fluid fluid) {
-        SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage().getGroup(tankType);
-        if (group.isFull()) return;
-
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(slotType)) {
-            Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
-            if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.move(FluidVariant.of(fluid), storage, group, Integer.MAX_VALUE, null);
-            }
+    /**
+     * Tries to extract the specified fluid from the item in the input slot
+     * and move it into the tank of the fluid storage.
+     *
+     * @param inputSlot the index of the input slot from which the fluid will be extracted
+     * @param tankSlot the index of the tank where the fluid will be moved to
+     * @param fluid the fluid to be extracted and stored
+     */
+    protected void takeFluidFromStack(int inputSlot, int tankSlot, Fluid fluid) {
+        FluidResourceSlot tank = this.fluidStorage().getSlot(tankSlot);
+        if (tank.isFull()) return;
+        ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
+        Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
+        if (storage != null && storage.supportsExtraction()) {
+            GenericApiUtil.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
         }
     }
 
-    protected void insertFluidToStack(SlotGroupType slotType, SlotGroupType tankType, Fluid fluid) {
-        SlotGroup<Fluid, FluidStack, FluidResourceSlot> group = this.fluidStorage().getGroup(tankType);
-        if (group.isEmpty()) return;
+    /**
+     * Tries to insert the specified fluid into the item in the input slot
+     * from the tank of the fluid storage.
+     *
+     * @param inputSlot the index of the input slot where the fluid will be inserted
+     * @param tankSlot the index of the tank from which the fluid will be extracted
+     * @param fluid the fluid to be inserted into the item
+     */
+    protected void insertFluidToStack(int inputSlot, int tankSlot, Fluid fluid) {
+        FluidResourceSlot tank = this.fluidStorage().getSlot(tankSlot);
+        if (tank.isEmpty()) return;
 
-        for (ItemResourceSlot slot : this.itemStorage().getGroup(slotType)) {
-            Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
-            if (storage != null && storage.supportsInsertion()) {
-                GenericApiUtil.move(FluidVariant.of(fluid), group, storage, Integer.MAX_VALUE, null);
-            }
+        ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
+        Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
+        if (storage != null && storage.supportsInsertion()) {
+            GenericApiUtil.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
         }
     }
-
 
     /**
      * Returns whether the given face can be configured for input or output.
@@ -755,7 +781,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * @param face the block face to test.
      * @return whether the given face can be configured for input or output.
      */
-    public boolean isFaceLocked(@NotNull BlockFace face) { // todo: locked faces
+    public boolean isFaceLocked(@NotNull BlockFace face) {
         return false;
     }
 
@@ -766,7 +792,8 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
 
         buf.writeBlockPos(this.getBlockPos());
-        this.getConfiguration().writePacket(buf);
+        this.configuration.writePacket(buf);
+        this.state.writePacket(buf);
         this.energyStorage.writePacket(buf);
         this.itemStorage.writePacket(buf);
         this.fluidStorage.writePacket(buf);
@@ -783,7 +810,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public Object getRenderAttachmentData() {
+    public @NotNull MachineRenderData getRenderAttachmentData() {
         return this.getIOConfig();
     }
 
@@ -797,6 +824,29 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Nullable
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeBlockPos(this.getBlockPos());
+        this.writeRenderData(buf);
+        return ServerPlayNetworking.createS2CPacket(Constant.id("be_render_data"), buf);
+    }
+
+    @MustBeInvokedByOverriders
+    public void readRenderData(FriendlyByteBuf buf) {
+        this.configuration.getIOConfiguration().readPacket(buf);
+    }
+
+    @MustBeInvokedByOverriders
+    public void writeRenderData(FriendlyByteBuf buf) {
+        this.configuration.getIOConfiguration().writePacket(buf);
+    }
+
+    public void awardUsedRecipes(@NotNull ServerPlayer player, @NotNull Set<ResourceLocation> recipes) {
+        for (ResourceLocation id : recipes) {
+            Optional<? extends Recipe<?>> optional = player.serverLevel().getRecipeManager().byKey(id);
+            if (optional.isPresent()) {
+                player.awardRecipes(Collections.singleton(optional.get()));
+                player.triggerRecipeCrafted(optional.get(), Collections.emptyList());
+            }
+        }
     }
 }

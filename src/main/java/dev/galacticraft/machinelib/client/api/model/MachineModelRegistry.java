@@ -24,13 +24,12 @@ package dev.galacticraft.machinelib.client.api.model;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
-import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
+import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +82,7 @@ public interface MachineModelRegistry {
                     private final TextureAtlasSprite machine = atlas.apply(MachineBakedModel.MACHINE);
 
                     @Override
-                    public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face) {
+                    public @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData renderData, @NotNull BlockFace face) {
                         if (face.side()) return this.machineSide;
                         return this.machine;
                     }
@@ -97,12 +96,10 @@ public interface MachineModelRegistry {
     @FunctionalInterface
     interface SpriteProvider {
         /**
-         * @param machine The machine block entity instance. Will be null in item contexts.
-         * @param stack   The machine stack being rendered. Will be null in block contexts. DO NOT MODIFY THE STACK
          * @param face    The face that is being textured.
          * @return The appropriate sprite to render for the given face.
          */
         @Contract(pure = true)
-        @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineBlockEntity machine, @Nullable ItemStack stack, @NotNull BlockFace face);
+        @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData data, @NotNull BlockFace face);
     }
 }

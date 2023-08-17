@@ -22,177 +22,181 @@
 
 package dev.galacticraft.machinelib.impl.storage;
 
-import com.google.common.collect.Iterators;
-import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroup;
-import dev.galacticraft.machinelib.api.storage.slot.SlotGroupType;
-import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
+import dev.galacticraft.machinelib.impl.Utils;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
+public class MachineItemStorageImpl extends ResourceStorageImpl<Item, ItemResourceSlot> implements MachineItemStorage {
+    public static final MachineItemStorageImpl EMPTY = new MachineItemStorageImpl(new ItemResourceSlot[0]);
 
-public class MachineItemStorageImpl implements MachineItemStorage {
-    private final SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups;
-    private final SlotGroupType[] types;
-    private final Map<SlotGroupType, SlotGroup<Item, ItemStack, ItemResourceSlot>> typeToGroup;
-    private final ItemResourceSlot[] allSlots;
-    private long modifications = 0;
-    private Runnable listener;
-    private TransactionContext cachedTransaction;
+    public MachineItemStorageImpl(@NotNull ItemResourceSlot @NotNull [] slots) {
+        super(slots);
+    }
 
-    public MachineItemStorageImpl(SlotGroupType[] types, SlotGroup<Item, ItemStack, ItemResourceSlot>[] groups) {
-        this.groups = groups;
-        this.types = types;
-        this.typeToGroup = new IdentityHashMap<>(this.groups.length);
-        int slots = 0;
-        for (int i = 0; i < this.groups.length; i++) {
-            SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.groups[i];
-            group._setParent(this);
-            this.typeToGroup.put(this.types[i], group);
-            slots += group.getSlots().length;
+    @Override
+    public int getContainerSize() {
+        return this.size();
+    }
+
+    @Override
+    public @NotNull ItemStack getItem(int i) {
+        return ItemStackUtil.copy(this.getSlot(i));
+    }
+
+    @Override
+    public @NotNull ItemStack removeItem(int slot, int amount) {
+        Utils.breakpointMe("attempted to remove item from vanilla compat container!");
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public @NotNull ItemStack removeItemNoUpdate(int i) {
+        Utils.breakpointMe("attempted to remove item from vanilla compat container!");
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItem(int i, ItemStack itemStack) {
+        Utils.breakpointMe("attempted to modify item from vanilla compat container!");
+    }
+
+    @Override
+    public void setChanged() {
+        Utils.breakpointMe("attempted to mark vanilla compat container as modified!");
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        Utils.breakpointMe("testing player validity of vanilla compat container");
+        return false;
+    }
+
+    @Override
+    public boolean canPlaceItem(int i, ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public boolean canTakeItem(Container container, int i, ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public void clearContent() {
+        Utils.breakpointMe("attempted to clear items in a vanilla compat container!");
+    }
+
+    @Override
+    public boolean consumeOne(@NotNull Item resource) {
+        for (ItemResourceSlot slot : this.slots) {
+            if (slot.consumeOne(resource)) return true;
         }
-        this.allSlots = new ItemResourceSlot[slots];
-        slots = 0;
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            for (ItemResourceSlot slot : group.getSlots()) {
-                this.allSlots[slots++] = slot;
-            }
+        return false;
+    }
+
+    @Override
+    public boolean consumeOne(@NotNull Item resource, @Nullable CompoundTag tag) {
+        for (ItemResourceSlot slot : this.slots) {
+            if (slot.consumeOne(resource, tag)) return true;
         }
+        return false;
     }
 
     @Override
-    public long getModifications() {
-        return this.modifications;
-    }
-
-    @Override
-    public int groups() {
-        return this.groups.length;
-    }
-
-    @Override
-    public @NotNull SlotGroup<Item, ItemStack, ItemResourceSlot> getGroup(@NotNull SlotGroupType type) {
-        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.typeToGroup.get(type);
-        assert group != null;
-        return group;
-    }
-
-    @Override
-    public @NotNull ItemResourceSlot getSlot(@NotNull SlotGroupType type) {
-        SlotGroup<Item, ItemStack, ItemResourceSlot> group = this.getGroup(type);
-        assert group.size() == 1;
-        return group.getSlot(0);
-    }
-
-    @Override
-    public @NotNull SlotGroupType @NotNull [] getTypes() {
-        return this.types;
-    }
-
-    @Override
-    public int slots() {
-        return this.allSlots.length;
-    }
-
-    @Override
-    public ItemResourceSlot[] getSlots() {
-        return this.allSlots;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<SlotGroup<Item, ItemStack, ItemResourceSlot>> iterator() {
-        return Iterators.forArray(this.groups);
-    }
-
-    @Override
-    public void revertModification() {
-        this.modifications--;
-    }
-
-    @Override
-    public void markModified(@Nullable TransactionContext context) {
-        if (context != null) {
-            this.modifications++;
-            context.addCloseCallback((context1, result) -> {
-                if (result.wasAborted()) {
-                    this.modifications--;
-                } else {
-                    if (this.listener != null) {
-                        TransactionContext outer = context1.nestingDepth() != 0 ? context1.getOpenTransaction(0) : context1;
-                        if (this.cachedTransaction != outer) {
-                            this.cachedTransaction = outer;
-                            context.addOuterCloseCallback((result1) -> {
-                                if (result1.wasCommitted()) this.listener.run();
-                            });
-                        }
-                    }
-                }
-            });
-        } else {
-            this.markModified();
+    public long consume(@NotNull Item resource, long amount) {
+        long consumed = 0;
+        for (ItemResourceSlot slot : this.slots) {
+            consumed += slot.consume(resource, amount - consumed);
+            if (consumed == amount) break;
         }
+        return consumed;
     }
 
     @Override
-    public void markModified() {
-        this.modifications++;
-        if (this.listener != null) this.listener.run();
-    }
-
-    @Override
-    public void setListener(Runnable listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public @NotNull ListTag createTag() {
-        ListTag tag = new ListTag();
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            tag.add(group.createTag());
+    public long consume(@NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        long consumed = 0;
+        for (ItemResourceSlot slot : this.slots) {
+            consumed += slot.consume(resource, tag, amount - consumed);
+            if (consumed == amount) break;
         }
-        return tag;
+        return consumed;
     }
 
     @Override
-    public void readTag(@NotNull ListTag tag) {
-        for (int i = 0; i < tag.size(); i++) {
-            this.groups[i].readTag(tag.getList(i));
+    public @Nullable Item consumeOne(int slot) {
+        return this.slots[slot].consumeOne();
+    }
+
+    @Override
+    public boolean consumeOne(int slot, @NotNull Item resource) {
+        return this.slots[slot].consumeOne(resource);
+    }
+
+    @Override
+    public boolean consumeOne(int slot, @NotNull Item resource, @Nullable CompoundTag tag) {
+        return this.slots[slot].consumeOne(resource, tag);
+    }
+
+    @Override
+    public long consume(int slot, long amount) {
+        return this.slots[slot].consume(amount);
+    }
+
+    @Override
+    public long consume(int slot, @NotNull Item resource, long amount) {
+        return this.slots[slot].consume(resource, amount);
+    }
+
+    @Override
+    public long consume(int slot, @NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        return this.slots[slot].consume(resource, tag, amount);
+    }
+
+    @Override
+    public boolean consumeOne(int start, int len, @NotNull Item resource) {
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            if (slot.consumeOne(resource)) return true;
         }
+        return false;
     }
 
     @Override
-    public void writePacket(@NotNull FriendlyByteBuf buf) {
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            group.writePacket(buf);
+    public boolean consumeOne(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag) {
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            if (slot.consumeOne(resource, tag)) return true;
         }
+        return false;
     }
 
     @Override
-    public void readPacket(@NotNull FriendlyByteBuf buf) {
-        for (SlotGroup<Item, ItemStack, ItemResourceSlot> group : this.groups) {
-            group.readPacket(buf);
+    public long consume(int start, int len, @NotNull Item resource, long amount) {
+        long consumed = 0;
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            consumed += slot.consume(resource, amount - consumed);
+            if (consumed == amount) break;
         }
+        return consumed;
     }
 
     @Override
-    public @NotNull Container getCraftingView(@NotNull SlotGroupType type) {
-        return ((Container) this.getGroup(type));
-    }
-
-    @Override
-    public @Nullable MenuSyncHandler createSyncHandler() {
-        return new ResourceStorageSyncHandler<>(this);
+    public long consume(int start, int len, @NotNull Item resource, @Nullable CompoundTag tag, long amount) {
+        long consumed = 0;
+        for (int i = start; i < start + len; i++) {
+            ItemResourceSlot slot = this.slots[i];
+            consumed += slot.consume(resource, tag, amount - consumed);
+            if (consumed == amount) break;
+        }
+        return consumed;
     }
 }

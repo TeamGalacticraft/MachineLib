@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.impl.menu.sync;
 
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
-import dev.galacticraft.machinelib.api.machine.configuration.face.BlockFace;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.FriendlyByteBuf;
@@ -68,7 +67,7 @@ public class MachineIOConfigSyncHandler implements MenuSyncHandler {
         byte total = buf.readByte();
         for (byte i = 0; i < total; i++) {
             byte b = buf.readByte();
-            this.syncHandlers[b].sync(buf);
+            this.syncHandlers[b].read(buf);
         }
     }
 }

@@ -22,42 +22,44 @@
 
 package dev.galacticraft.machinelib.impl.storage.exposed;
 
-import dev.galacticraft.machinelib.api.transfer.exposed.ExposedEnergyStorage;
+import dev.galacticraft.machinelib.api.compat.transfer.ExposedEnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import org.jetbrains.annotations.NotNull;
 import team.reborn.energy.api.EnergyStorage;
 
 /**
- * An {@link EnergyStorage} that can be configured to restrict input and output.
+ * An {@link EnergyStorage energy storage} implementation that can restrict input and output.
  *
- * @param parent     The parent {@link EnergyStorage}
- * @param insertion  Whether this {@link EnergyStorage} can accept energy
- * @param extraction Whether this {@link EnergyStorage} can extract energy
+ * @param parent The parent energy storage.
+ * @param maxInsertion The maximum amount of energy that can be inserted in one transaction.
+ * @param maxExtraction The maximum amount of energy that can be extracted in one transaction.
+ *
+ * @see EnergyStorage
  */
-public record ExposedEnergyStorageImpl(@NotNull EnergyStorage parent, boolean insertion,
-                                       boolean extraction) implements ExposedEnergyStorage {
+public record ExposedEnergyStorageImpl(@NotNull EnergyStorage parent, long maxInsertion,
+                                       long maxExtraction) implements ExposedEnergyStorage {
     @Override
     public boolean supportsInsertion() {
-        return this.insertion;
+        return this.maxExtraction > 0;
     }
 
     @Override
     public long insert(long maxAmount, TransactionContext transaction) {
-        if (this.insertion) {
-            return this.parent.insert(maxAmount, transaction);
+        if (this.maxInsertion > 0) {
+            return this.parent.insert(Math.min(this.maxInsertion, maxAmount), transaction);
         }
         return 0;
     }
 
     @Override
     public boolean supportsExtraction() {
-        return this.extraction;
+        return this.maxExtraction > 0;
     }
 
     @Override
     public long extract(long maxAmount, TransactionContext transaction) {
-        if (this.extraction) {
-            return this.parent.extract(maxAmount, transaction);
+        if (this.maxExtraction > 0) {
+            return this.parent.extract(Math.min(this.maxExtraction, maxAmount), transaction);
         }
         return 0;
     }

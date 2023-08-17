@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
@@ -60,7 +61,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -78,26 +79,69 @@ import java.util.Objects;
  * @see MachineBlockEntity
  */
 public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    /**
+     * Represents a boolean property for specifying the active state of the machine.
+     * @see MachineBlockEntity#isActive() for the definition of 'active'
+     */
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
+
+    /**
+     * Tooltip prompt text. Shown instead of the long-form description when shift is not pressed.
+     *
+     * @see #shiftDescription(ItemStack, BlockGetter, TooltipFlag)
+     */
     private static final Component PRESS_SHIFT = Component.translatable(Constant.TranslationKey.PRESS_SHIFT).setStyle(Constant.Text.DARK_GRAY_STYLE);
 
+    /**
+     * Factory that constructs the relevant machine block entity for this block.
+     */
     private final MachineBlockEntityFactory<Machine> factory;
+
+    /**
+     * The line-wrapped long description of this machine.
+     *
+     * @see #shiftDescription(ItemStack, BlockGetter, TooltipFlag)
+     */
     private List<Component> description = null;
 
     /**
      * Creates a new machine block.
      *
      * @param settings The settings for the block.
-     * @param factory
+     * @param factory the machine block entity factory
      */
     public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
-        super(settings.pushReaction(PushReaction.BLOCK));
+        super(settings);
         this.factory = factory;
+        this.registerDefaultState(this.getStateDefinition().any().setValue(ACTIVE, false));
+    }
+
+    /**
+     * Updates the active state of a machine block in the specified level at a given position.
+     *
+     * @param level The level in which the machine block exists.
+     * @param pos The position of the machine block.
+     * @param state The current state of the machine block.
+     * @param b The new value for the active state.
+     */
+    public static void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
+        level.setBlock(pos, state.setValue(ACTIVE, b), 2);
+    }
+
+    /**
+     * Determines whether a machine block is active or not based on its state.
+     *
+     * @param state The state of the machine block.
+     * @return {@code true} if the machine block is active, {@code false} otherwise.
+     */
+    public static boolean isActive(@NotNull BlockState state) {
+        return state.getValue(ACTIVE);
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(BlockStateProperties.HORIZONTAL_FACING);
+        builder.add(BlockStateProperties.HORIZONTAL_FACING, ACTIVE);
     }
 
     @Override
@@ -111,10 +155,20 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (!world.isClientSide && placer instanceof ServerPlayer player) {
-            if (world.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+        super.neighborChanged(state, level, pos, block, fromPos, notify);
+        if (!level.isClientSide) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                machine.getState().setPowered(level.hasNeighborSignal(pos));
+            }
+        }
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.setPlacedBy(level, pos, state, placer, itemStack);
+        if (!level.isClientSide && placer instanceof ServerPlayer player) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
                 SecuritySettings security = machine.getConfiguration().getSecurity();
                 if (!security.hasOwner()) {
                     security.setOwner(player.getUUID(), player.getGameProfile().getName());
@@ -124,17 +178,30 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState blockState2, boolean bl) {
+        super.onPlace(state, level, pos, blockState2, bl);
+        if (!level.isClientSide) {
+            if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
+                machine.getState().setPowered(level.hasNeighborSignal(pos));
+            }
+        }
+    }
+
+    @Override
     public @NotNull RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * @see #shiftDescription
+     */
     @Override
-    public final void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
+    public void appendHoverText(ItemStack stack, BlockGetter view, List<Component> tooltip, @NotNull TooltipFlag context) {
         Component text = this.shiftDescription(stack, view, context);
         if (text != null) {
             if (Screen.hasShiftDown()) {
                 if (this.description == null) {
-                    this.description = DisplayUtil.wrapText(text, 64);
+                    this.description = DisplayUtil.wrapText(text, 128);
                 }
                 tooltip.addAll(this.description);
             } else {
@@ -199,7 +266,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 List<ItemEntity> entities = new ArrayList<>();
                 for (ItemResourceSlot slot : inv.getSlots()) {
                     if (!slot.isEmpty()) {
-                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), slot.copyStack()));
+                        entities.add(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), ItemStackUtil.create(slot)));
                         slot.set(null, null, 0);
                     }
                 }
@@ -231,24 +298,29 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         return stack;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public <B extends BlockEntity> BlockEntityTicker<B> getTicker(Level world, BlockState state, BlockEntityType<B> type) {
-        return MachineBlockEntityTicker.getInstance();
+        return !world.isClientSide ? MachineBlockEntityTicker.getInstance() : null;
     }
 
     /**
      * Returns this machine's description for the tooltip when left shift is pressed.
      *
-     * @param stack    The item stack (the contained item is this block).
-     * @param view     The world.
-     * @param context Whether advanced tooltips are enabled.
+     * @param stack The item stack (the contained item is this block).
+     * @param view The world.
+     * @param context Extra tooltip information.
      * @return This machine's description.
      */
     public @Nullable Component shiftDescription(ItemStack stack, BlockGetter view, TooltipFlag context) {
         return Component.translatable(this.getDescriptionId() + ".description");
     }
 
+    /**
+     * Factory for creating {@link MachineBlockEntity}s.
+     *
+     * @param <Machine> the type of machine this factory creates
+     */
     @FunctionalInterface
     public interface MachineBlockEntityFactory<Machine extends MachineBlockEntity> {
         @Nullable Machine create(@NotNull BlockPos pos, @NotNull BlockState state);
