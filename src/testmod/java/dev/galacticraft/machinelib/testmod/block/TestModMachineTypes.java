@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.testmod.block;
 
 import com.google.common.collect.ImmutableList;
 import dev.galacticraft.machinelib.api.filter.ResourceFilters;
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineStatuses;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
@@ -48,7 +49,7 @@ public class TestModMachineTypes {
             TestModBlocks.GENERATOR,
             TestModBlockEntityTypes.GENERATOR,
             TestModMenuTypes.GENERATOR,
-            ImmutableList.of(MachineStatuses.ACTIVE, MachineStatuses.IDLE, MachineStatuses.OUTPUT_FULL),
+            ImmutableList.of(MachineStatuses.ACTIVE, MachineStatuses.OFF, MachineStatuses.IDLE, MachineStatuses.OUTPUT_FULL),
             () -> MachineEnergyStorage.create(30000, 300, 300, false, true),
             MachineItemStorage.of(
                     ItemResourceSlot.builder(InputType.TRANSFER)
@@ -69,7 +70,7 @@ public class TestModMachineTypes {
             TestModBlocks.MIXER,
             TestModBlockEntityTypes.MIXER,
             TestModMenuTypes.MIXER,
-            ImmutableList.of(MachineStatuses.IDLE), //todo
+            ImmutableList.of(MachineStatuses.IDLE, MachineStatuses.OFF), //todo
             () -> MachineEnergyStorage.create(30000, 300, 300, true, false),
             MachineItemStorage.of(
                     ItemResourceSlot.builder(InputType.TRANSFER)
@@ -102,7 +103,7 @@ public class TestModMachineTypes {
             TestModBlocks.MELTER,
             TestModBlockEntityTypes.MELTER,
             TestModMenuTypes.MELTER,
-            ImmutableList.of(MachineStatuses.ACTIVE, MachineStatuses.NOT_ENOUGH_ENERGY, MachineStatuses.OUTPUT_FULL, MachineStatuses.IDLE),
+            ImmutableList.of(MachineStatuses.ACTIVE, MachineStatuses.OFF, MachineStatuses.NOT_ENOUGH_ENERGY, MachineStatuses.OUTPUT_FULL, MachineStatuses.IDLE),
             () -> MachineEnergyStorage.create(30000, 300, 300, true, false),
             MachineItemStorage.of(
                     ItemResourceSlot.builder(InputType.TRANSFER)
