@@ -93,7 +93,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{github.ref_name}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', 'build.gradle.kts', 'gradle.properties') }}
 
       - name: Build
-        run: ./gradlew build -x checkLicenses --no-daemon
+        run: ./gradlew build -x checkLicenses -x test --no-daemon
 
       - name: Cache build output
         uses: actions/cache/save@v3
@@ -216,7 +216,7 @@ jobs:
 #        run: ./gradlew runGametest --no-daemon
 
   publish:
-    needs: [test, license-headers]
+    needs: [test, license-headers, analysis]
     runs-on: ubuntu-22.04
 
     steps:

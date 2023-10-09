@@ -141,7 +141,7 @@ jobs:
           debug: true
 
       - name: Build
-        run: ./gradlew build -x checkLicenses --no-daemon
+        run: ./gradlew build -x checkLicenses -x test --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

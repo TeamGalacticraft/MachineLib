@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -209,6 +210,10 @@ tasks.withType<Jar> {
 tasks.test {
     useJUnitPlatform()
     workingDir("run")
+
+    doLast {
+        Files.createDirectories(workingDir.toPath())
+    }
 }
 
 tasks.javadoc {
