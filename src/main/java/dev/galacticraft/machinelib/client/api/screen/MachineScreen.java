@@ -829,7 +829,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         graphics.pose().popPose();
 
         for (Tank tank : this.menu.tanks) {
-            tank.drawTooltip(graphics, this.minecraft, this.leftPos, this.topPos, mouseX, mouseY);
+            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                this.setTooltipForNextRenderPass(Lists.transform(tank.getTooltip(), Component::getVisualOrderText));
+                break;
+            }
         }
     }
 
@@ -868,7 +871,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                         InputType type = tank.getInputType();
                         if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
                             RenderSystem.disableDepthTest();
-                            graphics.fill(tank.getX(), tank.getY(), tank.getX() + tank.getWidth(), tank.getY() + tank.getHeight(), ((type.colour() << 8) >> 8) | (0x80 << 24));
+                            graphics.fill(this.leftPos + tank.getX(), this.topPos + tank.getY(), this.leftPos + tank.getX() + tank.getWidth(), this.topPos + tank.getY() + tank.getHeight(), ((type.colour() << 8) >> 8) | (0x80 << 24));
                             RenderSystem.enableDepthTest();
                         }
                     }

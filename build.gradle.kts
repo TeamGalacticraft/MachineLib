@@ -23,14 +23,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-plugins {
-    `maven-publish`
-    id("fabric-loom") version ("1.3-SNAPSHOT")
-    id("io.github.juuxel.loom-quiltflower") version ("1.10.0")
-    id("org.cadixdev.licenser") version ("0.6.1")
-    id("org.ajoberstar.grgit") version("5.2.0")
-}
-
 val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
 val commitHash = (System.getenv("GITHUB_SHA") ?: grgit.head().id)!!
 val prerelease = (System.getenv("PRE_RELEASE") ?: "false") == "true"
@@ -46,9 +38,12 @@ val badpackets = project.property("badpackets.version").toString()
 val energy = project.property("energy.version").toString()
 val fabric = project.property("fabric.version").toString()
 
-license {
-    header(rootProject.file("LICENSE_HEADER.txt"))
-    include("**/dev/galacticraft/**/*.java")
+plugins {
+    java
+    `maven-publish`
+    id("fabric-loom") version("1.4-SNAPSHOT")
+    id("org.cadixdev.licenser") version("0.6.1")
+    id("org.ajoberstar.grgit") version("5.2.0")
 }
 
 group = "dev.galacticraft"
@@ -78,12 +73,12 @@ java {
 
     withSourcesJar()
     withJavadocJar()
+}
 
-    sourceSets {
-        register("testmod") {
-            runtimeClasspath += sourceSets.main.get().runtimeClasspath
-            compileClasspath += sourceSets.main.get().compileClasspath
-        }
+sourceSets {
+    register("testmod") {
+        runtimeClasspath += sourceSets.main.get().runtimeClasspath
+        compileClasspath += sourceSets.main.get().compileClasspath
     }
 }
 
@@ -111,13 +106,13 @@ loom {
         getByName("client") {
             name("Minecraft Client")
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
+            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
         }
         register("gametest") {
             name("GameTest Server")
             server()
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
+            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
         }
     }
 
@@ -126,11 +121,6 @@ loom {
 
 repositories {
     maven("https://maven.bai.lol") {
-        content {
-            includeGroup("lol.bai")
-        }
-    }
-    maven("https://maven2.bai.lol") {
         content {
             includeGroup("lol.bai")
         }
@@ -226,6 +216,11 @@ tasks.javadoc {
         title = "MachineLib ${project.version} API"
     }
     exclude("**/impl/**")
+}
+
+license {
+    header(rootProject.file("LICENSE_HEADER.txt"))
+    include("**/dev/galacticraft/**/*.java")
 }
 
 publishing {
