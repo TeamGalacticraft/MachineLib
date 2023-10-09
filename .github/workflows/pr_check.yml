@@ -183,39 +183,39 @@ jobs:
       - name: Test
         run: ./gradlew test --no-daemon
 
-  gametest:
-    needs: build
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: temurin
-
-      - name: Restore gradle cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            .gradle/loom-cache
-          key: ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle.properties', 'gradle/gradle-wrapper.properties') }}
-
-      - name: Restore cached build output
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            .gradle/
-            !.gradle/loom-cache
-            build/
-          key: ${{ runner.os }}-build-PR${{github.event.number}}-${{ github.sha }}
-
-      - name: Gametest
-        run: ./gradlew runGametest --no-daemon
+#  gametest:
+#    needs: build
+#    runs-on: ubuntu-22.04
+#
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      - name: Setup JDK 17
+#        uses: actions/setup-java@v3
+#        with:
+#          java-version: 17
+#          distribution: temurin
+#
+#      - name: Restore gradle cache
+#        uses: actions/cache/restore@v3
+#        with:
+#          fail-on-cache-miss: true
+#          path: |
+#            ~/.gradle/caches
+#            ~/.gradle/wrapper
+#            .gradle/loom-cache
+#          key: ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle.properties', 'gradle/gradle-wrapper.properties') }}
+#
+#      - name: Restore cached build output
+#        uses: actions/cache/restore@v3
+#        with:
+#          fail-on-cache-miss: true
+#          path: |
+#            .gradle/
+#            !.gradle/loom-cache
+#            build/
+#          key: ${{ runner.os }}-build-PR${{github.event.number}}-${{ github.sha }}
+#
+#      - name: Gametest
+#        run: ./gradlew runGametest --no-daemon

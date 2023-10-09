@@ -41,12 +41,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public sealed class FluidStorageInsertionTests implements JUnitTest {
     private static final long CAPACITY = FluidConstants.BUCKET * 16;
-    private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
     protected MachineFluidStorage group;
 
     @BeforeEach
     public void setup() {
-        this.group = MachineFluidStorage.create(FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG))));
+        this.group = MachineFluidStorage.create(FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.any()));
     }
 
     @AfterEach
@@ -73,17 +72,6 @@ public sealed class FluidStorageInsertionTests implements JUnitTest {
             assertEquals(0, this.group.insert(Fluids.LAVA, FluidConstants.BUCKET));
 
             assertEquals(this.group.getAmount(0), FluidConstants.BUCKET);
-        }
-
-        @Test
-        public void filtered() {
-            assertTrue(this.group.canInsert(Fluids.WATER));
-
-            assertFalse(this.group.canInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.group.tryInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.group.insert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-
-            assertTrue(group.isEmpty());
         }
 
         @Test

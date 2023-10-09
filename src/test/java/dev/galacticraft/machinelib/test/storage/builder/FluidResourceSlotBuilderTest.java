@@ -88,6 +88,6 @@ public class FluidResourceSlotBuilderTest implements JUnitTest {
         FluidResourceSlot slot = builder.filter(ResourceFilters.none()).build();
 
         assertSame(ResourceFilters.none(), slot.getFilter());
-        assertEquals(0, slot.insert(Fluids.WATER, 1)); // filters only affect players
+        assertEquals(1, slot.insert(Fluids.WATER, 1)); // filters only affect players
     }
 }

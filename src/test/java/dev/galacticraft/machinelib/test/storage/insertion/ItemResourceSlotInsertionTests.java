@@ -39,12 +39,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
     private static final int CAPACITY = 64;
-    private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
     protected ItemResourceSlot slot;
 
     @BeforeEach
     public void setup() {
-        this.slot = ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.any());
     }
 
     @AfterEach
@@ -71,17 +70,6 @@ public sealed class ItemResourceSlotInsertionTests implements JUnitTest {
             assertEquals(0, this.slot.insert(Items.GOLD_INGOT, 16));
 
             assertEquals(this.slot.getAmount(), 16);
-        }
-
-        @Test
-        public void filtered() {
-            assertTrue(this.slot.canInsert(Items.GOLD_INGOT));
-
-            assertFalse(this.slot.canInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-            assertEquals(0, this.slot.tryInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-            assertEquals(0, this.slot.insert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-
-            assertTrue(slot.isEmpty());
         }
 
         @Test

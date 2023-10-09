@@ -41,12 +41,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public sealed class FluidResourceSlotTransactionTests implements JUnitTest {
     private static final long CAPACITY = FluidConstants.BUCKET * 16;
-    private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
     protected FluidResourceSlot slot;
 
     @BeforeEach
     public void setup() {
-        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.any());
     }
 
     @AfterEach

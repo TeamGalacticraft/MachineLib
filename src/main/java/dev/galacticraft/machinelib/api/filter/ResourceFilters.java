@@ -241,8 +241,7 @@ public final class ResourceFilters {
     /**
      * Checks if the specified item can have the given fluid (with NBT) extracted from it.
      *
-     * @param fluid The desired fluid to extract.
-     * @param nbt The desired fluid NBT tag.
+     * @param tag The desired fluids to extract.
      * @return A resource filter that checks if the item can have the given fluid (with NBT) extracted from it.
      */
     @Contract(pure = true)
