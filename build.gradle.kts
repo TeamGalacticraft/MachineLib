@@ -211,7 +211,7 @@ tasks.test {
     useJUnitPlatform()
     workingDir("run")
 
-    doLast {
+    doFirst {
         Files.createDirectories(workingDir.toPath())
     }
 }

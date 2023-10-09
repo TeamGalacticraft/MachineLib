@@ -96,7 +96,7 @@ jobs:
           key: ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle.properties', 'gradle/gradle-wrapper.properties') }}
 
       - name: Build
-        run: ./gradlew build -x checkLicenses --no-daemon
+        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
 
       - name: Cache build output
         uses: actions/cache/save@v3
@@ -141,7 +141,7 @@ jobs:
           debug: true
 
       - name: Build
-        run: ./gradlew build -x checkLicenses -x test --no-daemon
+        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

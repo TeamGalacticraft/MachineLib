@@ -93,7 +93,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{github.ref_name}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', 'build.gradle.kts', 'gradle.properties') }}
 
       - name: Build
-        run: ./gradlew build -x checkLicenses -x test --no-daemon
+        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
 
       - name: Cache build output
         uses: actions/cache/save@v3
@@ -136,7 +136,7 @@ jobs:
           languages: java
 
       - name: Build
-        run: ./gradlew build -x checkLicenses --no-daemon
+        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
@@ -250,7 +250,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ github.sha }}
 
       - name: Publish
-        run: ./gradlew publish --no-daemon
+        run: ./gradlew publish -x test --no-daemon
         env:
           PRE_RELEASE: false
           NEXUS_REPOSITORY_URL: ${{ secrets.NEXUS_RELEASE_URL }}
