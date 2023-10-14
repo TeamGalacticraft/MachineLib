@@ -252,7 +252,7 @@ jobs:
       - name: Publish
         run: ./gradlew publish -x test --no-daemon
         env:
-          PRE_RELEASE: false
+          BUILD_NUMBER: ${{ github.run_number }}
           NEXUS_REPOSITORY_URL: ${{ secrets.NEXUS_RELEASE_URL }}
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
