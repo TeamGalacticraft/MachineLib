@@ -29,7 +29,6 @@ import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -150,15 +149,11 @@ public final class TankImpl implements Tank {
         }
         List<Component> lines = new ArrayList<>(2);
         long amount = this.getAmount();
-        MutableComponent text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                Component.literal(DisplayUtil.truncateDecimal(amount / (FluidConstants.BUCKET / 1000.0), 0) + "mB")
-                : Component.literal(DisplayUtil.truncateDecimal(amount / (double) FluidConstants.BUCKET, 2) + "B");
 
-        MutableComponent translatableText;
-        translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
+        MutableComponent contents = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
 
-        lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())));
-        lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
+        lines.add(contents.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())));
+        lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(DisplayUtil.formatFluid(amount, Screen.hasShiftDown()).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
         return lines;
     }
 

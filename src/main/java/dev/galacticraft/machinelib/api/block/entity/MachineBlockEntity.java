@@ -644,9 +644,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
             this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
-            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST)));
+            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_COMPOUND)));
         if (nbt.contains(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST))
-            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST)));
+            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_COMPOUND)));
         this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
 
         if (level != null && level.isClientSide()) {

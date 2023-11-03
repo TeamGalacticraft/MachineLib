@@ -34,6 +34,7 @@ val modName = project.property("mod.name").toString()
 
 val minecraft = project.property("minecraft.version").toString()
 val loader = project.property("loader.version").toString()
+val parchment = project.property("parchment.version").toString()
 
 val badpackets = project.property("badpackets.version").toString()
 val energy = project.property("energy.version").toString()
@@ -126,11 +127,21 @@ repositories {
             includeGroup("lol.bai")
         }
     }
+    maven("https://maven.parchmentmc.org") {
+        content {
+            includeGroup("org.parchmentmc.data")
+        }
+    }
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
-    mappings(loom.officialMojangMappings())
+    mappings(loom.layered {
+        officialMojangMappings()
+        if (!parchment.isEmpty()) {
+            parchment("org.parchmentmc.data:parchment-$minecraft:$parchment@zip")
+        }
+    })
     modImplementation("net.fabricmc:fabric-loader:$loader")
     testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 
