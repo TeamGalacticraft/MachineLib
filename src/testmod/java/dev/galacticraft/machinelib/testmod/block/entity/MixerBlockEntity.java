@@ -43,7 +43,7 @@ public class MixerBlockEntity extends MachineBlockEntity {
     public static final int BATTERY_SLOT = 0;
     public static final int WATER_INPUT_SLOT = 1;
     public static final int LAVA_INPUT_SLOT = 2;
-        public static final int OUTPUT_SLOT = 3;
+    public static final int OUTPUT_SLOT = 3;
 
     public static final int WATER_TANK = 0;
     public static final int LAVA_TANK = 1;

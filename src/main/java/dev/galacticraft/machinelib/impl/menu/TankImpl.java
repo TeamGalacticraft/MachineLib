@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.menu;
 
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.api.util.StorageHelper;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -169,12 +169,12 @@ public final class TankImpl implements Tank {
                     storedResource = this.createVariant();
                 }
                 if (storedResource != null && !storedResource.isBlank()) {
-                    return GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, null) != 0;
+                    return StorageHelper.move(storedResource, storage, this.slot, Long.MAX_VALUE, null) != 0;
                 }
             } else if (storage.supportsInsertion() && this.inputType.playerExtraction()) {
                 FluidVariant storedResource = this.createVariant();
                 if (!storedResource.isBlank()) {
-                    return GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, null) != 0;
+                    return StorageHelper.move(storedResource, this.slot, storage, Long.MAX_VALUE, null) != 0;
                 }
             }
         }

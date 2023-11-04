@@ -32,7 +32,7 @@ import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.api.util.StorageHelper;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
 import io.netty.buffer.ByteBufAllocator;
@@ -181,12 +181,12 @@ public final class MachineLibC2SPackets {
                         storedResource = tank.createVariant();
                     }
                     if (storedResource != null) {
-                        return GenericApiUtil.move(storedResource, storage, slot, Long.MAX_VALUE, null) != 0;
+                        return StorageHelper.move(storedResource, storage, slot, Long.MAX_VALUE, null) != 0;
                     }
             } else if (storage.supportsInsertion() && type.playerExtraction()) {
                 FluidVariant storedResource = tank.createVariant();
                 if (!storedResource.isBlank()) {
-                    return GenericApiUtil.move(storedResource, slot, storage, Long.MAX_VALUE, null) != 0;
+                    return StorageHelper.move(storedResource, slot, storage, Long.MAX_VALUE, null) != 0;
                 }
 
             }

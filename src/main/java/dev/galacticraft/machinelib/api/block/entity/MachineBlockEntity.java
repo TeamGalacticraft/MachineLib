@@ -40,14 +40,14 @@ import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.util.BlockFace;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.api.util.StorageHelper;
 import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -95,7 +95,7 @@ import java.util.Set;
  * @see MachineMenu
  * @see MachineScreen
  */
-public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderAttachmentBlockEntity {
+public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderDataBlockEntity {
     /**
      * The {@link MachineType type} of this machine.
      * It controls the storage configurations and applicable statuses for this machine.
@@ -685,7 +685,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             ExposedStorage<Fluid, FluidVariant> storage = this.getExposedFluidStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
+                StorageHelper.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
             }
         }
     }
@@ -703,7 +703,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
+                StorageHelper.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
             }
         }
     }
@@ -749,7 +749,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
         Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
         if (storage != null && storage.supportsExtraction()) {
-            GenericApiUtil.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
+            StorageHelper.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
         }
     }
 
@@ -768,7 +768,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
         Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
         if (storage != null && storage.supportsInsertion()) {
-            GenericApiUtil.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
+            StorageHelper.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
         }
     }
 
@@ -807,7 +807,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public @NotNull MachineRenderData getRenderAttachmentData() {
+    public @NotNull MachineRenderData getRenderData() {
         return this.getIOConfig();
     }
 
