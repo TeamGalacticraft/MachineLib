@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -93,7 +93,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{github.ref_name}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', 'build.gradle.kts', 'gradle.properties') }}
 
       - name: Build
-        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
+        run: ./gradlew assemble testClasses -x checkLicenses --no-daemon
 
       - name: Cache build output
         uses: actions/cache/save@v3
@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -136,7 +136,7 @@ jobs:
           languages: java
 
       - name: Build
-        run: ./gradlew build testClasses -x checkLicenses test --no-daemon
+        run: ./gradlew assemble testClasses -x checkLicenses --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
@@ -147,7 +147,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -184,7 +184,7 @@ jobs:
 #
 #    steps:
 #      - name: Checkout repository
-#        uses: actions/checkout@v3
+#        uses: actions/checkout@v4
 #
 #      - name: Setup JDK 17
 #        uses: actions/setup-java@v3
@@ -221,7 +221,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3

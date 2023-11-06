@@ -29,7 +29,6 @@ import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.impl.Constant;
-import io.netty.buffer.ByteBuf;
 import lol.bai.badpackets.api.S2CPacketReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -99,14 +98,13 @@ public final class MachineLibS2CPackets {
 
 
         //todo: badpackets?
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("be_render_data"), (client, handler, buf, responseSender) -> {
-            BlockPos pos = buf.readBlockPos();
-
-            ByteBuf copy = buf.copy();
+        ClientPlayNetworking.registerGlobalReceiver(Constant.id("machine_sync"), (client, handler, buffer, responseSender) -> {
+            FriendlyByteBuf buf = new FriendlyByteBuf(buffer.copy());
             client.execute(() -> {
+                BlockPos pos = buf.readBlockPos();
                 if (client.level != null && client.level.isLoaded(pos)) {
                     if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                        machine.readRenderData(new FriendlyByteBuf(copy));
+                        machine.readClientSyncData(new FriendlyByteBuf(buf));
                         client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 8);
                     }
                 }

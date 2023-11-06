@@ -45,7 +45,7 @@ plugins {
     `maven-publish`
     id("fabric-loom") version("1.4-SNAPSHOT")
     id("org.cadixdev.licenser") version("0.6.1")
-    id("org.ajoberstar.grgit") version("5.2.0")
+    id("org.ajoberstar.grgit") version("5.2.1")
 }
 
 group = "dev.galacticraft"
@@ -222,9 +222,7 @@ tasks.test {
     useJUnitPlatform()
     workingDir("run")
 
-    doFirst {
-        Files.createDirectories(workingDir.toPath())
-    }
+    Files.createDirectories(workingDir.toPath())
 }
 
 tasks.javadoc {

@@ -169,7 +169,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
         super.setPlacedBy(level, pos, state, placer, itemStack);
         if (!level.isClientSide && placer instanceof ServerPlayer player) {
             if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                SecuritySettings security = machine.getConfiguration().getSecurity();
+                SecuritySettings security = machine.getSecurity();
                 if (!security.hasOwner()) {
                     security.setOwner(player.getUUID(), player.getGameProfile().getName());
                 }

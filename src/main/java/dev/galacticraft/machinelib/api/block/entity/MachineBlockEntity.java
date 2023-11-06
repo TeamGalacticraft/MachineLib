@@ -823,18 +823,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(this.getBlockPos());
-        this.writeRenderData(buf);
-        return ServerPlayNetworking.createS2CPacket(Constant.id("be_render_data"), buf);
+        this.writeClientSyncData(buf);
+        return ServerPlayNetworking.createS2CPacket(Constant.id("machine_sync"), buf);
     }
 
     @MustBeInvokedByOverriders
-    public void readRenderData(FriendlyByteBuf buf) {
-        this.configuration.getIOConfiguration().readPacket(buf);
+    public void readClientSyncData(FriendlyByteBuf buf) {
+        this.configuration.readPacket(buf);
     }
 
     @MustBeInvokedByOverriders
-    public void writeRenderData(FriendlyByteBuf buf) {
-        this.configuration.getIOConfiguration().writePacket(buf);
+    public void writeClientSyncData(FriendlyByteBuf buf) {
+        this.configuration.writePacket(buf);
     }
 
     public void awardUsedRecipes(@NotNull ServerPlayer player, @NotNull Set<ResourceLocation> recipes) {
