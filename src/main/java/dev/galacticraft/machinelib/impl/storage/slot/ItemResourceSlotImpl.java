@@ -253,16 +253,6 @@ public class ItemResourceSlotImpl extends ResourceSlotImpl<Item> implements Item
                 }
 
                 @Override
-                public long simulateInsert(ItemVariant resource, long maxAmount, @Nullable TransactionContext transaction) {
-                    return ItemResourceSlotImpl.this.tryInsert(resource.getItem(), resource.getNbt(), maxAmount);
-                }
-
-                @Override
-                public long simulateExtract(ItemVariant resource, long maxAmount, @Nullable TransactionContext transaction) {
-                    return ItemResourceSlotImpl.this.tryExtract(resource.getItem(), resource.getNbt(), maxAmount);
-                }
-
-                @Override
                 public long getAmount() {
                     return ItemResourceSlotImpl.this.getAmount();
                 }

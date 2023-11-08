@@ -24,20 +24,17 @@ package dev.galacticraft.machinelib.impl.menu;
 
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.api.util.StorageHelper;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -48,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -145,28 +143,18 @@ public final class TankImpl implements Tank {
     }
 
     @Override
-    public void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY) { //todo: client/server split
-        graphics.pose().translate(0, 0, 1);
-        if (mouseIn(mouseX, mouseY, x + this.x, y + this.y, this.getWidth(), this.getHeight())) {
-            List<Component> lines = new ArrayList<>(2);
-            assert client.screen != null;
-            if (this.isEmpty()) {
-                graphics.renderTooltip(client.font, Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE), mouseX, mouseY);
-                return;
-            }
-            long amount = this.getAmount();
-            MutableComponent text = Screen.hasShiftDown() || amount / 81.0 < 10000 ?
-                    Component.literal(DisplayUtil.truncateDecimal(amount / (FluidConstants.BUCKET / 1000.0), 0) + "mB")
-                    : Component.literal(DisplayUtil.truncateDecimal(amount / (double) FluidConstants.BUCKET, 2) + "B");
-
-            MutableComponent translatableText;
-            translatableText = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
-
-            lines.add(translatableText.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())).setStyle(Constant.Text.BLUE_STYLE));
-            lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(text.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
-            graphics.renderComponentTooltip(client.font, lines, mouseX, mouseY);
+    public List<Component> getTooltip() {
+        if (this.isEmpty()) {
+            return Collections.singletonList(Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE));
         }
-        graphics.pose().translate(0, 0, -1);
+        List<Component> lines = new ArrayList<>(2);
+        long amount = this.getAmount();
+
+        MutableComponent contents = Component.translatable(Constant.TranslationKey.TANK_CONTENTS);
+
+        lines.add(contents.setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(this.createVariant())));
+        lines.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(DisplayUtil.formatFluid(amount, Screen.hasShiftDown()).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
+        return lines;
     }
 
     @Override
@@ -181,12 +169,12 @@ public final class TankImpl implements Tank {
                     storedResource = this.createVariant();
                 }
                 if (storedResource != null && !storedResource.isBlank()) {
-                    return GenericApiUtil.move(storedResource, storage, this.slot, Long.MAX_VALUE, null) != 0;
+                    return StorageHelper.move(storedResource, storage, this.slot, Long.MAX_VALUE, null) != 0;
                 }
             } else if (storage.supportsInsertion() && this.inputType.playerExtraction()) {
                 FluidVariant storedResource = this.createVariant();
                 if (!storedResource.isBlank()) {
-                    return GenericApiUtil.move(storedResource, this.slot, storage, Long.MAX_VALUE, null) != 0;
+                    return StorageHelper.move(storedResource, this.slot, storage, Long.MAX_VALUE, null) != 0;
                 }
             }
         }

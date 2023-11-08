@@ -23,6 +23,8 @@
 package dev.galacticraft.machinelib.client.api.util;
 
 import com.google.common.collect.ImmutableList;
+import dev.galacticraft.machinelib.impl.MachineLib;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -61,11 +63,18 @@ public final class DisplayUtil {
 
     @Contract(pure = true, value = "_ -> new")
     public static @NotNull MutableComponent formatEnergy(long amount) {
-        if (amount >= 1_000_000L) {
-            return Component.literal(truncateDecimal(amount / 1_000_000.0, 2) + " MgJ");
+        if (amount >= MachineLib.CONFIG.megaGjBreakpoint()) {
+            return Component.literal(truncateDecimal(amount / 1_000_000.0, 3) + " MgJ");
         } else {
             return Component.literal(NUMBER_FORMAT.format(amount) + " gJ");
         }
+    }
+
+    @Contract(pure = true, value = "_, _ -> new")
+    public static @NotNull MutableComponent formatFluid(long amount, boolean forceDetail) {
+        return forceDetail || amount < MachineLib.CONFIG.bucketBreakpoint() ?
+                Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0) + "mB")
+                : Component.literal(truncateDecimal((double) amount / (double) FluidConstants.BUCKET, 2) + "B");
     }
 
     public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull Component text, int length) {

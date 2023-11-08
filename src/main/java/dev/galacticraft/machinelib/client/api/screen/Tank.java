@@ -30,14 +30,15 @@ import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.impl.menu.TankImpl;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Somewhat like a {@link net.minecraft.world.inventory.Slot} but for fluids and gases.
@@ -122,7 +123,7 @@ public interface Tank {
     @ApiStatus.Internal
     void setId(int id);
 
-    void drawTooltip(@NotNull GuiGraphics graphics, Minecraft client, int x, int y, int mouseX, int mouseY);
+    List<Component> getTooltip();
 
     boolean acceptStack(@NotNull ContainerItemContext context);
 

@@ -41,14 +41,14 @@ import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.util.BlockFace;
-import dev.galacticraft.machinelib.api.util.GenericApiUtil;
+import dev.galacticraft.machinelib.api.util.StorageHelper;
 import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -96,7 +96,7 @@ import java.util.Set;
  * @see MachineMenu
  * @see MachineScreen
  */
-public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderAttachmentBlockEntity {
+public abstract class MachineBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, RenderDataBlockEntity {
     /**
      * The {@link MachineType type} of this machine.
      * It controls the storage configurations and applicable statuses for this machine.
@@ -647,9 +647,9 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         if (nbt.contains(Constant.Nbt.ENERGY_STORAGE, Tag.TAG_LONG))
             this.energyStorage.readTag(Objects.requireNonNull(((LongTag) nbt.get(Constant.Nbt.ENERGY_STORAGE))));
         if (nbt.contains(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST))
-            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_LIST)));
+            this.itemStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.ITEM_STORAGE, Tag.TAG_COMPOUND)));
         if (nbt.contains(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST))
-            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_LIST)));
+            this.fluidStorage.readTag(Objects.requireNonNull(nbt.getList(Constant.Nbt.FLUID_STORAGE, Tag.TAG_COMPOUND)));
         this.disableDrops = nbt.getBoolean(Constant.Nbt.DISABLE_DROPS);
 
         if (level != null && level.isClientSide()) {
@@ -688,7 +688,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             ExposedStorage<Fluid, FluidVariant> storage = this.getExposedFluidStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
+                StorageHelper.moveAll(storage, this.fluidCache.find(direction), Long.MAX_VALUE, null); //TODO: fluid I/O cap
             }
         }
     }
@@ -706,7 +706,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         for (Direction direction : Constant.Cache.DIRECTIONS) {
             Storage<ItemVariant> storage = this.getExposedItemStorage(facing, direction);
             if (storage != null && storage.supportsExtraction()) {
-                GenericApiUtil.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
+                StorageHelper.moveAll(storage, this.itemCache.find(direction), Long.MAX_VALUE, null);
             }
         }
     }
@@ -752,7 +752,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
         Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
         if (storage != null && storage.supportsExtraction()) {
-            GenericApiUtil.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
+            StorageHelper.move(FluidVariant.of(fluid), storage, tank, Integer.MAX_VALUE, null);
         }
     }
 
@@ -771,7 +771,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         ItemResourceSlot slot = this.itemStorage.getSlot(inputSlot);
         Storage<FluidVariant> storage = slot.find(FluidStorage.ITEM);
         if (storage != null && storage.supportsInsertion()) {
-            GenericApiUtil.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
+            StorageHelper.move(FluidVariant.of(fluid), tank, storage, Integer.MAX_VALUE, null);
         }
     }
 
@@ -810,7 +810,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public @NotNull MachineRenderData getRenderAttachmentData() {
+    public @NotNull MachineRenderData getRenderData() {
         return this.getIOConfig();
     }
 
@@ -826,18 +826,18 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(this.getBlockPos());
-        this.writeRenderData(buf);
-        return ServerPlayNetworking.createS2CPacket(Constant.id("be_render_data"), buf);
+        this.writeClientSyncData(buf);
+        return ServerPlayNetworking.createS2CPacket(Constant.id("machine_sync"), buf);
     }
 
     @MustBeInvokedByOverriders
-    public void readRenderData(FriendlyByteBuf buf) {
-        this.configuration.getIOConfiguration().readPacket(buf);
+    public void readClientSyncData(FriendlyByteBuf buf) {
+        this.configuration.readPacket(buf);
     }
 
     @MustBeInvokedByOverriders
-    public void writeRenderData(FriendlyByteBuf buf) {
-        this.configuration.getIOConfiguration().writePacket(buf);
+    public void writeClientSyncData(FriendlyByteBuf buf) {
+        this.configuration.writePacket(buf);
     }
 
     public void awardUsedRecipes(@NotNull ServerPlayer player, @NotNull Set<ResourceLocation> recipes) {

@@ -20,16 +20,9 @@
  * SOFTWARE.
  */
 
+import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-plugins {
-    `maven-publish`
-    id("fabric-loom") version ("1.3-SNAPSHOT")
-    id("io.github.juuxel.loom-quiltflower") version ("1.10.0")
-    id("org.cadixdev.licenser") version ("0.6.1")
-    id("org.ajoberstar.grgit") version("5.2.0")
-}
 
 val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
 val commitHash = (System.getenv("GITHUB_SHA") ?: grgit.head().id)!!
@@ -41,14 +34,18 @@ val modName = project.property("mod.name").toString()
 
 val minecraft = project.property("minecraft.version").toString()
 val loader = project.property("loader.version").toString()
+val parchment = project.property("parchment.version").toString()
 
 val badpackets = project.property("badpackets.version").toString()
 val energy = project.property("energy.version").toString()
 val fabric = project.property("fabric.version").toString()
 
-license {
-    header(rootProject.file("LICENSE_HEADER.txt"))
-    include("**/dev/galacticraft/**/*.java")
+plugins {
+    java
+    `maven-publish`
+    id("fabric-loom") version("1.4-SNAPSHOT")
+    id("org.cadixdev.licenser") version("0.6.1")
+    id("org.ajoberstar.grgit") version("5.2.1")
 }
 
 group = "dev.galacticraft"
@@ -78,12 +75,12 @@ java {
 
     withSourcesJar()
     withJavadocJar()
+}
 
-    sourceSets {
-        register("testmod") {
-            runtimeClasspath += sourceSets.main.get().runtimeClasspath
-            compileClasspath += sourceSets.main.get().compileClasspath
-        }
+sourceSets {
+    register("testmod") {
+        runtimeClasspath += sourceSets.main.get().runtimeClasspath
+        compileClasspath += sourceSets.main.get().compileClasspath
     }
 }
 
@@ -111,13 +108,13 @@ loom {
         getByName("client") {
             name("Minecraft Client")
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
+            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
         }
         register("gametest") {
             name("GameTest Server")
             server()
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml")
+            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
         }
     }
 
@@ -130,16 +127,21 @@ repositories {
             includeGroup("lol.bai")
         }
     }
-    maven("https://maven2.bai.lol") {
+    maven("https://maven.parchmentmc.org") {
         content {
-            includeGroup("lol.bai")
+            includeGroup("org.parchmentmc.data")
         }
     }
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
-    mappings(loom.officialMojangMappings())
+    mappings(loom.layered {
+        officialMojangMappings()
+        if (!parchment.isEmpty()) {
+            parchment("org.parchmentmc.data:parchment-$minecraft:$parchment@zip")
+        }
+    })
     modImplementation("net.fabricmc:fabric-loader:$loader")
     testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 
@@ -219,6 +221,8 @@ tasks.withType<Jar> {
 tasks.test {
     useJUnitPlatform()
     workingDir("run")
+
+    Files.createDirectories(workingDir.toPath())
 }
 
 tasks.javadoc {
@@ -226,6 +230,11 @@ tasks.javadoc {
         title = "MachineLib ${project.version} API"
     }
     exclude("**/impl/**")
+}
+
+license {
+    header(rootProject.file("LICENSE_HEADER.txt"))
+    include("**/dev/galacticraft/**/*.java")
 }
 
 publishing {

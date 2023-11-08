@@ -179,7 +179,7 @@ public interface Constant {
         String OWNER = "ui.machinelib.machine.security.owner";
 
         String REDSTONE_ACTIVATION = "ui.machinelib.machine.redstone_activation";
-        String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_activation.ignore";
+        String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_activation.ignored";
         String LOW_REDSTONE = "ui.machinelib.machine.redstone_activation.low";
         String HIGH_REDSTONE = "ui.machinelib.machine.redstone_activation.high";
         String REDSTONE_STATE = "ui.machinelib.machine.redstone_activation.state";

@@ -41,15 +41,13 @@ import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
+import dev.galacticraft.machinelib.client.impl.util.GraphicsUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.ByteBufAllocator;
 import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.impl.transfer.context.PlayerContainerItemContext;
 import net.minecraft.ChatFormatting;
@@ -57,8 +55,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -67,14 +63,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.FastColor;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,10 +88,11 @@ import static dev.galacticraft.machinelib.impl.Constant.TextureCoordinate.*;
 public class MachineScreen<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> extends AbstractContainerScreen<Menu> {
     private static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
     private static final ItemStack GUNPOWDER = new ItemStack(Items.GUNPOWDER);
-    private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "unlit_torch")));
+    private static final ItemStack UNLIT_TORCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "unlit_torch"), Items.TORCH));
     private static final ItemStack REDSTONE_TORCH = new ItemStack(Items.REDSTONE_TORCH);
-    private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "standard_wrench")));
-    private static final ItemStack ALUMINUM_WIRE = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "aluminum_wire")));
+    private static final ItemStack WRENCH = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "standard_wrench"), Items.HOPPER));
+    private static final ItemStack ALUMINUM_WIRE = new ItemStack(getOptionalItem(new ResourceLocation("galacticraft", "aluminum_wire"), Items.MOJANG_BANNER_PATTERN));
+    private static final ItemStack IRON_CHESTPLATE = new ItemStack(Items.IRON_CHESTPLATE);
 
     private static final int SPACING = 4;
 
@@ -213,13 +208,14 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     /**
-     * Returns the requested item based on the id, or defaults to a barrier if not found.
+     * Returns the requested item based on the id
      *
-     * @param id the id of the item
+     * @param id        the id of the item
+     * @param other
      * @return the item stack
      */
-    private static Item getOptionalItem(ResourceLocation id) {
-        return BuiltInRegistries.ITEM.getOptional(id).orElse(Items.BARRIER);
+    private static Item getOptionalItem(ResourceLocation id, Item other) {
+        return BuiltInRegistries.ITEM.getOptional(id).orElse(other);
     }
 
     @Override
@@ -257,6 +253,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             poseStack.pushPose();
             if (secondary) poseStack.translate(0, SPACING, 0);
             graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, this.leftPos + (tab.isLeft() ? tab.isOpen() ? -PANEL_WIDTH : -22 : this.imageWidth), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? PANEL_HEIGHT : TAB_HEIGHT : 0) + SPACING, tab.getU(), tab.getV(), tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH, tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT);
+            if (!tab.isOpen()) {
+                graphics.renderFakeItem(tab.getItem(), this.leftPos + (tab.isLeft() ? -22 : this.imageWidth) + (tab.isLeft() ? 4 : 2), this.topPos + (secondary ? Tab.values()[tab.ordinal() - 1].isOpen() ? PANEL_HEIGHT : TAB_HEIGHT : 0) + SPACING + 3);
+            }
             secondary = !secondary;
             poseStack.popPose();
         }
@@ -271,18 +270,18 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             this.drawButton(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneActivation() == RedstoneActivation.HIGH);
             graphics.renderFakeItem(REDSTONE, PANEL_ICON_X, PANEL_ICON_Y);
             graphics.renderFakeItem(GUNPOWDER, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y);
-            graphics.renderFakeItem(UNLIT_TORCH, REDSTONE_LOW_X, REDSTONE_LOW_Y);
-            graphics.renderFakeItem(REDSTONE_TORCH, REDSTONE_HIGH_X, REDSTONE_HIGH_Y);
+            graphics.renderFakeItem(UNLIT_TORCH, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2);
+            graphics.renderFakeItem(REDSTONE_TORCH, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2);
 
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
-                    menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
+                    menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
                             this.menu.configuration.getRedstoneActivation().isActive(this.menu.state.isPowered()) ?
                                     Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                     : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
-                    .setStyle(Constant.Text.DARK_GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
+                    .setStyle(Constant.Text.GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
 
             poseStack.popPose();
         }
@@ -315,10 +314,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 graphics.drawString(this.font, orderedText, 40, 22 + offsetY, 0xFFFFFFFF, false);
                 offsetY += this.font.lineHeight + 2;
             }
-//                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.gjt", "N/A")
-//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
-            //                this.textRenderer.draw(matrices, Text.translatable("ui.galacticraft.machine.stats.todo", "N/A")
-//                        .setStyle(Constants.Text.GRAY_STYLE), 11, 54, ColorUtils.WHITE);
             poseStack.popPose();
         }
 
@@ -338,9 +333,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.ACCESS_LEVEL,
                     this.menu.configuration.getSecurity().getAccessLevel().getName()).setStyle(Constant.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y, 0xFFFFFFFF);
-//                assert this.menu.configuration.getSecurity().getOwner() != null;
-//                this.textRenderer.drawWithShadow(matrices, Text.translatable("ui.galacticraft.machine.security.owned_by", this.menu.configuration.getSecurity().getOwner().getName())
-//                        .setStyle(Constants.Text.GRAY_STYLE), SECURITY_STATE_TEXT_X, SECURITY_STATE_TEXT_Y + this.textRenderer.fontHeight + 4, ColorUtils.WHITE);
 
             poseStack.popPose();
         }
@@ -370,7 +362,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
         MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
         if (this.model != null) {
-            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine.getRenderAttachmentData(), machineFace.getType(), machineFace.getFlow()));
+            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine.getRenderData(), machineFace.getType(), machineFace.getFlow()));
         }
     }
 
@@ -790,26 +782,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         for (Tank tank : this.menu.tanks) {
             if (tank.getHeight() > 0 && tank.getWidth() > 0) {
                 if (tank.getAmount() > 0) {
-                    FluidVariant resource = tank.createVariant();
-                    if (resource.isBlank()) continue;
-                    boolean fillFromTop = FluidVariantAttributes.isLighterThanAir(resource);
-                    TextureAtlasSprite sprite = FluidVariantRendering.getSprite(resource);
-                    int fluidColor = FluidVariantRendering.getColor(resource);
-
-                    if (sprite == null || sprite.atlasLocation().equals(MissingTextureAtlasSprite.getLocation())) {
-                        sprite = FluidVariantRendering.getSprite(FluidVariant.of(Fluids.WATER));
-                        if (sprite == null) throw new IllegalStateException("Water sprite is null");
-                    }
-
-                    double v = (1.0 - ((double) tank.getAmount() / (double) tank.getCapacity()));
-                    int airHeight = (int) (v * tank.getHeight());
-                    int fluidHeight = tank.getHeight() - airHeight;
-
-                    if (!fillFromTop) {
-                        graphics.blit(tank.getX(), tank.getY() + airHeight, 0, tank.getWidth(), fluidHeight, sprite, FastColor.ARGB32.red(fluidColor) / 255.0f, FastColor.ARGB32.green(fluidColor) / 255.0f, FastColor.ARGB32.alpha(fluidColor) / 255.0f, 1.0f);
-                    } else {
-                        graphics.blit(tank.getX(), tank.getY(), 0, tank.getWidth(), fluidHeight, sprite, FastColor.ARGB32.red(fluidColor) / 255.0f, FastColor.ARGB32.green(fluidColor) / 255.0f, FastColor.ARGB32.alpha(fluidColor) / 255.0f, 1.0f);
-                    }
+                    GraphicsUtil.drawFluid(graphics, tank.getX(), tank.getY(), tank.getWidth(), tank.getHeight(),
+                            tank.getCapacity(), tank.createVariant(), tank.getAmount());
                 }
 
                 boolean primary = true;
@@ -829,7 +803,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         graphics.pose().popPose();
 
         for (Tank tank : this.menu.tanks) {
-            tank.drawTooltip(graphics, this.minecraft, this.leftPos, this.topPos, mouseX, mouseY);
+            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                this.setTooltipForNextRenderPass(Lists.transform(tank.getTooltip(), Component::getVisualOrderText));
+                break;
+            }
         }
     }
 
@@ -858,7 +835,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     for (StorageSlot slot : this.menu.machineSlots) {
                         InputType type = slot.getSlot().inputType();
                         if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                            this.drawSlotOverlay(graphics, slot.x, slot.y, type.colour());
+                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, slot.x, slot.y, 16, 16, type.colour());
                         }
                     }
                 }
@@ -867,21 +844,17 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     for (Tank tank : this.menu.tanks) {
                         InputType type = tank.getInputType();
                         if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                            RenderSystem.disableDepthTest();
-                            graphics.fill(tank.getX(), tank.getY(), tank.getX() + tank.getWidth(), tank.getY() + tank.getHeight(), ((type.colour() << 8) >> 8) | (0x80 << 24));
-                            RenderSystem.enableDepthTest();
+                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, tank.getX(), tank.getY(), tank.getWidth(), tank.getHeight(), type.colour());
                         }
                     }
                 }
+
+                if (resource.willAcceptResource(ResourceType.ENERGY)) {
+                    RenderSystem.enableBlend();
+                    GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, this.capacitorX, this.capacitorY, 16, this.capacitorHeight, 0x00f6ff00);
+                }
             }
         }
-    }
-
-    protected void drawSlotOverlay(@NotNull GuiGraphics graphics, int x, int y, int color) {
-        color <<= 8;
-        color >>= 8;
-        color |= (0x70 << 24);
-        graphics.fill(this.leftPos + x, this.topPos + y, this.leftPos + x + 16, this.topPos + y + 16, color);
     }
 
     @Override
@@ -1076,24 +1049,27 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      * The four different types of configuration panel.
      */
     public enum Tab {
-        REDSTONE(TAB_REDSTONE_U, TAB_REDSTONE_V, PANEL_REDSTONE_U, PANEL_REDSTONE_V, true),
-        CONFIGURATION(TAB_CONFIG_U, TAB_CONFIG_V, PANEL_CONFIG_U, PANEL_CONFIG_V, true),
-        STATS(TAB_STATS_U, TAB_STATS_V, PANEL_STATS_U, PANEL_STATS_V, false),
-        SECURITY(TAB_SECURITY_U, TAB_SECURITY_V, PANEL_SECURITY_U, PANEL_SECURITY_V, false);
+        REDSTONE(TAB_REDSTONE_U, TAB_REDSTONE_V, PANEL_REDSTONE_U, PANEL_REDSTONE_V, true, MachineScreen.REDSTONE),
+        CONFIGURATION(TAB_CONFIG_U, TAB_CONFIG_V, PANEL_CONFIG_U, PANEL_CONFIG_V, true, WRENCH),
+        STATS(TAB_STATS_U, TAB_STATS_V, PANEL_STATS_U, PANEL_STATS_V, false, ALUMINUM_WIRE),
+        SECURITY(TAB_SECURITY_U, TAB_SECURITY_V, PANEL_SECURITY_U, PANEL_SECURITY_V, false, IRON_CHESTPLATE);
 
         private final int tabU;
         private final int tabV;
         private final int panelU;
         private final int panelV;
         private final boolean left;
+        private final ItemStack item;
+
         private boolean open = false;
 
-        Tab(int tabU, int tabV, int panelU, int panelV, boolean left) {
+        Tab(int tabU, int tabV, int panelU, int panelV, boolean left, ItemStack item) {
             this.tabU = tabU;
             this.tabV = tabV;
             this.panelU = panelU;
             this.panelV = panelV;
             this.left = left;
+            this.item = item;
         }
 
         public int getU() {
@@ -1117,6 +1093,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             if (this.open) {
                 Tab.values()[this.ordinal() + 1 - this.ordinal() % 2 * 2].open = false;
             }
+        }
+
+        public ItemStack getItem() {
+            return this.item;
         }
     }
 }

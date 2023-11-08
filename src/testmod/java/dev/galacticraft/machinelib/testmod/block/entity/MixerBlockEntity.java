@@ -35,6 +35,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,8 @@ public class MixerBlockEntity extends MachineBlockEntity {
         super.tickConstant(level, pos, state, profiler);
         profiler.push("charge_stack");
         this.chargeFromStack(BATTERY_SLOT);
+        this.takeFluidFromStack(WATER_INPUT_SLOT, WATER_TANK, Fluids.WATER);
+        this.takeFluidFromStack(LAVA_INPUT_SLOT, LAVA_TANK, Fluids.LAVA);
         profiler.pop();
     }
 

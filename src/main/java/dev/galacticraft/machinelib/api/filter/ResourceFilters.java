@@ -30,6 +30,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.TagKey;
@@ -207,7 +208,7 @@ public final class ResourceFilters {
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
             if (storage == null || !storage.supportsExtraction()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
-                if (storage.simulateExtract(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
+                if (storage.extract(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
                     return true;
                 }
             }
@@ -229,8 +230,34 @@ public final class ResourceFilters {
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
             if (storage == null || !storage.supportsExtraction()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
-                if (storage.simulateExtract(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
+                if (storage.extract(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
                     return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    /**
+     * Checks if the specified item can have the given fluid (with NBT) extracted from it.
+     *
+     * @param tag The desired fluids to extract.
+     * @return A resource filter that checks if the item can have the given fluid (with NBT) extracted from it.
+     */
+    @Contract(pure = true)
+    public static @NotNull ResourceFilter<Item> canExtractFluid(@NotNull TagKey<Fluid> tag) {
+        return (r, nbtC) -> {
+            if (r == null) return false;
+            Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
+            if (storage == null || !storage.supportsExtraction()) return false;
+            try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
+                for (StorageView<FluidVariant> view : storage) {
+                    FluidVariant resource = view.getResource();
+                    if (!resource.isBlank() && resource.getFluid().is(tag)) {
+                        if (storage.extract(resource, FluidConstants.BUCKET, transaction) > 0) {
+                            return true;
+                        }
+                    }
                 }
             }
             return false;
@@ -250,7 +277,7 @@ public final class ResourceFilters {
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
             if (storage == null || !storage.supportsExtraction()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
-                if (storage.simulateInsert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
+                if (storage.insert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
                     return true;
                 }
             }
@@ -272,7 +299,7 @@ public final class ResourceFilters {
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
             if (storage == null || !storage.supportsExtraction()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
-                if (storage.simulateInsert(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
+                if (storage.insert(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
                     return true;
                 }
             }

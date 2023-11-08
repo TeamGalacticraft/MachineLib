@@ -40,12 +40,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
     private static final long CAPACITY = FluidConstants.BUCKET * 16;
-    private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
     protected FluidResourceSlot slot;
 
     @BeforeEach
     public void setup() {
-        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG)));
+        this.slot = FluidResourceSlot.create(InputType.STORAGE, TankDisplay.create(0, 0), CAPACITY, ResourceFilters.any());
     }
 
     @AfterEach
@@ -72,17 +71,6 @@ public sealed class FluidResourceSlotInsertionTests implements JUnitTest {
             assertEquals(0, this.slot.insert(Fluids.LAVA, FluidConstants.BUCKET));
 
             assertEquals(this.slot.getAmount(), FluidConstants.BUCKET);
-        }
-
-        @Test
-        public void filtered() {
-            assertTrue(this.slot.canInsert(Fluids.WATER));
-
-            assertFalse(this.slot.canInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.tryInsert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-            assertEquals(0, this.slot.insert(Fluids.WATER, FILTERED_TAG, FluidConstants.BUCKET));
-
-            assertTrue(slot.isEmpty());
         }
 
         @Test

@@ -40,12 +40,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public sealed class ItemStorageInsertionTests implements JUnitTest {
     private static final int CAPACITY = 64;
-    private static final CompoundTag FILTERED_TAG = Utils.generateNbt();
     protected MachineItemStorage storage;
 
     @BeforeEach
     public void setup() {
-        this.storage = MachineItemStorage.create(ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.not(ResourceFilters.ofNBT(FILTERED_TAG))));
+        this.storage = MachineItemStorage.create(ItemResourceSlot.create(InputType.STORAGE, ItemSlotDisplay.create(0, 0), ResourceFilters.any()));
     }
 
     @AfterEach
@@ -72,17 +71,6 @@ public sealed class ItemStorageInsertionTests implements JUnitTest {
             assertEquals(0, this.storage.insert(Items.GOLD_INGOT, 16));
 
             assertEquals(this.storage.getAmount(0), 16);
-        }
-
-        @Test
-        public void filtered() {
-            assertTrue(this.storage.canInsert(Items.GOLD_INGOT));
-
-            assertFalse(this.storage.canInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-            assertEquals(0, this.storage.tryInsert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-            assertEquals(0, this.storage.insert(Items.GOLD_INGOT, FILTERED_TAG, 16));
-
-            assertTrue(storage.isEmpty());
         }
 
         @Test

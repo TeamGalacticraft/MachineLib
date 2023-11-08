@@ -20,37 +20,28 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl;
+package dev.galacticraft.machinelib.api.config;
 
-import dev.galacticraft.machinelib.api.config.Config;
-import dev.galacticraft.machinelib.impl.network.MachineLibC2SPackets;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
-import net.fabricmc.loader.api.FabricLoader;
+import dev.galacticraft.machinelib.impl.config.MachineLibConfig;
 import org.jetbrains.annotations.ApiStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-@ApiStatus.Internal
-public final class MachineLib implements ModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger(Constant.MOD_NAME);
-    public static final Config CONFIG = Config.create();
-
-    @Override
-    public void onInitialize() {
-        MachineLibC2SPackets.register();
-        File file = FabricLoader.getInstance().getConfigDir().resolve("machinelib.json").toFile();
-        if (file.exists()) {
-            CONFIG.loadFromFile(file);
-        } else {
-            LOGGER.info("Config file does not exist. Creating it...");
-            CONFIG.save(file);
-        }
-
-        if (CONFIG.enableColouredVanillaFluidNames()) {
-            FluidVariantAttributes.enableColoredVanillaFluidNames();
-        }
+public interface Config {
+    static Config create() {
+        return new MachineLibConfig();
     }
+
+    boolean enableColouredVanillaFluidNames();
+
+    long bucketBreakpoint();
+
+    long megaGjBreakpoint();
+
+    void copyFrom(Config config);
+
+    @ApiStatus.Internal
+    void loadFromFile(File file);
+
+    void save(File file);
 }
