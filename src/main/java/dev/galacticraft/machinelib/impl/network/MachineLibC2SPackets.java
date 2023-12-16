@@ -67,8 +67,8 @@ public final class MachineLibC2SPackets {
             if (f >= 0 && f < Constant.Cache.BLOCK_FACES.length) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                        MachineBlockEntity machine = sHandler.machine;
+                    if (player.containerMenu instanceof MachineMenu<?> menu) {
+                        MachineBlockEntity machine = menu.machine;
                         if (machine.getSecurity().hasAccess(player)) {
                             MachineIOFace machineFace = machine.getIOConfig().get(face);
                             ServerLevel level = (ServerLevel) machine.getLevel();
@@ -104,9 +104,9 @@ public final class MachineLibC2SPackets {
             ) {
                 BlockFace face = Constant.Cache.BLOCK_FACES[f];
                 server.execute(() -> {
-                    if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                        MachineBlockEntity machine = sHandler.machine;
-                        if (machine.getSecurity().hasAccess(player) && !machine.isFaceLocked(face)) {
+                    if (player.containerMenu instanceof MachineMenu<?> menu) {
+                        MachineBlockEntity machine = menu.machine;
+                        if (machine.getSecurity().hasAccess(player) && !menu.isFaceLocked(face)) {
                             ServerLevel level = (ServerLevel) machine.getLevel();
                             BlockPos pos = machine.getBlockPos();
                             assert level != null;
@@ -132,8 +132,8 @@ public final class MachineLibC2SPackets {
         C2SPacketReceiver.register(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                    MachineBlockEntity machine = sHandler.machine;
+                if (player.containerMenu instanceof MachineMenu<?> menu) {
+                    MachineBlockEntity machine = menu.machine;
                     if (machine.getSecurity().hasAccess(player)) {
                         machine.setRedstone(redstoneActivation);
                         machine.setChanged();
@@ -145,8 +145,8 @@ public final class MachineLibC2SPackets {
         C2SPacketReceiver.register(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                    MachineBlockEntity machine = sHandler.machine;
+                if (player.containerMenu instanceof MachineMenu<?> menu) {
+                    MachineBlockEntity machine = menu.machine;
                     if (machine.getSecurity().isOwner(player)) {
                         machine.getSecurity().setAccessLevel(accessLevel);
                         machine.setChanged();
@@ -159,9 +159,9 @@ public final class MachineLibC2SPackets {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {
-                if (player.containerMenu instanceof MachineMenu<?> sHandler) {
-                    if (sHandler.containerId == syncId) {
-                        acceptStack(sHandler.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
+                if (player.containerMenu instanceof MachineMenu<?> menu) {
+                    if (menu.containerId == syncId) {
+                        acceptStack(menu.tanks.get(index), ContainerItemContext.ofPlayerCursor(player, player.containerMenu));
                     }
                 }
             });

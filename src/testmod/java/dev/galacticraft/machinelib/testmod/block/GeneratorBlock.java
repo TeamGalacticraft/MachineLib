@@ -37,7 +37,7 @@ public class GeneratorBlock extends MachineBlock<GeneratorBlockEntity> {
 
     @Override
     public void animateTick(BlockState blockState, Level level, BlockPos blockPos, RandomSource randomSource) {
-        if (level.getBlockEntity(blockPos) instanceof GeneratorBlockEntity generator && generator.getState().isActive()) {
+        if (MachineBlock.isActive(blockState)) {
             double d = blockPos.getX() + 0.4 + randomSource.nextFloat() * 0.2;
             double e = blockPos.getY() + 0.7 + randomSource.nextFloat() * 0.3;
             double f = blockPos.getZ() + 0.4 + randomSource.nextFloat() * 0.2;

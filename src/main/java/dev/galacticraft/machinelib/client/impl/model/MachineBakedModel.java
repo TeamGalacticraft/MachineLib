@@ -117,8 +117,8 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
 
     private boolean transform(MachineRenderData renderData, @NotNull BlockState state, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(state.getValue(BlockStateProperties.HORIZONTAL_FACING), quad.nominalFace());
-        MachineIOConfig ioConfig = renderData.getIOConfig();
-        MachineIOFace machineFace = ioConfig.get(face);
+        MachineIOFace machineFace = renderData == null ? MachineIOFace.blank() : renderData.getIOConfig().get(face);
+        assert face != null;
         quad.spriteBake(getSprite(face,
                         renderData,
                         machineFace.getType(), machineFace.getFlow()),
@@ -130,6 +130,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     private boolean transformItem(MachineIOConfig config, @NotNull MutableQuadView quad) {
         BlockFace face = BlockFace.toFace(Direction.NORTH, quad.nominalFace());
         MachineIOFace machineIOFace = config.get(face);
+        assert face != null;
         quad.spriteBake(getSprite(face,
                         config,
                         machineIOFace.getType(), machineIOFace.getFlow()),
@@ -138,7 +139,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         return true;
     }
 
-    public TextureAtlasSprite getSprite(@NotNull BlockFace face, @NotNull MachineRenderData renderData, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
+    public TextureAtlasSprite getSprite(@NotNull BlockFace face, @Nullable MachineRenderData renderData, @NotNull ResourceType type, @NotNull ResourceFlow flow) {
         if (type == ResourceType.NONE) return this.provider.getSpritesForState(renderData, face);
 
         switch (flow) {
@@ -291,7 +292,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData renderData, @NotNull BlockFace face) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineRenderData renderData, @NotNull BlockFace face) {
             if (face == BlockFace.FRONT) return this.sprite;
             if (face.side()) return this.machineSide;
             return this.machine;
@@ -306,7 +307,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData renderData, @NotNull BlockFace face) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineRenderData renderData, @NotNull BlockFace face) {
             return this.sprite;
         }
     }
@@ -331,7 +332,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
 
         @Override
-        public @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData renderData, @NotNull BlockFace face) {
+        public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineRenderData renderData, @NotNull BlockFace face) {
             if (face == BlockFace.FRONT) return this.front;
             if (face == BlockFace.BACK) return this.back;
             if (this.sided && face.side()) return this.machineSide;

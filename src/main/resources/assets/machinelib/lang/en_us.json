@@ -7,6 +7,8 @@
   "status.machinelib.capacitor_full": "Capacitor Full",
   "status.machinelib.active": "Active",
   "status.machinelib.idle": "Idle",
+  "status.machinelib.unknown": "Unknown",
+  "status.machinelib.disabled": "Disabled",
   "ui.machinelib.machine.current_energy": "Energy: %s/%s",
   "ui.machinelib.machine.security": "Security",
   "ui.machinelib.machine.security.access": "Access: %s",

@@ -82,7 +82,7 @@ public interface MachineModelRegistry {
                     private final TextureAtlasSprite machine = atlas.apply(MachineBakedModel.MACHINE);
 
                     @Override
-                    public @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData renderData, @NotNull BlockFace face) {
+                    public @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineRenderData renderData, @NotNull BlockFace face) {
                         if (face.side()) return this.machineSide;
                         return this.machine;
                     }
@@ -100,6 +100,6 @@ public interface MachineModelRegistry {
          * @return The appropriate sprite to render for the given face.
          */
         @Contract(pure = true)
-        @NotNull TextureAtlasSprite getSpritesForState(@NotNull MachineRenderData data, @NotNull BlockFace face);
+        @NotNull TextureAtlasSprite getSpritesForState(@Nullable MachineRenderData data, @NotNull BlockFace face);
     }
 }

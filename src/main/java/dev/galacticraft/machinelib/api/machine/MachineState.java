@@ -22,10 +22,12 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineStateImpl;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,13 @@ public interface MachineState extends MenuSynchronizable, Deserializable<Compoun
      * @return the current status of the machine.
      */
     @Nullable MachineStatus getStatus();
+
+    /**
+     * Returns the name of the current status of the machine or 'disabled' if the machine is currently disabled.
+     *
+     * @return the current status of the machine.
+     */
+    @NotNull Component getStatusText(@NotNull RedstoneActivation activation);
 
     /**
      * Sets the status of the machine.

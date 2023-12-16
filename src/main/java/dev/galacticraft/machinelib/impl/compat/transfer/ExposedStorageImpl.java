@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.api.misc.Modifiable;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -62,7 +63,7 @@ public class ExposedStorageImpl<Resource, Variant extends TransferVariant<Resour
     }
 
     @Override
-    public Iterator<StorageView<Variant>> iterator() {
+    public @NotNull Iterator<StorageView<Variant>> iterator() {
         return Iterators.forArray(this.slots);
     }
 

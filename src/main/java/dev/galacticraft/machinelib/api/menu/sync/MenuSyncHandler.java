@@ -38,7 +38,7 @@ import java.util.function.*;
 public interface MenuSyncHandler {
     /**
      * Constructs a sync handler that synchronizes long values.
-     * Obtains values from the supplier on the server, and stores values on the client with the ocnsumer
+     * Obtains values from the supplier on the server, and stores values on the client with the consumer
      *
      * @param supplier the data source
      * @param consumer the data output

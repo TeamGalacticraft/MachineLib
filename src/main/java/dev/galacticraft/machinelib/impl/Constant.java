@@ -214,6 +214,8 @@ public interface Constant {
         String TANK_AMOUNT = "ui.machinelib.machine.tank.contents.amount";
         String TANK_EMPTY = "ui.machinelib.machine.tank.contents.empty";
 
+        String UNKNOWN_STATUS = "status.machinelib.unknown";
+        String DISABLED = "status.machinelib.disabled";
         String UNKNOWN = "tooltip.machinelib.machine.unknown";
     }
 

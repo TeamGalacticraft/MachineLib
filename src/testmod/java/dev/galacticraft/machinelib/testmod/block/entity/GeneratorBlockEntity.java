@@ -54,7 +54,6 @@ public class GeneratorBlockEntity extends MachineBlockEntity {
     public GeneratorBlockEntity(@NotNull BlockPos pos, BlockState state) {
         super(TestModMachineTypes.GENERATOR, pos, state);
         this.fuelInput = this.itemStorage().getSlot(FUEL_SLOT);
-
     }
 
     @Override

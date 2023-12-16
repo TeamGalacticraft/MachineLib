@@ -32,18 +32,11 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> The type of tag that represents the serialized object.
  * @see Deserializable
  */
-public interface Serializable<T extends Tag> {
+public interface Serializable<T extends Tag> extends PacketSerializable {
     /**
      * Serializes this object as a tag.
      *
      * @return the created tag
      */
     @NotNull T createTag();
-
-    /**
-     * Serializes this object into a buffer.
-     *
-     * @param buf the buffer to write into
-     */
-    void writePacket(@NotNull FriendlyByteBuf buf);
 }

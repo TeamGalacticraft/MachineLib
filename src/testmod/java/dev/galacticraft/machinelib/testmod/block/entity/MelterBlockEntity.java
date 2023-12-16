@@ -70,6 +70,7 @@ public class MelterBlockEntity extends MachineBlockEntity {
         super.tickConstant(level, pos, state, profiler);
         profiler.push("charge_stack");
         this.chargeFromStack(BATTERY_SLOT);
+        this.insertFluidToStack(LAVA_OUTPUT_SLOT, LAVA_TANK, Fluids.LAVA);
         profiler.pop();
         this.trySpreadFluids(level, state);
     }

@@ -73,7 +73,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
 
         tests.add(new TestFunction(this.getBaseId(), this.getBaseId() + "/create_machine", EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
             if (this.createMachine(helper) == null) {
-                throw new GameTestAssertException("No machine assoicated with block!");
+                throw new GameTestAssertException("No machine associated with block!");
             }
             helper.succeed();
         }));

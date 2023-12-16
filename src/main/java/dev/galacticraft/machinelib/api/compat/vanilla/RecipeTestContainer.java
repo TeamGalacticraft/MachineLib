@@ -100,17 +100,17 @@ public class RecipeTestContainer implements Container {
     }
 
     @Override
-    public ItemStack getItem(int i) {
+    public @NotNull ItemStack getItem(int i) {
         return ItemStackUtil.copy(this.slots[i]);
     }
 
     @Override
-    public ItemStack removeItem(int i, int j) {
+    public @NotNull ItemStack removeItem(int i, int j) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(int i) {
+    public @NotNull ItemStack removeItemNoUpdate(int i) {
         return ItemStack.EMPTY;
     }
 

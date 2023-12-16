@@ -36,6 +36,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
 import dev.galacticraft.machinelib.api.storage.slot.display.TankDisplay;
 import dev.galacticraft.machinelib.api.transfer.InputType;
+import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.client.api.screen.Tank;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -188,8 +189,13 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
             }
         }
 
-        this.addPlayerInventorySlots(player.getInventory(), 0, 0); // its the server
+        this.addPlayerInventorySlots(player.getInventory(), 0, 0); // it's the server
         this.registerSyncHandlers(this::addSyncHandler);
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
     }
 
     /**
@@ -345,6 +351,16 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
         }
     }
 
+    /**
+     * Returns whether the given face can be configured for input or output.
+     *
+     * @param face the block face to test.
+     * @return whether the given face can be configured for input or output.
+     */
+    public boolean isFaceLocked(@NotNull BlockFace face) {
+        return false;
+    }
+
     @Override
     public @NotNull ItemStack quickMoveStack(Player player, int slotId) { //return LEFTOVER (in slot)
         Slot slot = this.slots.get(slotId);
@@ -360,7 +376,7 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
             ItemStack stack1 = slot.getItem();
             if (stack1.isEmpty()) return ItemStack.EMPTY;
 
-            int insert = stack1.getCount();
+            long insert = stack1.getCount();
             for (StorageSlot slot1 : this.machineSlots) {
                 if (slot1.getSlot().inputType().playerInsertion() && slot1.getSlot().contains(stack1.getItem(), stack1.getTag())) {
                     insert -= slot1.getSlot().insert(stack1.getItem(), stack1.getTag(), insert);
@@ -383,7 +399,8 @@ public class MachineMenu<Machine extends MachineBlockEntity> extends AbstractCon
                     slot.set(ItemStack.EMPTY);
                     return ItemStack.EMPTY;
                 } else {
-                    stack1.setCount(insert);
+                    assert insert < Integer.MAX_VALUE;
+                    stack1.setCount((int)insert);
                     slot.set(stack1);
                     return ItemStack.EMPTY; //fixme: inf loop if we return actual value, although it doesn't seem to be used beyond looping the call so this should be fine
                 }

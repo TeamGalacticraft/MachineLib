@@ -69,6 +69,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -772,16 +773,6 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         }
     }
 
-    /**
-     * Returns whether the given face can be configured for input or output.
-     *
-     * @param face the block face to test.
-     * @return whether the given face can be configured for input or output.
-     */
-    public boolean isFaceLocked(@NotNull BlockFace face) {
-        return false;
-    }
-
     @Override
     public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
         if (!this.getSecurity().hasAccess(player)) {
@@ -798,7 +789,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     @Override
     public @NotNull BlockEntityType<? extends MachineBlockEntity> getType() {
-        return (BlockEntityType<? extends MachineBlockEntity>) super.getType();
+        return this.type.getBlockEntityType();
     }
 
     @Override

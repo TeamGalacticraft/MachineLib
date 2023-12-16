@@ -38,10 +38,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class MachineTypeImpl<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> implements MachineType<Machine, Menu> {
-    public static final Supplier<MachineFluidStorage> DEFAULT_FLUID_STORAGE = MachineFluidStorage::empty;
-    public static final Supplier<MachineItemStorage> DEFAULT_ITEM_STORAGE = MachineItemStorage::empty;
-    public static final Supplier<MachineEnergyStorage> DEFAULT_ENERGY_STORAGE = MachineEnergyStorage::empty;
-
     private final @NotNull Block block;
     private final @NotNull BlockEntityType<Machine> blockEntityType;
     private final @NotNull MenuType<Menu> menuType;

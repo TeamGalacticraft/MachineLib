@@ -22,22 +22,20 @@
 
 package dev.galacticraft.machinelib.api.misc;
 
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an object that can be deserialized from a specific tag or a packet.
+ * Represents objects that can be serialized to a packet.
  *
- * @param <T> the type of tag used for deserialization
- * @see Serializable
+ * @see PacketDeserializable
  */
-public interface Deserializable<T extends Tag> extends Serializable<T>, PacketDeserializable {
+public interface PacketSerializable {
     /**
-     * Deserializes this object's state from a tag.
+     * Serializes this object into a buffer.
      *
-     * @param tag the tag to be read.
-     * @see #createTag()
+     * @param buf the buffer to write into
+     * @see PacketDeserializable#readPacket(FriendlyByteBuf)
      */
-    void readTag(@NotNull T tag);
+    void writePacket(@NotNull FriendlyByteBuf buf);
 }

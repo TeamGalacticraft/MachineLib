@@ -54,7 +54,7 @@ public final class BooleansMenuSyncHandler implements MenuSyncHandler {
         int b = 0;
         int j = 0;
         for (int i = 0; i < len; i++) {
-            bytes[b] |= ((this.input[b * 8 + j] ? 0b1 : 0b0) << j++);
+            bytes[b] |= (byte) ((this.input[b * 8 + j] ? 0b1 : 0b0) << j++);
             if (j == 8) {
                 j = 0;
                 b++;

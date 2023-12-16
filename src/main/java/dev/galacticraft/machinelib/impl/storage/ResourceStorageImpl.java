@@ -89,7 +89,7 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
                     this.modifications--;
                 } else {
                     if (this.listener != null) {
-                        TransactionContext outer = context1.nestingDepth() != 0 ? context1.getOpenTransaction(0) : context1;
+                        TransactionContext outer = context1.getOpenTransaction(0);
                         if (this.cachedTransaction != outer) {
                             this.cachedTransaction = outer;
                             context.addOuterCloseCallback((result1) -> {

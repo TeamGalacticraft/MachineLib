@@ -266,7 +266,7 @@ public final class SecuritySettingsImpl implements SecuritySettings {
     }
 
     @Override
-    public @Nullable MenuSyncHandler createSyncHandler() {
+    public MenuSyncHandler createSyncHandler() {
         return new SecuritySettingsSyncHandler(this);
     }
 }

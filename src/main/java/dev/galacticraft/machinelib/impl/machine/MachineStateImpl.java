@@ -25,26 +25,34 @@ package dev.galacticraft.machinelib.impl.machine;
 import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineType;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.menu.sync.MachineStateSyncHandler;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MachineStateImpl implements MachineState {
-    private final MachineType<?, ?> type;
-    private MachineStatus status;
+    private final @NotNull MachineType<?, ?> type;
+    private @Nullable MachineStatus status = null;
     private boolean powered = false;
 
-    public MachineStateImpl(MachineType<?, ?> type) {
+    public MachineStateImpl(@NotNull MachineType<?, ?> type) {
         this.type = type;
     }
 
     @Override
     public @Nullable MachineStatus getStatus() {
         return this.status;
+    }
+
+    @Override
+    public @NotNull Component getStatusText(@NotNull RedstoneActivation activation) {
+        return activation.isActive(this.powered) ? this.status != null ? this.status.getText() : Component.translatable(Constant.TranslationKey.UNKNOWN_STATUS).withStyle(ChatFormatting.GRAY) : Component.translatable(Constant.TranslationKey.DISABLED).withStyle(ChatFormatting.RED);
     }
 
     @Override

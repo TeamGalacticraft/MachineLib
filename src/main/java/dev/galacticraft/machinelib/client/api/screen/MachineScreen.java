@@ -28,7 +28,6 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
@@ -39,6 +38,7 @@ import dev.galacticraft.machinelib.api.transfer.InputType;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import dev.galacticraft.machinelib.client.impl.util.GraphicsUtil;
@@ -188,17 +188,20 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
     private @Nullable MachineBakedModel model;
 
+    private @NotNull MachineRenderData renderData;
+
     /**
      * Creates a new screen from the given screen handler.
      *
-     * @param handler The screen handler to create the screen from.
+     * @param menu The screen handler to create the screen from.
      * @param title   The title of the screen.
      * @param texture The texture of the background screen.
      */
-    protected MachineScreen(@NotNull Menu handler, @NotNull Component title, @NotNull ResourceLocation texture) {
-        super(handler, handler.playerInventory, title);
+    protected MachineScreen(@NotNull Menu menu, @NotNull Component title, @NotNull ResourceLocation texture) {
+        super(menu, menu.playerInventory, title);
 
         this.texture = texture;
+        this.renderData = menu.configuration.getIOConfiguration();
 
         Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.menu.configuration.getSecurity().getOwner(), this.menu.configuration.getSecurity().getUsername()), (type, skin, tex) -> {
             if (type == MinecraftProfileTexture.Type.SKIN && skin != null) {
@@ -293,12 +296,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
 
             RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-            this.drawMachineFace(graphics, TOP_FACE_X, TOP_FACE_Y, this.menu.machine, BlockFace.TOP);
-            this.drawMachineFace(graphics, LEFT_FACE_X, LEFT_FACE_Y, this.menu.machine, BlockFace.LEFT);
-            this.drawMachineFace(graphics, FRONT_FACE_X, FRONT_FACE_Y, this.menu.machine, BlockFace.FRONT);
-            this.drawMachineFace(graphics, RIGHT_FACE_X, RIGHT_FACE_Y, this.menu.machine, BlockFace.RIGHT);
-            this.drawMachineFace(graphics, BACK_FACE_X, BACK_FACE_Y, this.menu.machine, BlockFace.BACK);
-            this.drawMachineFace(graphics, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.menu.machine, BlockFace.BOTTOM);
+            this.drawMachineFace(graphics, TOP_FACE_X, TOP_FACE_Y, this.renderData, BlockFace.TOP);
+            this.drawMachineFace(graphics, LEFT_FACE_X, LEFT_FACE_Y, this.renderData, BlockFace.LEFT);
+            this.drawMachineFace(graphics, FRONT_FACE_X, FRONT_FACE_Y, this.renderData, BlockFace.FRONT);
+            this.drawMachineFace(graphics, RIGHT_FACE_X, RIGHT_FACE_Y, this.renderData, BlockFace.RIGHT);
+            this.drawMachineFace(graphics, BACK_FACE_X, BACK_FACE_Y, this.renderData, BlockFace.BACK);
+            this.drawMachineFace(graphics, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.renderData, BlockFace.BOTTOM);
             poseStack.popPose();
         }
         if (Tab.STATS.isOpen()) {
@@ -356,13 +359,13 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      * @param graphics the gui graphics
      * @param x        the x position to draw at
      * @param y        the y position to draw at
-     * @param machine  the machine to draw
+     * @param data     the machine's extra render data
      * @param face     the face to draw
      */
-    private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull MachineBlockEntity machine, @NotNull BlockFace face) {
+    private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull MachineRenderData data, @NotNull BlockFace face) {
         MachineIOFace machineFace = menu.configuration.getIOConfiguration().get(face);
         if (this.model != null) {
-            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, machine.getRenderData(), machineFace.getType(), machineFace.getFlow()));
+            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, model.getSprite(face, data, machineFace.getType(), machineFace.getFlow()));
         }
     }
 
@@ -741,17 +744,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
             if (mouseIn(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
-                if (!this.menu.machine.isDisabled()) {
-                    MachineStatus status = this.menu.state.getStatus();
-                    if (status != null) {
-                        lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(status.getText()));
-                    }
-                    lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
-                    this.appendEnergyTooltip(lines);
-                } else {
-                    lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(Component.translatable("ui.machinelib.machine.redstone_activation.status.disabled").withStyle(ChatFormatting.RED)));
-                    lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
-                }
+                lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(this.menu.state.getStatusText(this.menu.configuration.getRedstoneActivation())));
+                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
+                this.appendEnergyTooltip(lines);
                 this.setTooltipForNextRenderPass(Lists.transform(lines, Component::getVisualOrderText));
             }
         }
@@ -931,7 +926,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     private void modifyFace(int button, BlockFace face) {
-        if (this.menu.machine.isFaceLocked(face)) return;
+        if (this.menu.isFaceLocked(face)) return;
         if (button == 0) {
             cycleFace(face, Screen.hasShiftDown(), Screen.hasControlDown());
         }
