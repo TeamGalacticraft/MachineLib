@@ -34,7 +34,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -46,18 +45,14 @@ import java.util.function.Supplier;
  */
 public interface MachineType<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
     @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
-    static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull List<MachineStatus> statusDomain, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier) {
-        if (statusDomain.isEmpty()) throw new IllegalArgumentException("Status domain cannot be empty!");
-        return new MachineTypeImpl<>(block, blockEntityType, menuType, statusDomain, energySupplier, itemSupplier, MachineFluidStorage::empty);
+    static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier) {
+        return new MachineTypeImpl<>(block, blockEntityType, menuType, energySupplier, itemSupplier, MachineFluidStorage::empty);
     }
 
     @Contract(value = "_, _, _, _, _, _, _ -> new", pure = true)
-    static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull List<MachineStatus> statusDomain,  @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier, @NotNull Supplier<MachineFluidStorage> fluidSupplier) {
-        if (statusDomain.isEmpty()) throw new IllegalArgumentException("Status domain cannot be empty!");
-        return new MachineTypeImpl<>(block, blockEntityType, menuType, statusDomain,  energySupplier, itemSupplier, fluidSupplier);
+    static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType,  @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier, @NotNull Supplier<MachineFluidStorage> fluidSupplier) {
+        return new MachineTypeImpl<>(block, blockEntityType, menuType,  energySupplier, itemSupplier, fluidSupplier);
     }
-
-    @NotNull List<MachineStatus> statusDomain();
 
     @NotNull MachineEnergyStorage createEnergyStorage();
 

@@ -69,7 +69,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -211,7 +210,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
         this.name = name;
 
         this.configuration = MachineConfiguration.create();
-        this.state = MachineState.create(this.type);
+        this.state = MachineState.create();
 
         this.energyStorage = type.createEnergyStorage();
         this.energyStorage.setListener(this::setChanged);

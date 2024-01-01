@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
@@ -34,31 +33,23 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 public class MachineTypeImpl<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> implements MachineType<Machine, Menu> {
     private final @NotNull Block block;
     private final @NotNull BlockEntityType<Machine> blockEntityType;
     private final @NotNull MenuType<Menu> menuType;
-    private final List<MachineStatus> statusDomain;
     private final @NotNull Supplier<MachineEnergyStorage> energySupplier;
     private final @NotNull Supplier<MachineItemStorage> itemSupplier;
     private final @NotNull Supplier<MachineFluidStorage> fluidSupplier;
 
-    public MachineTypeImpl(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull List<MachineStatus> statusDomain, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier, @NotNull Supplier<MachineFluidStorage> fluidSupplier) {
+    public MachineTypeImpl(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier, @NotNull Supplier<MachineFluidStorage> fluidSupplier) {
         this.block = block;
         this.blockEntityType = blockEntityType;
         this.menuType = menuType;
-        this.statusDomain = statusDomain;
         this.energySupplier = energySupplier;
         this.itemSupplier = itemSupplier;
         this.fluidSupplier = fluidSupplier;
-    }
-
-    @Override
-    public @NotNull List<MachineStatus> statusDomain() {
-        return this.statusDomain;
     }
 
     @Override

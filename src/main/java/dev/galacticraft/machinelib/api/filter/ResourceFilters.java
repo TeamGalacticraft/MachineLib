@@ -52,7 +52,7 @@ public final class ResourceFilters {
         if (item == null) return false;
         EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
         if (storage == null || !storage.supportsExtraction()) return false;
-        try (Transaction test = Transaction.openNested(Transaction.getCurrentUnsafe())) { // SAFE: the transaction is immediately cancelled
+        try (Transaction test = Transaction.openNested(Transaction.getCurrentUnsafe())) { // SAFE: the transaction is immediately canceled
             if (storage.extract(1, test) == 1) return true;
         }
         return false;
@@ -65,7 +65,7 @@ public final class ResourceFilters {
         if (item == null) return false;
         EnergyStorage storage = ContainerItemContext.withConstant(ItemVariant.of(item, tag), 1).find(EnergyStorage.ITEM);
         if (storage == null || !storage.supportsInsertion()) return false;
-        try (Transaction test = Transaction.openNested(Transaction.getCurrentUnsafe())) { // SAFE: the transaction is immediately cancelled
+        try (Transaction test = Transaction.openNested(Transaction.getCurrentUnsafe())) { // SAFE: the transaction is immediately canceled
             if (storage.insert(1, test) == 1) return true;
         }
         return false;

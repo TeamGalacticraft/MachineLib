@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.impl.menu.sync;
 
 import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +31,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class MachineStateSyncHandler implements MenuSyncHandler {
     private final MachineState state;
-    private final MachineType<?, ?> type;
-
     private @Nullable MachineStatus status;
     private boolean powered = false;
 
-    public MachineStateSyncHandler(MachineState state, MachineType<?, ?> type) {
+    public MachineStateSyncHandler(MachineState state) {
         this.state = state;
-        this.type = type;
     }
 
     @Override
@@ -52,22 +48,13 @@ public class MachineStateSyncHandler implements MenuSyncHandler {
         this.status = this.state.getStatus();
         this.powered = this.state.isPowered();
 
-        if (this.status == null) {
-            buf.writeByte(-1);
-        } else {
-            buf.writeByte(this.type.statusDomain().indexOf(this.status));
-        }
+        MachineStatus.writePacket(this.status, buf);
         buf.writeBoolean(this.powered);
     }
 
     @Override
     public void read(@NotNull FriendlyByteBuf buf) {
-        byte b = buf.readByte();
-        if (b == -1) {
-            this.status = null;
-        } else {
-            this.status = this.type.statusDomain().get(b);
-        }
+        this.status = MachineStatus.readPacket(buf);
         this.powered = buf.readBoolean();
 
         this.state.setStatus(this.status);

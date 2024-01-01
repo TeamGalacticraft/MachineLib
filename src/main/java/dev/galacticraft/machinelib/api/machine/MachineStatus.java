@@ -29,6 +29,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the status of a machine.
@@ -75,21 +76,26 @@ public interface MachineStatus {
 
     /**
      * Serializes this machine status to a packet, based on the machine type
-     * @param type the type of machine in use
      * @param buf the buffer to write to
      */
-    default void writePacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
-        buf.writeByte(type.statusDomain().indexOf(this));
+    static void writePacket(@Nullable MachineStatus status, @NotNull FriendlyByteBuf buf) {
+        if (status == null) {
+            buf.writeByte(-1);
+            return;
+        }
+        buf.writeByte(status.getType().ordinal());
+        buf.writeComponent(status.getText());
     }
 
     /**
      * Deserializes this machine status form a packet, based on the machine in use
-     * @param type the type of machine in sue
      * @param buf the buffer to write to
      * @return the deserialized machine status
      */
-    static @NotNull MachineStatus readPacket(MachineType<?, ?> type, @NotNull FriendlyByteBuf buf) {
-        return type.statusDomain().get(buf.readByte());
+    static @Nullable MachineStatus readPacket(@NotNull FriendlyByteBuf buf) {
+        byte b = buf.readByte();
+        if (b == -1) return null;
+        return MachineStatus.create(buf.readComponent(), Type.values()[b]);
     }
 
     /**

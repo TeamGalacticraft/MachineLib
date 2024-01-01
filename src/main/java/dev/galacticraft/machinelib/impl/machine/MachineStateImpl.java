@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -37,12 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MachineStateImpl implements MachineState {
-    private final @NotNull MachineType<?, ?> type;
     private @Nullable MachineStatus status = null;
     private boolean powered = false;
 
-    public MachineStateImpl(@NotNull MachineType<?, ?> type) {
-        this.type = type;
+    public MachineStateImpl() {
     }
 
     @Override
@@ -68,44 +65,24 @@ public class MachineStateImpl implements MachineState {
     @Override
     public @NotNull CompoundTag createTag() {
         CompoundTag tag = new CompoundTag();
-        if (this.status == null) {
-            tag.putByte(Constant.Nbt.STATUS, (byte) -1);
-        } else {
-            tag.putByte(Constant.Nbt.STATUS, (byte) this.type.statusDomain().indexOf(this.status));
-        }
         tag.putBoolean(Constant.Nbt.POWERED, this.powered);
         return tag;
     }
 
     @Override
     public void writePacket(@NotNull FriendlyByteBuf buf) {
-        if (this.status == null) {
-            buf.writeByte(-1);
-        } else {
-            buf.writeByte(this.type.statusDomain().indexOf(this.status));
-        }
+        MachineStatus.writePacket(this.status, buf);
         buf.writeBoolean(this.powered);
     }
 
     @Override
     public void readTag(@NotNull CompoundTag tag) {
-        byte b = tag.getByte(Constant.Nbt.STATUS);
-        if (b == -1) {
-            this.status = null;
-        } else {
-            this.status = this.type.statusDomain().get(b);
-        }
         this.powered = tag.getBoolean(Constant.Nbt.POWERED);
     }
 
     @Override
     public void readPacket(@NotNull FriendlyByteBuf buf) {
-        byte b = buf.readByte();
-        if (b == -1) {
-            this.status = null;
-        } else {
-            this.status = this.type.statusDomain().get(b);
-        }
+        this.status = MachineStatus.readPacket(buf);
         this.powered = buf.readBoolean();
     }
 
@@ -121,6 +98,6 @@ public class MachineStateImpl implements MachineState {
 
     @Override
     public @Nullable MenuSyncHandler createSyncHandler() {
-        return new MachineStateSyncHandler(this, this.type);
+        return new MachineStateSyncHandler(this);
     }
 }

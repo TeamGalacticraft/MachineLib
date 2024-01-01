@@ -39,11 +39,10 @@ public interface MachineState extends MenuSynchronizable, Deserializable<Compoun
     /**
      * Creates a new state instance of the specified type.
      *
-     * @param type the type of machine
      * @return a new MachineState instance
      */
-    static @NotNull MachineState create(@NotNull MachineType<?, ?> type) {
-        return new MachineStateImpl(type);
+    static @NotNull MachineState create() {
+        return new MachineStateImpl();
     }
 
     /**

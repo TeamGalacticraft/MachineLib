@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public enum InputType {
     INPUT(0x009001, true, false, true), // external: insertion only, players: insertion and extraction allowed
     OUTPUT(0xa7071e, false, true, false), // external: extraction only, players: extraction only
-    RECIPE_OUTPUT(0xa7071e, false, true, false), // external: extraction only, players: extraction only. For use with recipe creating machines
+    RECIPE_OUTPUT(0xa7071e, false, true, false), // external: extraction only, players: extraction only - for use with recipe-based creating machines
     STORAGE(0x008d90, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
     TRANSFER(0x908400, false, false, true); // external: immutable, players: insertion and extraction allowed - e.g. battery slots
 
