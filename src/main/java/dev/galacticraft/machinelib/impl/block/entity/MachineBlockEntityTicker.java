@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Team Galacticraft
+ * Copyright (c) 2021-2024 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.impl.block.entity;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;

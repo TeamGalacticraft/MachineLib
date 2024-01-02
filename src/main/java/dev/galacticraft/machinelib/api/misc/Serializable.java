@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Team Galacticraft
+ * Copyright (c) 2021-2024 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 package dev.galacticraft.machinelib.api.misc;
 
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 
 /**
