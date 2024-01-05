@@ -31,11 +31,17 @@ import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class MachineTypeImpl<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> implements MachineType<Machine, Menu> {
+    @ApiStatus.Internal
+    public static final List<MachineType<?, ?>> MACHINE_TYPES = new ArrayList<>();
+
     private final @NotNull Block block;
     private final @NotNull BlockEntityType<Machine> blockEntityType;
     private final @NotNull MenuType<Menu> menuType;
@@ -50,6 +56,8 @@ public class MachineTypeImpl<Machine extends MachineBlockEntity, Menu extends Ma
         this.energySupplier = energySupplier;
         this.itemSupplier = itemSupplier;
         this.fluidSupplier = fluidSupplier;
+
+        MACHINE_TYPES.add(this);
     }
 
     @Override

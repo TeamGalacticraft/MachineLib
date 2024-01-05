@@ -37,7 +37,6 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -208,7 +207,7 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
         // TODO: block entity can be null when loading the world, I don't think that's suppose to happen
-        if (blockView instanceof RenderAttachedBlockView renderAttachedBlockView && renderAttachedBlockView.getBlockEntityRenderAttachment(pos) instanceof MachineRenderData renderData) {
+        if (blockView.getBlockEntityRenderData(pos) instanceof MachineRenderData renderData) {
             context.pushTransform(quad -> transform(renderData, state, quad));
             for (Direction direction : Constant.Cache.DIRECTIONS) {
                 context.getEmitter().square(direction, 0, 0, 1, 1, 0).emit();

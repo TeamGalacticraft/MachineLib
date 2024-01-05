@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "machinelib_testmod:models/block/melter"
+      "model": "machinelib_testmod:machine/melter"
     }
   }
 }

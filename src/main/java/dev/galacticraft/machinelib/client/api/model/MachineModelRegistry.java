@@ -42,6 +42,7 @@ import java.util.function.Function;
  * A registry for {@link MachineBakedModel} sprite providers.
  */
 public interface MachineModelRegistry {
+    String MARKER = "machinelib:generate";
     Map<ResourceLocation, SpriteProviderFactory> FACTORIES = new HashMap<>();
 
     /**

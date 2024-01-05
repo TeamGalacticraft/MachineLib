@@ -44,12 +44,12 @@ import java.util.function.Supplier;
  * @param <Menu> The type of menu associated with this machine type.
  */
 public interface MachineType<Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> {
-    @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
+    @Contract(value = "_, _, _, _, _ -> new", pure = true)
     static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType, @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier) {
         return new MachineTypeImpl<>(block, blockEntityType, menuType, energySupplier, itemSupplier, MachineFluidStorage::empty);
     }
 
-    @Contract(value = "_, _, _, _, _, _, _ -> new", pure = true)
+    @Contract(value = "_, _, _, _, _, _ -> new", pure = true)
     static <Machine extends MachineBlockEntity, Menu extends MachineMenu<Machine>> @NotNull MachineType<Machine, Menu> create(@NotNull Block block, @NotNull BlockEntityType<Machine> blockEntityType, @NotNull MenuType<Menu> menuType,  @NotNull Supplier<MachineEnergyStorage> energySupplier, @NotNull Supplier<MachineItemStorage> itemSupplier, @NotNull Supplier<MachineFluidStorage> fluidSupplier) {
         return new MachineTypeImpl<>(block, blockEntityType, menuType,  energySupplier, itemSupplier, fluidSupplier);
     }
