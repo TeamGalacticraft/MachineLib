@@ -233,7 +233,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * Appends additional information to the capacitor's tooltip.
      *
-     * @param list The list to append to.
+     * @param lines The list to append to.
      */
     public void appendEnergyTooltip(List<Component> lines) {
         lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(this.menu.state.getStatusText(this.menu.configuration.getRedstoneMode())));
