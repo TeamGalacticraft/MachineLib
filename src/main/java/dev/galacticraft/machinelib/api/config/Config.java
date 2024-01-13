@@ -36,8 +36,6 @@ public interface Config {
 
     long bucketBreakpoint();
 
-    long megaGjBreakpoint();
-
     void copyFrom(Config config);
 
     @ApiStatus.Internal

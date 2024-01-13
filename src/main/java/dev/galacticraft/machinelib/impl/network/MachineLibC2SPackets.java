@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.impl.network;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.InputType;
@@ -130,12 +130,12 @@ public final class MachineLibC2SPackets {
         });
 
         C2SPacketReceiver.register(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
-            RedstoneActivation redstoneActivation = RedstoneActivation.values()[buf.readByte()];
+            RedstoneMode redstoneMode = RedstoneMode.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.containerMenu instanceof MachineMenu<?> menu) {
                     MachineBlockEntity machine = menu.machine;
                     if (machine.getSecurity().hasAccess(player)) {
-                        machine.setRedstone(redstoneActivation);
+                        machine.setRedstone(redstoneMode);
                         machine.setChanged();
                     }
                 }

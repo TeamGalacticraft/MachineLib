@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.impl.Constant;
@@ -41,7 +41,7 @@ import java.util.Objects;
 public final class MachineConfigurationImpl implements MachineConfiguration {
     private final MachineIOConfig configuration = MachineIOConfig.create();
     private final SecuritySettings security = SecuritySettings.create();
-    private @NotNull RedstoneActivation redstone = RedstoneActivation.IGNORE;
+    private @NotNull RedstoneMode redstone = RedstoneMode.IGNORE;
 
     public MachineConfigurationImpl() {
     }
@@ -57,12 +57,12 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     }
 
     @Override
-    public @NotNull RedstoneActivation getRedstoneActivation() {
+    public @NotNull RedstoneMode getRedstoneMode() {
         return this.redstone;
     }
 
     @Override
-    public void setRedstoneActivation(@NotNull RedstoneActivation redstone) {
+    public void setRedstoneMode(@NotNull RedstoneMode redstone) {
         this.redstone = redstone;
     }
 
@@ -71,7 +71,7 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         CompoundTag tag = new CompoundTag();
         tag.put(Constant.Nbt.SECURITY, this.security.createTag());
         tag.put(Constant.Nbt.CONFIGURATION, this.configuration.createTag());
-        tag.put(Constant.Nbt.REDSTONE_ACTIVATION, this.redstone.createTag());
+        tag.put(Constant.Nbt.REDSTONE_MODE, this.redstone.createTag());
         return tag;
     }
 
@@ -80,8 +80,8 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
         this.security.readTag(tag.getCompound(Constant.Nbt.SECURITY));
         this.configuration.readTag(tag.getCompound(Constant.Nbt.CONFIGURATION));
 
-        if (tag.contains(Constant.Nbt.REDSTONE_ACTIVATION)) {
-            this.redstone = RedstoneActivation.readTag(Objects.requireNonNull((ByteTag) tag.get(Constant.Nbt.REDSTONE_ACTIVATION)));
+        if (tag.contains(Constant.Nbt.REDSTONE_MODE)) {
+            this.redstone = RedstoneMode.readTag(Objects.requireNonNull((ByteTag) tag.get(Constant.Nbt.REDSTONE_MODE)));
         }
     }
 
@@ -96,7 +96,7 @@ public final class MachineConfigurationImpl implements MachineConfiguration {
     public void readPacket(@NotNull FriendlyByteBuf buf) {
         this.security.readPacket(buf);
         this.configuration.readPacket(buf);
-        this.redstone = RedstoneActivation.readPacket(buf);
+        this.redstone = RedstoneMode.readPacket(buf);
     }
 
     @Override

@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSynchronizable;
 import dev.galacticraft.machinelib.api.misc.Deserializable;
 import dev.galacticraft.machinelib.impl.machine.MachineStateImpl;
@@ -57,7 +57,7 @@ public interface MachineState extends MenuSynchronizable, Deserializable<Compoun
      *
      * @return the current status of the machine.
      */
-    @NotNull Component getStatusText(@NotNull RedstoneActivation activation);
+    @NotNull Component getStatusText(@NotNull RedstoneMode activation);
 
     /**
      * Sets the status of the machine.

@@ -29,7 +29,7 @@ import dev.galacticraft.machinelib.api.machine.MachineStatus;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOConfig;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.misc.AdjacentBlockApiCache;
@@ -106,7 +106,7 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
 
     /**
      * The configuration for this machine.
-     * This is used to store the {@link #getRedstoneActivation() redstone activation}, {@link #getIOConfig() I/O configuration},
+     * This is used to store the {@link #getRedstoneMode() redstone mode}, {@link #getIOConfig() I/O configuration},
      * and {@link #getSecurity() security} settings for this machine.
      *
      * @see MachineConfiguration
@@ -284,14 +284,14 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     }
 
     /**
-     * Sets the redstone activation mode of this machine.
+     * Sets the redstone mode mode of this machine.
      *
-     * @param redstone the redstone activation mode to use.
-     * @see #getRedstoneActivation()
+     * @param redstone the redstone mode mode to use.
+     * @see #getRedstoneMode()
      */
     @Contract(mutates = "this")
-    public void setRedstone(@NotNull RedstoneActivation redstone) {
-        this.configuration.setRedstoneActivation(redstone);
+    public void setRedstone(@NotNull RedstoneMode redstone) {
+        this.configuration.setRedstoneMode(redstone);
     }
 
     /**
@@ -344,12 +344,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Dictates how this machine should react to redstone.
      *
      * @return how the machine reacts when it interacts with redstone.
-     * @see RedstoneActivation
-     * @see #setRedstone(RedstoneActivation)
+     * @see RedstoneMode
+     * @see #setRedstone(RedstoneMode)
      */
     @Contract(pure = true)
-    public final @NotNull RedstoneActivation getRedstoneActivation() {
-        return this.configuration.getRedstoneActivation();
+    public final @NotNull RedstoneMode getRedstoneMode() {
+        return this.configuration.getRedstoneMode();
     }
 
     /**
@@ -396,11 +396,11 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
      * Returns whether the current machine is enabled.
      *
      * @return whether the current machine is enabled.
-     * @see RedstoneActivation
-     * @see #getRedstoneActivation()
+     * @see RedstoneMode
+     * @see #getRedstoneMode()
      */
     public boolean isDisabled() {
-        return !this.getRedstoneActivation().isActive(this.state.isPowered());
+        return !this.getRedstoneMode().isActive(this.state.isPowered());
     }
 
     /**

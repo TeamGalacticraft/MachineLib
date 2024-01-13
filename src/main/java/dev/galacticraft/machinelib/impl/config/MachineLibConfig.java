@@ -43,8 +43,6 @@ public class MachineLibConfig implements Config {
     public boolean enableColouredVanillaFluidNames = true;
     @Expose
     public long bucketBreakpoint = FluidConstants.BUCKET * 100;
-    @Expose
-    public long megaGjBreakpoint = 1_000_000;
 
     @Override
     public boolean enableColouredVanillaFluidNames() {
@@ -57,15 +55,9 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public long megaGjBreakpoint() {
-        return this.megaGjBreakpoint;
-    }
-
-    @Override
     public void copyFrom(Config config) {
         this.enableColouredVanillaFluidNames = config.enableColouredVanillaFluidNames();
         this.bucketBreakpoint = config.bucketBreakpoint();
-        this.megaGjBreakpoint = config.megaGjBreakpoint();
     }
 
     @Override

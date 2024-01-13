@@ -30,7 +30,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineIOFace;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
@@ -40,8 +40,8 @@ import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.api.render.MachineRenderData;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
+import dev.galacticraft.machinelib.client.api.util.GraphicsUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
-import dev.galacticraft.machinelib.client.impl.util.GraphicsUtil;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
 import io.netty.buffer.ByteBufAllocator;
@@ -59,7 +59,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -236,7 +235,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      *
      * @param list The list to append to.
      */
-    public void appendEnergyTooltip(List<Component> list) {
+    public void appendEnergyTooltip(List<Component> lines) {
+        lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(this.menu.state.getStatusText(this.menu.configuration.getRedstoneMode())));
+        lines.add(DisplayUtil.createEnergyTooltip(this.menu.energyStorage.getAmount(), this.menu.energyStorage.getCapacity()));
     }
 
     /**
@@ -267,20 +268,20 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         if (Tab.REDSTONE.isOpen()) {
             poseStack.pushPose();
             poseStack.translate(-PANEL_WIDTH, SPACING, 0);
-            this.drawButton(graphics, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneActivation() == RedstoneActivation.IGNORE);
-            this.drawButton(graphics, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneActivation() == RedstoneActivation.LOW);
-            this.drawButton(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneActivation() == RedstoneActivation.HIGH);
+            this.drawButton(graphics, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneMode() == RedstoneMode.IGNORE);
+            this.drawButton(graphics, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneMode() == RedstoneMode.LOW);
+            this.drawButton(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.configuration.getRedstoneMode() == RedstoneMode.HIGH);
             graphics.renderFakeItem(REDSTONE, PANEL_ICON_X, PANEL_ICON_Y);
             graphics.renderFakeItem(GUNPOWDER, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y);
             graphics.renderFakeItem(UNLIT_TORCH, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2);
             graphics.renderFakeItem(REDSTONE_TORCH, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2);
 
-            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION)
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_MODE)
                     .setStyle(Constant.Text.GRAY_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATE,
-                    menu.configuration.getRedstoneActivation().getName()).setStyle(Constant.Text.GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
+                    menu.configuration.getRedstoneMode().getName()).setStyle(Constant.Text.GRAY_STYLE), REDSTONE_STATE_TEXT_X, REDSTONE_STATE_TEXT_Y, 0xFFFFFFFF);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_STATUS,
-                            this.menu.configuration.getRedstoneActivation().isActive(this.menu.state.isPowered()) ?
+                            this.menu.configuration.getRedstoneMode().isActive(this.menu.state.isPowered()) ?
                                     Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVE).setStyle(Constant.Text.GREEN_STYLE)
                                     : Component.translatable(Constant.TranslationKey.REDSTONE_DISABLED).setStyle(Constant.Text.DARK_RED_STYLE))
                     .setStyle(Constant.Text.GRAY_STYLE), REDSTONE_STATUS_TEXT_X, REDSTONE_STATUS_TEXT_Y + this.font.lineHeight, 0xFFFFFFFF);
@@ -412,17 +413,17 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 return true;
             }
             if (mouseIn(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneActivation.IGNORE);
+                this.setRedstone(RedstoneMode.IGNORE);
                 this.playButtonSound();
                 return true;
             }
             if (mouseIn(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneActivation.LOW);
+                this.setRedstone(RedstoneMode.LOW);
                 this.playButtonSound();
                 return true;
             }
             if (mouseIn(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                this.setRedstone(RedstoneActivation.HIGH);
+                this.setRedstone(RedstoneMode.HIGH);
                 this.playButtonSound();
                 return true;
             }
@@ -551,8 +552,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      *
      * @param redstone The redstone mode to set.
      */
-    protected void setRedstone(@NotNull RedstoneActivation redstone) {
-        this.menu.configuration.setRedstoneActivation(redstone);
+    protected void setRedstone(@NotNull RedstoneMode redstone) {
+        this.menu.configuration.setRedstoneMode(redstone);
         PacketSender.c2s().send(Constant.id("redstone_config"), new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(1, 1).writeByte(redstone.ordinal())));
     }
 
@@ -571,19 +572,19 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseX += PANEL_WIDTH;
             mouseY -= SPACING;
             if (mouseIn(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                graphics.renderTooltip(this.font, RedstoneActivation.IGNORE.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneMode.IGNORE.getName(), mX, mY);
             }
             if (mouseIn(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                graphics.renderTooltip(this.font, RedstoneActivation.LOW.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneMode.LOW.getName(), mX, mY);
             }
             if (mouseIn(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                graphics.renderTooltip(this.font, RedstoneActivation.HIGH.getName(), mX, mY);
+                graphics.renderTooltip(this.font, RedstoneMode.HIGH.getName(), mX, mY);
             }
         } else {
             mouseX += TAB_WIDTH;
             mouseY -= SPACING;
             if (mouseIn(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION).setStyle(Constant.Text.RED_STYLE), mX, mY);
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_MODE).setStyle(Constant.Text.RED_STYLE), mX, mY);
             }
         }
         mouseX = mX - this.leftPos;
@@ -743,8 +744,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
             if (mouseIn(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
-                lines.add(Component.translatable(Constant.TranslationKey.STATUS).setStyle(Constant.Text.GRAY_STYLE).append(this.menu.state.getStatusText(this.menu.configuration.getRedstoneActivation())));
-                lines.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatEnergy(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.GRAY_STYLE).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)));
                 this.appendEnergyTooltip(lines);
                 this.setTooltipForNextRenderPass(Lists.transform(lines, Component::getVisualOrderText));
             }

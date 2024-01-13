@@ -23,58 +23,64 @@
 package dev.galacticraft.machinelib.client.api.util;
 
 import com.google.common.collect.ImmutableList;
+import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
 
 public final class DisplayUtil {
-    private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat();
-    private static final char DECIMAL_SEPARATOR;
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance();
 
     static {
-        DECIMAL_SEPARATOR = NUMBER_FORMAT.getDecimalFormatSymbols().getDecimalSeparator();
+        if (NUMBER_FORMAT instanceof DecimalFormat fmt) {
+            fmt.setRoundingMode(RoundingMode.FLOOR);
+        }
         NUMBER_FORMAT.setGroupingUsed(true);
     }
 
     private DisplayUtil() {}
 
     public static String truncateDecimal(double d, int places) { //fixme R -> L languages?
-        if (places == 0) return NUMBER_FORMAT.format(Math.round(d));
-        String s = NUMBER_FORMAT.format(d);
-        int dot = s.indexOf(DECIMAL_SEPARATOR);
-        if (dot == -1) {
-            return s;
-        }
-        return s.substring(0, Math.min(s.length(), dot + 1 + places));
+        NUMBER_FORMAT.setMaximumFractionDigits(places);
+        return NUMBER_FORMAT.format(d);
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public static @NotNull MutableComponent formatNumber(long amount) {
+        return Component.literal(NUMBER_FORMAT.format(amount));
     }
 
     @Contract(pure = true, value = "_ -> new")
     public static @NotNull MutableComponent formatEnergy(long amount) {
-        if (amount >= MachineLib.CONFIG.megaGjBreakpoint()) {
-            return Component.literal(truncateDecimal(amount / 1_000_000.0, 3) + " MgJ");
-        } else {
-            return Component.literal(NUMBER_FORMAT.format(amount) + " gJ");
-        }
+        return formatNumber(amount).append(Component.translatable(Constant.TranslationKey.UNIT_GJ));
     }
 
     @Contract(pure = true, value = "_, _ -> new")
     public static @NotNull MutableComponent formatFluid(long amount, boolean forceDetail) {
         return forceDetail || amount < MachineLib.CONFIG.bucketBreakpoint() ?
-                Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0) + "mB")
-                : Component.literal(truncateDecimal((double) amount / (double) FluidConstants.BUCKET, 2) + "B");
+                Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET))
+                : Component.literal(truncateDecimal((double) amount / (double) FluidConstants.BUCKET, 2)).append(Component.translatable(Constant.TranslationKey.UNIT_BUCKET));
     }
 
     public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull Component text, int length) {
@@ -108,5 +114,23 @@ public final class DisplayUtil {
     public static int colorScale(double stored, double capacity) {
         double scale = 1.0 - (stored < 0 ? 0.0 : (capacity == 0 ? 1.0 : (1.0 - stored / capacity)));
         return Mth.hsvToRgb((float) ((120.0 / 360.0) * scale), 1.0f, 0.90f);
+    }
+
+    public static void createFluidTooltip(@NotNull List<Component> tooltip, @Nullable Fluid fluid, @Nullable CompoundTag tag, long amount, long capacity) {
+        if (amount == 0) {
+            tooltip.add(Component.translatable(Constant.TranslationKey.TANK_EMPTY).setStyle(Constant.Text.GRAY_STYLE));
+            return;
+        }
+
+        tooltip.add(Component.translatable(Constant.TranslationKey.TANK_CONTENTS).setStyle(Constant.Text.GRAY_STYLE).append(FluidVariantAttributes.getName(FluidVariant.of(fluid, tag))));
+        tooltip.add(Component.translatable(Constant.TranslationKey.TANK_AMOUNT).setStyle(Constant.Text.GRAY_STYLE).append(DisplayUtil.formatFluid(amount, Screen.hasShiftDown()).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
+
+        if (capacity != -1) {
+            tooltip.add(Component.translatable(Constant.TranslationKey.TANK_CAPACITY).setStyle(Constant.Text.GRAY_STYLE).append(DisplayUtil.formatFluid(capacity, Screen.hasShiftDown()).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
+        }
+    }
+
+    public static MutableComponent createEnergyTooltip(long amount, long capacity) {
+        return Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, DisplayUtil.formatNumber(amount).setStyle(Style.EMPTY.withColor(DisplayUtil.colorScale(amount, capacity))), DisplayUtil.formatEnergy(capacity).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
     }
 }

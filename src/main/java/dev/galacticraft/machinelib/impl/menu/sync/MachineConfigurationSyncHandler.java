@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.impl.menu.sync;
 
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
@@ -33,19 +33,19 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
 
     private final MenuSyncHandler ioConfig;
     private final MenuSyncHandler security;
-    private RedstoneActivation redstone;
+    private RedstoneMode redstone;
 
     public MachineConfigurationSyncHandler(MachineConfiguration configuration) {
         this.configuration = configuration;
 
         this.ioConfig = configuration.getIOConfiguration().createSyncHandler();
         this.security = configuration.getSecurity().createSyncHandler();
-        this.redstone = configuration.getRedstoneActivation();
+        this.redstone = configuration.getRedstoneMode();
     }
 
     @Override
     public boolean needsSyncing() {
-        return this.ioConfig.needsSyncing() || this.security.needsSyncing() || this.redstone != configuration.getRedstoneActivation();
+        return this.ioConfig.needsSyncing() || this.security.needsSyncing() || this.redstone != configuration.getRedstoneMode();
     }
 
     @Override
@@ -53,7 +53,7 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
         byte ref = 0b000;
         if (this.ioConfig.needsSyncing()) ref |= 0b001;
         if (this.security.needsSyncing()) ref |= 0b010;
-        if (this.redstone != this.configuration.getRedstoneActivation()) ref |= 0b100;
+        if (this.redstone != this.configuration.getRedstoneMode()) ref |= 0b100;
 
         buf.writeByte(ref);
 
@@ -64,9 +64,9 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
             this.security.sync(buf);
         }
 
-        if (this.redstone != this.configuration.getRedstoneActivation()) {
-            this.redstone = this.configuration.getRedstoneActivation();
-            buf.writeByte(this.configuration.getRedstoneActivation().ordinal());
+        if (this.redstone != this.configuration.getRedstoneMode()) {
+            this.redstone = this.configuration.getRedstoneMode();
+            buf.writeByte(this.configuration.getRedstoneMode().ordinal());
         }
     }
 
@@ -80,8 +80,8 @@ public class MachineConfigurationSyncHandler implements MenuSyncHandler {
             this.security.read(buf);
         }
         if ((ref & 0b100) != 0) {
-            this.redstone = RedstoneActivation.VALUES[buf.readByte()];
-            this.configuration.setRedstoneActivation(this.redstone);
+            this.redstone = RedstoneMode.VALUES[buf.readByte()];
+            this.configuration.setRedstoneMode(this.redstone);
         }
     }
 }

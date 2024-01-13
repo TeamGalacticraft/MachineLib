@@ -44,6 +44,30 @@ public final class StorageHelper {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long calculateCapacity(Variant variant, @NotNull S storage, @Nullable TransactionContext context) {
+        if (variant.isBlank()) return 0;
+
+        long capacity = 0;
+        for (StorageView<Variant> view : storage) {
+            if (variant.equals(view.getResource())) {
+                capacity += view.getCapacity();
+            }
+        }
+        return capacity;
+    }
+
+    public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long calculateAmount(Variant variant, @NotNull S storage, @Nullable TransactionContext context) {
+        if (variant.isBlank()) return 0;
+
+        long amount = 0;
+        for (StorageView<Variant> view : storage) {
+            if (variant.equals(view.getResource())) {
+                amount += view.getAmount();
+            }
+        }
+        return amount;
+    }
+
     public static <Resource, Variant extends TransferVariant<Resource>, S extends Storage<Variant>> long move(Variant variant, @Nullable StorageAccess<Resource> from, @Nullable S to, long maxAmount, @Nullable TransactionContext context) {
         if (from == null || to == null || variant.isBlank() || maxAmount == 0) return 0;
         StoragePreconditions.notNegative(maxAmount);
@@ -193,4 +217,6 @@ public final class StorageHelper {
         }
         return changed;
     }
+
+    public record StorageContents(long amount, long capacity) {}
 }

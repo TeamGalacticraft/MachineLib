@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.api.block;
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneActivation;
+import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
@@ -231,8 +231,8 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 }
             }
 
-            if (nbt.contains(Constant.Nbt.REDSTONE_ACTIVATION, Tag.TAG_BYTE)) {
-                tooltip.add(Component.translatable(Constant.TranslationKey.REDSTONE_ACTIVATION, RedstoneActivation.readTag((ByteTag) Objects.requireNonNull(nbt.get(Constant.Nbt.REDSTONE_ACTIVATION))).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
+            if (nbt.contains(Constant.Nbt.REDSTONE_MODE, Tag.TAG_BYTE)) {
+                tooltip.add(Component.translatable(Constant.TranslationKey.REDSTONE_MODE, RedstoneMode.readTag((ByteTag) Objects.requireNonNull(nbt.get(Constant.Nbt.REDSTONE_MODE))).getName()).setStyle(Constant.Text.DARK_RED_STYLE));
             }
         }
     }

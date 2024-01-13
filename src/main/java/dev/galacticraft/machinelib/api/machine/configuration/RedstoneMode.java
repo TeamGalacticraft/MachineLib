@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Dictates how a machine behaves when it interacts with redstone.
  */
-public enum RedstoneActivation implements StringRepresentable {
+public enum RedstoneMode implements StringRepresentable {
     /**
      * Ignores redstone entirely (always running).
      */
@@ -49,20 +49,20 @@ public enum RedstoneActivation implements StringRepresentable {
      */
     HIGH(Component.translatable(Constant.TranslationKey.HIGH_REDSTONE).setStyle(Constant.Text.RED_STYLE));
 
-    public static final RedstoneActivation[] VALUES = RedstoneActivation.values();
+    public static final RedstoneMode[] VALUES = RedstoneMode.values();
 
     /**
-     * The text of the redstone activation state.
+     * The text of the redstone mode state.
      */
     private final @NotNull Component name;
 
     /**
-     * Constructs a redstone activation type with the given text.
+     * Constructs a redstone mode type with the given text.
      *
      * @param name the name of the interaction.
      */
     @Contract(pure = true)
-    RedstoneActivation(@NotNull Component name) {
+    RedstoneMode(@NotNull Component name) {
         this.name = name;
     }
 
@@ -75,30 +75,30 @@ public enum RedstoneActivation implements StringRepresentable {
     }
 
     /**
-     * Deserializes an activation state from NBT.
+     * Deserializes an redstone mode from NBT.
      *
      * @param tag the NBT.
-     * @return the activation state.
+     * @return the redstone mode.
      * @see #createTag()
      */
-    public static @NotNull RedstoneActivation readTag(@NotNull ByteTag tag) {
+    public static @NotNull RedstoneMode readTag(@NotNull ByteTag tag) {
         return VALUES[tag.getAsByte()];
     }
 
     /**
-     * Deserializes an activation state from a packet.
+     * Deserializes an redstone mode from a packet.
      * @param buf the buffer to read from
-     * @return the activation state
+     * @return the redstone mode
      * @see #writePacket(FriendlyByteBuf)
      */
-    public static @NotNull RedstoneActivation readPacket(@NotNull FriendlyByteBuf buf) {
+    public static @NotNull RedstoneMode readPacket(@NotNull FriendlyByteBuf buf) {
         return VALUES[buf.readByte()];
     }
 
     /**
-     * Returns the name of the redstone activation state.
+     * Returns the name of the redstone mode state.
      *
-     * @return The text of the redstone activation state.
+     * @return The text of the redstone mode state.
      */
     @Contract(pure = true)
     public @NotNull Component getName() {
@@ -117,7 +117,7 @@ public enum RedstoneActivation implements StringRepresentable {
 
     /**
      * Serializes this state as a NBT.
-     * @return this activation state as a tag.
+     * @return this redstone mode as a tag.
      * @see #readTag(ByteTag)
      */
     public @NotNull ByteTag createTag() {

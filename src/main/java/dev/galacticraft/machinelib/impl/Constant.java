@@ -67,7 +67,7 @@ public interface Constant {
         String SECURITY = "Security";
         String CONFIGURATION = "Configuration";
         String ENERGY = "Energy";
-        String REDSTONE_ACTIVATION = "RedstoneActivation";
+        String REDSTONE_MODE = "RedstoneMode";
         String MAX_PROGRESS = "MaxProgress";
         String RESOURCE = "Resource";
         String FLOW = "Flow";
@@ -159,14 +159,12 @@ public interface Constant {
         String PRESS_SHIFT = "tooltip.machinelib.press_shift";
 
         String STATUS = "ui.machinelib.machine.status";
-        String STATUS_INVALID = "status.machinelib.invalid";
         String STATUS_NOT_ENOUGH_ENERGY = "status.machinelib.not_enough_energy";
         String STATUS_INVALID_RECIPE = "status.machinelib.invalid_recipe";
         String STATUS_OUTPUT_FULL = "status.machinelib.output_full";
         String STATUS_CAPACITOR_FULL = "status.machinelib.capacitor_full";
         String STATUS_ACTIVE = "status.machinelib.active";
         String STATUS_IDLE = "status.machinelib.idle";
-        String STATUS_OFF = "status.machinelib.off";
 
         String CURRENT_ENERGY = "ui.machinelib.machine.current_energy";
 
@@ -178,18 +176,16 @@ public interface Constant {
         String ACCESS_DENIED = "ui.machinelib.machine.security.access_denied";
         String OWNER = "ui.machinelib.machine.security.owner";
 
-        String REDSTONE_ACTIVATION = "ui.machinelib.machine.redstone_activation";
-        String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_activation.ignored";
-        String LOW_REDSTONE = "ui.machinelib.machine.redstone_activation.low";
-        String HIGH_REDSTONE = "ui.machinelib.machine.redstone_activation.high";
-        String REDSTONE_STATE = "ui.machinelib.machine.redstone_activation.state";
-        String REDSTONE_STATUS = "ui.machinelib.machine.redstone_activation.status";
-        String REDSTONE_ACTIVE = "ui.machinelib.machine.redstone_activation.status.enabled";
-        String REDSTONE_DISABLED = "ui.machinelib.machine.redstone_activation.status.disabled";
+        String REDSTONE_MODE = "ui.machinelib.machine.redstone_mode";
+        String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_mode.ignored";
+        String LOW_REDSTONE = "ui.machinelib.machine.redstone_mode.low";
+        String HIGH_REDSTONE = "ui.machinelib.machine.redstone_mode.high";
+        String REDSTONE_STATE = "ui.machinelib.machine.redstone_mode.state";
+        String REDSTONE_STATUS = "ui.machinelib.machine.redstone_mode.status";
+        String REDSTONE_ACTIVE = "ui.machinelib.machine.redstone_mode.status.enabled";
+        String REDSTONE_DISABLED = "ui.machinelib.machine.redstone_mode.status.disabled";
 
         String CONFIGURATION = "ui.machinelib.machine.configuration";
-        String GROUP = "ui.machinelib.machine.configuration.group";
-        String SLOT = "ui.machinelib.machine.configuration.slot";
 
         String STATISTICS = "ui.machinelib.machine.statistics";
 
@@ -212,7 +208,13 @@ public interface Constant {
 
         String TANK_CONTENTS = "ui.machinelib.machine.tank.contents";
         String TANK_AMOUNT = "ui.machinelib.machine.tank.contents.amount";
+        String TANK_CAPACITY = "ui.machinelib.machine.tank.contents.capacity";
         String TANK_EMPTY = "ui.machinelib.machine.tank.contents.empty";
+
+        String UNIT_GJ = "ui.machinelib.units.energy.base";
+        String UNIT_MEGA_GJ = "ui.machinelib.units.energy.mega";
+        String UNIT_BUCKET = "ui.machinelib.units.fluid.base";
+        String UNIT_MILLIBUCKET = "ui.machinelib.units.fluid.milli";
 
         String UNKNOWN_STATUS = "status.machinelib.unknown";
         String DISABLED = "status.machinelib.disabled";

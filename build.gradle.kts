@@ -43,7 +43,7 @@ val fabric = project.property("fabric.version").toString()
 plugins {
     java
     `maven-publish`
-    id("fabric-loom") version("1.4-SNAPSHOT")
+    id("fabric-loom") version("1.5-SNAPSHOT")
     id("org.cadixdev.licenser") version("0.6.1")
     id("org.ajoberstar.grgit") version("5.2.1")
 }
@@ -108,13 +108,13 @@ loom {
         getByName("client") {
             name("Minecraft Client")
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
+            property("fabric-api.gametest")
         }
         register("gametest") {
             name("GameTest Server")
             server()
             source(sourceSets.getByName("testmod"))
-            vmArgs("-ea", "-Dfabric-api.gametest", "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory}/junit.xml")
+            property("fabric-api.gametest")
         }
     }
 }
@@ -134,11 +134,13 @@ repositories {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
-    mappings(loom.layered {
-        officialMojangMappings()
-        if (!parchment.isEmpty()) {
+    mappings(if (parchment.isNotEmpty()) {
+        loom.layered {
+            officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-$minecraft:$parchment@zip")
         }
+    } else {
+        loom.officialMojangMappings()
     })
     modImplementation("net.fabricmc:fabric-loader:$loader")
     testImplementation("net.fabricmc:fabric-loader-junit:$loader")
