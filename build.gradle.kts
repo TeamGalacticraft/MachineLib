@@ -43,7 +43,7 @@ val fabric = project.property("fabric.version").toString()
 plugins {
     java
     `maven-publish`
-    id("fabric-loom") version("1.5-SNAPSHOT")
+    id("fabric-loom") version("1.4-SNAPSHOT")
     id("org.cadixdev.licenser") version("0.6.1")
     id("org.ajoberstar.grgit") version("5.2.1")
 }
@@ -226,10 +226,10 @@ tasks.test {
 }
 
 tasks.javadoc {
-    options.apply {
-        title = "MachineLib ${project.version} API"
-    }
+    title = "MachineLib ${project.version} API"
     exclude("**/impl/**")
+
+    options.encoding = "UTF-8"
 }
 
 license {
