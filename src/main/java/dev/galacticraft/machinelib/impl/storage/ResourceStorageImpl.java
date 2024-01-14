@@ -28,6 +28,8 @@ import dev.galacticraft.machinelib.api.menu.sync.MenuSyncHandler;
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.impl.menu.sync.ResourceStorageSyncHandler;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 
 public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Resource>> extends BaseSlottedStorage<Resource, Slot> implements ResourceStorage<Resource, Slot> {
-    private long modifications = 0;
-    private TransactionContext cachedTransaction = null;
+    private long modifications = 1;
+    private final LongList transactions = new LongArrayList();
     private Runnable listener;
 
     public ResourceStorageImpl(@NotNull Slot @NotNull [] slots) {
@@ -81,23 +83,26 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
     }
 
     @Override
-    public void markModified(@Nullable TransactionContext context) {
-        if (context != null) {
-            this.modifications++;
-            context.addCloseCallback((context1, result) -> {
+    public void markModified(@Nullable TransactionContext transaction) {
+        if (transaction != null) {
+            this.transactions.size(transaction.nestingDepth() + 1);
+            this.transactions.set(transaction.nestingDepth(), this.modifications++);
+
+            transaction.addCloseCallback((context, result) -> {
                 if (result.wasAborted()) {
-                    this.modifications--;
-                } else {
-                    if (this.listener != null) {
-                        TransactionContext outer = context1.getOpenTransaction(0);
-                        if (this.cachedTransaction != outer) {
-                            this.cachedTransaction = outer;
-                            context.addOuterCloseCallback((result1) -> {
-                                if (result1.wasCommitted()) this.listener.run();
-                            });
-                        }
+                    this.modifications = this.transactions.removeLong(context.nestingDepth());
+                } else if (context.nestingDepth() > 0) {
+                    long snap = this.transactions.removeLong(context.nestingDepth());
+                    if (this.transactions.get(context.nestingDepth() - 1) == 0) {
+                        this.transactions.set(context.nestingDepth() - 1, snap);
                     }
+                } else {
+                    context.addOuterCloseCallback((res) -> {
+                        assert res.wasCommitted();
+                        this.listener.run();
+                    });
                 }
+
             });
         } else {
             this.markModified();

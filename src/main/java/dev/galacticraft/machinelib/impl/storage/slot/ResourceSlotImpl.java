@@ -54,7 +54,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     protected @Nullable CompoundTag tag = null;
     protected long amount = 0;
 
-    private long modifications = 0;
+    private long modifications = 1;
 
     protected ResourceSlotImpl(InputType inputType, ResourceFilter<Resource> externalFilter, long capacity) {
         this.inputType = inputType;
@@ -350,19 +350,11 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
     public void markModified(@Nullable TransactionContext context) {
         this.modifications++;
         if (this.parent != null) this.parent.markModified(context);
-
-        if (context != null) {
-            context.addCloseCallback((context1, result) -> {
-                if (result.wasAborted()) {
-                    this.modifications--;
-                }
-            });
-        }
     }
 
     @Override
     protected Snapshot<Resource> createSnapshot() {
-        return new Snapshot<>(this.resource, this.amount, this.tag);
+        return new Snapshot<>(this.resource, this.amount, this.tag, this.modifications);
     }
 
     @Override
@@ -370,16 +362,17 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
         this.resource = snapshot.resource;
         this.amount = snapshot.amount;
         this.tag = snapshot.tag;
+        this.modifications = snapshot.modifications;
         assert this.isSane();
     }
 
     @Override
-    public void updateSnapshots(TransactionContext transaction) {
-        this.markModified(transaction);
-
-        if (transaction != null) {
-            super.updateSnapshots(transaction);
+    public void updateSnapshots(TransactionContext context) {
+        if (context != null) {
+            super.updateSnapshots(context);
         }
+
+        this.markModified(context);
     }
 
     protected void setEmpty() {
@@ -421,7 +414,7 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
 
     @VisibleForTesting
     public boolean isSane() {
-        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0/* && this.amount <= this.getRealCapacity()*/ && (this.tag == null || !this.tag.isEmpty()));
+        return (this.resource == null && this.tag == null && this.amount == 0) || (this.resource != null && this.amount > 0 && (this.tag == null || !this.tag.isEmpty()));
     }
 
     private long doExtraction(long extracted) {
@@ -441,6 +434,6 @@ public abstract class ResourceSlotImpl<Resource> extends SnapshotParticipant<Res
         return tag == null ? null : (tag.isEmpty() ? null : tag);
     }
 
-    protected record Snapshot<Resource>(@Nullable Resource resource, long amount, @Nullable CompoundTag tag) {
+    protected record Snapshot<Resource>(@Nullable Resource resource, long amount, @Nullable CompoundTag tag, long modifications) {
     }
 }

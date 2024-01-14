@@ -51,8 +51,11 @@ public final class GraphicsUtil {
         int fluidHeight = (int) (((double) available / (double) capacity) * height);
         int startY = fillFromTop ? y : y + (height - fluidHeight);
 
-        for (int splitY = startY; splitY < startY + fluidHeight; splitY += width){
-            graphics.blit(x, splitY, 0, width, Math.min(16, startY + fluidHeight - splitY), sprite, r, g, b, 1.0f);
+        for (int splitX = 0; splitX < width; splitX += Math.min(width, 16)){
+            int realWidth = Math.min(width - splitX, 16);
+            for (int splitY = startY; splitY < startY + fluidHeight; splitY += realWidth){
+                graphics.blit(x + splitX, splitY, 0, realWidth, Math.min(realWidth, startY + fluidHeight - splitY), sprite, r, g, b, 1.0f);
+            }
         }
     }
 
