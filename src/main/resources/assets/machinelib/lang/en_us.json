@@ -54,5 +54,9 @@
   "ui.machinelib.units.fluid.milli": "mB",
 
   "tooltip.machinelib.machine.unknown": "Unknown",
-  "tooltip.machinelib.press_shift": "Press LSHIFT for more information."
+  "tooltip.machinelib.press_shift": "Press LSHIFT for more information.",
+
+  "ui.machinelib.config.category.general": "General",
+  "ui.machinelib.config.category.debug": "Debug",
+  "ui.machinelib.config.enable_coloured_vanilla_fluid_names": "Enable Coloured Vanilla Fluid Names",
 }

@@ -39,11 +39,14 @@ val parchment = project.property("parchment.version").toString()
 val badpackets = project.property("badpackets.version").toString()
 val energy = project.property("energy.version").toString()
 val fabric = project.property("fabric.version").toString()
+val clothConfig = project.property("cloth.config.version").toString()
+val modmenu = project.property("modmenu.version").toString()
+val rei = project.property("rei.version").toString()
 
 plugins {
     java
     `maven-publish`
-    id("fabric-loom") version("1.4-SNAPSHOT")
+    id("fabric-loom") version("1.5-SNAPSHOT")
     id("org.cadixdev.licenser") version("0.6.1")
     id("org.ajoberstar.grgit") version("5.2.1")
 }
@@ -130,6 +133,18 @@ repositories {
             includeGroup("org.parchmentmc.data")
         }
     }
+    maven("https://maven.terraformersmc.com/releases") {
+        content {
+            includeGroup("com.terraformersmc")
+        }
+    }
+    maven("https://maven.shedaniel.me") {
+        content {
+            includeGroup("me.shedaniel")
+            includeGroup("me.shedaniel.cloth")
+            includeGroup("dev.architectury")
+        }
+    }
 }
 
 dependencies {
@@ -159,16 +174,28 @@ dependencies {
         "fabric-rendering-data-attachment-v1",
         "fabric-rendering-fluids-v1",
         "fabric-screen-handler-api-v1",
-        "fabric-transfer-api-v1",
-        "fabric-transitive-access-wideners-v1"
+        "fabric-transfer-api-v1"
     ).forEach {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
 
-    modImplementation("lol.bai:badpackets:fabric-$badpackets")
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei") { excludeFabric() }
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig") { excludeFabric() }
+    modImplementation("com.terraformersmc:modmenu:$modmenu") { excludeFabric() }
+
+    modImplementation("lol.bai:badpackets:fabric-$badpackets") { excludeFabric() }
 
     "testmodImplementation"(sourceSets.main.get().output)
     "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
+
+    // REI Runtime for Fabric
+    "modTestmodRuntimeOnly"("me.shedaniel:RoughlyEnoughItems-fabric:$rei") { excludeFabric() }
+}
+
+fun ModuleDependency.excludeFabric() {
+    exclude(group = "net.fabricmc")
+    exclude(group = "net.fabricmc.fabric-api")
 }
 
 tasks.withType<ProcessResources> {

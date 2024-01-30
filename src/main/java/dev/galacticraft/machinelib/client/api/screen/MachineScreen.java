@@ -165,7 +165,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     /**
      * The tank that is currently hovered over.
      */
-    protected @Nullable Tank focusedTank = null;
+    public @Nullable Tank hoveredTank = null;
     /**
      * The x-position of the capacitor.
      */
@@ -771,7 +771,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     protected void drawTanks(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.pose().pushPose();
         graphics.pose().translate(this.leftPos, this.topPos, 0);
-        this.focusedTank = null;
+        this.hoveredTank = null;
         for (Tank tank : this.menu.tanks) {
             if (tank.getHeight() > 0 && tank.getWidth() > 0) {
                 if (tank.getAmount() > 0) {
@@ -785,8 +785,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     primary = !primary;
                 }
 
-                if (this.focusedTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
-                    this.focusedTank = tank;
+                if (this.hoveredTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                    this.hoveredTank = tank;
                     RenderSystem.disableDepthTest();
                     graphics.fill(tank.getX(), tank.getY(), tank.getX() + tank.getWidth(), tank.getY() + tank.getHeight(), 0x80ffffff);
                     RenderSystem.enableDepthTest();
@@ -853,11 +853,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean tankMod = false;
-        if (this.focusedTank != null && button == 0) {
-            tankMod = this.focusedTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
+        if (this.hoveredTank != null && button == 0) {
+            tankMod = this.hoveredTank.acceptStack(new PlayerContainerItemContext(this.menu.playerInventory.player, PlayerInventoryStorage.getCursorStorage(this.menu)));
             if (tankMod) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(ByteBufAllocator.DEFAULT.buffer(Integer.BYTES * 2)).writeVarInt(this.menu.containerId);
-                buf.writeInt(this.focusedTank.getId());
+                buf.writeInt(this.hoveredTank.getId());
                 PacketSender.c2s().send(Constant.id("tank_modify"), buf);
             }
         }

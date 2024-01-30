@@ -31,23 +31,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-
 @ApiStatus.Internal
 public final class MachineLib implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(Constant.MOD_NAME);
-    public static final Config CONFIG = Config.create();
+    public static final Config CONFIG = Config.loadFrom(FabricLoader.getInstance().getConfigDir().resolve("machinelib.json").toFile());
 
     @Override
     public void onInitialize() {
         MachineLibC2SPackets.register();
-        File file = FabricLoader.getInstance().getConfigDir().resolve("machinelib.json").toFile();
-        if (file.exists()) {
-            CONFIG.loadFromFile(file);
-        } else {
-            LOGGER.info("Config file does not exist. Creating it...");
-            CONFIG.save(file);
-        }
 
         if (CONFIG.enableColouredVanillaFluidNames()) {
             FluidVariantAttributes.enableColoredVanillaFluidNames();

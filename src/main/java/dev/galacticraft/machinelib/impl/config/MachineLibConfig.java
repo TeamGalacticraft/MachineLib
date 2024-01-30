@@ -28,21 +28,35 @@ import com.google.gson.annotations.Expose;
 import dev.galacticraft.machinelib.api.config.Config;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class MachineLibConfig implements Config {
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-
-    public MachineLibConfig() {}
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    private final @Nullable File file;
 
     @Expose
     public boolean enableColouredVanillaFluidNames = true;
     @Expose
     public long bucketBreakpoint = FluidConstants.BUCKET * 100;
+
+    public MachineLibConfig(@Nullable File file) {
+        this.file = file;
+
+        if (file != null) {
+            if (file.exists()) {
+                this.reload();
+            } else {
+                MachineLib.LOGGER.info("Config file does not exist. Creating it...");
+                this.save();
+            }
+        }
+    }
 
     @Override
     public boolean enableColouredVanillaFluidNames() {
@@ -50,8 +64,18 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
+    public void setEnableColouredVanillaFluidNames(boolean enabled) {
+        this.enableColouredVanillaFluidNames = enabled;
+    }
+
+    @Override
     public long bucketBreakpoint() {
         return this.bucketBreakpoint;
+    }
+
+    @Override
+    public void setBucketBreakpoint(long value) {
+        this.bucketBreakpoint = value;
     }
 
     @Override
@@ -61,21 +85,29 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public void loadFromFile(File file) {
-        try (FileReader reader = new FileReader(file)) {
-            MachineLibConfig config = GSON.fromJson(reader, MachineLibConfig.class);
-            this.copyFrom(config);
-        } catch (IOException e) {
-            MachineLib.LOGGER.error("Failed to read config file!", e);
+    public void reload() {
+        if (this.file != null) {
+            try (FileReader reader = new FileReader(this.file, StandardCharsets.UTF_8)) {
+                MachineLibConfig config = GSON.fromJson(reader, MachineLibConfig.class);
+                this.copyFrom(config);
+            } catch (IOException e) {
+                MachineLib.LOGGER.error("Failed to read config file!", e);
+            }
         }
     }
 
     @Override
-    public void save(File file) {
-        try (FileWriter writer = new FileWriter(file)) {
-            GSON.toJson(this, writer);
-        } catch (IOException e) {
-            MachineLib.LOGGER.error("Failed to save config file!", e);
+    public void save() {
+        if (this.file != null) {
+            if (!this.file.getParentFile().exists()) {
+                this.file.getParentFile().mkdirs();
+            }
+
+            try (FileWriter writer = new FileWriter(this.file, StandardCharsets.UTF_8)) {
+                GSON.toJson(this, writer);
+            } catch (IOException e) {
+                MachineLib.LOGGER.error("Failed to save config file!", e);
+            }
         }
     }
 }

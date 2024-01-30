@@ -28,18 +28,22 @@ import org.jetbrains.annotations.ApiStatus;
 import java.io.File;
 
 public interface Config {
-    static Config create() {
-        return new MachineLibConfig();
+    Config DEFAULT = new MachineLibConfig(null);
+
+    static Config loadFrom(File file) {
+        return new MachineLibConfig(file);
     }
 
     boolean enableColouredVanillaFluidNames();
+    void setEnableColouredVanillaFluidNames(boolean enabled);
 
     long bucketBreakpoint();
+    void setBucketBreakpoint(long value);
 
     void copyFrom(Config config);
 
     @ApiStatus.Internal
-    void loadFromFile(File file);
+    void reload();
 
-    void save(File file);
+    void save();
 }

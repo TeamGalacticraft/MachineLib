@@ -46,13 +46,15 @@ public class ItemStackUtil {
         return stack;
     }
 
-    public static ItemStack of(@NotNull Item resource, @Nullable CompoundTag tag, int amount) {
+    public static ItemStack of(@Nullable Item resource, @Nullable CompoundTag tag, int amount) {
+        if (resource == null) return ItemStack.EMPTY;
         ItemStack stack = new ItemStack(resource, amount);
         stack.setTag(tag);
         return stack;
     }
 
-    public static ItemStack of(@NotNull Item resource, int amount) {
+    public static ItemStack of(@Nullable Item resource, int amount) {
+        if (resource == null) return ItemStack.EMPTY;
         return new ItemStack(resource, amount);
     }
 }

@@ -35,10 +35,16 @@
     ],
     "main": [
       "dev.galacticraft.machinelib.impl.MachineLib"
+    ],
+    "rei_common": [
+      "dev.galacticraft.machinelib.impl.compat.rei.MachineLibREIPlugin"
+    ],
+    "rei_client": [
+      "dev.galacticraft.machinelib.client.impl.compat.rei.MachineLibREIClientPlugin"
     ]
   },
   "depends": {
-    "fabricloader": ">=0.14",
+    "fabricloader": ">=0.15",
     "minecraft": ">=1.20.1",
 
     "fabric-api-base": "*",
@@ -54,6 +60,9 @@
   },
   "custom": {
     "modmenu": {
+      "links": {
+        "modmenu.discord": "https://discord.gg/n3QqhMYyFK"
+      },
       "badges": [
         "library"
       ],

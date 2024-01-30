@@ -61,7 +61,7 @@ public final class DisplayUtil {
 
     private DisplayUtil() {}
 
-    public static String truncateDecimal(double d, int places) { //fixme R -> L languages?
+    public static String truncateDecimal(double d, int places) {
         NUMBER_FORMAT.setMaximumFractionDigits(places);
         return NUMBER_FORMAT.format(d);
     }
