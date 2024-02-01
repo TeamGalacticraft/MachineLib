@@ -275,7 +275,7 @@ public final class ResourceFilters {
         return (r, nbt) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbt), 1).find(FluidStorage.ITEM);
-            if (storage == null || !storage.supportsExtraction()) return false;
+            if (storage == null || !storage.supportsInsertion()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
                 if (storage.insert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction) > 0) {
                     return true;
@@ -297,7 +297,7 @@ public final class ResourceFilters {
         return (r, nbtC) -> {
             if (r == null) return false;
             Storage<FluidVariant> storage = ContainerItemContext.withConstant(ItemVariant.of(r, nbtC), 1).find(FluidStorage.ITEM);
-            if (storage == null || !storage.supportsExtraction()) return false;
+            if (storage == null || !storage.supportsInsertion()) return false;
             try (Transaction transaction = Transaction.openNested(Transaction.getCurrentUnsafe())) {
                 if (storage.insert(FluidVariant.of(fluid, nbt), FluidConstants.BUCKET, transaction) > 0) {
                     return true;

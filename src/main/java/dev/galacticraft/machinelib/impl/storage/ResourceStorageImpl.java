@@ -99,7 +99,7 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
                 } else {
                     context.addOuterCloseCallback((res) -> {
                         assert res.wasCommitted();
-                        this.listener.run();
+                       if (this.listener != null) this.listener.run();
                     });
                 }
 

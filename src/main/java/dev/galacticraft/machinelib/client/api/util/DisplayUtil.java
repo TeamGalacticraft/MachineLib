@@ -82,7 +82,7 @@ public final class DisplayUtil {
         if (!forceDetail && MachineLib.CONFIG.fluidDisplayMode() == Config.FluidDisplayMode.MILLIBUCKET) {
             return Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET));
         }
-        return Component.literal(String.valueOf(amount)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET));
+        return Component.literal(String.valueOf(amount));
     }
 
     public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull Component text, int length) {
