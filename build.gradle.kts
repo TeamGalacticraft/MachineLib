@@ -42,6 +42,7 @@ val fabric = project.property("fabric.version").toString()
 val clothConfig = project.property("cloth.config.version").toString()
 val modmenu = project.property("modmenu.version").toString()
 val rei = project.property("rei.version").toString()
+val wthit = project.property("wthit.version").toString()
 
 plugins {
     java
@@ -101,6 +102,7 @@ loom {
     }
 
     createRemapConfigurations(sourceSets.getByName("testmod"))
+    createRemapConfigurations(sourceSets.test.get())
 
     runs {
         getByName("server") {
@@ -123,11 +125,6 @@ loom {
 }
 
 repositories {
-    maven("https://maven.bai.lol") {
-        content {
-            includeGroup("lol.bai")
-        }
-    }
     maven("https://maven.parchmentmc.org") {
         content {
             includeGroup("org.parchmentmc.data")
@@ -143,6 +140,12 @@ repositories {
             includeGroup("me.shedaniel")
             includeGroup("me.shedaniel.cloth")
             includeGroup("dev.architectury")
+        }
+    }
+    maven("https://maven.bai.lol") {
+        content {
+            includeGroup("lol.bai")
+            includeGroup("mcp.mobius.waila")
         }
     }
 }
@@ -179,18 +182,19 @@ dependencies {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
 
+    modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei") { excludeFabric() }
+
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig") { excludeFabric() }
     modImplementation("com.terraformersmc:modmenu:$modmenu") { excludeFabric() }
-
     modImplementation("lol.bai:badpackets:fabric-$badpackets") { excludeFabric() }
 
     "testmodImplementation"(sourceSets.main.get().output)
     "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
 
-    // REI Runtime for Fabric
-    "modTestmodRuntimeOnly"("me.shedaniel:RoughlyEnoughItems-fabric:$rei") { excludeFabric() }
+    modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
+    modRuntimeOnly("mcp.mobius.waila:wthit:fabric-$wthit")
 }
 
 fun ModuleDependency.excludeFabric() {

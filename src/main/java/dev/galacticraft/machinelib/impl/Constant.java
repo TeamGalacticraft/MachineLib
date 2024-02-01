@@ -55,6 +55,7 @@ public interface Constant {
         Style DARK_RED_STYLE = Style.EMPTY.withColor(ChatFormatting.DARK_RED);
         Style LIGHT_PURPLE_STYLE = Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE);
         Style YELLOW_STYLE = Style.EMPTY.withColor(ChatFormatting.YELLOW);
+        Style WHITE_STYLE = Style.EMPTY.withColor(ChatFormatting.WHITE);
     }
 
     interface Nbt {

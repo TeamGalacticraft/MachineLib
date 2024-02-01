@@ -27,7 +27,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import dev.galacticraft.machinelib.api.config.Config;
 import dev.galacticraft.machinelib.impl.MachineLib;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -41,9 +40,9 @@ public class MachineLibConfig implements Config {
     private final @Nullable File file;
 
     @Expose
-    public boolean enableColouredVanillaFluidNames = true;
+    public boolean enableColoredVanillaFluidNames = true;
     @Expose
-    public long bucketBreakpoint = FluidConstants.BUCKET * 100;
+    public FluidDisplayMode fluidDisplayMode = FluidDisplayMode.MILLIBUCKET;
 
     public MachineLibConfig(@Nullable File file) {
         this.file = file;
@@ -59,29 +58,29 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public boolean enableColouredVanillaFluidNames() {
-        return this.enableColouredVanillaFluidNames;
+    public boolean enableColoredVanillaFluidNames() {
+        return this.enableColoredVanillaFluidNames;
     }
 
     @Override
-    public void setEnableColouredVanillaFluidNames(boolean enabled) {
-        this.enableColouredVanillaFluidNames = enabled;
+    public void setEnableColoredVanillaFluidNames(boolean enabled) {
+        this.enableColoredVanillaFluidNames = enabled;
     }
 
     @Override
-    public long bucketBreakpoint() {
-        return this.bucketBreakpoint;
+    public FluidDisplayMode fluidDisplayMode() {
+        return this.fluidDisplayMode;
     }
 
     @Override
-    public void setBucketBreakpoint(long value) {
-        this.bucketBreakpoint = value;
+    public void setFluidDisplayMode(FluidDisplayMode value) {
+        this.fluidDisplayMode = value;
     }
 
     @Override
     public void copyFrom(Config config) {
-        this.enableColouredVanillaFluidNames = config.enableColouredVanillaFluidNames();
-        this.bucketBreakpoint = config.bucketBreakpoint();
+        this.enableColoredVanillaFluidNames = config.enableColoredVanillaFluidNames();
+        this.fluidDisplayMode = config.fluidDisplayMode();
     }
 
     @Override

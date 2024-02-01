@@ -40,7 +40,7 @@ public final class MachineLib implements ModInitializer {
     public void onInitialize() {
         MachineLibC2SPackets.register();
 
-        if (CONFIG.enableColouredVanillaFluidNames()) {
+        if (CONFIG.enableColoredVanillaFluidNames()) {
             FluidVariantAttributes.enableColoredVanillaFluidNames();
         }
     }

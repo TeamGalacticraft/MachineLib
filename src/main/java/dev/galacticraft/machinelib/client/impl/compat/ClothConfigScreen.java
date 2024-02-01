@@ -40,15 +40,15 @@ public class ClothConfigScreen {
         builder.setSavingRunnable(MachineLib.CONFIG::save);
 
         ConfigCategory general = builder.getOrCreateCategory(Component.translatable("ui.machinelib.config.category.general"));
-        general.addEntry(entryBuilder.startBooleanToggle(Component.translatable("ui.machinelib.config.enable_coloured_vanilla_fluid_names"), MachineLib.CONFIG.enableColouredVanillaFluidNames())
-                .setSaveConsumer(MachineLib.CONFIG::setEnableColouredVanillaFluidNames)
-                .setDefaultValue(Config.DEFAULT.enableColouredVanillaFluidNames())
+        general.addEntry(entryBuilder.startBooleanToggle(Component.translatable("ui.machinelib.config.enable_colored_vanilla_fluid_names"), MachineLib.CONFIG.enableColoredVanillaFluidNames())
+                .setSaveConsumer(MachineLib.CONFIG::setEnableColoredVanillaFluidNames)
+                .setDefaultValue(Config.DEFAULT.enableColoredVanillaFluidNames())
                 .build()
         );
-        general.addEntry(entryBuilder.startLongSlider(Component.translatable("ui.machinelib.config.bucket_breakpoint"), MachineLib.CONFIG.bucketBreakpoint(), FluidConstants.BUCKET, FluidConstants.BUCKET * 2048)
-                .setSaveConsumer(MachineLib.CONFIG::setBucketBreakpoint)
-                .setDefaultValue(Config.DEFAULT.bucketBreakpoint())
-                .setTextGetter(integer -> Component.literal(String.valueOf(integer)))
+        general.addEntry(entryBuilder.startEnumSelector(Component.translatable("ui.machinelib.config.fluid_display_mode"), Config.FluidDisplayMode.class, MachineLib.CONFIG.fluidDisplayMode())
+                .setSaveConsumer(MachineLib.CONFIG::setFluidDisplayMode)
+                .setDefaultValue(Config.DEFAULT.fluidDisplayMode())
+                .setEnumNameProvider(v -> ((Config.FluidDisplayMode)v).getName())
                 .build()
         );
 

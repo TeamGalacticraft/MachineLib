@@ -1,0 +1,6 @@
+{
+  "machinelib:plugin": {
+    "initializer": "dev.galacticraft.machinelib.impl.compat.waila.MachineLibWailaPlugin",
+    "side": "*"
+  }
+}

@@ -32,13 +32,13 @@ public enum InputType {
     STORAGE(0x008d90, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
     TRANSFER(0x908400, false, false, true); // external: immutable, players: insertion and extraction allowed - e.g. battery slots
 
-    private final int colour;
+    private final int color;
     private final boolean externalInsert;
     private final boolean externalExtract;
     private final boolean playerInsert;
 
-    InputType(int colour, boolean externalInsert, boolean externalExtract, boolean playerInsert) {
-        this.colour = colour;
+    InputType(int color, boolean externalInsert, boolean externalExtract, boolean playerInsert) {
+        this.color = color;
         this.externalInsert = externalInsert;
         this.externalExtract = externalExtract;
         this.playerInsert = playerInsert;
@@ -77,7 +77,7 @@ public enum InputType {
         return this == OUTPUT || this == RECIPE_OUTPUT;
     }
 
-    public int colour() {
-        return this.colour;
+    public int color() {
+        return this.color;
     }
 }

@@ -22,7 +22,9 @@
 
 package dev.galacticraft.machinelib.api.config;
 
+import com.google.gson.annotations.SerializedName;
 import dev.galacticraft.machinelib.impl.config.MachineLibConfig;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
@@ -34,11 +36,11 @@ public interface Config {
         return new MachineLibConfig(file);
     }
 
-    boolean enableColouredVanillaFluidNames();
-    void setEnableColouredVanillaFluidNames(boolean enabled);
+    boolean enableColoredVanillaFluidNames();
+    void setEnableColoredVanillaFluidNames(boolean enabled);
 
-    long bucketBreakpoint();
-    void setBucketBreakpoint(long value);
+    FluidDisplayMode fluidDisplayMode();
+    void setFluidDisplayMode(FluidDisplayMode value);
 
     void copyFrom(Config config);
 
@@ -46,4 +48,21 @@ public interface Config {
     void reload();
 
     void save();
+
+    enum FluidDisplayMode {
+        @SerializedName("millibucket")
+        MILLIBUCKET(Component.translatable("ui.machinelib.config.fluid_display_mode.millibucket")),
+        @SerializedName("raw")
+        RAW(Component.translatable("ui.machinelib.config.fluid_display_mode.raw")),;
+
+        private final Component name;
+
+        FluidDisplayMode(Component name) {
+            this.name = name;
+        }
+
+        public Component getName() {
+            return name;
+        }
+    }
 }

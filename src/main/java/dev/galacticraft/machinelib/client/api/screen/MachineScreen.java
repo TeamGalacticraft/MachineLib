@@ -828,7 +828,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     for (StorageSlot slot : this.menu.machineSlots) {
                         InputType type = slot.getSlot().inputType();
                         if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, slot.x, slot.y, 16, 16, type.colour());
+                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, slot.x, slot.y, 16, 16, type.color());
                         }
                     }
                 }
@@ -837,7 +837,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     for (Tank tank : this.menu.tanks) {
                         InputType type = tank.getInputType();
                         if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, tank.getX(), tank.getY(), tank.getWidth(), tank.getHeight(), type.colour());
+                            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, tank.getX(), tank.getY(), tank.getWidth(), tank.getHeight(), type.color());
                         }
                     }
                 }

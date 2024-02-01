@@ -30,8 +30,8 @@ public class ModMenuCompat implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         if (FabricLoader.getInstance().isModLoaded("cloth-config")) {
-            return ModMenuApi.super.getModConfigScreenFactory();
+            return ClothConfigScreen::factory;
         }
-        return ClothConfigScreen::factory;
+        return screen -> null;
     }
 }

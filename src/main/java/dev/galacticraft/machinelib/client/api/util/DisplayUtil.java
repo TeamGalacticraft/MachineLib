@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.client.api.util;
 
 import com.google.common.collect.ImmutableList;
+import dev.galacticraft.machinelib.api.config.Config;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
@@ -78,9 +79,10 @@ public final class DisplayUtil {
 
     @Contract(pure = true, value = "_, _ -> new")
     public static @NotNull MutableComponent formatFluid(long amount, boolean forceDetail) {
-        return forceDetail || amount < MachineLib.CONFIG.bucketBreakpoint() ?
-                Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET))
-                : Component.literal(truncateDecimal((double) amount / (double) FluidConstants.BUCKET, 2)).append(Component.translatable(Constant.TranslationKey.UNIT_BUCKET));
+        if (!forceDetail && MachineLib.CONFIG.fluidDisplayMode() == Config.FluidDisplayMode.MILLIBUCKET) {
+            return Component.literal(truncateDecimal((double) amount / ((double)(FluidConstants.BUCKET / 1000)), 0)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET));
+        }
+        return Component.literal(String.valueOf(amount)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET));
     }
 
     public static @NotNull @Unmodifiable List<Component> wrapText(@NotNull Component text, int length) {

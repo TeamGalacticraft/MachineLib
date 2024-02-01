@@ -40,7 +40,7 @@
       "dev.galacticraft.machinelib.impl.compat.rei.MachineLibREIPlugin"
     ],
     "rei_client": [
-      "dev.galacticraft.machinelib.client.impl.compat.rei.MachineLibREIClientPlugin"
+      "dev.galacticraft.machinelib.client.impl.compat.MachineLibREIClientPlugin"
     ]
   },
   "depends": {

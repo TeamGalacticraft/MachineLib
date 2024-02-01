@@ -51,7 +51,7 @@ public interface MachineStatus {
      * Creates a new machine status.
      *
      * @param key The translation key of the machine status name.
-     * @param color The colour to use for the status text.
+     * @param color The color to use for the status text.
      * @param type The type of the machine status.
      * @return The newly created machine status.
      */

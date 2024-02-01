@@ -18,6 +18,7 @@
   "ui.machinelib.machine.security.access_denied": "Access Denied",
   "ui.machinelib.machine.security.owner": "Owner: %s",
   "ui.machinelib.machine.redstone_mode": "Redstone Mode",
+  "ui.machinelib.machine.redstone_mode.tooltip": "Redstone: %s",
   "ui.machinelib.machine.redstone_mode.ignored": "Ignored",
   "ui.machinelib.machine.redstone_mode.low": "Low",
   "ui.machinelib.machine.redstone_mode.high": "High",
@@ -58,5 +59,8 @@
 
   "ui.machinelib.config.category.general": "General",
   "ui.machinelib.config.category.debug": "Debug",
-  "ui.machinelib.config.enable_coloured_vanilla_fluid_names": "Enable Coloured Vanilla Fluid Names",
+  "ui.machinelib.config.enable_colored_vanilla_fluid_names": "Enable Colored Vanilla Fluid Names",
+  "ui.machinelib.config.fluid_display_mode": "Fluid Display Mode",
+  "ui.machinelib.config.fluid_display_mode.millibucket": "Millibucket",
+  "ui.machinelib.config.fluid_display_mode.raw": "Raw"
 }
