@@ -182,6 +182,8 @@ dependencies {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
 
+    modRuntimeOnly("net.fabricmc.fabric-api:fabric-api:$fabric")
+
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei") { excludeFabric() }
