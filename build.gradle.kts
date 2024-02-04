@@ -89,6 +89,8 @@ sourceSets {
 }
 
 loom {
+    val testmod = sourceSets.getByName("testmod")
+
     mods {
         create("machinelib") {
             sourceSet(sourceSets.main.get())
@@ -97,28 +99,28 @@ loom {
             sourceSet(sourceSets.test.get())
         }
         create("machinelib_testmod") {
-            sourceSet(sourceSets.getByName("testmod"))
+            sourceSet(testmod)
         }
     }
 
-    createRemapConfigurations(sourceSets.getByName("testmod"))
+    createRemapConfigurations(testmod)
     createRemapConfigurations(sourceSets.test.get())
 
     runs {
         getByName("server") {
             name("Minecraft Server")
-            source(sourceSets.getByName("testmod"))
+            source(testmod)
             vmArgs("-ea")
         }
         getByName("client") {
             name("Minecraft Client")
-            source(sourceSets.getByName("testmod"))
+            source(testmod)
             property("fabric-api.gametest")
         }
         register("gametest") {
             name("GameTest Server")
             server()
-            source(sourceSets.getByName("testmod"))
+            source(testmod)
             property("fabric-api.gametest")
         }
     }

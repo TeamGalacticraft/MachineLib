@@ -27,14 +27,15 @@ import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.MachineConfiguration;
 import dev.galacticraft.machinelib.impl.Constant;
 import mcp.mobius.waila.api.*;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class MachineLibWailaPlugin implements IWailaPlugin {
-    private static final IBlockComponentProvider COMPONENT_PROVIDER = new IBlockComponentProvider() {
-        @Override
-        public void appendHead(ITooltip tooltip, IBlockAccessor accessor, IPluginConfig config) {
-            if (Screen.hasShiftDown()) {
+    @Override
+    public void register(IRegistrar registrar) {
+        registrar.addBlockData((IDataProvider<MachineBlockEntity>) (data, accessor, config) -> data.raw().put("config", accessor.getTarget().getConfiguration().createTag()), MachineBlock.class);
+        registrar.addComponent(new IBlockComponentProvider() {
+            @Override
+            public void appendBody(ITooltip tooltip, IBlockAccessor accessor, IPluginConfig config) {
                 MachineConfiguration configuration = MachineConfiguration.create();
                 configuration.readTag(accessor.getData().raw().getCompound("config"));
                 tooltip.addLine(Component.translatable("ui.machinelib.machine.redstone_mode.tooltip", configuration.getRedstoneMode().getName()).setStyle(Constant.Text.RED_STYLE));
@@ -43,12 +44,6 @@ public class MachineLibWailaPlugin implements IWailaPlugin {
                     tooltip.addLine(Component.translatable("ui.machinelib.machine.security.owner", Component.literal(username).setStyle(Constant.Text.WHITE_STYLE)).setStyle(Constant.Text.AQUA_STYLE));
                 }
             }
-        }
-    };
-
-    @Override
-    public void register(IRegistrar registrar) {
-        registrar.addBlockData((IDataProvider<MachineBlockEntity>) (data, accessor, config) -> data.raw().put("config", accessor.getTarget().getConfiguration().createTag()), MachineBlock.class);
-        registrar.addComponent(COMPONENT_PROVIDER, TooltipPosition.TAIL, MachineBlock.class);
+        }, TooltipPosition.BODY, MachineBlock.class);
     }
 }
