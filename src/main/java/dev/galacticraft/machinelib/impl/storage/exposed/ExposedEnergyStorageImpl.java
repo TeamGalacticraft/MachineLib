@@ -40,7 +40,7 @@ public record ExposedEnergyStorageImpl(@NotNull EnergyStorage parent, long maxIn
                                        long maxExtraction) implements ExposedEnergyStorage {
     @Override
     public boolean supportsInsertion() {
-        return this.maxExtraction > 0;
+        return this.maxInsertion > 0;
     }
 
     @Override
