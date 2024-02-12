@@ -32,6 +32,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,7 +142,7 @@ public class RecipeMachineMenu<C extends Container, R extends Recipe<C>, Machine
 
         consumer.accept(MenuSyncHandler.simple(this.machine::getProgress, this::setProgress));
         consumer.accept(MenuSyncHandler.simple(() -> {
-            R recipe = this.machine.getActiveRecipe();
+            RecipeHolder<R> recipe = this.machine.getActiveRecipe();
             return recipe != null ? this.machine.getProcessingTime(recipe) : 0;
         }, this::setMaxProgress));
     }

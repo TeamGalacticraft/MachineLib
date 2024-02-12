@@ -38,6 +38,7 @@ import dev.galacticraft.machinelib.impl.Constant;
 import io.netty.buffer.ByteBufAllocator;
 import lol.bai.badpackets.api.C2SPacketReceiver;
 import lol.bai.badpackets.api.PacketSender;
+import lol.bai.badpackets.api.play.PlayPackets;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -60,7 +61,7 @@ public final class MachineLibC2SPackets {
     }
 
     public static void register() {
-        C2SPacketReceiver.register(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
+        PlayPackets.registerServerReceiver(Constant.id("reset_face"), (server, player, handler, buf, responseSender) -> {
             byte f = buf.readByte();
             boolean type = buf.readBoolean();
 
@@ -93,7 +94,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        C2SPacketReceiver.register(Constant.id("face_type"), (server, player, handler, buf, responseSender) -> {
+        PlayPackets.registerServerReceiver(Constant.id("face_type"), (server, player, handler, buf, responseSender) -> {
             byte f = buf.readByte();
             byte type = buf.readByte();
             byte flow = buf.readByte();
@@ -129,7 +130,7 @@ public final class MachineLibC2SPackets {
             }
         });
 
-        C2SPacketReceiver.register(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
+        PlayPackets.registerServerReceiver(Constant.id("redstone_config"), (server, player, handler, buf, responseSender) -> {
             RedstoneMode redstoneMode = RedstoneMode.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.containerMenu instanceof MachineMenu<?> menu) {
@@ -142,7 +143,7 @@ public final class MachineLibC2SPackets {
             });
         });
 
-        C2SPacketReceiver.register(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
+        PlayPackets.registerServerReceiver(Constant.id("security_config"), (server, player, handler, buf, responseSender) -> {
             AccessLevel accessLevel = AccessLevel.values()[buf.readByte()];
             server.execute(() -> {
                 if (player.containerMenu instanceof MachineMenu<?> menu) {
@@ -155,7 +156,7 @@ public final class MachineLibC2SPackets {
             });
         });
 
-        C2SPacketReceiver.register(Constant.id("tank_modify"), (server, player, handler, buf, responseSender) -> {
+        PlayPackets.registerServerReceiver(Constant.id("tank_modify"), (server, player, handler, buf, responseSender) -> {
             int syncId = buf.readVarInt();
             int index = buf.readInt();
             server.execute(() -> {

@@ -151,8 +151,7 @@ public interface Constant {
         int PANEL_STATS_V = 0;
         int PANEL_SECURITY_U = 101;
         int PANEL_SECURITY_V = 93;
-        int OWNER_FACE_WIDTH = 32;
-        int OWNER_FACE_HEIGHT = 32;
+        int OWNER_FACE_SIZE = 32;
         int PANEL_UPPER_HEIGHT = 20;
     }
 

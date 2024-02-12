@@ -42,6 +42,7 @@ val fabric = project.property("fabric.version").toString()
 val clothConfig = project.property("cloth.config.version").toString()
 val modmenu = project.property("modmenu.version").toString()
 val rei = project.property("rei.version").toString()
+val architectury = project.property("architectury.version").toString()
 val wthit = project.property("wthit.version").toString()
 
 plugins {
@@ -157,7 +158,7 @@ dependencies {
     mappings(if (parchment.isNotEmpty()) {
         loom.layered {
             officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-$minecraft:$parchment@zip")
+            parchment("org.parchmentmc.data:parchment-1.20.2:$parchment@zip")
         }
     } else {
         loom.officialMojangMappings()
@@ -189,6 +190,7 @@ dependencies {
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei") { excludeFabric() }
+    modCompileOnly ("dev.architectury:architectury-fabric:$architectury")
 
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig") { excludeFabric() }
     modImplementation("com.terraformersmc:modmenu:$modmenu") { excludeFabric() }

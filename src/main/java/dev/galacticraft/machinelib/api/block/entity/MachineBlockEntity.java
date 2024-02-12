@@ -56,19 +56,19 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -811,25 +811,12 @@ public abstract class MachineBlockEntity extends BlockEntity implements Extended
     @Nullable
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeBlockPos(this.getBlockPos());
-        this.writeClientSyncData(buf);
-        return ServerPlayNetworking.createS2CPacket(Constant.id("machine_sync"), buf);
-    }
-
-    @MustBeInvokedByOverriders
-    public void readClientSyncData(FriendlyByteBuf buf) {
-        this.configuration.readPacket(buf);
-    }
-
-    @MustBeInvokedByOverriders
-    public void writeClientSyncData(FriendlyByteBuf buf) {
-        this.configuration.writePacket(buf);
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     public void awardUsedRecipes(@NotNull ServerPlayer player, @NotNull Set<ResourceLocation> recipes) {
         for (ResourceLocation id : recipes) {
-            Optional<? extends Recipe<?>> optional = player.serverLevel().getRecipeManager().byKey(id);
+            Optional<RecipeHolder<?>> optional = player.serverLevel().getRecipeManager().byKey(id);
             if (optional.isPresent()) {
                 player.awardRecipes(Collections.singleton(optional.get()));
                 player.triggerRecipeCrafted(optional.get(), Collections.emptyList());

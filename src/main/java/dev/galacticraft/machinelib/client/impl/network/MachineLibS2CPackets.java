@@ -29,10 +29,9 @@ import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.impl.Constant;
-import lol.bai.badpackets.api.S2CPacketReceiver;
+import lol.bai.badpackets.api.play.PlayPackets;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.ApiStatus;
@@ -44,7 +43,7 @@ public final class MachineLibS2CPackets {
     }
 
     public static void register() {
-        S2CPacketReceiver.register(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
+        PlayPackets.registerClientReceiver(Constant.id("storage_sync"), (client, handler, buf, responseSender) -> {
             FriendlyByteBuf packet = new FriendlyByteBuf(buf.copy());
             client.execute(() -> {
                 if (client.player.containerMenu instanceof MachineMenu<?> menu) {
@@ -55,7 +54,7 @@ public final class MachineLibS2CPackets {
             });
         });
 
-        S2CPacketReceiver.register(Constant.id("reset_face"), (client, handler, buf, responseSender) -> {
+        PlayPackets.registerClientReceiver(Constant.id("reset_face"), (client, handler, buf, responseSender) -> {
             BlockPos pos = BlockPos.of(buf.readLong());
             byte f = buf.readByte();
 
@@ -73,7 +72,7 @@ public final class MachineLibS2CPackets {
             }
         });
 
-        S2CPacketReceiver.register(Constant.id("face_type"), (client, handler, buf, responseSender) -> {
+        PlayPackets.registerClientReceiver(Constant.id("face_type"), (client, handler, buf, responseSender) -> {
             BlockPos pos = BlockPos.of(buf.readLong());
             byte f = buf.readByte();
             byte type = buf.readByte();
@@ -94,21 +93,6 @@ public final class MachineLibS2CPackets {
                     }
                 });
             }
-        });
-
-
-        //todo: badpackets?
-        ClientPlayNetworking.registerGlobalReceiver(Constant.id("machine_sync"), (client, handler, buffer, responseSender) -> {
-            FriendlyByteBuf buf = new FriendlyByteBuf(buffer.copy());
-            client.execute(() -> {
-                BlockPos pos = buf.readBlockPos();
-                if (client.level != null && client.level.isLoaded(pos)) {
-                    if (client.level.getBlockEntity(pos) instanceof MachineBlockEntity machine) {
-                        machine.readClientSyncData(new FriendlyByteBuf(buf));
-                        client.levelRenderer.blockChanged(client.level, pos, machine.getBlockState(), machine.getBlockState(), 8);
-                    }
-                }
-            });
         });
     }
 }

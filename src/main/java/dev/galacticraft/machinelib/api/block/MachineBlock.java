@@ -22,7 +22,10 @@
 
 package dev.galacticraft.machinelib.api.block;
 
+import com.google.common.base.Suppliers;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.AccessLevel;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
@@ -35,12 +38,14 @@ import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.block.entity.MachineBlockEntityTicker;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -52,6 +57,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -72,6 +79,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * The base block for all machines.
@@ -79,6 +87,11 @@ import java.util.Objects;
  * @see MachineBlockEntity
  */
 public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntityBlock {
+    public static final MapCodec<MachineBlock<? extends MachineBlockEntity>> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            propertiesCodec(),
+            ResourceLocation.CODEC.fieldOf("factory").forGetter(machineBlock -> BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(machineBlock.factory.get()))
+    ).apply(instance, MachineBlock::new));
+
     /**
      * Represents a boolean property for specifying the active state of the machine.
      * @see MachineBlockEntity#isActive() for the definition of 'active'
@@ -95,7 +108,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     /**
      * Factory that constructs the relevant machine block entity for this block.
      */
-    private final MachineBlockEntityFactory<Machine> factory;
+    private final Supplier<BlockEntityType<Machine>> factory;
 
     /**
      * The line-wrapped long description of this machine.
@@ -108,11 +121,11 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
      * Creates a new machine block.
      *
      * @param settings The settings for the block.
-     * @param factory the machine block entity factory
+     * @param factoryId the machine block entity factory
      */
-    public MachineBlock(Properties settings, MachineBlockEntityFactory<Machine> factory) {
+    public MachineBlock(Properties settings, ResourceLocation factoryId) {
         super(settings);
-        this.factory = factory;
+        this.factory = Suppliers.memoize(() -> (BlockEntityType<Machine>) BuiltInRegistries.BLOCK_ENTITY_TYPE.get(factoryId));
         this.registerDefaultState(this.getStateDefinition().any().setValue(ACTIVE, false));
     }
 
@@ -146,7 +159,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
 
     @Override
     public Machine newBlockEntity(BlockPos pos, BlockState state) {
-        return this.factory.create(pos, state);
+        return this.factory.get().create(pos, state);
     }
 
     @Override
@@ -185,6 +198,11 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 machine.getState().setPowered(level.hasNeighborSignal(pos));
             }
         }
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -257,7 +275,7 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+    public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
         super.playerWillDestroy(world, pos, state, player);
         BlockEntity entity = world.getBlockEntity(pos);
         if (entity instanceof MachineBlockEntity machine) {
@@ -275,6 +293,8 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
                 }
             }
         }
+
+        return state;
     }
 
     @Override
@@ -285,10 +305,10 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(BlockGetter view, BlockPos pos, BlockState state) {
-        ItemStack stack = super.getCloneItemStack(view, pos, state);
+    public @NotNull ItemStack getCloneItemStack(LevelReader reader, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(reader, pos, state);
 
-        BlockEntity blockEntity = view.getBlockEntity(pos);
+        BlockEntity blockEntity = reader.getBlockEntity(pos);
         if (blockEntity instanceof MachineBlockEntity machine) {
             CompoundTag config = new CompoundTag();
             config.put(Constant.Nbt.CONFIGURATION, machine.getConfiguration().createTag());
@@ -314,15 +334,5 @@ public class MachineBlock<Machine extends MachineBlockEntity> extends BaseEntity
      */
     public @Nullable Component shiftDescription(ItemStack stack, BlockGetter view, TooltipFlag context) {
         return Component.translatable(this.getDescriptionId() + ".description");
-    }
-
-    /**
-     * Factory for creating {@link MachineBlockEntity}s.
-     *
-     * @param <Machine> the type of machine this factory creates
-     */
-    @FunctionalInterface
-    public interface MachineBlockEntityFactory<Machine extends MachineBlockEntity> {
-        @Nullable Machine create(@NotNull BlockPos pos, @NotNull BlockState state);
     }
 }

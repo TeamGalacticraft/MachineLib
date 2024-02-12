@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.client.api.screen;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
@@ -52,9 +53,11 @@ import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.impl.transfer.context.PlayerContainerItemContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
@@ -75,6 +78,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static dev.galacticraft.machinelib.impl.Constant.TextureCoordinate.*;
 
@@ -182,7 +186,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      * The skin of the owner of this machine.
      * Defaults to steve if the skin cannot be found.
      */
-    private @NotNull ResourceLocation ownerSkin = DefaultPlayerSkin.getDefaultSkin(UUID.randomUUID());
+    private @NotNull Supplier<PlayerSkin> ownerSkin = Suppliers.memoize(() -> DefaultPlayerSkin.get(UUID.randomUUID()));
 
     private @Nullable MachineBakedModel model;
 
@@ -201,11 +205,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         this.texture = texture;
         this.renderData = menu.configuration.getIOConfiguration();
 
-        Minecraft.getInstance().getSkinManager().registerSkins(new GameProfile(this.menu.configuration.getSecurity().getOwner(), this.menu.configuration.getSecurity().getUsername()), (type, skin, tex) -> {
-            if (type == MinecraftProfileTexture.Type.SKIN && skin != null) {
-                MachineScreen.this.ownerSkin = skin;
-            }
-        }, true);
+        MachineScreen.this.ownerSkin = Minecraft.getInstance().getSkinManager().lookupInsecure(new GameProfile(this.menu.configuration.getSecurity().getOwner(), this.menu.configuration.getSecurity().getUsername()));
     }
 
     /**
@@ -308,7 +308,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             poseStack.pushPose();
             poseStack.translate(this.imageWidth, SPACING, 0);
             graphics.renderFakeItem(ALUMINUM_WIRE, PANEL_ICON_X, PANEL_ICON_Y);
-            graphics.blit(this.ownerSkin, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_WIDTH, OWNER_FACE_HEIGHT, 8, 8, 8, 8, 64, 64);
+            PlayerFaceRenderer.draw(graphics, this.ownerSkin.get(), OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE);
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.STATISTICS)
                     .setStyle(Constant.Text.GREEN_STYLE), PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
             List<FormattedCharSequence> text = this.font.split(this.menu.type.getBlock().getName(), 64);
@@ -627,7 +627,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
             if (this.menu.configuration.getSecurity().getUsername() != null) {
-                if (mouseIn(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_WIDTH, OWNER_FACE_HEIGHT)) {
+                if (mouseIn(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE, OWNER_FACE_SIZE)) {
                     assert this.menu.configuration.getSecurity().getOwner() != null;
                     graphics.renderTooltip(this.font, Component.literal(this.menu.configuration.getSecurity().getUsername()), mX, mY);
                 }
@@ -715,11 +715,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
     @Override
     protected final void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
-        this.renderBackground(graphics);
-
         graphics.blit(this.texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 
-        this.renderBackground(graphics, mouseX, mouseY, delta);
+        this.renderMachineBackground(graphics, mouseX, mouseY, delta);
         this.drawTanks(graphics, mouseX, mouseY);
         this.drawCapacitor(graphics, mouseX, mouseY);
         this.handleSlotHighlight(graphics, mouseX, mouseY);
@@ -758,7 +756,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      * @param mouseY   The mouse's y-position
      * @param delta    The delta time
      */
-    protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderMachineBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
     }
 
     /**

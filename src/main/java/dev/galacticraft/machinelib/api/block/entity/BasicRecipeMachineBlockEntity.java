@@ -29,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Contract;
@@ -124,8 +125,8 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
      * @param recipe The recipe to output.
      */
     @Override
-    protected void outputStacks(@NotNull R recipe) {
-        ItemStack assembled = recipe.assemble(this.craftingInv(), this.level.registryAccess());
+    protected void outputStacks(@NotNull RecipeHolder<R> recipe) {
+        ItemStack assembled = recipe.value().assemble(this.craftingInv(), this.level.registryAccess());
         this.itemStorage().insertMatching(this.outputSlots, this.outputSlotsLen, assembled.getItem(), assembled.getTag(), assembled.getCount());
     }
 
@@ -136,8 +137,8 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
      * @return {@code true} if the machine can output stacks for the recipe, {@code false} otherwise.
      */
     @Override
-    protected boolean canOutputStacks(@NotNull R recipe) {
-        ItemStack assembled = recipe.assemble(this.craftingInv(), this.level.registryAccess());
+    protected boolean canOutputStacks(@NotNull RecipeHolder<R> recipe) {
+        ItemStack assembled = recipe.value().assemble(this.craftingInv(), this.level.registryAccess());
         return this.itemStorage().canInsert(this.outputSlots, this.outputSlotsLen, assembled.getItem(), assembled.getTag(), assembled.getCount());
     }
 
@@ -147,7 +148,7 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
      * @param recipe The recipe to extract.
      */
     @Override
-    protected void extractCraftingMaterials(@NotNull R recipe) {
+    protected void extractCraftingMaterials(@NotNull RecipeHolder<R> recipe) {
         for (int i = 0; i < this.inputSlotsLen; i++) {
             this.itemStorage().consumeOne(this.inputSlots + i);
         }

@@ -25,19 +25,13 @@ package dev.galacticraft.machinelib.client.impl.compat;
 import dev.architectury.event.CompoundEventResult;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
-import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
-import me.shedaniel.rei.api.client.registry.screen.ExclusionZonesProvider;
-import me.shedaniel.rei.api.client.registry.screen.FocusedStackProvider;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
-import me.shedaniel.rei.api.common.entry.EntryStack;
 import me.shedaniel.rei.api.common.util.EntryStacks;
-import net.minecraft.client.gui.screens.Screen;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class MachineLibREIClientPlugin implements REIClientPlugin {

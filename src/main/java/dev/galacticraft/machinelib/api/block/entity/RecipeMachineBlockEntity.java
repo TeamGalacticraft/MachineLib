@@ -35,6 +35,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -67,14 +68,14 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
     /**
      * The machine's active recipe. If there is no active recipe, this will be {@code null}.
      */
-    private @Nullable R activeRecipe = null;
+    private @Nullable RecipeHolder<R> activeRecipe = null;
 
     /**
      * The last recipe to be processed in this machine.
      * Used to speed up the recipe search process.
      */
     @ApiStatus.Internal
-    private @Nullable R cachedRecipe = null;
+    private @Nullable RecipeHolder<R> cachedRecipe = null;
 
     /**
      * The progress of the machine's current recipe.
@@ -108,7 +109,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      *
      * @param recipe The recipe to output.
      */
-    protected abstract void outputStacks(@NotNull R recipe);
+    protected abstract void outputStacks(@NotNull RecipeHolder<R> recipe);
 
     /**
      * Checks if the machine can output stacks for the given recipe.
@@ -116,14 +117,14 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param recipe The recipe to check.
      * @return {@code true} if the machine can output stacks for the recipe, {@code false} otherwise.
      */
-    protected abstract boolean canOutputStacks(@NotNull R recipe);
+    protected abstract boolean canOutputStacks(@NotNull RecipeHolder<R> recipe);
 
     /**
      * Extracts the recipe's input from the machine's inventory.
      *
      * @param recipe The recipe to extract.
      */
-    protected abstract void extractCraftingMaterials(@NotNull R recipe);
+    protected abstract void extractCraftingMaterials(@NotNull RecipeHolder<R> recipe);
 
     /**
      * Returns the machine status to use when the machine is working on a certain recipe.
@@ -131,7 +132,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The machine status to use when the machine is working on a certain recipe.
      */
     @Contract(pure = true)
-    protected abstract @NotNull MachineStatus workingStatus(R recipe);
+    protected abstract @NotNull MachineStatus workingStatus(RecipeHolder<R> recipe);
 
     /**
      * Tests if the necessary resources to run this machine are available.
@@ -160,7 +161,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
             MachineStatus recipeFailure = this.testInventoryRecipe(level, profiler);
             profiler.pop();
             if (recipeFailure == null) {
-                R recipe = this.getActiveRecipe();
+                RecipeHolder<R> recipe = this.getActiveRecipe();
                 assert recipe != null;
                 profiler.push("working");
                 this.extractResourcesToWork();
@@ -189,7 +190,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
         if (this.inventoryModCount != this.itemStorage().getModifications()) { // includes output slots
             this.inventoryModCount = this.itemStorage().getModifications();
             profiler.push("find_recipe");
-            R recipe = this.findValidRecipe(world);
+            RecipeHolder<R> recipe = this.findValidRecipe(world);
             profiler.pop();
             if (recipe != null) {
                 if (this.canOutputStacks(recipe)) {
@@ -214,7 +215,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param profiler The world profiler.
      * @param recipe   The recipe to craft.
      */
-    protected void craft(@NotNull ProfilerFiller profiler, @NotNull R recipe) {
+    protected void craft(@NotNull ProfilerFiller profiler, @NotNull RecipeHolder<R> recipe) {
         profiler.push("extract_materials");
         this.extractCraftingMaterials(recipe);
         profiler.popPush("output_stacks");
@@ -240,8 +241,8 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param world The world.
      * @return The first valid recipe in the machine's inventory.
      */
-    protected @Nullable R findValidRecipe(@NotNull Level world) {
-        if (this.cachedRecipe != null && this.cachedRecipe.matches(this.craftingInv(), world)) {
+    protected @Nullable RecipeHolder<R> findValidRecipe(@NotNull Level world) {
+        if (this.cachedRecipe != null && this.cachedRecipe.value().matches(this.craftingInv(), world)) {
             return this.cachedRecipe;
         }
         return world.getRecipeManager().getRecipeFor(this.getRecipeType(), this.craftingInv(), world).orElse(null);
@@ -265,7 +266,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The process time of the given recipe.
      */
     @Contract(pure = true)
-    public abstract int getProcessingTime(@NotNull R recipe);
+    public abstract int getProcessingTime(@NotNull RecipeHolder<R> recipe);
 
     /**
      * Returns the progress of the machine.
@@ -293,7 +294,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @return The active recipe of the machine.
      */
     @Contract(pure = true)
-    public @Nullable R getActiveRecipe() {
+    public @Nullable RecipeHolder<R> getActiveRecipe() {
         return this.activeRecipe;
     }
 
@@ -303,7 +304,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
      * @param recipe The recipe to set.
      */
     @Contract(mutates = "this")
-    protected void setActiveRecipe(@Nullable R recipe) {
+    protected void setActiveRecipe(@Nullable RecipeHolder<R> recipe) {
         if (recipe != null) this.cachedRecipe = recipe;
 
         if (this.activeRecipe != recipe) {
