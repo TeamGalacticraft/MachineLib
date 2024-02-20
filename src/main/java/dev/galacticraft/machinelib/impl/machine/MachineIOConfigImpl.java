@@ -54,7 +54,7 @@ public final class MachineIOConfigImpl implements MachineIOConfig {
             case RIGHT -> this.right;
             case LEFT -> this.left;
             case BOTTOM -> this.bottom;
-//            null -> this.nullFace;
+//            case null -> this.nullFace;
         };
     }
 

@@ -24,10 +24,6 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-val buildNumber = System.getenv("BUILD_NUMBER") ?: ""
-val commitHash = (System.getenv("GITHUB_SHA") ?: grgit.head().id)!!
-val prerelease = (System.getenv("PRE_RELEASE") ?: "false") == "true"
-
 val modId = project.property("mod.id").toString()
 val modVersion = project.property("mod.version").toString()
 val modName = project.property("mod.name").toString()
@@ -56,21 +52,26 @@ plugins {
 group = "dev.galacticraft"
 version = buildString {
     append(modVersion)
-    if (prerelease) {
+    val env = System.getenv()
+    if (env.containsKey("PRE_RELEASE") && env["PRE_RELEASE"] == "true") {
         append("-pre")
     }
     append('+')
-    if (buildNumber.isNotBlank()) {
-        append(buildNumber)
-    } else if (commitHash.isNotEmpty()) {
-        append(commitHash.substring(0, 8))
-        if (!grgit.status().isClean) {
-            append("-dirty")
-        }
+    if (env.containsKey("GITHUB_RUN_NUMBER")) {
+        append(env["GITHUB_RUN_NUMBER"])
     } else {
-        append("unknown")
+        val grgit = extensions.findByType<org.ajoberstar.grgit.Grgit>()
+        if (grgit?.head() != null) {
+            append(grgit.head().id.substring(0, 8))
+            if (!grgit.status().isClean) {
+                append("-dirty")
+            }
+        } else {
+            append("unknown")
+        }
     }
 }
+println("$modName: $version")
 
 base.archivesName.set(modName)
 
@@ -189,8 +190,7 @@ dependencies {
 
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei") { excludeFabric() }
-    modCompileOnly ("dev.architectury:architectury-fabric:$architectury")
+    modCompileOnly("dev.architectury:architectury-fabric:$architectury")
 
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig") { excludeFabric() }
     modImplementation("com.terraformersmc:modmenu:$modmenu") { excludeFabric() }
@@ -209,14 +209,15 @@ fun ModuleDependency.excludeFabric() {
 }
 
 tasks.withType<ProcessResources> {
-    inputs.property("version", project.version)
-
-    filesMatching("fabric.mod.json") {
-        expand(
+    val properties = mapOf(
             "version" to project.version,
             "mod_id" to modId,
             "mod_name" to modName
-        )
+    )
+    inputs.properties(properties)
+
+    filesMatching("fabric.mod.json") {
+        expand(properties)
     }
 
     // Minify json resources
@@ -242,7 +243,7 @@ tasks.withType<Jar> {
     from("LICENSE")
     manifest {
         attributes(
-            "Specification-Title" to modName,
+            "Specification-Title" to modId,
             "Specification-Vendor" to "Team Galacticraft",
             "Specification-Version" to modVersion,
             "Implementation-Title" to project.name,
