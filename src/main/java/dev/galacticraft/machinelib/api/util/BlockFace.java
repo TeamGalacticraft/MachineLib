@@ -103,30 +103,30 @@ public enum BlockFace {
         return switch (facing) {
             case NORTH -> switch (target) {
                 case NORTH -> FRONT;
-                case EAST -> LEFT;
+                case EAST -> RIGHT;
                 case SOUTH -> BACK;
-                case WEST -> RIGHT;
+                case WEST -> LEFT;
                 default -> throw new IllegalStateException("Unexpected value: " + target);
             };
             case EAST -> switch (target) {
                 case EAST -> FRONT;
-                case NORTH -> RIGHT;
+                case NORTH -> LEFT;
                 case WEST -> BACK;
-                case SOUTH -> LEFT;
+                case SOUTH -> RIGHT;
                 default -> throw new IllegalStateException("Unexpected value: " + target);
             };
             case SOUTH -> switch (target) {
                 case SOUTH -> FRONT;
-                case WEST -> LEFT;
+                case WEST -> RIGHT;
                 case NORTH -> BACK;
-                case EAST -> RIGHT;
+                case EAST -> LEFT;
                 default -> throw new IllegalStateException("Unexpected value: " + target);
             };
             case WEST -> switch (target) {
                 case WEST -> FRONT;
-                case SOUTH -> RIGHT;
+                case SOUTH -> LEFT;
                 case EAST -> BACK;
-                case NORTH -> LEFT;
+                case NORTH -> RIGHT;
                 default -> throw new IllegalStateException("Unexpected value: " + target);
             };
             default -> throw new IllegalStateException("Unexpected value: " + target);
