@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Resource>> extends BaseSlottedStorage<Resource, Slot> implements ResourceStorage<Resource, Slot> {
+public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Resource>> extends BaseSlottedStorage<Resource, Slot> implements ResourceStorage<Resource, Slot>, TransactionContext.CloseCallback {
     private long modifications = 1;
     private final LongList transactions = new LongArrayList();
     private Runnable listener;
@@ -85,27 +85,37 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
     @Override
     public void markModified(@Nullable TransactionContext transaction) {
         if (transaction != null) {
-            this.transactions.size(transaction.nestingDepth() + 1);
-            this.transactions.set(transaction.nestingDepth(), this.modifications++);
+            while (this.transactions.size() <= transaction.nestingDepth()) {
+                this.transactions.add(-1L);
+            }
 
-            transaction.addCloseCallback((context, result) -> {
-                if (result.wasAborted()) {
-                    this.modifications = this.transactions.removeLong(context.nestingDepth());
-                } else if (context.nestingDepth() > 0) {
-                    long snap = this.transactions.removeLong(context.nestingDepth());
-                    if (this.transactions.get(context.nestingDepth() - 1) == 0) {
-                        this.transactions.set(context.nestingDepth() - 1, snap);
-                    }
-                } else {
-                    context.addOuterCloseCallback((res) -> {
-                        assert res.wasCommitted();
-                       if (this.listener != null) this.listener.run();
-                    });
-                }
+            if (this.transactions.getLong(transaction.nestingDepth()) == -1L) {
+                this.transactions.set(transaction.nestingDepth(), this.modifications);
+                transaction.addCloseCallback(this);
+            }
 
-            });
+            this.modifications++;
         } else {
             this.markModified();
+        }
+    }
+
+    @Override
+    public void onClose(TransactionContext transaction, TransactionContext.Result result) {
+        if (result.wasAborted()) {
+            this.modifications = this.transactions.removeLong(transaction.nestingDepth());
+        } else if (transaction.nestingDepth() > 0) {
+            long snap = this.transactions.removeLong(transaction.nestingDepth());
+            if (this.transactions.getLong(transaction.nestingDepth() - 1) == -1) {
+                this.transactions.set(transaction.nestingDepth() - 1, snap);
+                transaction.getOpenTransaction(transaction.nestingDepth() - 1).addCloseCallback(this);
+            }
+        } else {
+            this.transactions.clear();
+            transaction.addOuterCloseCallback((res) -> {
+                assert res.wasCommitted();
+                if (this.listener != null) this.listener.run();
+            });
         }
     }
 
