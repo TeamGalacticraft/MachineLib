@@ -125,13 +125,13 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private static final int TOP_FACE_X = 33;
     private static final int TOP_FACE_Y = 26;
 
-    private static final int LEFT_FACE_X = 14;
+    private static final int LEFT_FACE_X = 52;
     private static final int LEFT_FACE_Y = 45;
 
     private static final int FRONT_FACE_X = 33;
     private static final int FRONT_FACE_Y = 45;
 
-    private static final int RIGHT_FACE_X = 52;
+    private static final int RIGHT_FACE_X = 14;
     private static final int RIGHT_FACE_Y = 45;
 
     private static final int BACK_FACE_X = 71;
