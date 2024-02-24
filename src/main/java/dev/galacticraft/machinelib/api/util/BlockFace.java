@@ -42,7 +42,7 @@ public enum BlockFace {
     /**
      * The face of a block that is facing to the right, when facing in the direction the block is facing.
      */
-    RIGHT(Component.translatable(Constant.TranslationKey.RIGHT), true),
+    RIGHT(Component.translatable(Constant.TranslationKey.LEFT), true),
     /**
      * The face of a block that is facing backwards.
      */
@@ -50,7 +50,7 @@ public enum BlockFace {
     /**
      * The face of a block that is facing to the left, when facing in the direction the block is facing.
      */
-    LEFT(Component.translatable(Constant.TranslationKey.LEFT), true),
+    LEFT(Component.translatable(Constant.TranslationKey.RIGHT), true),
     /**
      * The top face of a block.
      */
