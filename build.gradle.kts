@@ -30,7 +30,7 @@ val modName = project.property("mod.name").toString()
 
 val minecraft = project.property("minecraft.version").toString()
 val loader = project.property("loader.version").toString()
-val parchment = project.property("parchment.version").toString()
+val yarn = project.property("yarn.build").toString()
 
 val badpackets = project.property("badpackets.version").toString()
 val energy = project.property("energy.version").toString()
@@ -41,12 +41,15 @@ val rei = project.property("rei.version").toString()
 val architectury = project.property("architectury.version").toString()
 val wthit = project.property("wthit.version").toString()
 
+val isCI = System.getenv().getOrDefault("CI", "false") == "true";
+
 plugins {
     java
     `maven-publish`
     id("fabric-loom") version("1.5-SNAPSHOT")
     id("org.cadixdev.licenser") version("0.6.1")
     id("org.ajoberstar.grgit") version("5.2.1")
+    id("dev.galacticraft.mojarn") version("0.1.1")
 }
 
 group = "dev.galacticraft"
@@ -156,11 +159,8 @@ repositories {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
-    mappings(if (parchment.isNotEmpty()) {
-        loom.layered {
-            officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-1.20.2:$parchment@zip")
-        }
+    mappings(if (!isCI && yarn.isNotEmpty()) {
+        mojarn.mappings("net.fabricmc:yarn:$minecraft+build.$yarn:v2")
     } else {
         loom.officialMojangMappings()
     })
