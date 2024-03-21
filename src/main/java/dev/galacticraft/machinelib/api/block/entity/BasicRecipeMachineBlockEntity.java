@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.api.block.entity;
 
-import dev.galacticraft.machinelib.api.compat.vanilla.RecipeTestContainer;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.menu.RecipeMachineMenu;
 import net.minecraft.core.BlockPos;
@@ -45,7 +44,7 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
     /**
      * An inventory for use in finding vanilla recipes for this machine.
      */
-    protected final @NotNull Container craftingInv;
+    protected final @NotNull C craftingInv;
 
     protected final int inputSlots;
     protected final int inputSlotsLen;
@@ -104,8 +103,10 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
         this.outputSlots = outputSlots;
         this.outputSlotsLen = outputSlotsLen;
 
-        this.craftingInv = RecipeTestContainer.create(this.itemStorage(), this.inputSlots, this.inputSlotsLen);
+        this.craftingInv = this.createCraftingInv();
     }
+
+    protected abstract C createCraftingInv();
 
     /**
      * Creates an inventory for use in finding vanilla recipes for this machine.
@@ -116,7 +117,7 @@ public abstract class BasicRecipeMachineBlockEntity<C extends Container, R exten
     @Override
     @Contract(pure = true)
     protected @NotNull C craftingInv() {
-        return (C) this.craftingInv;
+        return this.craftingInv;
     }
 
     /**

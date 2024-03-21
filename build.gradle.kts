@@ -189,23 +189,18 @@ dependencies {
     modRuntimeOnly("net.fabricmc.fabric-api:fabric-api:$fabric")
 
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei") { excludeFabric() }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
     modCompileOnly("dev.architectury:architectury-fabric:$architectury")
 
-    modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig") { excludeFabric() }
-    modImplementation("com.terraformersmc:modmenu:$modmenu") { excludeFabric() }
-    modImplementation("lol.bai:badpackets:fabric-$badpackets") { excludeFabric() }
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig")
+    modImplementation("com.terraformersmc:modmenu:$modmenu")
+    modImplementation("lol.bai:badpackets:fabric-$badpackets")
 
     "testmodImplementation"(sourceSets.main.get().output)
     "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
 
     modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
     modRuntimeOnly("mcp.mobius.waila:wthit:fabric-$wthit")
-}
-
-fun ModuleDependency.excludeFabric() {
-    exclude(group = "net.fabricmc")
-    exclude(group = "net.fabricmc.fabric-api")
 }
 
 tasks.withType<ProcessResources> {

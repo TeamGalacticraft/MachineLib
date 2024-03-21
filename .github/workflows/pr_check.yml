@@ -21,24 +21,23 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Cache Gradle
+      - name: Gradle cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle
-          key: ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', '**/build.gradle.kts', '**/gradle.properties') }}-${{github.ref_name}}
+          key: ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', '**/build.gradle.kts', '**/gradle.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-PR${{github.event.number}}-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', '**/build.gradle.kts', '**/gradle.properties') }}
-            ${{ runner.os }}-gradle-PR${{github.event.number}}-
             ${{ runner.os }}-gradle-${{ hashFiles('gradle/gradle-wrapper.properties', 'settings.gradle.kts', '**/build.gradle.kts', '**/gradle.properties') }}
+            ${{ runner.os }}-gradle-PR${{github.event.number}}-
             ${{ runner.os }}-gradle-
 
       - name: Initialize build environment
         run: ./gradlew
 
-      - name: Check license headers
+      - name: License headers
         run: ./gradlew checkLicenses
 
       - name: Build
@@ -48,4 +47,4 @@ jobs:
 
       - name: Test
         if: ${{ steps.build.outcome == 'success' && !cancelled() }}
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test

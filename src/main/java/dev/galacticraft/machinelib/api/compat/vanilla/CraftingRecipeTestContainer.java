@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2021-2024 Team Galacticraft
  *
@@ -26,25 +27,32 @@ import com.google.common.collect.Iterators;
 import dev.galacticraft.machinelib.api.storage.SlottedStorageAccess;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A container for testing recipes using the vanilla recipe system.
  *
- * @see net.minecraft.world.item.crafting.RecipeManager
+ * @see RecipeTestContainer
+ * @see CraftingContainer
  */
-public class RecipeTestContainer implements Container {
+public class CraftingRecipeTestContainer extends RecipeTestContainer implements CraftingContainer {
     /**
-     * The slots contained in this container
+     * The width of the crafting grid
      */
-    protected final ItemResourceSlot[] slots;
+    private final int width;
+    /**
+     * The height of the crafting grid
+     */
+    private final int height;
 
     /**
      * Creates a new container with the given slots.
@@ -52,10 +60,10 @@ public class RecipeTestContainer implements Container {
      * @param slots the slots to use
      * @return a new test container
      */
-    @Contract(value = "_ -> new", pure = true)
-    public static @NotNull RecipeTestContainer create(ItemResourceSlot @NotNull ... slots) {
-        assert slots.length > 0;
-        return new RecipeTestContainer(slots);
+    @Contract(value = "_, _, _ -> new", pure = true)
+    public static @NotNull CraftingRecipeTestContainer create(int width, int height, ItemResourceSlot @NotNull ... slots) {
+        assert slots.length > 0 && slots.length == width * height;
+        return new CraftingRecipeTestContainer(width, height, slots);
     }
 
     /**
@@ -66,79 +74,51 @@ public class RecipeTestContainer implements Container {
      * @param len the number of slots to include in the container
      * @return a new test container
      */
-    @Contract(value = "_, _, _-> new", pure = true)
-    public static @NotNull RecipeTestContainer create(SlottedStorageAccess<Item, ItemResourceSlot> access, int start, int len) {
+    @Contract(value = "_, _, _, _, _-> new", pure = true)
+    public static @NotNull CraftingRecipeTestContainer create(int width, int height, SlottedStorageAccess<Item, ItemResourceSlot> access, int start, int len) {
+        assert len == width * height;
         Iterator<ItemResourceSlot> iterator = access.iterator();
         Iterators.advance(iterator, start);
         ItemResourceSlot[] slots = new ItemResourceSlot[len];
         for (int i = 0; i < len; i++) {
             slots[i] = iterator.next();
         }
-        return new RecipeTestContainer(slots);
+        return new CraftingRecipeTestContainer(width, height, slots);
     }
 
     /**
      * Constructs a new RecipeTestContainer with the provided slots.
      *
-     * @param slots the slots to be included in the container
+     * @param width  the width of the crafting grid
+     * @param height the height of the crafting grid
+     * @param slots  the slots to be included in the container
      */
-    RecipeTestContainer(ItemResourceSlot[] slots) {
-        this.slots = slots;
+    private CraftingRecipeTestContainer(int width, int height, ItemResourceSlot[] slots) {
+        super(slots);
+        this.width = width;
+        this.height = height;
     }
 
     @Override
-    public int getContainerSize() {
-        return this.slots.length;
+    public int getWidth() {
+        return this.width;
     }
 
     @Override
-    public boolean isEmpty() {
+    public int getHeight() {
+        return this.height;
+    }
+
+    @Override
+    public @NotNull List<ItemStack> getItems() {
+        List<ItemStack> list = new ArrayList<>(this.slots.length);
         for (ItemResourceSlot slot : this.slots) {
-            if (!slot.isEmpty()) return false;
+            list.add(ItemStackUtil.create(slot));
         }
-        return true;
+        return list;
     }
 
     @Override
-    public @NotNull ItemStack getItem(int i) {
-        return ItemStackUtil.copy(this.slots[i]);
+    public void fillStackedContents(StackedContents finder) {
     }
-
-    @Override
-    public @NotNull ItemStack removeItem(int i, int j) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ItemStack removeItemNoUpdate(int i) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public void setItem(int i, ItemStack itemStack) {
-
-    }
-
-    @Override
-    public void setChanged() {
-
-    }
-
-    @Override
-    public boolean stillValid(Player player) {
-        return false;
-    }
-
-    @Override
-    public boolean canPlaceItem(int i, ItemStack itemStack) {
-        return false;
-    }
-
-    @Override
-    public boolean canTakeItem(Container container, int i, ItemStack itemStack) {
-        return false;
-    }
-
-    @Override
-    public void clearContent() {}
 }
