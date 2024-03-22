@@ -67,25 +67,25 @@ public class GeneratorBlockEntity extends MachineBlockEntity {
 
     @Override
     protected @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
-        if (this.burnTime > 0) {
-            if (this.energyStorage().isFull()) return MachineStatuses.OUTPUT_FULL;
-            this.energyStorage().insert(GENERATION_RATE);
-            this.burnTime--;
-        }
         if (!this.energyStorage().isFull()) {
             if (this.burnTime == 0) {
                 Item item = this.fuelInput.consumeOne();
                 if (item != null) {
                     Integer time = FuelRegistry.INSTANCE.get(item);
-                    if (time == null) return MachineStatuses.IDLE;
+                    if (time == null) time = 0;
                     this.burnTime = time;
-                } else {
-                    return MachineStatuses.IDLE;
                 }
             }
+        }
+
+        if (this.burnTime > 0) {
+            this.energyStorage().insert(GENERATION_RATE);
+            this.burnTime--;
         } else {
             return MachineStatuses.IDLE;
         }
+
+        if (this.energyStorage().isFull()) return MachineStatuses.OUTPUT_FULL;
         return MachineStatuses.ACTIVE;
     }
 

@@ -22,39 +22,31 @@
 
 package dev.galacticraft.machinelib.api.gametest;
 
-import com.google.common.base.CaseFormat;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
-import dev.galacticraft.machinelib.api.gametest.annotation.ProcessingTest;
-import dev.galacticraft.machinelib.api.gametest.annotation.container.DefaultedMetadata;
+import dev.galacticraft.machinelib.api.gametest.annotation.BasicTest;
+import dev.galacticraft.machinelib.api.gametest.annotation.MachineTest;
 import dev.galacticraft.machinelib.api.machine.MachineType;
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Rotation;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * A class for testing machines.
  *
  * @param <Machine> the type of machine block entity
- * @see InstantTest
- * @see ProcessingTest
+ * @see BasicTest
+ * @see MachineTest
  */
-public abstract class MachineGameTest<Machine extends MachineBlockEntity> implements FabricGameTest {
-    private static final Function<String, String> NAME_CONVERSION = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE);
+public abstract class MachineGameTest<Machine extends MachineBlockEntity> extends SimpleGameTest {
+    public static final BlockPos MACHINE_POS = new BlockPos(1, 2, 1);
 
     private final MachineType<Machine, ?> type;
 
@@ -62,138 +54,71 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> implem
         this.type = type;
     }
 
-    @Override
-    public void invokeTestMethod(GameTestHelper context, Method method) {
-        if (method.getAnnotation(GameTest.class) != null) FabricGameTest.super.invokeTestMethod(context, method);
-    }
-
+    @GameTestGenerator
     @MustBeInvokedByOverriders
-    public @NotNull List<TestFunction> generateTests() {
-        List<TestFunction> tests = new ArrayList<>();
+    public @NotNull List<TestFunction> registerTests() {
+        List<TestFunction> tests = super.registerTests();
 
-        tests.add(new TestFunction(this.getBaseId(), this.getBaseId() + "/create_machine", EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
+        tests.add(this.createTest("place", STRUCTURE_3x3, 1, 1, helper -> {
             if (this.createMachine(helper) == null) {
                 throw new GameTestAssertException("No machine associated with block!");
             }
             helper.succeed();
         }));
 
-        Class<? extends MachineGameTest<Machine>> clazz = (Class<? extends MachineGameTest<Machine>>) this.getClass();
-        DefaultedMetadata meta = clazz.getAnnotation(DefaultedMetadata.class);
-        String structure = meta != null ? meta.structure() : EMPTY_STRUCTURE;
-        for (Method method : clazz.getMethods()) {
-            ProcessingTest processingTest = method.getAnnotation(ProcessingTest.class);
-            if (processingTest != null) {
-                String subId = "";
-                if (!processingTest.group().isBlank()) {
-                    subId = "/" + processingTest.group();
-                } else {
-                    if (meta != null && !meta.group().isBlank()) {
-                        subId = "/" + meta.group();
-                    }
-                }
-                tests.add(new TestFunction(this.getBaseId() + subId, this.getBaseId() + '/' + NAME_CONVERSION.apply(method.getName()), structure, Rotation.NONE, processingTest.workTime() + 1, 1, true, 1, 1, helper -> {
+        for (Method method : this.getClass().getMethods()) {
+            MachineTest machineTest = method.getAnnotation(MachineTest.class);
+            if (machineTest != null) {
+                tests.add(this.createTest(machineTest.batch(), machineTest.group(), method.getName(), machineTest.structure(), machineTest.workTime(), machineTest.setupTime(), helper -> {
                     Machine machine = this.createMachine(helper);
-                    if (processingTest.requiresEnergy()) machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
-                    try {
-                        Runnable runnable = (Runnable) method.invoke(this, machine);
-                        helper.runAfterDelay(processingTest.workTime() + 1, () -> {
+                    Runnable runnable = this.invokeTestMethod(method, machine, helper);
+                    if (runnable != null) {
+                        helper.runAfterDelay(machineTest.workTime(), () -> {
                             runnable.run();
                             helper.succeed();
                         });
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException("Failed to invoke test method!", e);
-                    } catch (InvocationTargetException e) {
-                        handleException(e);
                     }
                 }));
-            } else {
-                InstantTest instantTest = method.getAnnotation(InstantTest.class);
-                if (instantTest != null) {
-                    String subId = "";
-                    if (!instantTest.group().isBlank()) {
-                        subId = "/" + instantTest.group();
-                    } else {
-                        if (meta != null && !meta.group().isBlank()) {
-                            subId = "/" + meta.group();
-                        }
-                    }
-                    tests.add(new TestFunction(this.getBaseId() + subId, this.getBaseId() + '/' + NAME_CONVERSION.apply(method.getName()), EMPTY_STRUCTURE, Rotation.NONE, 1, 1, true, 1, 1, helper -> {
-                        Machine machine = this.createMachine(helper);
-                        if (instantTest.requiresEnergy())
-                            machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
-                        try {
-                            Runnable runnable = (Runnable) method.invoke(this, machine);
-                            if (runnable == null) {
-                                helper.succeed();
-                                return;
-                            }
-
-                            helper.runAfterDelay(1, () -> {
-                                runnable.run();
-                                helper.succeed();
-                            });
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException("Failed to invoke test method!", e);
-                        } catch (InvocationTargetException e) {
-                            handleException(e);
-                        }
-                    }));
-                }
             }
         }
 
         return tests;
     }
 
-    public @NotNull TestFunction createChargeFromEnergyItemTest(int slot, Item infiniteBattery) {
-        return new TestFunction(this.getBaseId(), this.getBaseId() + "/charge_from_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
+    public TestFunction createChargeFromEnergyItemTest(int slot, Item infiniteBattery) {
+        return this.createTest("chargeFromItem", STRUCTURE_3x3, 2, 1, helper -> {
             Machine machine = this.createMachine(helper);
             machine.itemStorage().getSlot(slot).set(infiniteBattery, 1);
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isEmpty()) {
-                    helper.fail("Machine did not charge from the stack!", BlockPos.ZERO);
+                    helper.fail("Machine did not charge from the stack!", machine.getBlockPos());
+                } else {
+                    helper.succeed();
                 }
-                helper.succeed();
             });
         });
     }
 
-    public @NotNull TestFunction createDrainToEnergyItemTest(int slot, Item battery) {
-        return new TestFunction(this.getBaseId(), this.getBaseId() + "/drain_to_item", EMPTY_STRUCTURE, Rotation.NONE, 2, 1, true, 1, 1, helper -> {
+    public TestFunction createDrainToEnergyItemTest(int slot, Item battery) {
+        return this.createTest("drainToItem", STRUCTURE_3x3, 2, 1, helper -> {
             Machine machine = this.createMachine(helper);
-            machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
 
+            machine.energyStorage().setEnergy(machine.energyStorage().getCapacity());
             machine.itemStorage().getSlot(slot).set(battery, 1);
 
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isFull()) {
                     helper.fail("Machine did not drain energy to the stack!", BlockPos.ZERO);
+                } else {
+                    helper.succeed();
                 }
-                helper.succeed();
             });
         });
     }
 
-    public static void handleException(@NotNull InvocationTargetException e) {
-        if (e.getCause() instanceof GameTestAssertException ex) {
-            throw ex;
-        } else if (e.getCause() instanceof RuntimeException ex){
-            throw ex;
-        } else if (e.getCause() != null) {
-            throw new RuntimeException(e.getCause());
-        } else {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public @NotNull String getBaseId() {
-        return BuiltInRegistries.BLOCK.getKey(this.type.getBlock()).toString().replace(":", ".");
-    }
-
     protected Machine createMachine(GameTestHelper helper) {
-        helper.setBlock(BlockPos.ZERO, this.type.getBlock());
-        return (Machine) helper.getBlockEntity(BlockPos.ZERO);
+        helper.setBlock(MACHINE_POS, this.type.getBlock());
+        return (Machine) helper.getBlockEntity(MACHINE_POS);
     }
 }

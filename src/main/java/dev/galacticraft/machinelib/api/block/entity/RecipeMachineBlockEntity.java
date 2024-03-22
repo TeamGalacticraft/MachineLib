@@ -165,7 +165,7 @@ public abstract class RecipeMachineBlockEntity<C extends Container, R extends Re
                 assert recipe != null;
                 profiler.push("working");
                 this.extractResourcesToWork();
-                if (++this.progress > this.getProcessingTime(recipe)) {
+                if (++this.progress >= this.getProcessingTime(recipe)) {
                     profiler.push("crafting");
                     this.craft(profiler, recipe);
                     profiler.pop();

@@ -120,13 +120,13 @@ loom {
         getByName("client") {
             name("Minecraft Client")
             source(testmod)
-            property("fabric-api.gametest")
         }
         register("gametest") {
             name("GameTest Server")
             server()
             source(testmod)
             property("fabric-api.gametest")
+            property("fabric-api.gametest.report-file", "${project.layout.buildDirectory.get()}/junit.xml")
         }
     }
 }

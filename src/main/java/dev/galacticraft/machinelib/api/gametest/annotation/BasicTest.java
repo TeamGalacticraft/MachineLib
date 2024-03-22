@@ -20,31 +20,23 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.gametest.annotation.container;
+package dev.galacticraft.machinelib.api.gametest.annotation;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import dev.galacticraft.machinelib.api.gametest.SimpleGameTest;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * The {@code DefaultedMetadata} annotation is used
- * to mark a test class with default metadata values for all test methods.
- */
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface DefaultedMetadata {
-    /**
-     * Returns the default group to use for the contained tests
-     * @return the default group to use for the contained tests
-     */
+public @interface BasicTest {
+    String batch();
     String group() default "";
+    String structure() default SimpleGameTest.STRUCTURE_3x3;
 
-    /**
-     * Returns the structure to use for the tests
-     * @return the structure to use for the tests
-     */
-    String structure() default FabricGameTest.EMPTY_STRUCTURE;
+    int setupTime() default 1;
+
+    int workTime() default 1;
 }

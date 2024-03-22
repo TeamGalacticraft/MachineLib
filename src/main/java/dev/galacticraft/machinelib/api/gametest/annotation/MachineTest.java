@@ -22,18 +22,26 @@
 
 package dev.galacticraft.machinelib.api.gametest.annotation;
 
+import dev.galacticraft.machinelib.api.gametest.SimpleGameTest;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as a test that finishes instantaneously (1 tick).
+ * Represents a test that has to wait a specified number of ticks for results.
+ * Annotated methods should have initial setup in their body,
+ * and return a {@link Runnable} that verifies state at the end.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface InstantTest {
+public @interface MachineTest {
+    String batch() default "";
     String group() default "";
+    String structure() default SimpleGameTest.STRUCTURE_3x3;
 
-    boolean requiresEnergy() default false;
+    int setupTime() default 1;
+
+    int workTime();
 }

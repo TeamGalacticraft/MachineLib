@@ -27,11 +27,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Represents a test that does not need a world context and completes instantly
- */
-@Target(ElementType.METHOD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface UnitTest {
-    String group() default "";
+public @interface TestSuite {
+    String value(); // name
 }

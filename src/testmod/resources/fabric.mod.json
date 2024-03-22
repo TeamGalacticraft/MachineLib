@@ -28,6 +28,7 @@
       "dev.galacticraft.machinelib.testmod.TestModClient"
     ],
     "fabric-gametest": [
+      "dev.galacticraft.machinelib.testmod.gametest.GeneratorTests"
     ]
   },
   "depends": {

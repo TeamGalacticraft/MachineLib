@@ -23,16 +23,15 @@
 package dev.galacticraft.machinelib.api.gametest;
 
 import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
-import dev.galacticraft.machinelib.api.gametest.annotation.InstantTest;
+import dev.galacticraft.machinelib.api.gametest.annotation.MachineTest;
 import dev.galacticraft.machinelib.api.machine.MachineType;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.level.block.Rotation;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +62,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
 
     protected RecipeGameTest(@NotNull MachineType<Machine, ?> type, int inputSlotsStart, int inputSlotsLength, int outputSlotsStart, int outputSlotsLength) {
         super(type);
+
         this.inputSlotsStart = inputSlotsStart;
         this.inputSlotsLength = inputSlotsLength;
         this.outputSlotsStart = outputSlotsStart;
@@ -73,7 +73,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
     protected abstract int getRecipeRuntime();
     protected abstract void createValidRecipe(@NotNull MachineItemStorage storage);
 
-    protected boolean recipeCrafted(@NotNull MachineItemStorage storage) {
+    protected boolean anyRecipeCrafted(@NotNull MachineItemStorage storage) {
         return !storage.isEmpty(this.outputSlotsStart, this.outputSlotsLength);
     }
 
@@ -89,7 +89,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         }
     }
 
-    @InstantTest(group = "recipe")
+    @MachineTest(group = "recipe", workTime = 1)
     public Runnable initialize(Machine machine) {
         this.fulfillRunRequirements(machine);
         this.createValidRecipe(machine.itemStorage());
@@ -100,7 +100,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         };
     }
 
-    @InstantTest(group = "recipe")
+    @MachineTest(group = "recipe", workTime = 1)
     public Runnable invalid(Machine machine) {
         this.fulfillRunRequirements(machine);
         this.createInvalidRecipe(machine.itemStorage());
@@ -111,8 +111,20 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
         };
     }
 
-    @InstantTest(group = "recipe")
+    @MachineTest(group = "recipe", workTime = 1)
     public Runnable full(Machine machine) {
+        this.fulfillRunRequirements(machine);
+        this.fillOutputSlots(machine.itemStorage());
+        this.createValidRecipe(machine.itemStorage());
+        return () -> {
+            if (machine.getActiveRecipe() != null) {
+                throw new GameTestAssertException("Crafting something despite the output being full!");
+            }
+        };
+    }
+
+    @MachineTest(group = "recipe", workTime = 1)
+    public Runnable craft(Machine machine) {
         this.fulfillRunRequirements(machine);
         this.fillOutputSlots(machine.itemStorage());
         this.createValidRecipe(machine.itemStorage());
@@ -133,7 +145,7 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
 //        };
 //    }
 
-    @InstantTest(group = "recipe")
+    @MachineTest(group = "recipe", workTime = 1)
     public Runnable resourcesNoRecipe(Machine machine) {
         this.fulfillRunRequirements(machine);
         return () -> {
@@ -145,19 +157,22 @@ public abstract class RecipeGameTest<C extends Container, R extends Recipe<C>, M
 
     @Override
     @MustBeInvokedByOverriders
-    public @NotNull List<TestFunction> generateTests() {
-        List<TestFunction> functions = super.generateTests();
-        functions.add(new TestFunction(this.getBaseId(), this.getBaseId() + ".craft", EMPTY_STRUCTURE, Rotation.NONE, this.getRecipeRuntime() + 1, 1, true, 1, 1, helper -> {
+    @GameTestGenerator
+    public @NotNull List<TestFunction> registerTests() {
+        List<TestFunction> tests = super.registerTests();
+        // variable runtime
+        tests.add(this.createTest("recipe", "craft", STRUCTURE_3x3, this.getRecipeRuntime(), 1, helper -> {
             Machine machine = createMachine(helper);
             this.fulfillRunRequirements(machine);
             this.createValidRecipe(machine.itemStorage());
-            helper.runAfterDelay(this.getRecipeRuntime() + 1, () -> {
-                if (!this.recipeCrafted(machine.itemStorage())) {
-                    helper.fail("Failed to craft recipe!", BlockPos.ZERO);
+            helper.runAfterDelay(this.getRecipeRuntime(), () -> {
+                if (!this.anyRecipeCrafted(machine.itemStorage())) {
+                    helper.fail("Failed to craft recipe!", machine.getBlockPos());
+                } else {
+                    helper.succeed();
                 }
-                helper.succeed();
             });
         }));
-        return functions;
+        return tests;
     }
 }
