@@ -754,10 +754,12 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     protected void drawCapacitor(GuiGraphics graphics, int mouseX, int mouseY) {
         long capacity = this.menu.energyStorage.getCapacity();
         if (capacity > 0 && this.capacitorHeight != 0) {
-            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, ENERGY_BACKGROUND_X, ENERGY_BACKGROUND_Y, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
+            int x = this.leftPos + this.capacitorX;
+            int y = this.topPos + this.capacitorY;
             long amount = this.menu.energyStorage.getAmount();
             float scale = (float) ((double) amount / (double) capacity);
-            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, this.leftPos + this.capacitorX, (int) Math.floor(this.topPos + this.capacitorY + this.capacitorHeight - (this.capacitorHeight * scale)), ENERGY_X, ENERGY_Y, OVERLAY_WIDTH, (int) Math.floor(OVERLAY_HEIGHT * scale), OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, x, y, ENERGY_X, ENERGY_Y, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, x, y, ENERGY_BACKGROUND_X, ENERGY_BACKGROUND_Y, OVERLAY_WIDTH, (int) (OVERLAY_HEIGHT * (1 - scale)), OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
 
             if (mouseIn(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
                 List<Component> lines = new ArrayList<>();
