@@ -35,10 +35,12 @@ public class TestModBlocks {
     public static final Block GENERATOR = new GeneratorBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL));
     public static final Block MIXER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MIXER));
     public static final Block MELTER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MELTER));
+    public static final Block WIRE = new SimpleWireBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL));
 
     public static void register() {
         Registry.register(BuiltInRegistries.BLOCK, Constant.id(Constant.GENERATOR), TestModBlocks.GENERATOR);
         Registry.register(BuiltInRegistries.BLOCK, Constant.id(Constant.MIXER), TestModBlocks.MIXER);
         Registry.register(BuiltInRegistries.BLOCK, Constant.id(Constant.MELTER), TestModBlocks.MELTER);
+        Registry.register(BuiltInRegistries.BLOCK, Constant.id(Constant.WIRE), TestModBlocks.WIRE);
     }
 }

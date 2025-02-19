@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2024 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,24 +20,27 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod;
+package dev.galacticraft.machinelib.testmod.block;
 
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dev.galacticraft.machinelib.api.wire.WireBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-public interface Constant {
-    String MOD_ID = "machinelib_testmod";
-    Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    String GENERATOR = "generator";
-    String MIXER = "mixer";
-    String MELTER = "melter";
-    String WIRE = "wire";
+public class SimpleWireBlock extends WireBlock {
+    public SimpleWireBlock(Properties properties) {
+        super(properties);
+    }
 
-    @Contract("_ -> new")
-    static @NotNull ResourceLocation id(@NotNull String id) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, id);
+    @Override
+    public long getCapacity() {
+        return 10000;
+    }
+
+    @Override
+    public boolean canConnect(Level level, BlockPos pos, @Nullable BlockState state, Direction direction) {
+        return true;
     }
 }

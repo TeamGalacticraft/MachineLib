@@ -39,6 +39,7 @@ public class TestModItems {
     public static final Item GENERATOR = new BlockItem(TestModBlocks.GENERATOR, new Item.Properties());
     public static final Item MIXER = new BlockItem(TestModBlocks.MIXER, new Item.Properties());
     public static final Item MELTER = new BlockItem(TestModBlocks.MELTER, new Item.Properties());
+    public static final Item WIRE = new BlockItem(TestModBlocks.WIRE, new Item.Properties());
 
     public static final Item INFINITE_BATTERY = new Item(new Item.Properties());
     public static final BatteryItem BASIC_BATTERY = new BatteryItem(new Item.Properties(), 15000);
@@ -47,6 +48,7 @@ public class TestModItems {
         Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.GENERATOR), TestModItems.GENERATOR);
         Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.MIXER), TestModItems.MIXER);
         Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.MELTER), TestModItems.MELTER);
+        Registry.register(BuiltInRegistries.ITEM, Constant.id(Constant.WIRE), TestModItems.WIRE);
 
         Registry.register(BuiltInRegistries.ITEM, Constant.id("infinite_battery"), TestModItems.INFINITE_BATTERY);
         Registry.register(BuiltInRegistries.ITEM, Constant.id("battery"), TestModItems.BASIC_BATTERY);
@@ -58,6 +60,7 @@ public class TestModItems {
             entries.accept(GENERATOR);
             entries.accept(MIXER);
             entries.accept(MELTER);
+            entries.accept(WIRE);
         });
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {

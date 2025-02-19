@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2024 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,24 +20,17 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod;
+package dev.galacticraft.machinelib.impl.attachment;
 
+import dev.galacticraft.machinelib.api.wire.WireNetworkManager;
+import dev.galacticraft.machinelib.impl.Constant;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public interface Constant {
-    String MOD_ID = "machinelib_testmod";
-    Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    String GENERATOR = "generator";
-    String MIXER = "mixer";
-    String MELTER = "melter";
-    String WIRE = "wire";
+public class AttachmentTypes {
+    public static final AttachmentType<WireNetworkManager> WIRE_NETWORK_MANAGER = AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(Constant.MOD_ID, "wire_network"), b -> b.initializer(WireNetworkManager::new).persistent(WireNetworkManager.CODEC));
 
-    @Contract("_ -> new")
-    static @NotNull ResourceLocation id(@NotNull String id) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, id);
+    public static void init() {
     }
 }
