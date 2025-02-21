@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.api.item;
 
-import dev.galacticraft.machinelib.api.component.MLDataComponents;
+import dev.galacticraft.machinelib.api.component.MachineLibDataComponents;
 import dev.galacticraft.machinelib.api.filter.ResourceFilter;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -47,22 +47,22 @@ public class ItemBackedFluidStorage extends GenericItemBackedStorage<Fluid, Flui
 
     @Override
     protected long getRawMaxInput() {
-        return this.getComponent(MLDataComponents.MAX_INPUT);
+        return this.getComponent(MachineLibDataComponents.MAX_INPUT);
     }
 
     @Override
     protected long getRawMaxOutput() {
-        return this.getComponent(MLDataComponents.MAX_OUTPUT);
+        return this.getComponent(MachineLibDataComponents.MAX_OUTPUT);
     }
 
     @Override
     protected long getRawCapacity() {
-        return this.getComponent(MLDataComponents.CAPACITY);
+        return this.getComponent(MachineLibDataComponents.CAPACITY);
     }
 
     @Override
     protected long getRawAmount() {
-        return this.getComponent(MLDataComponents.AMOUNT);
+        return this.getComponent(MachineLibDataComponents.AMOUNT);
     }
 
     @Override
@@ -70,12 +70,12 @@ public class ItemBackedFluidStorage extends GenericItemBackedStorage<Fluid, Flui
         ItemStack stack = this.context.getItemVariant().toStack();
         if (amount == 0) {
             assert variant.isBlank();
-            stack.remove(MLDataComponents.FLUID);
-            stack.remove(MLDataComponents.AMOUNT);
+            stack.remove(MachineLibDataComponents.FLUID);
+            stack.remove(MachineLibDataComponents.AMOUNT);
         } else {
             assert !variant.isBlank();
-            stack.set(MLDataComponents.FLUID, variant);
-            stack.set(MLDataComponents.AMOUNT, amount);
+            stack.set(MachineLibDataComponents.FLUID, variant);
+            stack.set(MachineLibDataComponents.AMOUNT, amount);
         }
 
         long itemCount = this.context.getAmount();
@@ -92,7 +92,7 @@ public class ItemBackedFluidStorage extends GenericItemBackedStorage<Fluid, Flui
     public FluidVariant getResource() {
         DataComponentPatch components = this.context.getItemVariant().getComponents();
         if (components != null) {
-            Optional<? extends FluidVariant> optional = components.get(MLDataComponents.FLUID);
+            Optional<? extends FluidVariant> optional = components.get(MachineLibDataComponents.FLUID);
             return optional != null && optional.isPresent() ? optional.get() : FluidVariant.blank();
         }
         return FluidVariant.blank();

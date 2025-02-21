@@ -20,17 +20,14 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.attachment;
+package dev.galacticraft.machinelib.testmod.block.entity;
 
-import dev.galacticraft.machinelib.api.wire.WireNetworkManager;
-import dev.galacticraft.machinelib.impl.Constant;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class AttachmentTypes {
-    public static final AttachmentType<WireNetworkManager> WIRE_NETWORK_MANAGER = AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(Constant.MOD_ID, "wire_network"), b -> b.initializer(WireNetworkManager::new).persistent(WireNetworkManager.CODEC));
-
-    public static void init() {
+public class DummyBlockEntity extends BlockEntity {
+    public DummyBlockEntity(BlockPos blockPos, BlockState blockState) {
+        super(TestModBlockEntityTypes.DUMMY, blockPos, blockState);
     }
 }

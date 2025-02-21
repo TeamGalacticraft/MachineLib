@@ -22,26 +22,31 @@
 
 package dev.galacticraft.machinelib.api.wire;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
-import com.google.common.graph.Traverser;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
@@ -75,10 +80,32 @@ public class WireNetworkManager {
 
             return dynamicOps.mapBuilder()
                     .add("wires", dynamicOps.createLongList(entries.stream().mapToLong(e -> e.getKey().asLong())))
-                    .add("wire_mappings", dynamicOps.createIntList(entries.stream().mapToInt(e -> wireSegments.indexOf(e.getValue())))) //fixme slow
+                    .add("wire_mappings", dynamicOps.createIntList(entries.stream().mapToInt(e -> wireSegments.indexOf(e.getValue())))) //fixme slow, but only called on world close
                     .add("nodes", dynamicOps.createList(wireSegments.stream().map(s -> WireSegment.CODEC.encodeStart(dynamicOps, s).getOrThrow())))
                     .add("edges", dynamicOps.createList(manager.networks.edges().stream().map(e -> NetworkConnection.CODEC.encodeStart(dynamicOps, e).getOrThrow())))
                     .build(t);
+        }
+    };
+
+    private static final EnergyStorage CLIENT_DUMMY_STORAGE = new EnergyStorage() {
+        @Override
+        public long insert(long maxAmount, TransactionContext transaction) {
+            return 0;
+        }
+
+        @Override
+        public long extract(long maxAmount, TransactionContext transaction) {
+            return 0;
+        }
+
+        @Override
+        public long getAmount() {
+            return 0;
+        }
+
+        @Override
+        public long getCapacity() {
+            return 1;
         }
     };
 
@@ -106,7 +133,11 @@ public class WireNetworkManager {
         return this.wires.get(pos);
     }
 
-    private void wireRemoved(Level level, BlockPos pos) {
+    public @NotNull EnergyStorage getStorage(Level level, BlockPos pos) {
+        return level.isClientSide ? CLIENT_DUMMY_STORAGE : new WireEnergyStorage(pos, (ServerLevel) level);
+    }
+
+    public void removeWire(ServerLevel level, BlockPos pos) {
         WireSegment segment = this.wires.remove(pos);
         if (segment == null) return;
 
@@ -119,16 +150,18 @@ public class WireNetworkManager {
         }
 
         Set<BlockPos> connected = new HashSet<>();
+        Set<NetworkConnection> peerSegments = new HashSet<>();
         Map<BlockPos, EnumSet<Direction>> connectedRefs = new HashMap<>();
 
-        Set<NetworkConnection> networkConnections = new HashSet<>(this.networks.incidentEdges(segment));
         this.networks.removeNode(segment);
 
         while (!adjacent.isEmpty()) {
             connected.clear();
             connectedRefs.clear();
-            traverse(connected, connectedRefs, level, adjacent.removeLast(), null);
-            WireSegment newSegment = new WireSegment(segment.x, segment.z, (ServerLevel) level, connectedRefs);
+            peerSegments.clear();
+
+            traverseWires(connected, connectedRefs, peerSegments, level, adjacent.removeLast(), null, segment.capacity);
+            WireSegment newSegment = new WireSegment(segment.x, segment.z, level, segment.capacity, connectedRefs);
 
             adjacent.removeAll(connected);
 
@@ -136,57 +169,112 @@ public class WireNetworkManager {
                 this.wires.put(blockPos, newSegment);
             }
 
-            this.networks.addNode(newSegment);
-            for (NetworkConnection edge : networkConnections) {
-                if (connected.contains(edge.first)) {
-                    this.networks.addEdge(newSegment, this.wires.get(edge.second), edge);
-                } else if (connected.contains(edge.second)) {
-                    this.networks.addEdge(newSegment, this.wires.get(edge.first), edge);
-                }
+            for (NetworkConnection peerSegment : peerSegments) {
+                this.networks.addEdge(this.wires.get(peerSegment.first), this.wires.get(peerSegment.second), peerSegment);
             }
         }
     }
 
-    public long accept(WireSegment source, Level level, long amount, TransactionContext context) {
+    public long accept(BlockPos sourcePos, ServerLevel level, long amount, TransactionContext context) {
+        WireSegment source = this.wires.get(sourcePos);
+        if (source == null) {
+            BlockState state = level.getBlockState(sourcePos);
+            if (!(state.getBlock() instanceof WireBlock)) return 0;
+            source = createFullNetwork(level, sourcePos, state);
+        }
+
         if (this.locked.contains(source)) return 0;
         level.getProfiler().push("wire_network");
-        level.getProfiler().push("traversal");
-        ImmutableSet<WireSegment> network = ImmutableSet.copyOf(Traverser.forGraph(this.networks).breadthFirst(source));
-        level.getProfiler().pop();
-        try {
-            this.locked.addAll(network);
 
-            List<EnergyRequest> requests = new ArrayList<>(32);
+        level.getProfiler().push("traversal");
+        Object2LongOpenHashMap<WireSegment> network = traverseNetwork(level.getGameTime(), source);
+        level.getProfiler().pop();
+
+        try {
+            this.locked.addAll(network.keySet());
+            record SegmentRequest(WireSegment key, double internalFulfillment, List<EnergyRequest> requests) {}
+            List<SegmentRequest> netRequests = new ArrayList<>(network.size());
             long requested = 0;
 
+            level.getProfiler().push("test");
             try (Transaction transaction = Transaction.openNested(context)) {
-                for (WireSegment segment : network) {
-                    requested += segment.tryAccept(requests, level, amount, transaction);
+                for (ObjectIterator<Object2LongMap.Entry<WireSegment>> iterator = network.object2LongEntrySet().fastIterator(); iterator.hasNext(); ) {
+                    List<EnergyRequest> requests = new ArrayList<>();
+                    Object2LongMap.Entry<WireSegment> entry = iterator.next();
+                    WireSegment segment = entry.getKey();
+                    if (segment.usage >= network.getLong(segment)) continue;
+                    long request = segment.tryAccept(requests, level, amount, transaction);
+                    long possible = Math.min(request, network.getLong(segment) - segment.usage);
+                    if (request > 0 && possible > 0) {
+                        netRequests.add(new SegmentRequest(segment, (double) possible / (double) request, requests));
+                        requested += possible;
+                    }
                 }
                 transaction.abort();
             }
+            level.getProfiler().pop();
 
-            if (requested == 0) return 0;
+            if (requested <= 0) return 0;
 
-            double multiplier = (double) amount / requested;
+            double globalFulfillment = amount > requested ? 1 : (double) amount / requested;
             long distributed = 0;
+            level.getProfiler().push("distribution");
+            System.out.println(sourcePos.toShortString());
             try (Transaction transaction = Transaction.openNested(context)) {
-                for (EnergyRequest request : requests) {
-                    distributed += request.storage.insert((long) (request.amount * multiplier), transaction);
+                for (SegmentRequest segment : netRequests) {
+                    for (EnergyRequest request : segment.requests) {
+                        long inserted = request.storage.insert((long) (request.amount * globalFulfillment * segment.internalFulfillment), transaction);
+                        distributed += inserted;
+                        System.out.println("dist: " + inserted);
+                        if ((segment.key.usage += inserted) >= segment.key.capacity) break;
+                    }
                 }
 
-                if (distributed <= amount) transaction.commit();
-                else return 0;
+                if (distributed <= amount) {
+                    transaction.commit();
+                } else {
+                    MachineLib.LOGGER.error("Distributed too much energy. Aborting!");
+                    return 0;
+                }
+            } finally {
+                level.getProfiler().pop();
             }
 
             return amount - distributed;
         } finally {
-            this.locked.removeAll(network);
+            this.locked.removeAll(network.keySet());
             level.getProfiler().pop();
         }
     }
 
-    public static void traverse(Set<BlockPos> visited, Map<BlockPos, EnumSet<Direction>> visitedEndpoints, Level level, BlockPos start, @Nullable BlockPos until) {
+    private Object2LongOpenHashMap<WireSegment> traverseNetwork(long tick, WireSegment source) {
+        ArrayList<WireSegment> queue = new ArrayList<>();
+        queue.add(source);
+        Object2LongOpenHashMap<WireSegment> map = new Object2LongOpenHashMap<>();
+        map.defaultReturnValue(Integer.MIN_VALUE);
+
+        map.put(source, source.capacity);
+        while (!queue.isEmpty()) {
+            WireSegment segment = queue.removeLast();
+            if (segment.tick != tick) {
+                System.out.println("---- " + segment.usage + " / " + segment.capacity);
+                segment.usage = 0;
+                segment.tick = tick;
+            }
+
+            long cap = map.getLong(segment);
+            for (WireSegment successor : this.networks.successors(segment)) {
+                long localCap = Math.min(cap, successor.capacity);
+                if (map.getLong(successor) < localCap) { // DNE or worse than the new one
+                    map.put(successor, localCap);
+                    queue.add(successor); // we can requeue if we get better flow here
+                }
+            }
+        }
+        return map;
+    }
+
+    private static void traverseWires(Set<BlockPos> visited, Map<BlockPos, EnumSet<Direction>> visitedEndpoints, Set<NetworkConnection> peerSegments, ServerLevel level, BlockPos start, @Nullable BlockPos until, long cap) {
         List<BlockPos> queue = new ArrayList<>();
         queue.add(start);
         visited.add(start);
@@ -199,14 +287,20 @@ public class WireNetworkManager {
             // enqueue all adjacent wires
             for (Direction direction : Direction.values()) {
                 mutable.setWithOffset(target, direction);
-                if (!visited.contains(mutable) && start.getX() >> 4 == mutable.getX() >> 4 && start.getZ() >> 4 == mutable.getZ() >> 4) {
-                    if (isPhysicallyConnected(state, direction, level.getBlockState(mutable))) {
-                        BlockPos immutable = mutable.immutable();
-                        visited.add(immutable);
-                        if (mutable.equals(until)) return;
-                        queue.addLast(immutable);
-                    } else if (isEndpointConnected(state, direction) && !(level.getBlockState(mutable).getBlock() instanceof WireBlock)) {
-                        visitedEndpoints.computeIfAbsent(target.immutable(), k -> EnumSet.noneOf(Direction.class)).add(direction.getOpposite());
+                if (!visited.contains(mutable)) {
+                    BlockState adjState = level.getBlockState(mutable);
+                    if (isPhysicallyConnected(state, direction, adjState)) {
+                        if (isMergable(start.getX() >> 4, start.getZ() >> 4, mutable, cap, ((WireBlock) adjState.getBlock()).capacity)) {
+                            BlockPos immutable = mutable.immutable();
+                            visited.add(immutable);
+                            if (mutable.equals(until)) return;
+                            queue.addLast(immutable);
+                        } else {
+                            if (mutable.equals(until)) return;
+                            peerSegments.add(new NetworkConnection(target, mutable.immutable()));
+                        }
+                    } else if (isEndpointConnected(state, direction, adjState)) {
+                        visitedEndpoints.computeIfAbsent(mutable.immutable(), k -> EnumSet.noneOf(Direction.class)).add(direction.getOpposite());
                     }
                 }
             }
@@ -214,22 +308,22 @@ public class WireNetworkManager {
     }
 
     // direction to updated neighbor
-    public void updateWire(Level level, BlockPos pos, BlockState state, Direction direction, BlockPos adjPos, BlockState adjState) {
+    public void updateWire(ServerLevel level, BlockPos pos, BlockState state, Direction direction, BlockPos adjPos, BlockState adjState) {
         WireSegment segment = this.getSegment(pos);
         if (segment == null) {
-            return;
-//            throw new AssertionError();
+            MachineLib.LOGGER.warn("Missing network at [{}], creating one.", pos.toShortString());
+            segment = createFullNetwork(level, pos, state);
         }
 
         WireSegment adjSegment = this.getSegment(adjPos);
         if (adjSegment != null) { // check for wire
-            if (sameChunk(pos.getX() >> 4, pos.getZ() >> 4, adjPos)) { // internal - mutate network segment
+            if (isMergable(pos.getX() >> 4, pos.getZ() >> 4, adjPos, segment.capacity, adjSegment.capacity)) { // internal - mutate network segment
                 if (isPhysicallyConnected(state, direction, adjState)) {
                     if (adjSegment == segment) return; // connection already exists - no change.
                     mergeSegments(adjSegment, segment); // newly created connection
                 } else {
                     if (!(adjState.getBlock() instanceof WireBlock)) {
-                        this.wireRemoved(level, adjPos); // wire removed - can fast track
+                        this.removeWire(level, adjPos); // wire removed - can fast track
                     } else if (adjSegment == segment) {
                         this.splitSegment(pos, direction, level, segment); // connection deleted
                     } //otherwise, no previous connection - no change.
@@ -242,55 +336,59 @@ public class WireNetworkManager {
                 }
             }
         } else if (!(adjState.getBlock() instanceof WireBlock)) { // check for endpoint (internal/external endpoints handled by segment)
-            if (isEndpointConnected(state, direction) && !(level.getBlockState(adjPos).getBlock() instanceof WireBlock)) {
-                segment.addEndpoint((ServerLevel) level, adjPos, direction.getOpposite());
+            if (isEndpointConnected(state, direction, adjState)) {
+                segment.addEndpoint(level, adjPos, direction.getOpposite());
             } else {
                 segment.removeEndpoint(adjPos, direction.getOpposite());
             }
         }
     }
 
-    public void newWire(Level level, BlockPos pos, BlockState state) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        // network and segment to apply to the wire
-        WireSegment segment = null;
-//        for (Direction direction : Direction.values()) {
-//            if (state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()])) {
-//                WireSegment adj = this.getSegment(mutablePos.setWithOffset(pos, direction));
-//                if (adj != null) {
-//                    if (this.verifyValidConnection(level, pos, direction)) {
-//                        if (sameChunk(pos.getX() >> 4, pos.getZ() >> 4, mutablePos)) {
-//                            if (segment == null) {
-//                                segment = adj;
-//                            } else if (segment != adj) { // merge segments
-//                                mergeSegments(adj, segment);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        if (segment == null) {
-            segment = new WireSegment(pos.getX() >> 4, pos.getZ() >> 4);
-            this.networks.addNode(segment);
-            this.wires.put(pos, segment);
+    private WireSegment createFullNetwork(ServerLevel level, BlockPos pos, BlockState state) {
+        if (state == null) state = level.getBlockState(pos);
+
+        Set<BlockPos> connected = new HashSet<>();
+        Set<NetworkConnection> peerSegments = new HashSet<>();
+        Map<BlockPos, EnumSet<Direction>> connectedRefs = new HashMap<>();
+        traverseWires(connected, connectedRefs, peerSegments, level, pos, null, ((WireBlock) state.getBlock()).capacity);
+        WireSegment segment = new WireSegment(pos.getX() >> 4, pos.getZ() >> 4, level, ((WireBlock) state.getBlock()).capacity, connectedRefs);
+
+        this.networks.addNode(segment);
+        for (BlockPos blockPos : connected) {
+            WireSegment segment1 = this.wires.put(blockPos, segment);
+            if (segment1 != null) this.networks.removeNode(segment1);
         }
 
-//        for (Direction direction : Direction.values()) {
-//            if (state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()])) {
-//                WireSegment adj = this.getSegment(mutablePos.setWithOffset(pos, direction));
-//                if (adj != null) {
-//                    if (this.verifyValidConnection(level, pos, direction)) {
-//                        if (!sameChunk(pos.getX() >> 4, pos.getZ() >> 4, mutablePos)) {
-//                            this.networks.addEdge(segment, adj, new NetworkConnection(pos, mutablePos.immutable()));
-//                        }
-//                    }
-//                }
-//            }
-//        }
+        for (NetworkConnection peerSegment : peerSegments) {
+            if (this.wires.get(peerSegment.first) == null) {
+                createFullNetwork(level, peerSegment.first, null);
+                if (!networks.edges().contains(peerSegment)) throw new AssertionError();
+            } else if (this.wires.get(peerSegment.second) == null) {
+                createFullNetwork(level, peerSegment.second, null);
+                if (!networks.edges().contains(peerSegment)) throw new AssertionError();
+            } else {
+                this.networks.addEdge(this.wires.get(peerSegment.first), this.wires.get(peerSegment.second), peerSegment);
+            }
+        }
+        return segment;
+    }
+
+    public void newWire(ServerLevel level, BlockPos pos, BlockState state) {
+        // network and segment to apply to the wire
+        WireSegment segment = new WireSegment(pos.getX() >> 4, pos.getZ() >> 4, ((WireBlock) state.getBlock()).capacity);
+        this.networks.addNode(segment);
+        this.wires.put(pos, segment);
+
+        // update endpoint connections. we don't need to update wires, as they will notify properly
+        for (Direction direction : Direction.values()) {
+            if (state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()]) && !(level.getBlockState(pos.relative(direction)).getBlock() instanceof WireBlock)) {
+                segment.addEndpoint(level, pos.relative(direction), direction.getOpposite());
+            }
+        }
     }
 
     private void mergeSegments(WireSegment adj, WireSegment segment) {
+        if (adj.capacity != segment.capacity) throw new AssertionError();
         segment.external.putAll(adj.external);
         segment.storageRefs.putAll(adj.storageRefs);
         adj.external.clear();
@@ -305,108 +403,90 @@ public class WireNetworkManager {
         }
     }
 
-    private void splitSegment(BlockPos disconnected, Direction disconnectDir, Level level, WireSegment segment) {
+    private void splitSegment(BlockPos disconnected, Direction disconnectDir, ServerLevel level, WireSegment segment) {
         Set<BlockPos> connected = new HashSet<>();
         Map<BlockPos, EnumSet<Direction>> connectedRefs = new HashMap<>();
+        Set<NetworkConnection> peerSegments = new HashSet<>();
         BlockPos disconnectPeer = disconnected.relative(disconnectDir);
-        traverse(connected, connectedRefs, level, disconnected, disconnectPeer);
-        if (connected.contains(disconnectPeer)) return; // no change.
 
-        Set<NetworkConnection> networkConnections = new HashSet<>(this.networks.incidentEdges(segment));
+        traverseWires(connected, connectedRefs, peerSegments, level, disconnected, disconnectPeer, segment.capacity);
+        if (connected.contains(disconnectPeer)) return; // no change.
         this.networks.removeNode(segment);
 
-        {
-            WireSegment segment1 = new WireSegment(segment.x, segment.z, (ServerLevel) level, connectedRefs);
-            this.networks.addNode(segment1);
-            for (NetworkConnection edge : networkConnections) {
-                if (connected.contains(edge.first)) {
-                    this.networks.addEdge(segment1, this.wires.get(edge.second), edge);
-                } else if (connected.contains(edge.second)) {
-                    this.networks.addEdge(segment1, this.wires.get(edge.first), edge);
-                }
-            }
+        WireSegment segment1 = new WireSegment(segment.x, segment.z, level, segment.capacity, connectedRefs);
+        this.networks.addNode(segment1);
+        for (NetworkConnection peerSegment : peerSegments) {
+            this.networks.addEdge(this.wires.get(peerSegment.first), this.wires.get(peerSegment.second), peerSegment);
         }
 
-        {
-            connected.clear();
-            connectedRefs.clear();
-            traverse(connected, connectedRefs, level, disconnectPeer, null);
-            WireSegment segment2 = new WireSegment(segment.x, segment.z, (ServerLevel) level, connectedRefs);
-            this.networks.addNode(segment2);
-            for (NetworkConnection edge : networkConnections) {
-                if (connected.contains(edge.first)) {
-                    this.networks.addEdge(segment2, this.wires.get(edge.second), edge);
-                } else if (connected.contains(edge.second)) {
-                    this.networks.addEdge(segment2, this.wires.get(edge.first), edge);
-                }
-            }
+        connected.clear();
+        connectedRefs.clear();
+        peerSegments.clear();
+
+        traverseWires(connected, connectedRefs, peerSegments, level, disconnectPeer, null, segment.capacity);
+        WireSegment segment2 = new WireSegment(segment.x, segment.z, level, segment.capacity, connectedRefs);
+        this.networks.addNode(segment2);
+        for (NetworkConnection peerSegment : peerSegments) {
+            this.networks.addEdge(this.wires.get(peerSegment.first), this.wires.get(peerSegment.second), peerSegment);
         }
     }
-
-//    private boolean checkValid(Level level, BlockPos pos, Direction direction) {
-//        BlockPos relative = pos.relative(direction);
-//        BlockState state = level.getBlockState(relative);
-//        if (state.getBlock() instanceof WireBlock wb) {
-//            return state.getValue(WireBlock.CONNECTIONS[direction.getOpposite().get3DDataValue()]);
-//        }
-//        MachineLib.LOGGER.warn("Removed {} ghost wires", traverseValidate(level, relative));
-//        this.traverseValidate(level, relative);
-//
-//        return false;
-//    }
-
-    private boolean verifyValidConnection(Level level, BlockPos pos, Direction direction) {
-        BlockPos relative = pos.relative(direction);
-        BlockState state = level.getBlockState(relative);
-        if (state.getOptionalValue(WireBlock.CONNECTIONS[direction.getOpposite().get3DDataValue()]).orElse(false)) {
-            return true;
-        }
-        MachineLib.LOGGER.warn("Invalid connection at {}", relative);
-
-        return false;
-    }
-
-//    private int traverseValidate(Level level, BlockPos pos) {
-//        int invalid = 0;
-//        List<BlockPos> queue = new ArrayList<>();
-//        Set<BlockPos> visited = new HashSet<>();
-//        queue.add(pos);
-//        visited.add(pos);
-//
-//        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-//        while (!queue.isEmpty()) {
-//            BlockPos target = queue.removeLast();
-//            if (!(level.getBlockState(target).getBlock() instanceof WireBlock)) {
-//                // remove ghost wire
-//                this.removeWire(target);
-//                invalid++;
-//
-//                // enqueue all adjacent wires
-//                for (Direction direction : Direction.values()) {
-//                    mutable.setWithOffset(target, direction);
-//                    if (!visited.contains(mutable) && this.getSegment(mutable) != null) {
-//                        queue.addLast(mutable.immutable());
-//                        visited.add(mutable.immutable());
-//                    }
-//                }
-//            } else {
-//                // the position is valid. don't check again
-//                visited.add(target);
-//            }
-//        }
-//        return invalid;
-//    }
 
     protected static boolean isPhysicallyConnected(BlockState state, Direction direction, BlockState adjState) {
-        return state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()]) && adjState.getOptionalValue(WireBlock.CONNECTIONS[direction.getOpposite().get3DDataValue()]).orElse(false);
+        return state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()])
+                && adjState.getOptionalValue(WireBlock.CONNECTIONS[direction.getOpposite().get3DDataValue()]).orElse(false);
     }
 
-    protected static boolean isEndpointConnected(BlockState state, Direction direction) {
-        return state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()]);
+    protected static boolean isEndpointConnected(BlockState state, Direction direction, BlockState adjState) {
+        return state.getValue(WireBlock.CONNECTIONS[direction.get3DDataValue()]) && !(adjState.getBlock() instanceof WireBlock);
     }
 
-    protected boolean sameChunk(int x, int z, BlockPos pos) {
+    protected static boolean isMergable(int x, int z, BlockPos pos, long a, long b) {
+        return sameChunk(x, z, pos) && a == b;
+    }
+
+    protected static boolean sameChunk(int x, int z, BlockPos pos) {
         return pos.getX() >> 4 == x && pos.getZ() >> 4 == z;
+    }
+
+    public void rebuild(CommandContext<CommandSourceStack> ctx) {
+        Map<BlockPos, WireSegment> wires = new HashMap<>(this.wires);
+        this.wires.clear();
+        Set<WireSegment> wireSegments = new HashSet<>(this.networks.nodes());
+        Set<NetworkConnection> edges = new HashSet<>(this.networks.edges());
+        wireSegments.forEach(this.networks::removeNode);
+        ServerLevel level = ctx.getSource().getLevel();
+
+        int nonWires = 0;
+
+        for (BlockPos blockPos : wires.keySet()) {
+            WireSegment segment = this.wires.get(blockPos);
+            if (segment == null) {
+                BlockState blockState = level.getBlockState(blockPos);
+                if (blockState.getBlock() instanceof WireBlock) {
+                    createFullNetwork(level, blockPos, blockState);
+                } else {
+                    nonWires++;
+                }
+            }
+        }
+
+        int nodeDiff = this.networks.nodes().size() - wireSegments.size();
+        int edgeDiff = this.networks.edges().size() - edges.size();
+
+        HashSet<BlockPos> wireDiff = new HashSet<>(this.wires.keySet());
+        wireDiff.removeAll(wires.keySet());
+        ctx.getSource().sendSystemMessage(Component.literal("rebuilt networks. N: " + nodeDiff + ", E: " + edgeDiff + ", W+: " + wireDiff.size() + ", W-: " + nonWires));
+    }
+
+    public void purge() {
+        this.wires.clear();
+        new ArrayList<>(this.networks.nodes()).forEach(this.networks::removeNode);
+    }
+
+    public void printInfo(CommandContext<CommandSourceStack> ctx) {
+        Set<WireSegment> orphaned = new HashSet<>(this.networks.nodes());
+        orphaned.removeAll(this.wires.values());
+        ctx.getSource().sendSystemMessage(Component.literal("wires: " + this.wires.size() + ", segments: " + this.networks.nodes().size() + ", orphaned: " + orphaned.size()));
     }
 
     private record NetworkConnection(BlockPos first, BlockPos second) {
@@ -438,4 +518,35 @@ public class WireNetworkManager {
     }
 
     public record EnergyRequest(EnergyStorage storage, long amount) {}
+
+    private class WireEnergyStorage implements EnergyStorage {
+        private final BlockPos pos;
+        private final ServerLevel level;
+
+        public WireEnergyStorage(BlockPos pos, ServerLevel level) {
+            this.pos = pos;
+            this.level = level;
+        }
+
+        @Override
+        public long insert(long maxAmount, TransactionContext transaction) {
+            return WireNetworkManager.this.accept(pos, level, maxAmount, transaction);
+        }
+
+        @Override
+        public long extract(long maxAmount, TransactionContext transaction) {
+            return 0;
+        }
+
+        @Override
+        public long getAmount() {
+            return 0;
+        }
+
+        @Override
+        public long getCapacity() {
+            WireSegment segment = WireNetworkManager.this.getSegment(pos);
+            return segment != null ? segment.capacity : 0;
+        }
+    }
 }

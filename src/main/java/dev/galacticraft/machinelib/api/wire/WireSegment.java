@@ -33,7 +33,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 
 import java.util.*;
@@ -42,6 +41,7 @@ public class WireSegment {
     public static final Codec<WireSegment> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("x").forGetter(s -> s.x),
             Codec.INT.fieldOf("z").forGetter(s -> s.z),
+            Codec.LONG.fieldOf("cap").forGetter(s -> s.capacity),
             BlockPos.CODEC.listOf().fieldOf("ext").forGetter(s -> ImmutableList.copyOf(s.external.keySet())),
             StorageRef.CODEC.listOf().fieldOf("refs").forGetter(s -> s.storageRefs.entrySet().stream().map(e -> new StorageRef(e.getKey(), e.getValue())).toList())
     ).apply(i, WireSegment::new));
@@ -49,34 +49,42 @@ public class WireSegment {
     final int x;
     final int z;
 
+    final long capacity;
+
     // assertion: only one direction is possible as these are all outside chunk borders
     final Map<BlockPos, BlockApiCache<EnergyStorage, Direction>> external; // storage pos -> cache
     final Map<BlockPos, EnumSet<Direction>> storageRefs; // storage pos -> direction OUT OF storage
 
-    public WireSegment(int x, int z) {
+    long tick = -1;
+    long usage = 0;
+
+    public WireSegment(int x, int z, long capacity) {
         this.x = x;
         this.z = z;
+        this.capacity = capacity;
         this.external = new HashMap<>();
         this.storageRefs = new HashMap<>();
     }
 
-    public WireSegment(int x, int z, ServerLevel level, Map<BlockPos, EnumSet<Direction>> refs) {
+    public WireSegment(int x, int z, ServerLevel level, long capacity, Map<BlockPos, EnumSet<Direction>> refs) {
         this.x = x;
         this.z = z;
+        this.capacity = capacity;
         this.storageRefs = new HashMap<>(refs);
         this.external = new HashMap<>();
         for (Iterator<Map.Entry<BlockPos, EnumSet<Direction>>> iterator = refs.entrySet().iterator(); iterator.hasNext(); ) {
             Map.Entry<BlockPos, EnumSet<Direction>> entry = iterator.next();
             if (isExternal(entry.getKey())) {
-                external.put(entry.getKey(), BlockApiCache.create(EnergyStorage.SIDED, level, entry.getKey()));
+                this.external.put(entry.getKey(), BlockApiCache.create(EnergyStorage.SIDED, level, entry.getKey()));
                 iterator.remove();
             }
         }
     }
 
-    public WireSegment(int x, int z, List<BlockPos> ext, List<StorageRef> storageRefs) {
+    private WireSegment(int x, int z, long capacity, List<BlockPos> ext, List<StorageRef> storageRefs) {
         this.x = x;
         this.z = z;
+        this.capacity = capacity;
         this.external = new HashMap<>();
         this.storageRefs = new HashMap<>();
 
@@ -113,7 +121,7 @@ public class WireSegment {
         for (Map.Entry<BlockPos, BlockApiCache<EnergyStorage, Direction>> entry : external.entrySet()) {
             if (level.isLoaded(entry.getKey())) {
                 Direction direction = Direction.fromDelta(this.x - entry.getKey().getX() >> 4, 0, this.z - entry.getKey().getZ() >> 4);
-                EnergyStorage energyStorage = EnergyStorage.SIDED.find(level, entry.getKey(), chunk.getBlockState(entry.getKey()), chunk.getBlockEntity(entry.getKey()), direction);
+                EnergyStorage energyStorage = entry.getValue().find(direction);
                 if (energyStorage != null) {
                     long inserted = energyStorage.insert(amount, transaction);
                     if (inserted > 0) {
@@ -134,37 +142,12 @@ public class WireSegment {
 
     @Override
     public String toString() {
-        return "WireSegment@" + System.identityHashCode(this) + "{" +
+        return "WS@" + System.identityHashCode(this) + "{" +
                 "x=" + x +
                 ", z=" + z +
-                ", external=" + external +
-                ", storageRefs=" + storageRefs +
+                ", ext=" + external +
+                ", refs=" + storageRefs +
                 '}';
-    }
-
-    public @Nullable EnergyStorage storage(WireNetworkManager manager, Level level, @Nullable Direction context) {
-        if (context == null) return null;
-        return new EnergyStorage() {
-            @Override
-            public long insert(long maxAmount, TransactionContext transaction) {
-                return manager.accept(WireSegment.this, level, maxAmount, transaction);
-            }
-
-            @Override
-            public long extract(long maxAmount, TransactionContext transaction) {
-                return 0;
-            }
-
-            @Override
-            public long getAmount() {
-                return 0;
-            }
-
-            @Override
-            public long getCapacity() {
-                return 0;
-            }
-        };
     }
 
     public void addEndpoint(ServerLevel level, BlockPos pos, Direction direction) {

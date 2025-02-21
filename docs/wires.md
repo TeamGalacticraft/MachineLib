@@ -20,11 +20,14 @@
 ### Outline
 
 * No `BlockEntity`s.
-  * Keep track of networks within the `Level`
-    * Easier to keep track of global state
   * Keep track of connections using `BlockState`s
     * Ensures that visuals always line up to functionality
-  * Rely on block placement
+  * Rely on block placement/removal events
+* Block->Network relationships handled globally (in the `Level`)
+  * Easier to keep track and rectify state
+* Networks are made up of segments
+  * Split by chunk
+  * Split by transfer capacity
 
 ## Implementation Details
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2024 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,37 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod;
+package dev.galacticraft.machinelib.testmod.block;
 
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.world.level.block.Block;
+import team.reborn.energy.api.EnergyStorage;
 
-public interface Constant {
-    String MOD_ID = "machinelib_testmod";
-    Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    String GENERATOR = "generator";
-    String MIXER = "mixer";
-    String MELTER = "melter";
-    String WIRE = "wire";
-    String THIN_WIRE = "thin_wire";
-    String ENERGY_SOURCE = "energy_source";
-    String ENERGY_SINK = "energy_sink";
-    String DUMMY = "dummy";
-    String WEAK_ENERGY_SINK = "weak_energy_sink";
+public class EnergySinkBlock extends Block {
+    public EnergySinkBlock(Properties properties, long limit) {
+        super(properties);
+        EnergyStorage.SIDED.registerForBlocks((world, pos, state, blockEntity, context) -> new EnergySink(limit), this);
+    }
 
-    @Contract("_ -> new")
-    static @NotNull ResourceLocation id(@NotNull String id) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, id);
+    private record EnergySink(long limit) implements EnergyStorage {
+        @Override
+        public long insert(long maxAmount, TransactionContext transaction) {
+            return Math.min(limit, maxAmount);
+        }
+
+        @Override
+        public long extract(long maxAmount, TransactionContext transaction) {
+            return 0;
+        }
+
+        @Override
+        public long getAmount() {
+            return 0;
+        }
+
+        @Override
+        public long getCapacity() {
+            return limit;
+        }
     }
 }

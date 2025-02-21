@@ -20,27 +20,17 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.testmod.block;
+package dev.galacticraft.machinelib.impl.attachment;
 
-import dev.galacticraft.machinelib.api.wire.WireBlock;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
+import dev.galacticraft.machinelib.api.wire.WireNetworkManager;
+import dev.galacticraft.machinelib.impl.Constant;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.resources.ResourceLocation;
 
-public class SimpleWireBlock extends WireBlock {
-    public SimpleWireBlock(Properties properties) {
-        super(properties);
-    }
+public class MachineLibAttachmentTypes {
+    public static final AttachmentType<WireNetworkManager> WIRE_NETWORK_MANAGER = AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(Constant.MOD_ID, "wire_network"), b -> b.initializer(WireNetworkManager::new).persistent(WireNetworkManager.CODEC));
 
-    @Override
-    public long getCapacity() {
-        return 10000;
-    }
-
-    @Override
-    public boolean canConnect(Level level, BlockPos pos, @Nullable BlockState state, Direction direction) {
-        return true;
+    public static void init() {
     }
 }

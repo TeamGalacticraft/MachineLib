@@ -33,7 +33,7 @@ import net.minecraft.network.codec.StreamCodec;
 
 import java.util.function.UnaryOperator;
 
-public class MLDataComponents {
+public class MachineLibDataComponents {
     private static final StreamCodec<ByteBuf, Long> LONG_STREAM_CODEC = StreamCodec.of(ByteBuf::writeLong, ByteBuf::readLong);
 
     public static final DataComponentType<Long> AMOUNT = register("amount", b -> b

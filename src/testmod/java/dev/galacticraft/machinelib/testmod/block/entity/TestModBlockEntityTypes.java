@@ -30,17 +30,19 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public class TestModBlockEntityTypes {
+    public static final BlockEntityType<GeneratorBlockEntity> GENERATOR = BlockEntityType.Builder.of(GeneratorBlockEntity::new, TestModBlocks.GENERATOR).build(null);
+    public static final BlockEntityType<MixerBlockEntity> MIXER = BlockEntityType.Builder.of(MixerBlockEntity::new, TestModBlocks.MIXER).build(null);
+    public static final BlockEntityType<MelterBlockEntity> MELTER = BlockEntityType.Builder.of(MelterBlockEntity::new, TestModBlocks.MELTER).build(null);
+    public static final BlockEntityType<DummyBlockEntity> DUMMY = BlockEntityType.Builder.of(DummyBlockEntity::new, TestModBlocks.ENERGY_SOURCE).build(null);
+
     public static void register() {
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.GENERATOR), TestModBlockEntityTypes.GENERATOR);
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.MIXER), TestModBlockEntityTypes.MIXER);
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.MELTER), TestModBlockEntityTypes.MELTER);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Constant.id(Constant.DUMMY), TestModBlockEntityTypes.DUMMY);
 
         MachineBlockEntity.registerProviders(GENERATOR);
         MachineBlockEntity.registerProviders(MIXER);
         MachineBlockEntity.registerProviders(MELTER);
-    }    public static final BlockEntityType<GeneratorBlockEntity> GENERATOR = BlockEntityType.Builder.of(GeneratorBlockEntity::new, TestModBlocks.GENERATOR).build(null);
-    public static final BlockEntityType<MixerBlockEntity> MIXER = BlockEntityType.Builder.of(MixerBlockEntity::new, TestModBlocks.MIXER).build(null);
-    public static final BlockEntityType<MelterBlockEntity> MELTER = BlockEntityType.Builder.of(MelterBlockEntity::new, TestModBlocks.MELTER).build(null);
-
-
+    }
 }

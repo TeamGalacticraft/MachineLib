@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.api.item;
 
-import dev.galacticraft.machinelib.api.component.MLDataComponents;
+import dev.galacticraft.machinelib.api.component.MachineLibDataComponents;
 import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -46,9 +46,9 @@ public class SingleVariantFixedItemBackedFluidStorage extends FixedItemBackedFlu
 
         ItemStack stack = this.context.getItemVariant().toStack();
         if (amount == 0) {
-            stack.remove(MLDataComponents.AMOUNT);
+            stack.remove(MachineLibDataComponents.AMOUNT);
         } else {
-            stack.set(MLDataComponents.AMOUNT, amount);
+            stack.set(MachineLibDataComponents.AMOUNT, amount);
         }
 
         long itemCount = this.context.getAmount();

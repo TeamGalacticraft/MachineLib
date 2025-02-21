@@ -22,9 +22,10 @@
 
 package dev.galacticraft.machinelib.impl;
 
-import dev.galacticraft.machinelib.api.component.MLDataComponents;
+import dev.galacticraft.machinelib.api.component.MachineLibDataComponents;
 import dev.galacticraft.machinelib.api.config.Config;
-import dev.galacticraft.machinelib.impl.attachment.AttachmentTypes;
+import dev.galacticraft.machinelib.impl.attachment.MachineLibAttachmentTypes;
+import dev.galacticraft.machinelib.impl.command.MachineLibCommands;
 import dev.galacticraft.machinelib.impl.network.MachineLibPackets;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -42,8 +43,12 @@ public final class MachineLib implements ModInitializer {
     public void onInitialize() {
         MachineLibPackets.registerChannels();
         MachineLibPackets.registerServer();
-        MLDataComponents.init();
-        AttachmentTypes.init();
+        MachineLibDataComponents.init();
+        MachineLibAttachmentTypes.init();
+
+        if (FabricLoader.getInstance().isModLoaded("fabric-command-api-v2")) {
+            MachineLibCommands.register();
+        }
 
         if (CONFIG.enableColoredVanillaFluidNames()) {
             FluidVariantAttributes.enableColoredVanillaFluidNames();
