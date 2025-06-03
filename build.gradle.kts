@@ -168,9 +168,10 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:$loader")
     testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 
-    modApi("teamreborn:energy:$energy") {
+    // Mandatory Dependency (Included with Jar-In-Jar)
+    include(modApi("teamreborn:energy:$energy") {
         isTransitive = false
-    }
+    })
 
     listOf(
         "fabric-api-base",
