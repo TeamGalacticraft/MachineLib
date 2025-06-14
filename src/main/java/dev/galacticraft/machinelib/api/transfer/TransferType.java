@@ -30,7 +30,6 @@ public enum TransferType {
     STORAGE(0x008d90, true, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
     TRANSFER(0x908400, false, false, true, true), // external: immutable, players: insertion and extraction allowed - e.g. battery slots
     PROCESSING(0x908400, true, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed - e.g. bucket slots
-    STRICT(0x555555, false, false, false, false), // external: immutable, players: immutable
     STRICT_INPUT(0x004700, true, false, false, false), // external: insertion only, players: immutable
     STRICT_OUTPUT(0x54030f, false, true, false, false); // external: extraction only, players: immutable
 
