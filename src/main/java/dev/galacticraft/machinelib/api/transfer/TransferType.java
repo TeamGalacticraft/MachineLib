@@ -25,22 +25,25 @@ package dev.galacticraft.machinelib.api.transfer;
 import org.jetbrains.annotations.Nullable;
 
 public enum TransferType {
-    INPUT(0x009001, true, false, true), // external: insertion only, players: insertion and extraction allowed
-    OUTPUT(0xa7071e, false, true, false), // external: extraction only, players: extraction only
-    STORAGE(0x008d90, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
-    TRANSFER(0x908400, false, false, true), // external: immutable, players: insertion and extraction allowed - e.g. battery slots
-    PROCESSING(0x908400, true, true, true); // external: insertion and extraction allowed, players: insertion and extraction allowed - e.g. bucket slots
+    INPUT(0x009001, true, false, true, true), // external: insertion only, players: insertion and extraction allowed
+    OUTPUT(0xa7071e, false, true, false, true), // external: extraction only, players: extraction only
+    STORAGE(0x008d90, true, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed
+    TRANSFER(0x908400, false, false, true, true), // external: immutable, players: insertion and extraction allowed - e.g. battery slots
+    STRICT(0x555555, false, false, false, false), // external: immutable, players: immutable
+    PROCESSING(0x908400, true, true, true, true); // external: insertion and extraction allowed, players: insertion and extraction allowed - e.g. bucket slots
 
     private final int color;
     private final boolean externalInsert;
     private final boolean externalExtract;
     private final boolean playerInsert;
+    private final boolean playerExtract;
 
-    TransferType(int color, boolean externalInsert, boolean externalExtract, boolean playerInsert) {
+    TransferType(int color, boolean externalInsert, boolean externalExtract, boolean playerInsert, boolean playerExtract) {
         this.color = color;
         this.externalInsert = externalInsert;
         this.externalExtract = externalExtract;
         this.playerInsert = playerInsert;
+        this.playerExtract = playerExtract;
     }
 
     public boolean externalExtraction() {
@@ -56,11 +59,11 @@ public enum TransferType {
     }
 
     public boolean playerInsertion() {
-        return playerInsert;
+        return this.playerInsert;
     }
 
     public boolean playerExtraction() {
-        return true;
+        return this.playerExtract;
     }
 
     public boolean isInput() {

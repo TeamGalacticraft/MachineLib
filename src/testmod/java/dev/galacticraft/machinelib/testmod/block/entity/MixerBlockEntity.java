@@ -127,7 +127,7 @@ public class MixerBlockEntity extends MachineBlockEntity {
 
         if (++this.progress == PROCESS_TIME) {
             water.extract(Fluids.WATER, FLUID_REQUIRED);
-            lava.extract(Fluids.WATER, FLUID_REQUIRED);
+            lava.extract(Fluids.LAVA, FLUID_REQUIRED);
             output.insert(Items.OBSIDIAN, 1);
             this.progress = 0;
         }
