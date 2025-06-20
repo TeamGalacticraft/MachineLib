@@ -362,9 +362,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             this.drawButton(graphics, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (TAB_HEIGHT + SPACING * 2) - this.topPos, this.menu.security.getAccessLevel() == AccessLevel.PUBLIC || !this.menu.security.isOwner(this.menu.player));
             this.drawButton(graphics, SECURITY_TEAM_X, SECURITY_TEAM_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (TAB_HEIGHT + SPACING * 2) - this.topPos, this.menu.security.getAccessLevel() == AccessLevel.TEAM || !this.menu.security.isOwner(this.menu.player));
             this.drawButton(graphics, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, mouseX - this.imageWidth - this.leftPos, mouseY - (TAB_HEIGHT + SPACING * 2) - this.topPos, this.menu.security.getAccessLevel() == AccessLevel.PRIVATE || !this.menu.security.isOwner(this.menu.player));
-            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
             graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_TEAM_X, SECURITY_TEAM_Y, ICON_LOCK_PARTY_U, ICON_LOCK_PARTY_V, ICON_WIDTH, ICON_HEIGHT);
-            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PUBLIC_U, ICON_LOCK_PUBLIC_V, ICON_WIDTH, ICON_HEIGHT);
+            graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, ICON_LOCK_PRIVATE_U, ICON_LOCK_PRIVATE_V, ICON_WIDTH, ICON_HEIGHT);
 
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.SECURITY).setStyle(Constant.Text.GRAY_STYLE),
                     (Tab.SECURITY.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
@@ -692,19 +692,19 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             mouseY -= TAB_HEIGHT + SPACING * 2;
 
             if (this.menu.security.isOwner(this.menu.player)) {
-                if (mouseIn(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    graphics.renderTooltip(this.font, AccessLevel.PRIVATE.getName(), mX, mY);
-                }
-                if (mouseIn(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    graphics.renderTooltip(this.font, AccessLevel.TEAM.getName(), mX, mY);
-                }
-                if (mouseIn(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+                if (mouseIn(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
                     graphics.renderTooltip(this.font, AccessLevel.PUBLIC.getName(), mX, mY);
                 }
+                if (mouseIn(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+                    graphics.renderTooltip(this.font, AccessLevel.TEAM.getName(), mX, mY);
+                }
+                if (mouseIn(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+                    graphics.renderTooltip(this.font, AccessLevel.PRIVATE.getName(), mX, mY);
+                }
             } else {
-                if (mouseIn(mouseX, mouseY, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                        || mouseIn(mouseX, mouseY, REDSTONE_LOW_X, REDSTONE_LOW_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                        || mouseIn(mouseX, mouseY, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+                if (mouseIn(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                        || mouseIn(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                        || mouseIn(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
                     graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
                 }
             }
