@@ -167,8 +167,10 @@ public interface Constant {
         String PRIVATE_ACCESS = "ui.machinelib.machine.security.access.private";
         String ACCESS_DENIED = "ui.machinelib.machine.security.access_denied";
         String OWNER = "ui.machinelib.machine.security.owner";
+        String OWNER_TOOLTIP = "ui.machinelib.machine.security.owner.tooltip";
 
         String REDSTONE_MODE = "ui.machinelib.machine.redstone_mode";
+        String REDSTONE_MODE_TOOLTIP = "ui.machinelib.machine.redstone_mode.tooltip";
         String IGNORE_REDSTONE = "ui.machinelib.machine.redstone_mode.ignored";
         String LOW_REDSTONE = "ui.machinelib.machine.redstone_mode.low";
         String HIGH_REDSTONE = "ui.machinelib.machine.redstone_mode.high";

@@ -145,7 +145,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private static final int BOTTOM_FACE_Y = 64;
 
     private static final int OWNER_FACE_X = 33;
-    private static final int OWNER_FACE_Y = 36;
+    private static final int OWNER_FACE_Y = 30;
+
+    private static final int OWNER_TEXT_X = 49;
+    private static final int OWNER_TEXT_Y = 66;
 
     private static final int REDSTONE_STATE_TEXT_X = 11;
     private static final int REDSTONE_STATE_TEXT_Y = 54;
@@ -155,9 +158,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
     private static final int SECURITY_STATE_TEXT_X = 9;
     private static final int SECURITY_STATE_TEXT_Y = 54;
-
-    private static final int STATS_TEXT_X = 9;
-    private static final int STATS_TEXT_Y = 55;
 
     private static final int MACHINE_FACE_SIZE = 16;
     private static final int BUTTON_SIZE = 16;
@@ -210,8 +210,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
         this.texture = texture;
 
-        UUID owner = this.menu.security.getOwner() == null ? this.menu.player.getUUID() : this.menu.security.getOwner();
-        this.owner = SkullBlockEntity.fetchGameProfile(owner).thenApply(o -> o.orElse(new GameProfile(owner, "???")));
+        UUID ownerUuid = this.menu.security.getOwner() != null ? this.menu.security.getOwner() : this.menu.player.getUUID();
+        this.owner = SkullBlockEntity.fetchGameProfile(ownerUuid).thenApply(o -> o.orElse(new GameProfile(ownerUuid, "???")));
         this.ownerSkin = this.owner.thenCompose(profile -> Minecraft.getInstance().getSkinManager().getOrLoad(profile));
     }
 
@@ -346,15 +346,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             poseStack.pushPose();
             poseStack.translate(this.imageWidth, SPACING, 0);
             graphics.renderFakeItem(ALUMINUM_WIRE, (Tab.STATS.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT), PANEL_ICON_Y);
-            PlayerFaceRenderer.draw(graphics, this.ownerSkin.getNow(DefaultPlayerSkin.get(this.menu.security.getOwner() == null ? this.menu.player.getUUID() : this.menu.security.getOwner())), OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE);
-            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.GRAY_STYLE),
+            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.WHITE_STYLE),
                     (Tab.STATS.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
-            // List<FormattedCharSequence> text = this.font.split(this.menu.be.getBlockState().getBlock().getName(), 64);
-            // int offsetY = 0;
-            // for (FormattedCharSequence orderedText : text) {
-            //     graphics.drawString(this.font, orderedText, STATS_TEXT_X, STATS_TEXT_Y + offsetY, 0xFFFFFFFF, false);
-            //     offsetY += this.font.lineHeight + 2;
-            // }
+
+            PlayerFaceRenderer.draw(graphics, this.ownerSkin.getNow(DefaultPlayerSkin.get(this.menu.security.getOwner() != null ? this.menu.security.getOwner() : this.menu.player.getUUID())), OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE);
+            graphics.drawCenteredString(this.font, Component.translatable(Constant.TranslationKey.OWNER).setStyle(Constant.Text.WHITE_STYLE), OWNER_TEXT_X, OWNER_TEXT_Y, 0xFFFFFFFF);
             poseStack.popPose();
         }
 
@@ -671,11 +667,17 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         mouseX -= this.imageWidth;
         mouseY -= SPACING;
         if (Tab.STATS.isOpen()) {
-            GameProfile ownerProfile = this.owner.getNow(null);
-            if (ownerProfile != null) {
-                if (mouseIn(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE, OWNER_FACE_SIZE)) {
+            if (mouseIn(mouseX, mouseY, OWNER_FACE_X, OWNER_FACE_Y, OWNER_FACE_SIZE, OWNER_FACE_SIZE)) {
+                GameProfile ownerProfile = this.owner.getNow(null);
+                if (ownerProfile != null) {
                     assert this.menu.security.getOwner() != null;
-                    graphics.renderTooltip(this.font, Component.literal(ownerProfile.getName()), mX, mY);
+                    TOOLTIP_ARRAY.add(Component.literal(ownerProfile.getName()));
+                    if (Screen.hasControlDown()) {
+                        TOOLTIP_ARRAY.add(Component.literal(ownerProfile.getId().toString()).withStyle(Constant.Text.DARK_GRAY_STYLE));
+                    }
+                    graphics.renderComponentTooltip(this.font, TOOLTIP_ARRAY, mX, mY);
+
+                    TOOLTIP_ARRAY.clear();
                 }
             }
         } else {
@@ -960,10 +962,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
     private void modifyFace(int button, BlockFace face) {
         if (this.menu.isFaceLocked(face)) return;
-        if (button == 0) {
-            ClientPlayNetworking.send(new SideConfigurationClickPayload(face, Screen.hasShiftDown(), Screen.hasControlDown()));
-            this.menu.cycleFaceConfig(face, Screen.hasShiftDown(), Screen.hasControlDown());
-        }
+        boolean reverse = (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) ? Screen.hasShiftDown() : !Screen.hasShiftDown();
+        boolean reset = (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) || Screen.hasControlDown();
+        ClientPlayNetworking.send(new SideConfigurationClickPayload(face, reverse, reset));
+        this.menu.cycleFaceConfig(face, reverse, reset);
         this.playButtonSound();
     }
 

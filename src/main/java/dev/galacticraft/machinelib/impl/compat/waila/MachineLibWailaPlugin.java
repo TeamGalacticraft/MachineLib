@@ -49,11 +49,11 @@ public class MachineLibWailaPlugin implements IWailaPlugin {
                 RedstoneMode redstone = RedstoneMode.readTag(accessor.getData().raw().get("redstone"));
                 security.readTag(accessor.getData().raw().getCompound("security"));
 
-                tooltip.addLine(Component.translatable("ui.machinelib.machine.redstone_mode.tooltip", redstone.getName()).setStyle(Constant.Text.RED_STYLE));
+                tooltip.addLine(Component.translatable(Constant.TranslationKey.REDSTONE_MODE_TOOLTIP, redstone.getName()).setStyle(Constant.Text.RED_STYLE));
                 if (security.getOwner() != null) {
                     Optional<GameProfile> profile = SkullBlockEntity.fetchGameProfile(security.getOwner()).getNow(null);
                     if (profile != null && profile.isPresent()) {
-                        tooltip.addLine(Component.translatable("ui.machinelib.machine.security.owner", Component.literal(profile.get().getName()).setStyle(Constant.Text.WHITE_STYLE)).setStyle(Constant.Text.AQUA_STYLE));
+                        tooltip.addLine(Component.translatable(Constant.TranslationKey.OWNER_TOOLTIP, Component.literal(profile.get().getName()).setStyle(Constant.Text.WHITE_STYLE)).setStyle(Constant.Text.AQUA_STYLE));
                     }
                 }
             }

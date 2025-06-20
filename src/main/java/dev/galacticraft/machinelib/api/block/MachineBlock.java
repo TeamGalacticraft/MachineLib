@@ -53,7 +53,6 @@ import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -63,6 +62,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -77,6 +77,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The base block for all machines.
@@ -132,21 +134,21 @@ public abstract class MachineBlock extends BaseBlock {
             if (!data.isEmpty()) {
                 CompoundTag nbt = data.getUnsafe();
                 tooltip.add(Component.empty());
-                if (nbt.contains(Constant.Nbt.ENERGY, Tag.TAG_INT))
+                if (nbt.contains(Constant.Nbt.ENERGY, Tag.TAG_INT)) {
                     tooltip.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, Component.literal(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
+                }
+
                 if (nbt.contains(Constant.Nbt.SECURITY, Tag.TAG_COMPOUND)) {
                     CompoundTag security = nbt.getCompound(Constant.Nbt.SECURITY);
-                    if (security.contains(Constant.Nbt.OWNER, Tag.TAG_COMPOUND)) {
-                        GameProfile profile = ResolvableProfile.CODEC.parse(NbtOps.INSTANCE, security.getCompound(Constant.Nbt.OWNER)).getOrThrow().gameProfile();
-                        if (profile != null) {
-                            MutableComponent owner = Component.translatable(Constant.TranslationKey.OWNER, Component.literal(profile.getName()).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
-                            if (Screen.hasControlDown()) {
-                                owner.append(Component.literal(" (" + profile.getId().toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
-                            }
-                            tooltip.add(owner);
-                        } else {
-                            tooltip.add(Component.translatable(Constant.TranslationKey.OWNER, Component.translatable(Constant.TranslationKey.UNKNOWN).setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE));
+                    if (security.hasUUID(Constant.Nbt.OWNER)) {
+                        UUID ownerUuid = security.getUUID(Constant.Nbt.OWNER);
+                        Optional<GameProfile> profile = SkullBlockEntity.fetchGameProfile(ownerUuid).getNow(Optional.empty());
+                        MutableComponent name = profile.isPresent() ? Component.literal(profile.get().getName()) : Component.translatable(Constant.TranslationKey.UNKNOWN);
+                        MutableComponent owner = Component.translatable(Constant.TranslationKey.OWNER_TOOLTIP, name.setStyle(Constant.Text.LIGHT_PURPLE_STYLE)).setStyle(Constant.Text.GRAY_STYLE);
+                        if (Screen.hasControlDown()) {
+                            owner.append(Component.literal(" (" + ownerUuid.toString() + ")").setStyle(Constant.Text.AQUA_STYLE));
                         }
+                        tooltip.add(owner);
                         tooltip.add(Component.translatable(Constant.TranslationKey.ACCESS_LEVEL, AccessLevel.fromString(security.getString(Constant.Nbt.ACCESS_LEVEL)).getName()).setStyle(Constant.Text.GREEN_STYLE));
                     }
                 }
