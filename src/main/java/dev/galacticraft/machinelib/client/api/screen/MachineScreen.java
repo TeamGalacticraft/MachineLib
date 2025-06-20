@@ -962,7 +962,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
 
     private void modifyFace(int button, BlockFace face) {
         if (this.menu.isFaceLocked(face)) return;
-        boolean reverse = (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) ? Screen.hasShiftDown() : !Screen.hasShiftDown();
+        boolean reverse = (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) ? Screen.hasShiftDown() : !Screen.hasShiftDown();
         boolean reset = (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) || Screen.hasControlDown();
         ClientPlayNetworking.send(new SideConfigurationClickPayload(face, reverse, reset));
         this.menu.cycleFaceConfig(face, reverse, reset);
