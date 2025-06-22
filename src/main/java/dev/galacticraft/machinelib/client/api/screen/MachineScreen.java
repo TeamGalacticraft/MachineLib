@@ -108,23 +108,23 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private static final int PANEL_TITLE_X = 18;
     private static final int PANEL_TITLE_Y = 7;
 
-    private static final int REDSTONE_IGNORE_X = 18;
-    private static final int REDSTONE_IGNORE_Y = 30;
+    private static final int REDSTONE_IGNORE_X = 14;
+    private static final int REDSTONE_IGNORE_Y = 26;
 
-    private static final int REDSTONE_LOW_X = 43;
-    private static final int REDSTONE_LOW_Y = 30;
+    private static final int REDSTONE_LOW_X = 41;
+    private static final int REDSTONE_LOW_Y = 26;
 
     private static final int REDSTONE_HIGH_X = 68;
-    private static final int REDSTONE_HIGH_Y = 30;
+    private static final int REDSTONE_HIGH_Y = 26;
 
-    private static final int SECURITY_PUBLIC_X = 16;
-    private static final int SECURITY_PUBLIC_Y = 30;
+    private static final int SECURITY_PUBLIC_X = 12;
+    private static final int SECURITY_PUBLIC_Y = 26;
 
-    private static final int SECURITY_TEAM_X = 41;
-    private static final int SECURITY_TEAM_Y = 30;
+    private static final int SECURITY_TEAM_X = 39;
+    private static final int SECURITY_TEAM_Y = 26;
 
     private static final int SECURITY_PRIVATE_X = 66;
-    private static final int SECURITY_PRIVATE_Y = 30;
+    private static final int SECURITY_PRIVATE_Y = 26;
 
     private static final int TOP_FACE_X = 33;
     private static final int TOP_FACE_Y = 26;
@@ -308,9 +308,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             this.drawButton(graphics, REDSTONE_LOW_X, REDSTONE_LOW_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.redstoneMode == RedstoneMode.LOW);
             this.drawButton(graphics, REDSTONE_HIGH_X, REDSTONE_HIGH_Y, mouseX + PANEL_WIDTH - this.leftPos, mouseY - SPACING - this.topPos, menu.redstoneMode == RedstoneMode.HIGH);
             graphics.renderFakeItem(REDSTONE, (Tab.REDSTONE.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT), PANEL_ICON_Y);
-            graphics.renderFakeItem(GUNPOWDER, REDSTONE_IGNORE_X, REDSTONE_IGNORE_Y);
-            graphics.renderFakeItem(UNLIT_TORCH, REDSTONE_LOW_X, REDSTONE_LOW_Y - 2);
-            graphics.renderFakeItem(REDSTONE_TORCH, REDSTONE_HIGH_X, REDSTONE_HIGH_Y - 2);
+            graphics.renderFakeItem(GUNPOWDER, REDSTONE_IGNORE_X + 2, REDSTONE_IGNORE_Y + 2);
+            graphics.renderFakeItem(UNLIT_TORCH, REDSTONE_LOW_X + 2, REDSTONE_LOW_Y);
+            graphics.renderFakeItem(REDSTONE_TORCH, REDSTONE_HIGH_X + 2, REDSTONE_HIGH_Y);
 
             graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.REDSTONE_MODE).setStyle(Constant.Text.GRAY_STYLE),
                     (Tab.REDSTONE.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X - 1, PANEL_TITLE_Y, 0xFFFFFFFF);
