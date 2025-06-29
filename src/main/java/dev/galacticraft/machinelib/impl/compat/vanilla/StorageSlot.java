@@ -131,7 +131,7 @@ public class StorageSlot extends Slot {
 
     @Override
     public boolean mayPickup(@NotNull Player player) {
-        return player.getUUID().equals(this.player.getUUID());
+        return this.slot.transferMode().playerExtraction() && player.getUUID().equals(this.player.getUUID());
     }
 
     @Override //return failed

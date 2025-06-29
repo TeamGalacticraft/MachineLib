@@ -71,12 +71,12 @@ public abstract class ExposedSlotImpl<Resource, Variant extends TransferVariant<
 
     @Override
     public boolean supportsInsertion() {
-        return this.insertion && this.slot.isValid() ;
+        return this.insertion && this.slot.isValid();
     }
 
     @Override
     public boolean supportsExtraction() {
-        return this.extraction && this.slot.isValid() ;
+        return this.extraction && this.slot.isValid();
     }
 
     @Override
