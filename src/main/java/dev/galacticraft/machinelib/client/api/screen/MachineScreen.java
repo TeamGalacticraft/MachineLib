@@ -225,7 +225,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         return BuiltInRegistries.ITEM.getOptional(id).orElse(fallback);
     }
 
-    private static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
+    protected static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
     }
 

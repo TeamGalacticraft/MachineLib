@@ -31,7 +31,8 @@ public enum TransferType {
     TRANSFER(0x908400, false, false, true, true), // external: immutable, players: insertion and extraction allowed - e.g. battery slots
     PROCESSING(0x908400, true, true, true, true), // external: insertion and extraction allowed, players: insertion and extraction allowed - e.g. bucket slots
     STRICT_INPUT(0x004700, true, false, false, false), // external: insertion only, players: immutable
-    STRICT_OUTPUT(0x54030f, false, true, false, false); // external: extraction only, players: immutable
+    STRICT_OUTPUT(0x54030f, false, true, false, false), // external: extraction only, players: immutable
+    INTERNAL(0x000000, false, false, false, false); // external: immutable, players: immutable
 
     private final int color;
     private final boolean externalInsert;
