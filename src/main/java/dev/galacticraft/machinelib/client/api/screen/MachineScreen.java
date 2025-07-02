@@ -654,9 +654,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         } else {
             mouseX += TAB_WIDTH;
             if (Tab.REDSTONE.isOpen()) {
-                mouseY -= PANEL_HEIGHT + SPACING;
+                mouseY -= PANEL_HEIGHT + SPACING * 2;
             } else {
-                mouseY -= TAB_HEIGHT + SPACING;
+                mouseY -= TAB_HEIGHT + SPACING * 2;
             }
             if (mouseIn(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
                 graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.BLUE_STYLE), mX, mY);
@@ -680,10 +680,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     TOOLTIP_ARRAY.clear();
                 }
             }
-        } else {
-            if (mouseIn(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
-                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
-            }
+        } else if (mouseIn(mouseX, mouseY, 0, 0, TAB_WIDTH, TAB_HEIGHT)) {
+            graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.STATISTICS).setStyle(Constant.Text.YELLOW_STYLE), mX, mY);
         }
         mouseX = mX - this.leftPos;
         mouseY = mY - this.topPos;
@@ -701,12 +699,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 if (mouseIn(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
                     graphics.renderTooltip(this.font, AccessLevel.PRIVATE.getName(), mX, mY);
                 }
-            } else {
-                if (mouseIn(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                        || mouseIn(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                        || mouseIn(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
-                    graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
-                }
+            } else if (mouseIn(mouseX, mouseY, SECURITY_PUBLIC_X, SECURITY_PUBLIC_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                    || mouseIn(mouseX, mouseY, SECURITY_TEAM_X, SECURITY_TEAM_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                    || mouseIn(mouseX, mouseY, SECURITY_PRIVATE_X, SECURITY_PRIVATE_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+                graphics.renderTooltip(this.font, Component.translatable(Constant.TranslationKey.ACCESS_DENIED), mX, mY);
             }
         } else {
             mouseX -= this.imageWidth;
