@@ -187,7 +187,7 @@ public abstract class RecipeMachineBlockEntity<I extends RecipeInput, R extends 
     }
 
     @Override
-    public void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+    protected void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         super.tickConstant(level, pos, state, profiler);
         if (!this.getState().isActive()) {
             this.progress = Math.max(this.progress - this.decreaseProgressAmount(), 0);
