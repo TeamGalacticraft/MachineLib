@@ -115,4 +115,9 @@ public abstract class BasicRecipeMachineBlockEntity<I extends RecipeInput, R ext
             slot.consumeOne();
         }
     }
+
+    @Override
+    protected int decreaseProgressAmount() {
+        return 1;
+    }
 }

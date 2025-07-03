@@ -154,6 +154,11 @@ public abstract class RecipeMachineBlockEntity<I extends RecipeInput, R extends 
      */
     protected abstract void extractResourcesToWork();
 
+    /**
+     * {@return the amount to decrease the progress by when the machine is not active e.g. loses power}
+     */
+    protected abstract int decreaseProgressAmount();
+
     @Override
     public @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
         profiler.push("resources");
@@ -179,6 +184,14 @@ public abstract class RecipeMachineBlockEntity<I extends RecipeInput, R extends 
             return recipeFailure;
         }
         return status;
+    }
+
+    @Override
+    public void tickConstant(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler) {
+        super.tickConstant(level, pos, state, profiler);
+        if (!this.getState().isActive()) {
+            this.progress = Math.max(this.progress - this.decreaseProgressAmount(), 0);
+        }
     }
 
     /**
