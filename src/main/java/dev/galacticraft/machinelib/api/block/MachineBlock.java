@@ -113,7 +113,7 @@ public abstract class MachineBlock extends BaseBlock {
      * @param state The current state of the machine block.
      * @param b The new value for the active state.
      */
-    public static void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
+    public void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
         level.setBlock(pos, state.setValue(ACTIVE, b), 2);
     }
 

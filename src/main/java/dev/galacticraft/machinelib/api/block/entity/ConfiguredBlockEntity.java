@@ -151,8 +151,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         this.tickConstant(level, pos, state, profiler);
         profiler.pop();
         if (this.isDisabled()) {
-            if (this.active) {
-                MachineBlock.updateActiveState(level, pos, state, this.active = false);
+            if (this.active && state.getBlock() instanceof MachineBlock machineBlock) {
+                machineBlock.updateActiveState(level, pos, state, this.active = false);
             }
             profiler.push("disabled");
             this.tickDisabled(level, pos, state, profiler);
@@ -161,8 +161,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
             profiler.push("active");
             this.state.setStatus(this.tick(level, pos, state, profiler));
             profiler.pop();
-            if (this.active != this.state.isActive()) {
-                MachineBlock.updateActiveState(level, pos, state, this.active = this.state.isActive());
+            if (this.active != this.state.isActive() && state.getBlock() instanceof MachineBlock machineBlock) {
+                machineBlock.updateActiveState(level, pos, state, this.active = this.state.isActive());
             }
         }
     }
