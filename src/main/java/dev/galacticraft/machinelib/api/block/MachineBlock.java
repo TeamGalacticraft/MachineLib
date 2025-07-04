@@ -106,18 +106,6 @@ public abstract class MachineBlock extends BaseBlock {
     }
 
     /**
-     * Updates the active state of a machine block in the specified level at a given position.
-     *
-     * @param level The level in which the machine block exists.
-     * @param pos The position of the machine block.
-     * @param state The current state of the machine block.
-     * @param b The new value for the active state.
-     */
-    public void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
-        level.setBlock(pos, state.setValue(ACTIVE, b), 2);
-    }
-
-    /**
      * Determines whether a machine block is active or not based on its state.
      *
      * @param state The state of the machine block.

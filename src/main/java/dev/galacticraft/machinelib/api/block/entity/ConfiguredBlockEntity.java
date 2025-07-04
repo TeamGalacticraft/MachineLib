@@ -42,6 +42,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -151,8 +152,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         this.tickConstant(level, pos, state, profiler);
         profiler.pop();
         if (this.isDisabled()) {
-            if (this.active && state.getBlock() instanceof MachineBlock machineBlock) {
-                machineBlock.updateActiveState(level, pos, state, this.active = false);
+            if (this.active) {
+                this.updateActiveState(level, pos, state, this.active = false);
             }
             profiler.push("disabled");
             this.tickDisabled(level, pos, state, profiler);
@@ -161,8 +162,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
             profiler.push("active");
             this.state.setStatus(this.tick(level, pos, state, profiler));
             profiler.pop();
-            if (this.active != this.state.isActive() && state.getBlock() instanceof MachineBlock machineBlock) {
-                machineBlock.updateActiveState(level, pos, state, this.active = this.state.isActive());
+            if (this.active != this.state.isActive()) {
+                this.updateActiveState(level, pos, state, this.active = this.state.isActive());
             }
         }
     }
@@ -209,6 +210,20 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
      * @see #tickConstant(ServerLevel, BlockPos, BlockState, ProfilerFiller)
      */
     protected abstract @NotNull MachineStatus tick(@NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ProfilerFiller profiler);
+
+    /**
+     * Updates the active state of a machine block in the specified level at a given position.
+     *
+     * @param level The level in which the machine block exists.
+     * @param pos The position of the machine block.
+     * @param state The current state of the machine block.
+     * @param b The new value for the active state.
+     */
+    protected void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
+        if (state.getBlock() instanceof MachineBlock) {
+            level.setBlock(pos, state.setValue(MachineBlock.ACTIVE, b), 2);
+        }
+    }
 
     /**
      * Returns whether the machine is currently active or not.
