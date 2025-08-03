@@ -35,6 +35,7 @@ import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
+import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.compat.vanilla.StorageSlot;
@@ -193,10 +194,15 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
         Slot slot = this.slots.get(slotId);
 
         // move from machine -> player
-        if (slotId < this.internalSlots) {
-            assert slot instanceof StorageSlot;
-            this.quickMoveIntoPlayerInventory(((StorageSlot) slot).getWrapped());
-            return slot.getItem();
+        if (slotId < this.internalSlots && slot instanceof StorageSlot storageSlot) {
+            ItemResourceSlot itemSlot = storageSlot.getWrapped();
+            ItemStack original = storageSlot.getItem().copy();
+            this.quickMoveIntoPlayerInventory(itemSlot);
+            ItemStack itemStack = storageSlot.getItem();
+            if (itemSlot.transferMode() == TransferType.OUTPUT) {
+                storageSlot.onQuickCraft(itemStack, original);
+            }
+            return itemStack;
         }
 
         // move from player -> machine

@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.compat.vanilla;
 import com.mojang.datafixers.util.Pair;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.display.ItemSlotDisplay;
+import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import dev.galacticraft.machinelib.impl.util.Utils;
 import net.minecraft.core.component.DataComponentPatch;
@@ -151,8 +152,16 @@ public class StorageSlot extends Slot {
     }
 
     @Override
+    protected void onQuickCraft(ItemStack stack, int n) {
+        assert stack.getCount() == n;
+        this.checkTakeAchievements(stack);
+    }
+
+    @Override
     protected void checkTakeAchievements(ItemStack stack) {
         super.checkTakeAchievements(stack);
+        if (this.slot.transferMode() != TransferType.OUTPUT) return;
+
         stack.onCraftedBy(this.player.level(), this.player, stack.getCount());
         Set<ResourceLocation> recipes = this.getWrapped().takeRecipes();
         if (recipes != null) {
