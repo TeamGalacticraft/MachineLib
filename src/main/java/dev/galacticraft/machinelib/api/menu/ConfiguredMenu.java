@@ -190,78 +190,108 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
     }
 
     @Override
-    public @NotNull ItemStack quickMoveStack(Player player, int slotId) { //return LEFTOVER (in slot)
-        Slot slot = this.slots.get(slotId);
+    public @NotNull ItemStack quickMoveStack(Player player, int index) {
+        ItemStack stack = ItemStack.EMPTY;
+        Slot slotFrom = this.slots.get(index);
+        if (slotFrom.hasItem()) {
+            ItemStack stackFrom = slotFrom.getItem();
+            stack = stackFrom.copy();
 
-        // move from machine -> player
-        if (slotId < this.internalSlots && slot instanceof StorageSlot storageSlot) {
-            ItemResourceSlot itemSlot = storageSlot.getWrapped();
-            ItemStack original = storageSlot.getItem().copy();
-            this.quickMoveIntoPlayerInventory(itemSlot);
-            ItemStack itemStack = storageSlot.getItem();
-            if (itemSlot.transferMode() == TransferType.OUTPUT) {
-                storageSlot.onQuickCraft(itemStack, original);
-            }
-            return itemStack;
-        }
-
-        // move from player -> machine
-
-        assert !(slot instanceof StorageSlot);
-        ItemStack stack = slot.getItem();
-
-        // if the slot is empty, nothing moves
-        if (stack.isEmpty()) return ItemStack.EMPTY;
-
-        // try to move it into slots that already contain the same item
-        long available = stack.getCount();
-        for (int i = 0; i < this.internalSlots; i++) {
-            ItemResourceSlot slot1 = ((StorageSlot) this.slots.get(i)).getWrapped();
-            if (slot1.transferMode().playerInsertion() && slot1.contains(stack.getItem(), stack.getComponentsPatch())) {
-                available -= slot1.insert(stack.getItem(), stack.getComponentsPatch(), available);
-                // if we've moved all the items, we're done
-                if (available == 0) {
-                    slot.setByPlayer(ItemStack.EMPTY);
+            // move from machine -> player
+            if (index < this.internalSlots && slotFrom instanceof StorageSlot storageSlot) {
+                ItemResourceSlot itemSlot = storageSlot.getWrapped();
+                if (!this.quickMoveIntoPlayerInventory(itemSlot)) {
                     return ItemStack.EMPTY;
                 }
+                stack = storageSlot.getItem();
+                if (itemSlot.transferMode() == TransferType.OUTPUT) {
+                    storageSlot.onQuickCraft(stack, stackFrom);
+                }
+                return stack;
             }
-        }
 
-        // try to move it into empty slots
-        for (int i = 0; i < this.internalSlots; i++) {
-            StorageSlot slot1 = ((StorageSlot) this.slots.get(i));
-            if (slot1.mayPlace(stack)) {
-                available -= slot1.getWrapped().insert(stack.getItem(), stack.getComponentsPatch(), available);
-                if (available == 0) {
-                    slot.setByPlayer(ItemStack.EMPTY);
-                    return ItemStack.EMPTY;
+            // move from player -> machine
+            assert !(slotFrom instanceof StorageSlot);
+
+            // try to move it into slots that already contain the same item
+            long available = stack.getCount();
+            final long originalCount = available;
+            for (int i = 0; i < this.internalSlots; i++) {
+                ItemResourceSlot slot1 = ((StorageSlot) this.slots.get(i)).getWrapped();
+                if (slot1.transferMode().playerInsertion() && slot1.contains(stack.getItem(), stack.getComponentsPatch())) {
+                    available -= slot1.insert(stack.getItem(), stack.getComponentsPatch(), available);
+                    // if we've moved all the items, we're done
+                    if (available == 0) {
+                        slotFrom.setByPlayer(ItemStack.EMPTY);
+                        return ItemStack.EMPTY;
+                    }
                 }
             }
+
+            // try to move it into empty slots
+            for (int i = 0; i < this.internalSlots; i++) {
+                StorageSlot slot1 = ((StorageSlot) this.slots.get(i));
+                if (slot1.mayPlace(stack)) {
+                    available -= slot1.getWrapped().insert(stack.getItem(), stack.getComponentsPatch(), available);
+                    if (available == 0) {
+                        slotFrom.setByPlayer(ItemStack.EMPTY);
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+
+            if (available == originalCount) {
+                final int size = this.slots.size();
+                if (index >= this.internalSlots && index < size - 9) {
+                    if (!this.moveItemStackTo(stackFrom, size - 9, size, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (index >= size - 9 && index < size) {
+                    if (!this.moveItemStackTo(stackFrom, this.internalSlots, size - 9, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            } else {
+                // if we still have items left, keep them in the player's inventory
+                assert available > 0;
+                stackFrom.setCount((int) available);
+            }
+
+            if (stackFrom.isEmpty()) {
+                slotFrom.set(ItemStack.EMPTY);
+            } else {
+                slotFrom.setChanged();
+            }
+
+            if (stackFrom.getCount() == stack.getCount() || available != originalCount) {
+                return ItemStack.EMPTY;
+            }
         }
 
-        // if we still have items left, keep them in the player's inventory
-        assert available > 0;
-        stack.setCount((int) available);
-        slot.setChanged();
-        return ItemStack.EMPTY;
+        return stack;
     }
 
     /**
      * Quick-moves a stack from the machine's inventory into the player's inventory
      *
      * @param fromSlot the slot that was shift-clicked
+     * @return whether the quick-move was successful
      */
-    private void quickMoveIntoPlayerInventory(ResourceSlot<Item> fromSlot) {
+    private boolean quickMoveIntoPlayerInventory(ResourceSlot<Item> fromSlot) {
         // if the slot is empty, nothing moves
-        if (fromSlot.isEmpty()) return;
+        if (fromSlot.isEmpty()) return false;
 
+        // reverse the order for output slots only to match vanilla behaviour
+        boolean reverse = fromSlot.transferMode() == TransferType.OUTPUT;
         ItemStack stack = ItemStackUtil.create(fromSlot);
 
-        int total = stack.getCount();
-        int size = this.slots.size() - 1;
+        final int total = stack.getCount();
+        final int size = this.slots.size();
+        final int start = reverse ? size - 1 : this.internalSlots;
 
         // try to move it into slots that already contain the same item
-        for (int i = size; i >= this.internalSlots; i--) { // reverse order (hot bar first)
+        int i = start;
+        while (i >= this.internalSlots && i < size) {
             Slot slot = this.slots.get(i);
             assert !(slot instanceof StorageSlot);
             if (ItemStack.isSameItemSameComponents(stack, slot.getItem())) {
@@ -270,30 +300,37 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
                     // take items from the machine slot
                     long extract = fromSlot.extract(total);
                     assert extract == total;
-                    return;
+                    return true;
                 }
             }
+            i += reverse ? -1 : 1;
         }
 
         // try to move it into empty slots
-        for (int i = size; i >= this.internalSlots; i--) {
+        i = start;
+        while (i >= this.internalSlots && i < size) {
             Slot slot1 = this.slots.get(i);
             stack = slot1.safeInsert(stack);
             if (stack.isEmpty()) {
                 // take items from the machine slot
                 long extract = fromSlot.extract(total);
                 assert extract == total;
-                return;
+                return true;
             }
+            i += reverse ? -1 : 1;
         }
 
         long extract = fromSlot.extract(total - stack.getCount());
         assert extract == total - stack.getCount();
+        return false;
     }
 
     @Override
     protected boolean moveItemStackTo(ItemStack stack, int startIndex, int endIndex, boolean reverse) {
-        throw new UnsupportedOperationException("you shouldn't call this.");
+        if (startIndex < this.internalSlots) {
+            throw new UnsupportedOperationException(String.format("invalid startIndex of %s, must be at least %s", startIndex, this.internalSlots));
+        }
+        return super.moveItemStackTo(stack, startIndex, endIndex, reverse);
     }
 
     /**
