@@ -333,6 +333,16 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
         return super.moveItemStackTo(stack, startIndex, endIndex, reverse);
     }
 
+    @Override
+    public void sendAllDataToRemote() {
+        for (int i = 0; i < this.internalSlots; i++) {
+            if (this.slots.get(i) instanceof StorageSlot storageSlot) {
+                storageSlot.handleStackMutation();
+            }
+        }
+        super.sendAllDataToRemote();
+    }
+
     /**
      * Cycles the I/O configuration of a machine face.
      *

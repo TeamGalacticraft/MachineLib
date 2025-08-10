@@ -86,6 +86,18 @@ public class StorageSlot extends Slot {
         return this.watchedStack;
     }
 
+    @ApiStatus.Internal
+    public void handleStackMutation() {
+        if (this.watchedStack != null && this.watchModCount == this.slot.getModifications()
+                && (this.watchedStack.getCount() != this.slot.getAmount()
+                || !this.slot.getComponents().equals(this.watchedStack.getComponentsPatch())
+                || !Utils.itemsEqual(this.slot.getResource(), this.watchedStack.getItem()))) {
+            this.set(this.watchedStack);
+            this.watchModCount = this.slot.getModifications();
+            this.setChanged();
+        }
+    }
+
     @Override
     public boolean hasItem() {
         return !this.slot.isEmpty();
@@ -109,7 +121,6 @@ public class StorageSlot extends Slot {
                     || !this.slot.getComponents().equals(this.watchedStack.getComponentsPatch())
                     || !Utils.itemsEqual(this.slot.getResource(), this.watchedStack.getItem())
             ) {
-                if (true) throw new AssertionError();
                 this.set(this.watchedStack);
                 this.slot.markModified();
             }
