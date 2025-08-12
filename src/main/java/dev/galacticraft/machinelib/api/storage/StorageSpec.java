@@ -47,6 +47,10 @@ public record StorageSpec(@Nullable MachineItemStorage.Spec item, @Nullable Mach
         return of(null, null, fluid);
     }
 
+    public static StorageSpec empty() {
+        return of(null, null, null);
+    }
+
     public @NotNull MachineItemStorage createItemStorage() {
         return this.item == null ? MachineItemStorage.empty() : this.item.create();
     }
