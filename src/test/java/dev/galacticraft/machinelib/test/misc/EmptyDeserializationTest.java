@@ -39,6 +39,6 @@ public class EmptyDeserializationTest {
     @Test
     public void ioConfiguration() {
         IOConfig ioConfig = new IOConfig();
-        Assertions.assertDoesNotThrow(() -> ioConfig.readTag(new ByteArrayTag(new byte[6])));
+        Assertions.assertDoesNotThrow(() -> ioConfig.readTag(new ByteArrayTag(new byte[0])));
     }
 }
