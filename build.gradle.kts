@@ -189,7 +189,7 @@ dependencies {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
 
-    modRuntimeOnly("net.fabricmc.fabric-api:fabric-api:$fabric")
+    modLocalRuntime("net.fabricmc.fabric-api:fabric-api:$fabric")
 
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
@@ -202,8 +202,8 @@ dependencies {
     "testmodImplementation"(sourceSets.main.get().output)
     "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
 
-    modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
-    modRuntimeOnly("mcp.mobius.waila:wthit:fabric-$wthit")
+    modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
+    modLocalRuntime("mcp.mobius.waila:wthit:fabric-$wthit")
 }
 
 tasks.withType<ProcessResources> {
