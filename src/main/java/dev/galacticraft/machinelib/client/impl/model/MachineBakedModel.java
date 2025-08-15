@@ -47,6 +47,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
@@ -194,9 +195,9 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         CustomData customData = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
 
         IOConfig config;
-        if (!customData.isEmpty() && customData.contains(Constant.Nbt.CONFIGURATION)) {
+        if (!customData.isEmpty() && customData.getUnsafe().contains(Constant.Nbt.CONFIGURATION, Tag.TAG_BYTE_ARRAY)) {
             config = new IOConfig();
-            config.readTag(customData.getUnsafe().getList(Constant.Nbt.CONFIGURATION, Tag.TAG_BYTE));
+            config.readTag(new ByteArrayTag(customData.getUnsafe().getByteArray(Constant.Nbt.CONFIGURATION)));
         } else {
             config = null;
         }

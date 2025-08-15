@@ -36,6 +36,7 @@ import dev.galacticraft.machinelib.impl.network.s2c.SideConfigurationUpdatePaylo
 import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -281,8 +282,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
     @Override
     public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookup) {
         super.loadAdditional(tag, lookup);
-        if (tag.contains(Constant.Nbt.CONFIGURATION, Tag.TAG_LIST))
-            this.configuration.readTag(tag.getList(Constant.Nbt.CONFIGURATION, Tag.TAG_BYTE));
+        if (tag.contains(Constant.Nbt.CONFIGURATION, Tag.TAG_BYTE_ARRAY))
+            this.configuration.readTag(new ByteArrayTag(tag.getByteArray(Constant.Nbt.CONFIGURATION)));
         if (tag.contains(Constant.Nbt.SECURITY, Tag.TAG_COMPOUND))
             this.security.readTag(tag.getCompound(Constant.Nbt.SECURITY));
         if (tag.contains(Constant.Nbt.REDSTONE_MODE, Tag.TAG_BYTE))

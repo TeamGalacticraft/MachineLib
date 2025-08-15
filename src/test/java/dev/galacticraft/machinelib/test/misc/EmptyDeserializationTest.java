@@ -24,8 +24,8 @@ package dev.galacticraft.machinelib.test.misc;
 
 import dev.galacticraft.machinelib.api.machine.configuration.IOConfig;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
+import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +39,6 @@ public class EmptyDeserializationTest {
     @Test
     public void ioConfiguration() {
         IOConfig ioConfig = new IOConfig();
-        Assertions.assertDoesNotThrow(() -> ioConfig.readTag(new ListTag()));
+        Assertions.assertDoesNotThrow(() -> ioConfig.readTag(new ByteArrayTag(new byte[6])));
     }
 }

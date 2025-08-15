@@ -30,16 +30,14 @@ import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Stores the configuration of a machine's I/O for all six faces.
  */
-public final class IOConfig implements Serializable<ListTag>, MachineRenderData, DeltaPacketSerializable<ByteBuf, IOConfig> {
+public final class IOConfig implements Serializable<ByteArrayTag>, MachineRenderData, DeltaPacketSerializable<ByteBuf, IOConfig> {
     public static final StreamCodec<ByteBuf, IOConfig> CODEC = PacketSerializable.createCodec(IOConfig::new);
 
     /**
@@ -78,19 +76,19 @@ public final class IOConfig implements Serializable<ListTag>, MachineRenderData,
     }
 
     @Override
-    public @NotNull ListTag createTag() {
-        ListTag nbt = new ListTag();
-        for (IOFace face : this.faces) {
-            nbt.add(face.createTag());
+    public @NotNull ByteArrayTag createTag() {
+        ByteArrayTag nbt = new ByteArrayTag(new byte[6]);
+        for (int i = 0; i < this.faces.length; i++) {
+            nbt.set(i, this.faces[i].createTag());
         }
         return nbt;
     }
 
     @Override
-    public void readTag(@NotNull ListTag tag) {
-        if (tag.getElementType() == Tag.TAG_BYTE) {
+    public void readTag(@NotNull ByteArrayTag tag) {
+        if (tag.size() == 6) {
             for (int i = 0; i < tag.size(); i++) {
-                this.faces[i].readTag((ByteTag) tag.get(i));
+                this.faces[i].readTag(tag.get(i));
             }
         } else {
             for (IOFace face : faces) {
