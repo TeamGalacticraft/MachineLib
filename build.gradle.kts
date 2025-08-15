@@ -109,6 +109,7 @@ loom {
     }
 
     createRemapConfigurations(testmod)
+    createRemapConfigurations(sourceSets.test.get())
 
     runs {
         getByName("server") {
@@ -201,7 +202,7 @@ dependencies {
     modLocalRuntime(modCompileOnly("com.terraformersmc:modmenu:$modmenu")!!)
 
     "testmodImplementation"(sourceSets.main.get().output)
-    "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
+    "modTestRuntimeOnly"("modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")!!)
 }
 
 tasks.withType<ProcessResources> {
