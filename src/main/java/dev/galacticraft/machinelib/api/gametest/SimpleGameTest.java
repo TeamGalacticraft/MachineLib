@@ -75,12 +75,6 @@ public abstract class SimpleGameTest implements FabricGameTest {
         return tests;
     }
 
-    protected String getTestBatch() {
-        TestSuite annotation = this.getClass().getAnnotation(TestSuite.class);
-        if (annotation != null) return annotation.value();
-        return "defaultBatch";
-    }
-
     @Override
     public void invokeTestMethod(GameTestHelper context, Method method) {
         // don't invoke fabric if there is no annotation (generated test)
@@ -96,9 +90,10 @@ public abstract class SimpleGameTest implements FabricGameTest {
     }
 
     protected TestFunction createTest(@Nullable String batch, @Nullable String group, String name, String structure, int ticks, int setupTicks, Consumer<GameTestHelper> test) {
+        batch = batch == null || batch.isBlank() ? "defaultBatch" : batch;
         return new TestFunction(
-                batch == null || batch.isBlank() ? this.getTestBatch() : batch,
-                GameTestUtils.generateTestName(batch == null || batch.isBlank() ? this.getTestBatch() : batch, group, name),
+                batch,
+                GameTestUtils.generateTestName(batch, group == null || group.isBlank() ? getDefaultTestGroup() : group, name),
                 structure,
                 Rotation.NONE,
                 ticks,
@@ -106,5 +101,10 @@ public abstract class SimpleGameTest implements FabricGameTest {
                 true,
                 test
         );
+    }
+
+    private String getDefaultTestGroup() {
+        TestSuite annotation = this.getClass().getAnnotation(TestSuite.class);
+        return annotation != null ? annotation.value() : null;
     }
 }
