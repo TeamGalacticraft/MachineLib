@@ -20,21 +20,18 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.gametest;
+package dev.galacticraft.machinelib.api.gametest.annotation;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.lang.reflect.Method;
-
-/**
- * A gametest helper class that can be used to create tests with a single method.
- */
-public abstract class SimpleGameTest implements FabricGameTest {
-    @Override
-    public void invokeTestMethod(GameTestHelper context, Method method) {
-        // don't invoke fabric if there is no annotation (generated test)
-        if (method.isAnnotationPresent(GameTest.class)) FabricGameTest.super.invokeTestMethod(context, method);
-    }
+@Target({ElementType.METHOD, ElementType.PACKAGE, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Structure {
+    /**
+     * {@return the test structure}
+     */
+    String value();
 }

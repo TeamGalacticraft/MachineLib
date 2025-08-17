@@ -22,8 +22,6 @@
 
 package dev.galacticraft.machinelib.api.gametest.annotation;
 
-import dev.galacticraft.machinelib.api.gametest.MachineTestContext;
-import dev.galacticraft.machinelib.api.gametest.SimpleGameTest;
 import net.minecraft.gametest.framework.GameTest;
 
 import java.lang.annotation.ElementType;
@@ -31,21 +29,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * <p>{@code @MachineTest} annotated methods should only be found in {@link dev.galacticraft.machinelib.api.gametest.MachineGameTest}s and descendants.
- *
- * <p>{@code @MachineTest} annotated methods must not be {@code private} or {@code static}.
- *
- * <p>{@code @MachineTest} annotated methods can take
- * a {@link net.minecraft.gametest.framework.GameTestHelper},
- * a {@link MachineTestContext},
- * OR a {@link dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity} (and descendant classes).
- *
- * <p>{@code @MachineTest} annotated methods should return a {@link Runnable} that will be executed after {@code workTime} ticks have passed.
- */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.PACKAGE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MachineTest {
+public @interface TestInfo {
     /**
      * {@return the batch name of the test}
      *
@@ -55,29 +41,12 @@ public @interface MachineTest {
 
     /**
      * {@return the group name of the test}
-     * Used for test naming only.
+     * Used for naming purposes only.
      */
     String group() default "";
 
     /**
-     * {@return the structure file to use for the test}
-     *
-     * @see GameTest#template()
+     * {@return overrides the name of the test function}
      */
-    String structure() default SimpleGameTest.STRUCTURE_3x3;
-
-    /**
-     * {@return the setup time of the test}
-     */
-    int setupTime() default 1;
-
-    /**
-     * {@return the work time of the test}
-     */
-    int workTime() default 1;
-
-    /**
-     * {@return whether to capture {@link AssertionError}s to add gametest data}
-     */
-    boolean captureAssertions() default true;
+    String name() default "";
 }

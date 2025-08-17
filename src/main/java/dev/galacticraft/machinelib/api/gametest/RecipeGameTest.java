@@ -23,18 +23,20 @@
 package dev.galacticraft.machinelib.api.gametest;
 
 import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
-import dev.galacticraft.machinelib.api.gametest.annotation.MachineTest;
+import dev.galacticraft.machinelib.api.gametest.annotation.TestProvider;
+import dev.galacticraft.machinelib.api.gametest.annotation.timing.Oneshot;
+import dev.galacticraft.machinelib.api.gametest.annotation.type.Machine;
 import dev.galacticraft.machinelib.api.gametest.recipe.IngredientSupplier;
+import dev.galacticraft.machinelib.api.gametest.util.GameTestStructures;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
+import dev.galacticraft.machinelib.impl.gametest.GameTestUtils;
 import net.minecraft.gametest.framework.GameTestAssertException;
-import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.level.block.Block;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -44,24 +46,24 @@ import java.util.List;
  *
  * @param <I> the type of container used by the recipe
  * @param <R> the type of recipe used by the recipe
- * @param <Machine> the type of machine used in the game test
+ * @param <BE> the type of machine used in the game test
  * @see RecipeMachineBlockEntity
  */
-public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>, Machine extends RecipeMachineBlockEntity<I, R>> extends MachineGameTest<Machine> {
+public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>, BE extends RecipeMachineBlockEntity<I, R>> extends MachineGameTest<BE> {
     protected final int recipeRuntime;
     private final int outputSlotsStart;
     private final int outputSlotsLength;
-    private final List<IngredientSupplier<I, R, Machine>> conditions;
+    private final List<IngredientSupplier<I, R, BE>> conditions;
 
-    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, Machine>> conditions, int recipeRuntime) {
+    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, BE>> conditions, int recipeRuntime) {
         this(block, conditions, -1, 0, recipeRuntime);
     }
 
-    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, Machine>> conditions, int outputSlot, int recipeRuntime) {
+    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, BE>> conditions, int outputSlot, int recipeRuntime) {
         this(block, conditions, outputSlot, 1, recipeRuntime);
     }
 
-    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, Machine>> conditions, int outputSlotsStart, int outputSlotsLength, int recipeRuntime) {
+    protected RecipeGameTest(@NotNull Block block, List<IngredientSupplier<I, R, BE>> conditions, int outputSlotsStart, int outputSlotsLength, int recipeRuntime) {
         super(block);
 
         this.outputSlotsStart = outputSlotsStart;
@@ -83,14 +85,15 @@ public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>,
         }
     }
 
-    protected void fulfillRunConditions(Machine machine) {
-        for (IngredientSupplier<I, R, Machine> condition : this.conditions) {
+    protected void fulfillRunConditions(BE machine) {
+        for (IngredientSupplier<I, R, BE> condition : this.conditions) {
             condition.supplyIngredient(machine);
         }
     }
 
-    @MachineTest(group = "recipe")
-    public Runnable initialize(Machine machine) {
+    @Oneshot
+    @Machine
+    public Runnable initialize(BE machine) {
         this.fulfillRunConditions(machine);
         return () -> {
             if (machine.getActiveRecipe() == null) {
@@ -99,8 +102,9 @@ public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>,
         };
     }
 
-    @MachineTest(group = "recipe")
-    public Runnable full(Machine machine) {
+    @Oneshot
+    @Machine
+    public Runnable full(BE machine) {
         this.fulfillRunConditions(machine);
         this.fillOutputSlots(machine.itemStorage());
 
@@ -112,7 +116,7 @@ public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>,
     }
 
     protected void tryCraft(GameTestHelper helper) {
-        Machine machine = createMachine(helper);
+        BE machine = createMachine(helper);
 
         fulfillRunConditions(machine);
 
@@ -126,7 +130,7 @@ public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>,
     }
 
     protected void tryCraftPartial(GameTestHelper helper, int ignored) {
-        Machine machine = createMachine(helper);
+        BE machine = createMachine(helper);
 
         for (int i = 0; i < this.conditions.size(); i++) {
             if (i == ignored) continue;
@@ -142,18 +146,14 @@ public abstract class RecipeGameTest<I extends RecipeInput, R extends Recipe<I>,
         });
     }
 
-    @Override
-    @MustBeInvokedByOverriders
-    @GameTestGenerator
-    public @NotNull List<TestFunction> registerTests() {
-        List<TestFunction> tests = super.registerTests();
+    @TestProvider
+    private void recipeTests(List<TestFunction> tests) {
         // variable runtime
-        tests.add(this.createTest("recipe", "craft", STRUCTURE_3x3, this.recipeRuntime, 1, this::tryCraft));
+        tests.add(GameTestUtils.createAdditionalTest(this.getClass(), "recipe.craft", GameTestStructures.EMPTY_1x1, this.recipeRuntime, 0, this::tryCraft));
 
         for (int i = 0; i < this.conditions.size(); i++) {
             int finalI = i;
-            tests.add(this.createTest("recipe", "craft.partial." + i, STRUCTURE_3x3, this.recipeRuntime, 1, helper -> this.tryCraftPartial(helper, finalI)));
+            tests.add(GameTestUtils.createAdditionalTest(this.getClass(), "recipe.craft.partial." + i, GameTestStructures.EMPTY_1x1, this.recipeRuntime, 0, helper -> this.tryCraftPartial(helper, finalI)));
         }
-        return tests;
     }
 }

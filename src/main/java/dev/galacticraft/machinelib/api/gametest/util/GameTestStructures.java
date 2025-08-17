@@ -20,22 +20,13 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.gametest.annotation;
+package dev.galacticraft.machinelib.api.gametest.util;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 
-/**
- * Applies default values to all test methods in the class.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface TestSuite {
-    /**
-     * {@return the name of the test suite}
-     * Sets the default group name for all test methods in the class.
-     */
-    String value(); // name
+public final class GameTestStructures {
+    public static final String EMPTY_1x1 = "machinelib:1x1";
+    public static final String EMPTY_3x3 = "machinelib:3x3";
+//    public static final String EMPTY_5x5 = "machinelib:5x5";
+    public static final String EMPTY_8x8 = FabricGameTest.EMPTY_STRUCTURE;
 }

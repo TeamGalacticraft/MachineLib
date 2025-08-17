@@ -23,8 +23,10 @@
 package dev.galacticraft.machinelib.testmod.gametest;
 
 import dev.galacticraft.machinelib.api.gametest.MachineGameTest;
-import dev.galacticraft.machinelib.api.gametest.annotation.MachineTest;
-import dev.galacticraft.machinelib.api.gametest.annotation.TestSuite;
+import dev.galacticraft.machinelib.api.gametest.TestUtils;
+import dev.galacticraft.machinelib.api.gametest.annotation.TestInfo;
+import dev.galacticraft.machinelib.api.gametest.annotation.timing.Oneshot;
+import dev.galacticraft.machinelib.api.gametest.annotation.type.Machine;
 import dev.galacticraft.machinelib.testmod.block.TestModBlocks;
 import dev.galacticraft.machinelib.testmod.block.entity.GeneratorBlockEntity;
 import dev.galacticraft.machinelib.testmod.item.TestModItems;
@@ -32,17 +34,17 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.item.Items;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@TestSuite("generator")
+@TestInfo(group = "generator")
 public class GeneratorTests extends MachineGameTest<GeneratorBlockEntity> {
     public GeneratorTests() {
         super(TestModBlocks.GENERATOR);
     }
 
-    @MachineTest(workTime = 10)
+    @Machine
+    @Oneshot(time = 10)
     public Runnable generatePower(GeneratorBlockEntity machine) {
         machine.itemStorage().slot(GeneratorBlockEntity.FUEL_SLOT).set(Items.COAL, 1);
         return () -> {
@@ -52,10 +54,9 @@ public class GeneratorTests extends MachineGameTest<GeneratorBlockEntity> {
         };
     }
 
-    @Override
     @GameTestGenerator
-    public @NotNull List<TestFunction> registerTests() {
-        List<TestFunction> tests = super.registerTests();
+    public List<TestFunction> generateTests() {
+        List<TestFunction> tests = TestUtils.generateTests(this);
         tests.add(this.createDrainToEnergyItemTest(GeneratorBlockEntity.BATTERY_SLOT, TestModItems.BASIC_BATTERY));
         return tests;
     }

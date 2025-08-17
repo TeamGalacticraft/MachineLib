@@ -22,19 +22,14 @@
 
 package dev.galacticraft.machinelib.api.gametest;
 
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
+@FunctionalInterface
+public interface Step extends Runnable {
+    @Nullable Step next();
 
-/**
- * A gametest helper class that can be used to create tests with a single method.
- */
-public abstract class SimpleGameTest implements FabricGameTest {
-    @Override
-    public void invokeTestMethod(GameTestHelper context, Method method) {
-        // don't invoke fabric if there is no annotation (generated test)
-        if (method.isAnnotationPresent(GameTest.class)) FabricGameTest.super.invokeTestMethod(context, method);
+    @Deprecated
+    default void run() {
+        this.next();
     }
 }
