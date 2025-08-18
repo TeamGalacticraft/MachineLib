@@ -53,7 +53,7 @@ public @interface BasicTest {
      *
      * @see GameTest#batch()
      */
-    String batch();
+    String batch() default "defaultBatch";
 
     /**
      * {@return the group name of the test}

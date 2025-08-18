@@ -189,21 +189,20 @@ dependencies {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
 
-    modLocalRuntime("net.fabricmc.fabric-api:fabric-api:$fabric")
-
-    modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
-    modCompileOnly("dev.architectury:architectury-fabric:$architectury")
-
-    modImplementation("me.shedaniel.cloth:cloth-config-fabric:$clothConfig")
-    modImplementation("com.terraformersmc:modmenu:$modmenu")
     modImplementation("lol.bai:badpackets:fabric-$badpackets")
 
-    "testmodImplementation"(sourceSets.main.get().output)
-    "modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")
-
-    modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
+    modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modLocalRuntime("mcp.mobius.waila:wthit:fabric-$wthit")
+
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
+    modCompileOnly("dev.architectury:architectury-fabric:$architectury")
+    modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
+
+    modLocalRuntime(modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:$clothConfig")!!)
+    modLocalRuntime(modCompileOnly("com.terraformersmc:modmenu:$modmenu")!!)
+
+    "testmodImplementation"(sourceSets.main.get().output)
+    "modTestRuntimeOnly"("modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")!!)
 }
 
 tasks.withType<ProcessResources> {
