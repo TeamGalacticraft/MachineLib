@@ -398,7 +398,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      */
     private void drawMachineFace(@NotNull GuiGraphics graphics, int x, int y, @NotNull IOConfig ioConfig, @NotNull BlockFace face) {
         if (this.model != null) {
-            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, this.model.getItemOverride(this.menu.be.getBlockState(), face, ioConfig));
+            graphics.blit(x, y, 0, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE, this.model.getSprite(null, face, ioConfig));
         }
     }
 
@@ -728,8 +728,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     protected void renderFaceTooltip(GuiGraphics graphics, @NotNull BlockFace face, int mouseX, int mouseY) {
         TOOLTIP_ARRAY.add(face.getName());
         IOFace configuredFace = this.menu.configuration.get(face);
-        if (configuredFace.getType() != ResourceType.NONE) {
-            TOOLTIP_ARRAY.add(configuredFace.getType().getName().copy().append(" ").append(configuredFace.getFlow().getName()));
+        ResourceType type = configuredFace.getType();
+        if (type == ResourceType.OVERRIDE) {
+            TOOLTIP_ARRAY.add(type.getName());
+        } else if (type != ResourceType.NONE) {
+            TOOLTIP_ARRAY.add(type.getName().copy().append(" ").append(configuredFace.getFlow().getName()));
         }
         graphics.renderComponentTooltip(this.font, TOOLTIP_ARRAY, mouseX, mouseY);
 

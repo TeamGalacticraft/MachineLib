@@ -314,6 +314,10 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         tag.putBoolean(Constant.Nbt.ACTIVE, this.active);
     }
 
+    public boolean faceHasOverride(BlockFace face) {
+        return false;
+    }
+
     private IOFace @NotNull [] generateIOFaces() {
         IOFace[] faces = new IOFace[6];
         for (int i = 0; i < faces.length; i++) {

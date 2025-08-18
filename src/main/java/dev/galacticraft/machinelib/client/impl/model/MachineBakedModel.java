@@ -99,7 +99,9 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         if (config != null) {
             IOFace ioFace = config.get(face);
             ResourceType type = ioFace.getType();
-            if (type != ResourceType.NONE) {
+            if (type == ResourceType.OVERRIDE) {
+                return this.base.base();
+            } else if (type != ResourceType.NONE) {
                 ResourceFlow flow = ioFace.getFlow();
 
                 switch (flow) {
@@ -161,11 +163,6 @@ public final class MachineBakedModel implements FabricBakedModel, BakedModel {
         }
         TextureAtlasSprite sprite = this.provider.getSprite(face);
         return sprite == null ? this.base.base() : sprite;
-    }
-
-    public TextureAtlasSprite getItemOverride(@Nullable BlockState state, @NotNull BlockFace face, @Nullable IOConfig config) {
-        TextureAtlasSprite override = this.provider.getItemOverride(face);
-        return override != null ? override : this.getSprite(state, face, config);
     }
 
     public TextureProvider.BoundTextureProvider getProvider() {
