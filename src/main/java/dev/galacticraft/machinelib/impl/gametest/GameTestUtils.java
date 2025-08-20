@@ -25,9 +25,11 @@ package dev.galacticraft.machinelib.impl.gametest;
 import com.google.common.collect.Lists;
 import dev.galacticraft.machinelib.api.gametest.TestModifiers;
 import dev.galacticraft.machinelib.api.gametest.Step;
+import dev.galacticraft.machinelib.api.gametest.TestUtils;
 import dev.galacticraft.machinelib.api.gametest.annotation.Magic;
 import dev.galacticraft.machinelib.api.gametest.annotation.Structure;
 import dev.galacticraft.machinelib.api.gametest.annotation.TestInfo;
+import dev.galacticraft.machinelib.api.gametest.annotation.timing.InexactTime;
 import dev.galacticraft.machinelib.api.gametest.annotation.timing.Oneshot;
 import dev.galacticraft.machinelib.api.gametest.annotation.timing.Timed;
 import dev.galacticraft.machinelib.api.gametest.util.GameTestStructures;
@@ -160,7 +162,7 @@ public class GameTestUtils {
     }
 
     public static void testGroup(StringBuilder builder, Method method) {
-        testGroup(builder, method.getClass());
+        testGroup(builder, method.getDeclaringClass());
 
         TestInfo annotation = method.getAnnotation(TestInfo.class);
         if (annotation != null) {
@@ -263,40 +265,51 @@ public class GameTestUtils {
             List<Object> args = new ArrayList<>();
             args.add(helper);
 
-            for (Annotation annotation : method.getAnnotations()) {
-                TestModifiers.invoke(annotation, helper, method.getDeclaringClass(), instance, args, variant);
-            }
+            BlockPos[] pos = new BlockPos[]{TestUtils.getCenterFloor(helper)};
 
-            for (Method pre : before) {
-                GameTestUtils.tryInvokeUnorderedArguments(null, pre, helper, helper.getLevel(), helper.getLevel().getServer());
-            }
+            try {
+                for (Annotation annotation : method.getAnnotations()) {
+                    TestModifiers.invoke(annotation, helper, method.getDeclaringClass(), instance, args, variant);
+                }
+                for (Annotation annotation : method.getAnnotations()) {
+                    TestModifiers.removeConflicting(annotation, args);
+                }
 
-            if (method.isAnnotationPresent(Timed.class)) {
-                Timed annotation = method.getAnnotation(Timed.class);
-                assert annotation != null;
-                Step r = GameTestUtils.invokeUnorderedArguments(instance, method, args.toArray());
-                assert r != null;
-                invokeNextStep(helper, annotation.delay(), 0, r, after);
-            } else if (method.isAnnotationPresent(Oneshot.class)) {
-                Oneshot annotation = method.getAnnotation(Oneshot.class);
-                assert annotation != null;
-                Runnable r = GameTestUtils.invokeUnorderedArguments(instance, method, args.toArray());
-                if (r == null) {
-                    helper.succeed();
+                invokeAll(helper, before);
 
-                    for (Method post : after) {
-                        GameTestUtils.tryInvokeUnorderedArguments(null, post, helper, helper.getLevel(), helper.getLevel().getServer());
-                    }
-                } else {
-                    helper.runAfterDelay(annotation.time(), () -> {
-                        r.run();
+                if (method.isAnnotationPresent(Timed.class)) {
+                    Timed annotation = method.getAnnotation(Timed.class);
+                    assert annotation != null;
+                    Step r = GameTestUtils.invokeUnorderedArguments(instance, method, args.toArray());
+                    assert r != null;
+                    invokeNextStep(helper, pos, annotation.delay(), 0, r, after);
+                } else if (method.isAnnotationPresent(Oneshot.class)) {
+                    Oneshot annotation = method.getAnnotation(Oneshot.class);
+                    assert annotation != null;
+                    Runnable r = GameTestUtils.invokeUnorderedArguments(instance, method, args.toArray());
+                    if (r == null) {
                         helper.succeed();
 
-                        for (Method post : after) {
-                            GameTestUtils.tryInvokeUnorderedArguments(null, post, helper, helper.getLevel(), helper.getLevel().getServer());
-                        }
-                    });
+                        invokeAll(helper, after);
+                    } else {
+                        helper.runAfterDelay(annotation.time(), () -> {
+                            try {
+                                r.run();
+                                helper.succeed();
+
+                                invokeAll(helper, after);
+                            } catch (AssertionError assertion) {
+                                GameTestUtils.wrapThrowable(helper, pos[0], assertion);
+                            }
+                        });
+                    }
+                } else if (method.isAnnotationPresent(InexactTime.class)) {
+                    InexactTime annotation = method.getAnnotation(InexactTime.class);
+                    assert annotation != null;
+                    GameTestUtils.invokeUnorderedArguments(instance, method, args.toArray());
                 }
+            } catch (AssertionError assertion) {
+                GameTestUtils.wrapThrowable(helper, pos[0], assertion);
             }
         };
     }
@@ -322,15 +335,15 @@ public class GameTestUtils {
 
         if (clazz.getEnclosingClass() != null) {
             try {
-                Constructor<?> declaredConstructor = clazz.getEnclosingClass().getDeclaredConstructor();
-                declaredConstructor.setAccessible(true);
-                return getMagic(clazz.getEnclosingClass(), declaredConstructor.newInstance(), magic);
+                Constructor<?> constructor = clazz.getEnclosingClass().getDeclaredConstructor();
+                constructor.setAccessible(true);
+                return getMagic(clazz.getEnclosingClass(), constructor.newInstance(), magic);
             } catch (Exception ex) {
                 if (instance != null) {
                     try {
-                        Constructor<?> declaredConstructor = clazz.getEnclosingClass().getDeclaredConstructor(instance.getClass());
-                        declaredConstructor.setAccessible(true);
-                        return getMagic(clazz.getEnclosingClass(), declaredConstructor.newInstance(instance), magic);
+                        Constructor<?> constructor = clazz.getEnclosingClass().getDeclaredConstructor(instance.getClass());
+                        constructor.setAccessible(true);
+                        return getMagic(clazz.getEnclosingClass(), constructor.newInstance(instance), magic);
                     } catch (Exception ignore) {}
                 }
                 return getMagic(clazz.getEnclosingClass(), null, magic);
@@ -339,28 +352,42 @@ public class GameTestUtils {
         return null;
     }
 
-    private static void invokeNextStep(GameTestHelper helper, int[] delay, int i, Step current, List<Method> after) {
+    private static void invokeNextStep(GameTestHelper helper, BlockPos[] pos, int[] delay, int i, Step current, List<Method> after) {
         helper.runAfterDelay(delay[i], () -> {
-            Step next = current.next();
-            if (i + 1 == delay.length) {
-                if (next != null) throw new AssertionError("Extra step?");
-                helper.succeed();
+            try {
 
-                for (Method post : after) {
-                    GameTestUtils.tryInvokeUnorderedArguments(null, post, helper, helper.getLevel(), helper.getLevel().getServer());
+                Step next = current.next();
+                if (i + 1 == delay.length) {
+                    if (next != null) throw new AssertionError("Extra step?");
+                    helper.succeed();
+
+                    invokeAll(helper, after);
+                } else {
+                    if (next == null) throw new NullPointerException("Missing step?");
+                    invokeNextStep(helper, pos, delay, i + 1, next, after);
                 }
-            } else {
-                if (next == null) throw new NullPointerException("Missing step?");
-                invokeNextStep(helper, delay, i + 1, next, after);
+            } catch (AssertionError assertion) {
+                GameTestUtils.wrapThrowable(helper, pos[0], assertion);
             }
         });
+    }
+
+    private static void invokeAll(GameTestHelper helper, List<Method> after) {
+        for (Method post : after) {
+            GameTestUtils.tryInvokeUnorderedArguments(null, post, helper, helper.getLevel(), helper.getLevel().getServer());
+        }
     }
 
     @Contract("_, _, _ -> fail")
     public static void wrapThrowable(GameTestHelper helper, BlockPos pos, Throwable t) {
         if (t instanceof GameTestAssertException ex) throw ex;
 
-        GameTestAssertPosException ex = new GameTestAssertPosException(t.getMessage(), helper.absolutePos(pos), pos, helper.getTick());
+        GameTestAssertException ex;
+        if (pos != null) {
+             ex = new GameTestAssertPosException(t.getMessage(), helper.absolutePos(pos), pos, helper.getTick());
+        } else {
+            ex = new GameTestAssertException(t.getMessage());
+        }
         ex.setStackTrace(t.getStackTrace());
         throw ex;
     }

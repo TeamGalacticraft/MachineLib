@@ -25,6 +25,8 @@ package dev.galacticraft.machinelib.api.gametest;
 import dev.galacticraft.machinelib.api.gametest.annotation.type.Machine;
 import dev.galacticraft.machinelib.api.gametest.annotation.type.Matrix;
 import dev.galacticraft.machinelib.api.gametest.annotation.type.SingleBlock;
+import dev.galacticraft.machinelib.api.gametest.context.AssertionContext;
+import dev.galacticraft.machinelib.api.gametest.context.MachineTestContext;
 import dev.galacticraft.machinelib.impl.gametest.GameTestUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -58,19 +60,28 @@ public class TestModifiers {
             arguments.add(obj[variant]);
         });
 
-        register(Machine.class, (arguments, helper, clazz, inst, variant, annotation) -> {
-            Object magic = GameTestUtils.getMagic(clazz, inst, annotation.machine());
-            if (magic == null) throw new IllegalArgumentException("Missing magic block");
+        register(Machine.class, new TestModifier<>() {
+            @Override
+            public void addArguments(List<Object> arguments, GameTestHelper helper, Class<?> clazz, Object inst, int variant, Machine annotation) {
+                Object magic = GameTestUtils.getMagic(clazz, inst, annotation.machine());
+                if (magic == null) throw new IllegalArgumentException("Missing magic block");
 
-            BlockPos pos = TestUtils.getCenterFloor(helper);
-            if (magic instanceof Block block) {
-                helper.setBlock(pos, block);
-            } else if (magic instanceof BlockState state) {
-                helper.setBlock(pos, state);
-            } else {
-                throw new IllegalArgumentException("Expected block");
+                BlockPos pos = TestUtils.getCenterFloor(helper);
+                if (magic instanceof Block block) {
+                    helper.setBlock(pos, block);
+                } else if (magic instanceof BlockState state) {
+                    helper.setBlock(pos, state);
+                } else {
+                    throw new IllegalArgumentException("Expected block");
+                }
+                arguments.add(helper.getBlockEntity(pos));
+                arguments.add(new MachineTestContext<>(helper, pos));
             }
-            arguments.add(helper.getBlockEntity(pos));
+
+            @Override
+            public void removeConflicting(List<Object> arguments) {
+                arguments.removeIf(a -> a.getClass() == AssertionContext.class);
+            }
         });
 
         register(SingleBlock.class, (arguments, helper, clazz, inst, variant, annotation) -> {
@@ -85,10 +96,19 @@ public class TestModifiers {
                 throw new IllegalArgumentException("Expected block");
             }
             arguments.add(helper.getBlockEntity(pos));
+            arguments.add(new AssertionContext(helper, pos));
         });
+    }
+
+    public static <T extends Annotation> void removeConflicting(T annotation, List<Object> args) {
+        TestModifier<T> provider = (TestModifier<T>) PROVIDERS.get(annotation.annotationType());
+        if (provider != null) {
+            provider.removeConflicting(args);
+        }
     }
 
     public interface TestModifier<T extends Annotation> {
         void addArguments(List<Object> arguments, GameTestHelper helper, Class<?> clazz, Object inst, int variant, T annotation);
+        default void removeConflicting(List<Object> arguments) {}
     }
 }

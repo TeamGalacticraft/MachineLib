@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.gametest;
 import dev.galacticraft.machinelib.api.gametest.annotation.AfterEach;
 import dev.galacticraft.machinelib.api.gametest.annotation.BeforeEach;
 import dev.galacticraft.machinelib.api.gametest.annotation.TestProvider;
+import dev.galacticraft.machinelib.api.gametest.annotation.timing.InexactTime;
 import dev.galacticraft.machinelib.api.gametest.annotation.timing.Oneshot;
 import dev.galacticraft.machinelib.api.gametest.annotation.timing.Timed;
 import dev.galacticraft.machinelib.api.gametest.annotation.type.Matrix;
@@ -136,6 +137,11 @@ public class TestUtils {
             assert oneshot != null;
             max = oneshot.time();
             setup = oneshot.setup();
+        } else if (method.isAnnotationPresent(InexactTime.class)) {
+            InexactTime inexactTime = method.getAnnotation(InexactTime.class);
+            assert inexactTime != null;
+            max = inexactTime.maxTime();
+            setup = inexactTime.setup();
         } else {
             return;
         }

@@ -72,7 +72,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> extend
 
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isFull()) {
-                    helper.fail("Machine did not drain energy to the stack!", BlockPos.ZERO);
+                    helper.fail("Machine did not drain energy to the stack!", machine.getBlockPos());
                 } else {
                     helper.succeed();
                 }
@@ -103,7 +103,7 @@ public abstract class MachineGameTest<Machine extends MachineBlockEntity> extend
 
             helper.runAfterDelay(1, () -> {
                 if (machine.energyStorage().isFull()) {
-                    helper.fail("Machine did not drain fluid into the stack!", BlockPos.ZERO);
+                    helper.fail("Machine did not drain fluid into the stack!", machine.getBlockPos());
                 } else {
                     helper.succeed();
                 }
