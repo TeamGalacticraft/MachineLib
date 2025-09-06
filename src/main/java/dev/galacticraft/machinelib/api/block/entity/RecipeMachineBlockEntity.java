@@ -31,6 +31,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * A machine block entity that processes recipes.
@@ -98,6 +101,18 @@ public abstract class RecipeMachineBlockEntity<I extends RecipeInput, R extends 
         super(type, pos, state, spec);
         this.recipeType = recipeType;
     }
+
+    /**
+     * {@return A list of the item stacks in the input slots.}
+     */
+    @Contract(pure = true)
+    public abstract List<ItemStack> inputItemStacks();
+
+    /**
+     * {@return A list of the item stacks in the output slots.}
+     */
+    @Contract(pure = true)
+    public abstract List<ItemStack> outputItemStacks();
 
     /**
      * An inventory for use in finding vanilla recipes for this machine.
@@ -311,6 +326,14 @@ public abstract class RecipeMachineBlockEntity<I extends RecipeInput, R extends 
         } else if (recipe == null) {
             this.setProgress(0);
         }
+    }
+
+    /**
+     * {@return the machine's progress from 0 to 1}
+     */
+    @Contract(pure = true)
+    public float getProgressRatio() {
+        return ((float) this.getProgress()) / ((float) this.getProcessingTime(this.getActiveRecipe()));
     }
 
     @Override
