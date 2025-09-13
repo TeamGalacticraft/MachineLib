@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Team Galacticraft
+ * Copyright (c) 2021-2025 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,13 @@
 
 package dev.galacticraft.machinelib.client.impl.compat;
 
-import dev.emi.emi.api.EmiExclusionArea;
 import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.widget.Bounds;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
-import dev.galacticraft.machinelib.impl.MachineLib;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public class MachineLibEMIPlugin implements EmiPlugin {
     @Override
