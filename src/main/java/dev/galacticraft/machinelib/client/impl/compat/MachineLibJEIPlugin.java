@@ -22,37 +22,33 @@
 
 package dev.galacticraft.machinelib.client.impl.compat;
 
-import dev.architectury.event.CompoundEventResult;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
-import me.shedaniel.math.Rectangle;
-import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
-import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
-import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
-import me.shedaniel.rei.api.common.util.EntryStacks;
+import dev.galacticraft.machinelib.impl.Constant;
+import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.gui.handlers.IGuiContainerHandler;
+import mezz.jei.api.registration.IGuiHandlerRegistration;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
-public class MachineLibREIClientPlugin implements REIClientPlugin {
+@JeiPlugin
+public class MachineLibJEIPlugin implements IModPlugin {
     @Override
-    public void registerScreens(ScreenRegistry registry) {
-        registry.registerFocusedStack((screen, mouse) -> {
-            if (screen instanceof MachineScreen<?, ?> machineScreen) {
-                if (machineScreen.hoveredTank != null && !machineScreen.hoveredTank.isEmpty()) {
-                    return CompoundEventResult.interruptTrue(EntryStacks.of(machineScreen.hoveredTank.getFluid(), machineScreen.hoveredTank.getAmount()));
-                }
-            }
-            return CompoundEventResult.pass();
-        });
+    public ResourceLocation getPluginUid() {
+        return Constant.id("jei_plugin");
     }
 
     @Override
-    public void registerExclusionZones(ExclusionZones zones) {
-        zones.register(MachineScreen.class, provider -> {
-            List<Rect2i> areas = provider.getExclusionZones();
-            return areas.stream().map(
-                    rect2i -> new Rectangle(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight())
-            ).toList();
-        });
+    public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        registration.addGenericGuiContainerHandler(MachineScreen.class,
+            new IGuiContainerHandler<MachineScreen<?, ?>>() {
+                @Override
+                public List<Rect2i> getGuiExtraAreas(MachineScreen<?, ?> provider) {
+                    return provider.getExclusionZones();
+                }
+            }
+        );
     }
 }

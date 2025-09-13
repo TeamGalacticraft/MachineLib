@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2019-2025 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,27 @@
 
 package dev.galacticraft.machinelib.client.impl.compat;
 
-import dev.architectury.event.CompoundEventResult;
+import dev.emi.emi.api.EmiExclusionArea;
+import dev.emi.emi.api.EmiPlugin;
+import dev.emi.emi.api.EmiRegistry;
+import dev.emi.emi.api.widget.Bounds;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
-import me.shedaniel.math.Rectangle;
-import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
-import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
-import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
-import me.shedaniel.rei.api.common.util.EntryStacks;
+import dev.galacticraft.machinelib.impl.MachineLib;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-public class MachineLibREIClientPlugin implements REIClientPlugin {
+public class MachineLibEMIPlugin implements EmiPlugin {
     @Override
-    public void registerScreens(ScreenRegistry registry) {
-        registry.registerFocusedStack((screen, mouse) -> {
-            if (screen instanceof MachineScreen<?, ?> machineScreen) {
-                if (machineScreen.hoveredTank != null && !machineScreen.hoveredTank.isEmpty()) {
-                    return CompoundEventResult.interruptTrue(EntryStacks.of(machineScreen.hoveredTank.getFluid(), machineScreen.hoveredTank.getAmount()));
-                }
-            }
-            return CompoundEventResult.pass();
-        });
-    }
-
-    @Override
-    public void registerExclusionZones(ExclusionZones zones) {
-        zones.register(MachineScreen.class, provider -> {
+    public void register(EmiRegistry registry) {
+        registry.addGenericExclusionArea((screen, consumer) -> {
+            if (!(screen instanceof MachineScreen provider)) return;
             List<Rect2i> areas = provider.getExclusionZones();
-            return areas.stream().map(
-                    rect2i -> new Rectangle(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight())
-            ).toList();
+            areas.forEach(rect2i -> {
+                consumer.accept(new Bounds(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight()));
+            });
         });
     }
 }

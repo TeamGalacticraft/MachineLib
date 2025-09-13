@@ -55,6 +55,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -576,6 +577,36 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             }
         }
         return false;
+    }
+
+    /**
+     * {@return a list of rectangles recipe viewers should avoid placing items in}
+     */
+    public List<Rect2i> getExclusionZones() {
+        List<Rect2i> areas = new ArrayList<>();
+        int leftX = this.getX();
+        int rightX = this.getX() + this.getImageWidth();
+        int leftY = this.getY() + SPACING;
+        int rightY = this.getY() + SPACING;
+        int width;
+        int height;
+        for (Tab tab : Tab.values()) {
+            if (tab.isOpen()) {
+                width = PANEL_WIDTH;
+                height = PANEL_HEIGHT;
+            } else {
+                width = TAB_WIDTH;
+                height = TAB_HEIGHT;
+            }
+            if (tab.isLeft()) {
+                areas.add(new Rect2i(leftX - width, leftY, width, height));
+                leftY += height + SPACING;
+            } else {
+                areas.add(new Rect2i(rightX, rightY, width, height));
+                rightY += height + SPACING;
+            }
+        }
+        return areas;
     }
 
     /**
