@@ -273,6 +273,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     protected void drawConfigurationPanels(@NotNull GuiGraphics graphics, int mouseX, int mouseY) {
         assert this.minecraft != null;
         PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.translate(0, 0, 10);
 
         int leftX = this.leftPos;
         int rightX = this.leftPos + this.imageWidth;
@@ -281,7 +283,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         int width;
         int height;
         for (Tab tab : Tab.values()) { // 0, 1, 2, 3
-            poseStack.pushPose();
             width = tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
             height = tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
             if (tab.isLeft()) {
@@ -297,9 +298,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 }
                 rightY += height + SPACING;
             }
-            poseStack.popPose();
         }
-        poseStack.pushPose();
         poseStack.translate(this.leftPos, this.topPos, 0);
 
         if (Tab.REDSTONE.isOpen()) {
