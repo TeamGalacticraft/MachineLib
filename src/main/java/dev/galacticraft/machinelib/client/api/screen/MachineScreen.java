@@ -49,6 +49,7 @@ import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.renderer.v1.model.WrapperBakedModel;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -58,6 +59,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -236,8 +238,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         assert this.minecraft != null;
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
 
-        if (this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(this.menu.be.getBlockState()) instanceof MachineBakedModel model) {
-            this.previousState = this.menu.be.getBlockState();
+        BlockState blockState = this.menu.be.getBlockState();
+        BakedModel bakedModel = this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+        if (WrapperBakedModel.unwrap(bakedModel) instanceof MachineBakedModel model) {
+            this.previousState = blockState;
             this.model = model;
         }
     }
@@ -245,9 +249,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     @Override
     protected void containerTick() {
         super.containerTick();
-        if (!this.menu.be.getBlockState().equals(this.previousState)) {
-            this.previousState = this.menu.be.getBlockState();
-            if (this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(this.menu.be.getBlockState()) instanceof MachineBakedModel model) {
+        BlockState blockState = this.menu.be.getBlockState();
+        if (!blockState.equals(this.previousState)) {
+            this.previousState = blockState;
+            BakedModel bakedModel = this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+            if (WrapperBakedModel.unwrap(bakedModel) instanceof MachineBakedModel model) {
                 this.model = model;
             }
         }
