@@ -86,15 +86,15 @@ public interface Constant {
         int OVERLAY_WIDTH = 16;
         int OVERLAY_HEIGHT = 48;
 
-        int ENERGY_BACKGROUND_X = 0;
-        int ENERGY_BACKGROUND_Y = 0;
-        int ENERGY_X = 16;
-        int ENERGY_Y = 0;
+        int ENERGY_BACKGROUND_U = 0;
+        int ENERGY_BACKGROUND_V = 0;
+        int ENERGY_U = 16;
+        int ENERGY_V = 0;
 
-        int OXYGEN_BACKGROUND_X = 32;
-        int OXYGEN_BACKGROUND_Y = 0;
-        int OXYGEN_X = 48;
-        int OXYGEN_Y = 0;
+        int OXYGEN_BACKGROUND_U = 32;
+        int OXYGEN_BACKGROUND_V = 0;
+        int OXYGEN_U = 48;
+        int OXYGEN_V = 0;
 
         /**
          * The width of a configuration panel.
