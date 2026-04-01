@@ -229,7 +229,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     protected static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
+        return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
     }
 
     @Override
@@ -820,7 +820,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             long amount = this.menu.energyStorage.getAmount();
             GraphicsUtil.drawCapacitor(graphics, x, y, capacity, amount, false);
 
-            if (mouseIn(mouseX, mouseY, x, y, 16, this.capacitorHeight)) {
+            if (mouseIn(mouseX, mouseY, x - 1, y - 1, OVERLAY_WIDTH + 2, this.capacitorHeight + 2)) {
                 List<Component> lines = new ArrayList<>();
                 this.appendEnergyTooltip(lines);
                 this.setTooltipForNextRenderPass(Lists.transform(lines, Component::getVisualOrderText));
@@ -865,7 +865,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     }
                 }
 
-                if (this.hoveredTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                if (this.hoveredTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX() - 1, this.topPos + tank.getY() - 1, tank.getWidth() + 2, tank.getHeight() + 2)) {
                     this.hoveredTank = tank;
                     RenderSystem.disableDepthTest();
                     graphics.fill(tank.getX(), tank.getY(), tank.getX() + tank.getWidth(), tank.getY() + tank.getHeight(), 0x80ffffff);
@@ -876,7 +876,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         graphics.pose().popPose();
 
         for (Tank tank : this.menu.tanks) {
-            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX() - 1, this.topPos + tank.getY() - 1, tank.getWidth() + 2, tank.getHeight() + 2)) {
                 this.setTooltipForNextRenderPass(Lists.transform(tank.getTooltip(), Component::getVisualOrderText));
                 break;
             }

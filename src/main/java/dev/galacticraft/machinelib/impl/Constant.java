@@ -111,8 +111,8 @@ public interface Constant {
         /**
          * The height of a configuration tab.
          */
-
         int TAB_HEIGHT = 22;
+
         int BUTTON_U = 0;
         int BUTTON_V = 196;
         int BUTTON_HOVERED_V = 216;
