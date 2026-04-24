@@ -8,7 +8,7 @@ jobs:
     if: github.ref_name == github.event.repository.default_branch
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Copy translations
         run: |
