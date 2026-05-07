@@ -47,9 +47,6 @@ public interface MultiblockMenuFactory {
     /**
      * Gets the opening data sent to the client when this menu opens.
      *
-     * <p>The default sends the clicked part position. Custom multiblock menus can
-     * override this later to send an instance id, origin, or custom record.</p>
-     *
      * @param context menu context
      * @param player player opening the menu
      * @return screen opening data
@@ -58,7 +55,13 @@ public interface MultiblockMenuFactory {
             final MultiblockMenuContext context,
             final ServerPlayer player
     ) {
-        return context.clickedPos();
+        return new MultiblockMenuOpeningData(
+                context.instanceId(),
+                context.definition().id(),
+                context.origin(),
+                context.clickedPos(),
+                context.orientation()
+        );
     }
 
     /**
