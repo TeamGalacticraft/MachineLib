@@ -1,6 +1,7 @@
 package dev.galacticraft.machinelib.api.multiblock.components;
 
 import dev.galacticraft.machinelib.api.multiblock.MultiblockBuilder;
+import dev.galacticraft.machinelib.api.storage.StorageSpec;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.resources.ResourceLocation;
 
@@ -21,6 +22,9 @@ public final class MultiblockStandardComponents {
 
     public static final ResourceLocation IO_CONFIG =
             Constant.id("io_config");
+
+    public static final ResourceLocation STORAGE =
+            Constant.id("storage");
 
     private MultiblockStandardComponents() {
 
@@ -59,4 +63,26 @@ public final class MultiblockStandardComponents {
                 );
     }
 
+    /**
+     * Adds a persistent storage component to a multiblock builder.
+     *
+     * <p>This should be used by multiblocks that need MachineLib item, fluid, or
+     * energy storage. The storage component is separate from
+     * {@link #configured(MultiblockBuilder)}, because different machines need
+     * different storage layouts.</p>
+     *
+     * @param builder builder to modify
+     * @param spec storage specification
+     * @return the same builder
+     */
+    public static MultiblockBuilder storage(
+            final MultiblockBuilder builder,
+            final StorageSpec spec
+    ) {
+        return builder.component(
+                STORAGE,
+                MultiblockStorageComponent.class,
+                context -> new MultiblockStorageComponent(spec)
+        );
+    }
 }
