@@ -54,6 +54,14 @@ public interface MultiblockComponentContext {
     Set<BlockPos> partPositions();
 
     /**
+     * Marks this formed machine's persistent component data as changed.
+     *
+     * <p>Components should call this whenever persistent state changes. The
+     * multiblock manager will then write the component state into saved data.</p>
+     */
+    void setChanged();
+
+    /**
      * Gets another component attached to the same formed machine.
      *
      * @param type component type

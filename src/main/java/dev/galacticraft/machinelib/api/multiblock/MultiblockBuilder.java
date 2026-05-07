@@ -1,5 +1,7 @@
 package dev.galacticraft.machinelib.api.multiblock;
 
+import net.minecraft.resources.ResourceLocation;
+
 /**
  * Mutable builder API for a multiblock definition.
  */
@@ -41,12 +43,14 @@ public interface MultiblockBuilder {
     /**
      * Adds a runtime component factory to this multiblock definition.
      *
+     * @param id stable persistent component id
      * @param type component lookup type
      * @param factory component factory
      * @return this builder
      * @param <T> component type
      */
     <T extends MultiblockComponent> MultiblockBuilder component(
+            ResourceLocation id,
             Class<T> type,
             MultiblockComponentFactory<? extends T> factory
     );

@@ -5,6 +5,7 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import dev.galacticraft.machinelib.impl.network.s2c.MultiblockSyncAddPayload;
 import dev.galacticraft.machinelib.impl.network.s2c.MultiblockSyncRemovePayload;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -343,13 +344,27 @@ public final class MultiblockManager {
             return null;
         }
 
+        final CompoundTag savedComponents;
+
+        if (save) {
+            savedComponents = new CompoundTag();
+        } else {
+            final MultiblockSavedData.SavedMachine savedMachine =
+                    this.savedData.get(instanceId);
+
+            savedComponents = savedMachine == null
+                    ? new CompoundTag()
+                    : savedMachine.components();
+        }
+
         final FormedMultiblockMachine machine = new FormedMultiblockMachine(
                 instanceId,
                 this.level,
                 origin,
                 orientation,
                 definition,
-                parts
+                parts,
+                savedComponents
         );
 
         this.addRuntimeIndexes(machine);
@@ -405,6 +420,10 @@ public final class MultiblockManager {
     public void unloadRuntimeOnly(final FormedMultiblockMachine machine) {
         if (machine == null) {
             return;
+        }
+
+        if (machine.componentsChanged()) {
+            this.savedData.updateComponents(machine);
         }
 
         machine.unloadRuntime();
@@ -553,10 +572,17 @@ public final class MultiblockManager {
 
     /**
      * Ticks runtime components for all currently loaded formed machines.
+     *
+     * <p>If a component marks itself changed during ticking, this method writes the
+     * component data back into persistent saved data.</p>
      */
     public void tickComponents() {
         for (final FormedMultiblockMachine machine : List.copyOf(this.machinesById.values())) {
             machine.tickComponents();
+
+            if (machine.componentsChanged()) {
+                this.savedData.updateComponents(machine);
+            }
         }
     }
 }

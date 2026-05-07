@@ -96,7 +96,11 @@ public final class MachineLibTestMultiblocks {
                         }
                     });
 
-                    builder.component(TestCounterComponent.class, context -> new TestCounterComponent());
+                    builder.component(
+                            ResourceLocation.fromNamespaceAndPath(Constant.MOD_ID, "test_counter"),
+                            TestCounterComponent.class,
+                            context -> new TestCounterComponent()
+                    );
                 }
         );
     }

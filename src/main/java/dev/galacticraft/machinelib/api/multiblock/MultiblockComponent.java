@@ -1,20 +1,52 @@
 package dev.galacticraft.machinelib.api.multiblock;
 
+import net.minecraft.nbt.CompoundTag;
+
 /**
  * Runtime logic attached to a formed multiblock machine.
  *
- * <p>Components are the first step toward real multiblock machines. They allow a
- * formed structure to hold runtime behaviour such as inventories, tanks, energy,
- * recipes, progress, animation state, and machine status.</p>
+ * <p>Components allow a formed structure to hold runtime behaviour such as
+ * inventories, tanks, energy, recipes, progress, animation state, and machine
+ * status.</p>
  *
- * <p>This first implementation is runtime-only. Persistence should be added
- * later once the component model is stable.</p>
+ * <p>Persistent components should write only stable data. Structure identity,
+ * origin, orientation, and definition id are already stored by the multiblock
+ * saved-data system.</p>
  */
 public interface MultiblockComponent {
 
     /**
-     * Called once after the component is created and attached to a formed
-     * machine.
+     * Reads this component's persistent state.
+     *
+     * <p>This is called before {@link #onFormed(MultiblockComponentContext)} when
+     * a machine is restored from saved data.</p>
+     *
+     * @param context component context
+     * @param tag saved component tag
+     */
+    default void load(
+            final MultiblockComponentContext context,
+            final CompoundTag tag
+    ) {
+
+    }
+
+    /**
+     * Writes this component's persistent state.
+     *
+     * @param context component context
+     * @param tag component tag to write into
+     */
+    default void save(
+            final MultiblockComponentContext context,
+            final CompoundTag tag
+    ) {
+
+    }
+
+    /**
+     * Called once after the component is created, loaded, and attached to a
+     * formed machine.
      *
      * @param context component context
      */
@@ -34,9 +66,6 @@ public interface MultiblockComponent {
     /**
      * Called when the formed machine is permanently invalidated.
      *
-     * <p>This is used when the structure is broken and removed from persistent
-     * saved data.</p>
-     *
      * @param context component context
      */
     default void onInvalidated(final MultiblockComponentContext context) {
@@ -46,8 +75,6 @@ public interface MultiblockComponent {
     /**
      * Called when the runtime machine is unloaded while persistent saved data is
      * kept.
-     *
-     * <p>This is used for chunk unload/runtime unload behaviour.</p>
      *
      * @param context component context
      */

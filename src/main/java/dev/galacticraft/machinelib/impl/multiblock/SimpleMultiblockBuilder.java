@@ -81,12 +81,23 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
         return this;
     }
 
+    /**
+     * Adds a runtime component factory to this multiblock definition.
+     *
+     * @param id stable persistent component id
+     * @param type component lookup type
+     * @param factory component factory
+     * @return this builder
+     * @param <T> component type
+     */
     @Override
     public <T extends MultiblockComponent> SimpleMultiblockBuilder component(
+            final ResourceLocation id,
             final Class<T> type,
             final MultiblockComponentFactory<? extends T> factory
     ) {
         this.componentFactories.add(new MultiblockComponentFactoryEntry<>(
+                id,
                 type,
                 factory
         ));

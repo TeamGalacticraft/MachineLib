@@ -61,4 +61,9 @@ public final class SimpleMultiblockComponentContext implements MultiblockCompone
         return this.machine.component(type);
     }
 
+    @Override
+    public void setChanged() {
+        this.machine.setComponentsChanged();
+    }
+
 }

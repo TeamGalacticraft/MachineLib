@@ -261,10 +261,12 @@ public final class MultiblockSavedData extends SavedData {
                         machine.instanceId(),
                         machine.definition().id(),
                         machine.origin(),
-                        machine.orientation()
+                        machine.orientation(),
+                        machine.saveComponents()
                 )
         );
 
+        machine.clearComponentsChanged();
         this.setDirty();
     }
 
@@ -288,6 +290,34 @@ public final class MultiblockSavedData extends SavedData {
     }
 
     /**
+     * Updates only the persisted component data for a saved machine.
+     *
+     * @param machine runtime machine whose components should be saved
+     */
+    public void updateComponents(final FormedMultiblockMachine machine) {
+        final SavedMachine existing = this.machines.get(machine.instanceId());
+
+        if (existing == null) {
+            this.put(machine);
+            return;
+        }
+
+        this.machines.put(
+                machine.instanceId(),
+                new SavedMachine(
+                        existing.instanceId(),
+                        existing.definitionId(),
+                        existing.origin(),
+                        existing.orientation(),
+                        machine.saveComponents()
+                )
+        );
+
+        machine.clearComponentsChanged();
+        this.setDirty();
+    }
+
+    /**
      * Persistent identity and placement record for one formed multiblock.
      *
      * @param instanceId persistent instance id
@@ -299,7 +329,8 @@ public final class MultiblockSavedData extends SavedData {
             UUID instanceId,
             ResourceLocation definitionId,
             BlockPos origin,
-            MultiblockOrientation orientation
+            MultiblockOrientation orientation,
+            CompoundTag components
     ) {
 
         private static final String INSTANCE_ID = "InstanceId";
@@ -309,6 +340,7 @@ public final class MultiblockSavedData extends SavedData {
         private static final String ORIGIN_Z = "OriginZ";
         private static final String FORWARD = "Forward";
         private static final String UP = "Up";
+        private static final String COMPONENTS = "Components";
 
         /**
          * Saves this machine record to NBT.
@@ -327,6 +359,11 @@ public final class MultiblockSavedData extends SavedData {
 
             tag.putString(FORWARD, this.orientation.forward().getName());
             tag.putString(UP, this.orientation.up().getName());
+
+            tag.put(
+                    COMPONENTS,
+                    this.components.copy()
+            );
 
             return tag;
         }
@@ -354,11 +391,20 @@ public final class MultiblockSavedData extends SavedData {
                 throw new IllegalArgumentException("Invalid saved multiblock orientation.");
             }
 
+            final CompoundTag components;
+
+            if (tag.contains(COMPONENTS, Tag.TAG_COMPOUND)) {
+                components = tag.getCompound(COMPONENTS).copy();
+            } else {
+                components = new CompoundTag();
+            }
+
             return new SavedMachine(
                     instanceId,
                     definitionId,
                     origin,
-                    findOrientation(forward, up)
+                    findOrientation(forward, up),
+                    components
             );
         }
 

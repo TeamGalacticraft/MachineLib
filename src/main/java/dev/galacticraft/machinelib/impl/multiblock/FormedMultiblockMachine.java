@@ -5,6 +5,9 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntr
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,39 +35,13 @@ public final class FormedMultiblockMachine {
     private final List<MultiblockComponent> components;
     private final Map<Class<? extends MultiblockComponent>, MultiblockComponent> componentsByType;
     private final SimpleMultiblockComponentContext componentContext;
+    private final Map<ResourceLocation, MultiblockComponent> componentsById;
+    private boolean componentsChanged;
 
     private MultiblockState state = MultiblockState.FORMED;
 
     /**
-     * Creates a new formed multiblock machine with a random instance id.
-     *
-     * @param level level containing the multiblock
-     * @param origin world-space origin
-     * @param orientation applied orientation
-     * @param definition multiblock definition
-     * @param parts runtime part list
-     */
-    public FormedMultiblockMachine(
-            final ServerLevel level,
-            final BlockPos origin,
-            final MultiblockOrientation orientation,
-            final MultiblockDefinition definition,
-            final List<MultiblockPart> parts
-    ) {
-        this(
-                UUID.randomUUID(),
-                level,
-                origin,
-                orientation,
-                definition,
-                parts
-        );
-    }
-
-    /**
      * Creates a formed multiblock machine with a specific persistent instance id.
-     *
-     * <p>This constructor is used when restoring a machine from saved data.</p>
      *
      * @param instanceId persistent instance id
      * @param level level containing the multiblock
@@ -80,6 +57,38 @@ public final class FormedMultiblockMachine {
             final MultiblockOrientation orientation,
             final MultiblockDefinition definition,
             final List<MultiblockPart> parts
+    ) {
+        this(
+                instanceId,
+                level,
+                origin,
+                orientation,
+                definition,
+                parts,
+                new CompoundTag()
+        );
+    }
+
+    /**
+     * Creates a formed multiblock machine with a specific persistent instance id and
+     * saved component data.
+     *
+     * @param instanceId persistent instance id
+     * @param level level containing the multiblock
+     * @param origin world-space origin
+     * @param orientation applied orientation
+     * @param definition multiblock definition
+     * @param parts runtime part list
+     * @param savedComponents saved component data
+     */
+    public FormedMultiblockMachine(
+            final UUID instanceId,
+            final ServerLevel level,
+            final BlockPos origin,
+            final MultiblockOrientation orientation,
+            final MultiblockDefinition definition,
+            final List<MultiblockPart> parts,
+            final CompoundTag savedComponents
     ) {
         this.instanceId = instanceId;
         this.level = level;
@@ -112,13 +121,22 @@ public final class FormedMultiblockMachine {
         this.componentContext = new SimpleMultiblockComponentContext(this);
 
         final List<MultiblockComponent> createdComponents = new ArrayList<>();
-        final Map<Class<? extends MultiblockComponent>, MultiblockComponent> componentMap =
+        final Map<Class<? extends MultiblockComponent>, MultiblockComponent> componentTypeMap =
+                new HashMap<>();
+        final Map<ResourceLocation, MultiblockComponent> componentIdMap =
                 new HashMap<>();
 
         for (final MultiblockComponentFactoryEntry<?> entry : definition.componentFactories()) {
-            if (componentMap.containsKey(entry.type())) {
+            if (componentTypeMap.containsKey(entry.type())) {
                 throw new IllegalStateException(
                         "Duplicate multiblock component type " + entry.type().getName()
+                                + " on multiblock " + definition.id()
+                );
+            }
+
+            if (componentIdMap.containsKey(entry.id())) {
+                throw new IllegalStateException(
+                        "Duplicate multiblock component id " + entry.id()
                                 + " on multiblock " + definition.id()
                 );
             }
@@ -126,15 +144,23 @@ public final class FormedMultiblockMachine {
             final MultiblockComponent component =
                     entry.factory().create(this.componentContext);
 
+            final String savedKey = entry.id().toString();
+
+            if (savedComponents.contains(savedKey, Tag.TAG_COMPOUND)) {
+                component.load(
+                        this.componentContext,
+                        savedComponents.getCompound(savedKey)
+                );
+            }
+
             createdComponents.add(component);
-            componentMap.put(
-                    entry.type(),
-                    component
-            );
+            componentTypeMap.put(entry.type(), component);
+            componentIdMap.put(entry.id(), component);
         }
 
         this.components = List.copyOf(createdComponents);
-        this.componentsByType = Map.copyOf(componentMap);
+        this.componentsByType = Map.copyOf(componentTypeMap);
+        this.componentsById = Map.copyOf(componentIdMap);
 
         for (final MultiblockComponent component : this.components) {
             component.onFormed(this.componentContext);
@@ -290,6 +316,60 @@ public final class FormedMultiblockMachine {
         for (final MultiblockComponent component : this.components) {
             component.tick(this.componentContext);
         }
+    }
+
+    /**
+     * Marks this machine's persistent component data as changed.
+     */
+    public void setComponentsChanged() {
+        this.componentsChanged = true;
+    }
+
+    /**
+     * Checks whether this machine's persistent component data has changed.
+     *
+     * @return {@code true} if component data should be written to saved data
+     */
+    public boolean componentsChanged() {
+        return this.componentsChanged;
+    }
+
+    /**
+     * Clears this machine's component dirty flag after saving.
+     */
+    public void clearComponentsChanged() {
+        this.componentsChanged = false;
+    }
+
+    /**
+     * Saves all persistent component data into one compound.
+     *
+     * @return saved component data
+     */
+    public CompoundTag saveComponents() {
+        final CompoundTag componentsTag = new CompoundTag();
+
+        for (final MultiblockComponentFactoryEntry<?> entry : this.definition.componentFactories()) {
+            final MultiblockComponent component = this.componentsById.get(entry.id());
+
+            if (component == null) {
+                continue;
+            }
+
+            final CompoundTag componentTag = new CompoundTag();
+
+            component.save(
+                    this.componentContext,
+                    componentTag
+            );
+
+            componentsTag.put(
+                    entry.id().toString(),
+                    componentTag
+            );
+        }
+
+        return componentsTag;
     }
 
     /**
