@@ -1,5 +1,7 @@
 package dev.galacticraft.machinelib.impl.multiblock;
 
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuContext;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockSlotPredicate;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
@@ -7,6 +9,11 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.level.block.Blocks;
 
 public final class MachineLibTestMultiblocks {
@@ -65,7 +72,28 @@ public final class MachineLibTestMultiblocks {
                                 "Clicked formed multiblock " + context.definition().id()
                         ));
 
-                        return InteractionResult.CONSUME;
+                        return InteractionResult.PASS;
+                    });
+
+                    builder.menu(new MultiblockMenuFactory() {
+                        @Override
+                        public AbstractContainerMenu createMenu(
+                                final MultiblockMenuContext context,
+                                final int syncId,
+                                final Inventory inventory,
+                                final Player player
+                        ) {
+                            return ChestMenu.threeRows(
+                                    syncId,
+                                    inventory,
+                                    new SimpleContainer(27)
+                            );
+                        }
+
+                        @Override
+                        public Component getDisplayName(final MultiblockMenuContext context) {
+                            return Component.literal("Test Iron Cube");
+                        }
                     });
                 }
         );

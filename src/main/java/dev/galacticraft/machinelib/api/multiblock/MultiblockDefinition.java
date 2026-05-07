@@ -1,5 +1,6 @@
 package dev.galacticraft.machinelib.api.multiblock;
 
+import dev.galacticraft.machinelib.impl.multiblock.MultiblockMenuOpener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 
@@ -35,17 +36,35 @@ public interface MultiblockDefinition {
     List<FormationRule> rules();
 
     /**
+     * Gets the optional menu factory for this multiblock.
+     *
+     * @return menu factory, or {@code null}
+     */
+    default MultiblockMenuFactory menuFactory() {
+        return null;
+    }
+
+    /**
      * Handles interaction with one formed part of this multiblock.
      *
-     * <p>The default implementation passes the interaction through to the
-     * original clicked block. Definitions that want controller routing, menus,
-     * ports, debug messages, or custom behaviour should override this method.</p>
+     * <p>The default implementation opens the configured multiblock menu if one
+     * exists. Otherwise, the interaction passes through to the original clicked
+     * block.</p>
      *
      * @param context interaction context
      * @return interaction result
      */
     default InteractionResult usePart(final MultiblockPartInteractionContext context) {
-        return InteractionResult.PASS;
+        final MultiblockMenuFactory factory = this.menuFactory();
+
+        if (factory == null) {
+            return InteractionResult.PASS;
+        }
+
+        return MultiblockMenuOpener.open(
+                context,
+                factory
+        );
     }
 
 }
