@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public interface TankDisplay {
     /**
      * Creates a display with the specified x and y coordinates.
-     * The width of the tank display is set to 48 pixels.
+     * The sizeX of the tank display is set to 48 pixels.
      *
      * @param x the x-coordinate of the tank display
      * @param y the y-coordinate of the tank display
@@ -44,11 +44,11 @@ public interface TankDisplay {
     }
 
     /**
-     * Creates a display with the specified x and y coordinates and height.
+     * Creates a display with the specified x and y coordinates and sizeY.
      *
      * @param x the x-coordinate of the tank display
      * @param y the y-coordinate of the tank display
-     * @param height the height of the tank display in pixels
+     * @param height the sizeY of the tank display in pixels
      * @return a new display
      */
     @Contract("_, _, _ -> new")
@@ -57,12 +57,12 @@ public interface TankDisplay {
     }
 
     /**
-     * Creates a display with the specified x and y coordinates, width and height.
+     * Creates a display with the specified x and y coordinates, sizeX and sizeY.
      *
      * @param x the x-coordinate of the tank display
      * @param y the y-coordinate of the tank display
-     * @param width the width of the tank display in pixels
-     * @param height the height of the tank display in pixels
+     * @param width the sizeX of the tank display in pixels
+     * @param height the sizeY of the tank display in pixels
      * @return a new display
      */
     @Contract("_, _, _, _ -> new")
@@ -87,12 +87,12 @@ public interface TankDisplay {
     int y();
 
     /**
-     * {@return the width of the tank}
+     * {@return the sizeX of the tank}
      */
     int width();
 
     /**
-     * {@return the height of the tank}
+     * {@return the sizeY of the tank}
      */
     int height();
 

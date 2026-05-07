@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.api.config;
 
 import com.google.gson.annotations.SerializedName;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockValidationMode;
 import dev.galacticraft.machinelib.impl.config.MachineLibConfig;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
@@ -131,4 +132,28 @@ public interface Config {
             return name;
         }
     }
+
+    /**
+     * {@return the multiblock validation mode}
+     */
+    MultiblockValidationMode multiblockValidationMode();
+
+    /**
+     * Sets the multiblock validation mode.
+     *
+     * @param mode the validation mode
+     */
+    void setMultiblockValidationMode(MultiblockValidationMode mode);
+
+    /**
+     * {@return the multiblock validation budget per tick}
+     */
+    int multiblockValidationBudgetPerTick();
+
+    /**
+     * Sets the multiblock validation budget per tick.
+     *
+     * @param budget the validation budget
+     */
+    void setMultiblockValidationBudgetPerTick(int budget);
 }

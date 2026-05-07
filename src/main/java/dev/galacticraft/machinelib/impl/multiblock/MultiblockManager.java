@@ -1,0 +1,515 @@
+package dev.galacticraft.machinelib.impl.multiblock;
+
+import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
+import dev.galacticraft.machinelib.impl.network.s2c.MultiblockSyncAddPayload;
+import dev.galacticraft.machinelib.impl.network.s2c.MultiblockSyncRemovePayload;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Runtime manager for formed multiblock machines in a single server level.
+ */
+public final class MultiblockManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("MachineLib/Multiblocks");
+
+    private static final Map<ResourceKey<Level>, MultiblockManager> MANAGERS =
+            new HashMap<>();
+
+    private final ServerLevel level;
+
+    private final Map<UUID, FormedMultiblockMachine> machinesById =
+            new HashMap<>();
+
+    private final Map<BlockPos, FormedMultiblockMachine> machinesByOrigin =
+            new HashMap<>();
+
+    private final Map<BlockPos, FormedMultiblockMachine> machinesByPart =
+            new HashMap<>();
+
+    private final MultiblockSavedData savedData;
+
+    private boolean loadedPersistentMachines;
+
+    private MultiblockManager(final ServerLevel level) {
+        this.level = level;
+        this.savedData = MultiblockSavedData.get(level);
+    }
+
+    /**
+     * Gets the multiblock manager for a server level.
+     *
+     * @param level server level
+     * @return level manager
+     */
+    public static MultiblockManager get(final ServerLevel level) {
+        return MANAGERS.computeIfAbsent(
+                level.dimension(),
+                ignored -> new MultiblockManager(level)
+        );
+    }
+
+    /**
+     * Gets the level owned by this manager.
+     *
+     * @return server level
+     */
+    public ServerLevel level() {
+        return this.level;
+    }
+
+    /**
+     * Gets the persistent saved-data object used by this manager.
+     *
+     * @return saved multiblock data
+     */
+    public MultiblockSavedData savedData() {
+        return this.savedData;
+    }
+
+    /**
+     * Gets a currently loaded runtime machine by instance id.
+     *
+     * @param id instance id
+     * @return formed machine, or {@code null}
+     */
+    public FormedMultiblockMachine getById(final UUID id) {
+        return this.machinesById.get(id);
+    }
+
+    /**
+     * Gets a currently loaded runtime machine by origin.
+     *
+     * @param origin multiblock origin
+     * @return formed machine, or {@code null}
+     */
+    public FormedMultiblockMachine getByOrigin(final BlockPos origin) {
+        return this.machinesByOrigin.get(origin);
+    }
+
+    /**
+     * Gets a currently loaded runtime machine by part position.
+     *
+     * @param pos part position
+     * @return formed machine, or {@code null}
+     */
+    public FormedMultiblockMachine getByPart(final BlockPos pos) {
+        return this.machinesByPart.get(pos);
+    }
+
+    /**
+     * Handles player interaction with a formed multiblock part.
+     *
+     * <p>If the clicked position belongs to a loaded formed machine, this creates
+     * a multiblock interaction context and forwards the call to the multiblock
+     * definition. If no loaded machine owns the position, the interaction passes
+     * through normally.</p>
+     *
+     * @param player interacting player
+     * @param pos clicked block position
+     * @param hand interaction hand
+     * @param hit block hit result
+     * @return interaction result
+     */
+    public InteractionResult handleUsePart(
+            final ServerPlayer player,
+            final BlockPos pos,
+            final InteractionHand hand,
+            final BlockHitResult hit
+    ) {
+        final FormedMultiblockMachine machine = this.machinesByPart.get(pos);
+
+        if (machine == null) {
+            return InteractionResult.PASS;
+        }
+
+        final MultiblockValidationStatus status = machine.validate();
+
+        if (status == MultiblockValidationStatus.UNLOADED) {
+            this.unloadRuntimeOnly(machine);
+            return InteractionResult.PASS;
+        }
+
+        if (status == MultiblockValidationStatus.INVALID) {
+            this.invalidate(machine);
+            return InteractionResult.PASS;
+        }
+
+        return machine.definition().usePart(new SimpleMultiblockPartInteractionContext(
+                machine,
+                player,
+                pos,
+                hand,
+                hit
+        ));
+    }
+
+    /**
+     * Gets serializable part data for a currently loaded runtime part.
+     *
+     * @param pos part position
+     * @return part data, or {@code null}
+     */
+    public MultiblockPartData getPartData(final BlockPos pos) {
+        final FormedMultiblockMachine machine = this.machinesByPart.get(pos);
+
+        if (machine == null) {
+            return null;
+        }
+
+        return machine.dataForPart(pos);
+    }
+
+    /**
+     * Checks whether a position belongs to a currently loaded formed multiblock.
+     *
+     * @param pos world position
+     * @return {@code true} if the position belongs to a loaded runtime machine
+     */
+    public boolean isPartOfFormedMultiblock(final BlockPos pos) {
+        return this.machinesByPart.containsKey(pos);
+    }
+
+    /**
+     * Handles a block change affecting a possible runtime multiblock part.
+     *
+     * @param pos changed block position
+     * @return {@code true} if the changed block was inside a still-valid machine
+     */
+    public boolean handleBlockChanged(final BlockPos pos) {
+        final FormedMultiblockMachine machine = this.machinesByPart.get(pos);
+
+        if (machine == null) {
+            return false;
+        }
+
+        final MultiblockValidationStatus status = machine.validate();
+
+        if (status == MultiblockValidationStatus.VALID) {
+            return true;
+        }
+
+        if (status == MultiblockValidationStatus.UNLOADED) {
+            this.unloadRuntimeOnly(machine);
+            return false;
+        }
+
+        this.invalidate(machine);
+        return false;
+    }
+
+    /**
+     * Checks whether a newly formed machine can be registered.
+     *
+     * @param origin proposed origin
+     * @param parts proposed part list
+     * @return {@code true} if the machine can be registered safely
+     */
+    public boolean canRegister(
+            final BlockPos origin,
+            final List<MultiblockPart> parts
+    ) {
+        return this.canRegister(
+                origin,
+                parts,
+                null
+        );
+    }
+
+    private boolean canRegister(
+            final BlockPos origin,
+            final List<MultiblockPart> parts,
+            final UUID ignoredSavedInstanceId
+    ) {
+        if (this.machinesByOrigin.containsKey(origin)) {
+            return false;
+        }
+
+        for (final MultiblockPart part : parts) {
+            if (this.machinesByPart.containsKey(part.worldPos())) {
+                return false;
+            }
+        }
+
+        if (ignoredSavedInstanceId == null) {
+            if (this.savedData.containsOrigin(origin)) {
+                return false;
+            }
+
+            return !this.savedData.overlapsAnySavedMachine(this.level, parts);
+        }
+
+        if (this.savedData.containsOriginExcept(origin, ignoredSavedInstanceId)) {
+            return false;
+        }
+
+        return !this.savedData.overlapsAnySavedMachineExcept(
+                this.level,
+                parts,
+                ignoredSavedInstanceId
+        );
+    }
+
+    /**
+     * Registers a newly formed multiblock and writes it to persistent saved data.
+     *
+     * @param origin world-space origin
+     * @param orientation applied orientation
+     * @param definition multiblock definition
+     * @param parts runtime parts
+     * @return formed machine, or {@code null} if registration failed
+     */
+    public FormedMultiblockMachine register(
+            final BlockPos origin,
+            final MultiblockOrientation orientation,
+            final MultiblockDefinition definition,
+            final List<MultiblockPart> parts
+    ) {
+        return this.register(
+                UUID.randomUUID(),
+                origin,
+                orientation,
+                definition,
+                parts,
+                true
+        );
+    }
+
+    /**
+     * Registers a formed multiblock with a specific instance id and writes it to
+     * persistent saved data.
+     *
+     * @param instanceId instance id
+     * @param origin world-space origin
+     * @param orientation applied orientation
+     * @param definition multiblock definition
+     * @param parts runtime parts
+     * @return formed machine, or {@code null} if registration failed
+     */
+    public FormedMultiblockMachine register(
+            final UUID instanceId,
+            final BlockPos origin,
+            final MultiblockOrientation orientation,
+            final MultiblockDefinition definition,
+            final List<MultiblockPart> parts
+    ) {
+        return this.register(
+                instanceId,
+                origin,
+                orientation,
+                definition,
+                parts,
+                true
+        );
+    }
+
+    private FormedMultiblockMachine register(
+            final UUID instanceId,
+            final BlockPos origin,
+            final MultiblockOrientation orientation,
+            final MultiblockDefinition definition,
+            final List<MultiblockPart> parts,
+            final boolean save
+    ) {
+        final UUID ignoredSavedInstanceId = save ? null : instanceId;
+
+        if (!this.canRegister(origin, parts, ignoredSavedInstanceId)) {
+            return null;
+        }
+
+        final FormedMultiblockMachine machine = new FormedMultiblockMachine(
+                instanceId,
+                this.level,
+                origin,
+                orientation,
+                definition,
+                parts
+        );
+
+        this.machinesById.put(machine.instanceId(), machine);
+        this.machinesByOrigin.put(machine.origin(), machine);
+
+        for (final MultiblockPart part : machine.parts()) {
+            this.machinesByPart.put(part.worldPos(), machine);
+        }
+
+        if (save) {
+            this.savedData.put(machine);
+        }
+
+        LOGGER.info(
+                "Registered formed multiblock {} at {} orientation={} with {} parts; instance={}",
+                definition.id(),
+                origin,
+                orientation,
+                parts.size(),
+                machine.instanceId()
+        );
+
+        MultiblockSyncAddPayload.syncAdded(machine);
+
+        return machine;
+    }
+
+    /**
+     * Invalidates a machine permanently.
+     *
+     * @param machine machine to invalidate
+     */
+    public void invalidate(final FormedMultiblockMachine machine) {
+        if (machine == null) {
+            return;
+        }
+
+        machine.invalidate();
+
+        this.removeRuntimeIndexes(machine);
+        MultiblockSyncRemovePayload.syncRemoved(machine);
+        this.savedData.remove(machine.instanceId());
+
+        LOGGER.info(
+                "Invalidated multiblock {} at {}; instance={}",
+                machine.definition().id(),
+                machine.origin(),
+                machine.instanceId()
+        );
+    }
+
+    /**
+     * Removes a machine from runtime indexes without deleting persistent saved data.
+     *
+     * @param machine machine to unload from runtime only
+     */
+    public void unloadRuntimeOnly(final FormedMultiblockMachine machine) {
+        if (machine == null) {
+            return;
+        }
+
+        this.removeRuntimeIndexes(machine);
+        MultiblockSyncRemovePayload.syncRemoved(machine);
+
+        LOGGER.info(
+                "Unloaded runtime multiblock {} at {}; instance={}",
+                machine.definition().id(),
+                machine.origin(),
+                machine.instanceId()
+        );
+    }
+
+    private void removeRuntimeIndexes(final FormedMultiblockMachine machine) {
+        this.machinesById.remove(machine.instanceId());
+        this.machinesByOrigin.remove(machine.origin());
+
+        for (final BlockPos partPos : machine.partPositions()) {
+            this.machinesByPart.remove(partPos);
+        }
+    }
+
+    /**
+     * Marks initial persistent loading as started.
+     */
+    public void loadPersistentMachines() {
+        if (this.loadedPersistentMachines) {
+            return;
+        }
+
+        this.loadedPersistentMachines = true;
+        this.tryRestorePersistentMachines();
+    }
+
+    /**
+     * Attempts to restore all saved multiblocks whose required chunks are loaded.
+     */
+    public void tryRestorePersistentMachines() {
+        for (final MultiblockSavedData.SavedMachine savedMachine : List.copyOf(this.savedData.machines())) {
+            if (this.machinesById.containsKey(savedMachine.instanceId())) {
+                continue;
+            }
+
+            final MultiblockDefinition definition = MachineLibMultiblocks.getDefinition(savedMachine.definitionId());
+
+            if (definition == null) {
+                this.savedData.remove(savedMachine.instanceId());
+                continue;
+            }
+
+            final List<MultiblockPart> parts = MultiblockRuntimeBuilder.buildParts(
+                    this.level,
+                    savedMachine.origin(),
+                    savedMachine.orientation(),
+                    definition
+            );
+
+            if (!MultiblockChunkUtil.areAllPartsLoaded(this.level, parts)) {
+                continue;
+            }
+
+            if (!MultiblockRuntimeBuilder.arePartsValid(this.level, parts)) {
+                this.savedData.remove(savedMachine.instanceId());
+                continue;
+            }
+
+            this.register(
+                    savedMachine.instanceId(),
+                    savedMachine.origin(),
+                    savedMachine.orientation(),
+                    definition,
+                    parts,
+                    false
+            );
+        }
+    }
+
+    /**
+     * Gets all currently loaded runtime machines.
+     *
+     * @return immutable runtime machine collection
+     */
+    public Collection<FormedMultiblockMachine> formedMachines() {
+        return Collections.unmodifiableCollection(this.machinesById.values());
+    }
+
+    /**
+     * Gets the number of currently loaded runtime machines.
+     *
+     * @return formed runtime machine count
+     */
+    public int formedCount() {
+        return this.machinesById.size();
+    }
+
+    /**
+     * Gets the number of indexed loaded part positions.
+     *
+     * @return indexed runtime part count
+     */
+    public int indexedPartCount() {
+        return this.machinesByPart.size();
+    }
+
+    /**
+     * Clears runtime indexes only.
+     */
+    public void clear() {
+        this.machinesById.clear();
+        this.machinesByOrigin.clear();
+        this.machinesByPart.clear();
+    }
+
+}

@@ -24,6 +24,8 @@ package dev.galacticraft.machinelib.impl;
 
 import dev.galacticraft.machinelib.api.component.MLDataComponents;
 import dev.galacticraft.machinelib.api.config.Config;
+import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
+import dev.galacticraft.machinelib.impl.multiblock.MachineLibTestMultiblocks;
 import dev.galacticraft.machinelib.impl.network.MachineLibPackets;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -42,6 +44,10 @@ public final class MachineLib implements ModInitializer {
         MachineLibPackets.registerChannels();
         MachineLibPackets.registerServer();
         MLDataComponents.init();
+
+        MachineLibEvents.register();
+        MachineLibTestMultiblocks.register();
+        MachineLibMultiblocks.INSTANCE.freeze();
 
         if (CONFIG.enableColoredVanillaFluidNames()) {
             FluidVariantAttributes.enableColoredVanillaFluidNames();

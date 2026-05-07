@@ -97,19 +97,19 @@ public interface Constant {
         int OXYGEN_V = 0;
 
         /**
-         * The width of a configuration panel.
+         * The sizeX of a configuration panel.
          */
         int PANEL_WIDTH = 100;
         /**
-         * The height of a configuration panel.
+         * The sizeY of a configuration panel.
          */
         int PANEL_HEIGHT = 92;
         /**
-         * The width of a configuration tab.
+         * The sizeX of a configuration tab.
          */
         int TAB_WIDTH = 22;
         /**
-         * The height of a configuration tab.
+         * The sizeY of a configuration tab.
          */
         int TAB_HEIGHT = 22;
 

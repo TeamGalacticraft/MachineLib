@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "dev.galacticraft.machinelib.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "LevelMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

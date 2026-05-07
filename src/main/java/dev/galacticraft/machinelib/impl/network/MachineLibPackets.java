@@ -26,9 +26,7 @@ import dev.galacticraft.machinelib.impl.network.c2s.AccessLevelPayload;
 import dev.galacticraft.machinelib.impl.network.c2s.RedstoneModePayload;
 import dev.galacticraft.machinelib.impl.network.c2s.SideConfigurationClickPayload;
 import dev.galacticraft.machinelib.impl.network.c2s.TankInteractionPayload;
-import dev.galacticraft.machinelib.impl.network.s2c.BaseMachineUpdatePayload;
-import dev.galacticraft.machinelib.impl.network.s2c.MenuSyncPayload;
-import dev.galacticraft.machinelib.impl.network.s2c.SideConfigurationUpdatePayload;
+import dev.galacticraft.machinelib.impl.network.s2c.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -45,6 +43,8 @@ public class MachineLibPackets {
         ClientPlayNetworking.registerGlobalReceiver(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(SideConfigurationUpdatePayload.TYPE, SideConfigurationUpdatePayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(MenuSyncPayload.TYPE, MenuSyncPayload::apply);
+        ClientPlayNetworking.registerGlobalReceiver(MultiblockSyncAddPayload.TYPE, MultiblockSyncAddPayload::apply);
+        ClientPlayNetworking.registerGlobalReceiver(MultiblockSyncRemovePayload.TYPE, MultiblockSyncRemovePayload::apply);
     }
 
     public static void registerChannels() {
@@ -58,5 +58,7 @@ public class MachineLibPackets {
         PayloadTypeRegistry.playS2C().register(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SideConfigurationUpdatePayload.TYPE, SideConfigurationUpdatePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(MenuSyncPayload.TYPE, MenuSyncPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(MultiblockSyncAddPayload.TYPE, MultiblockSyncAddPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(MultiblockSyncRemovePayload.TYPE, MultiblockSyncRemovePayload.CODEC);
     }
 }

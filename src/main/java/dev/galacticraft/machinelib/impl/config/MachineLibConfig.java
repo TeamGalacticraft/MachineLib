@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import dev.galacticraft.machinelib.api.config.Config;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockValidationMode;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,12 @@ public class MachineLibConfig implements Config {
     public boolean enableColoredVanillaFluidNames = true;
     @Expose
     public FluidUnits fluidUnits = FluidUnits.MILLIBUCKET;
+
+    @Expose
+    public MultiblockValidationMode multiblockValidationMode = MultiblockValidationMode.END_OF_TICK;
+
+    @Expose
+    public int multiblockValidationBudgetPerTick = 32;
 
     public MachineLibConfig(@Nullable File file) {
         this.file = file;
@@ -78,9 +85,31 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
+    public MultiblockValidationMode multiblockValidationMode() {
+        return this.multiblockValidationMode;
+    }
+
+    @Override
+    public void setMultiblockValidationMode(final MultiblockValidationMode mode) {
+        this.multiblockValidationMode = mode;
+    }
+
+    @Override
+    public int multiblockValidationBudgetPerTick() {
+        return this.multiblockValidationBudgetPerTick;
+    }
+
+    @Override
+    public void setMultiblockValidationBudgetPerTick(final int budget) {
+        this.multiblockValidationBudgetPerTick = Math.max(1, budget);
+    }
+
+    @Override
     public void copyFrom(Config config) {
         this.enableColoredVanillaFluidNames = config.enableColoredVanillaFluidNames();
         this.fluidUnits = config.fluidUnits();
+        this.multiblockValidationMode = config.multiblockValidationMode();
+        this.multiblockValidationBudgetPerTick = config.multiblockValidationBudgetPerTick();
     }
 
     @Override

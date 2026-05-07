@@ -110,12 +110,12 @@ public interface Tank {
     int getY();
 
     /**
-     * {@return the height of this tank}
+     * {@return the sizeY of this tank}
      */
     int getHeight();
 
     /**
-     * {@return the width of this tank} Currently, always returns {@code 16}.
+     * {@return the sizeX of this tank} Currently, always returns {@code 16}.
      */
     int getWidth();
 

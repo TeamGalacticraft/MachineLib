@@ -157,7 +157,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     private static final int REDSTONE_STATE_TEXT_Y = 54;
 
     private static final int REDSTONE_STATUS_TEXT_X = 11;
-    private static final int REDSTONE_STATUS_TEXT_Y = 59; //add font height
+    private static final int REDSTONE_STATUS_TEXT_Y = 59; //add font sizeY
 
     private static final int SECURITY_STATE_TEXT_X = 9;
     private static final int SECURITY_STATE_TEXT_Y = 54;
@@ -195,7 +195,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
      */
     protected int capacitorY = 8;
     /**
-     * The height of the capacitor.
+     * The sizeY of the capacitor.
      */
     protected int capacitorHeight = 48;
     private @Nullable MachineBakedModel model;
@@ -977,14 +977,14 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     /**
-     * {@return the width of the background image}
+     * {@return the sizeX of the background image}
      */
     public int getImageWidth() {
         return this.imageWidth;
     }
 
     /**
-     * {@return the height of the background image}
+     * {@return the sizeY of the background image}
      */
     public int getImageHeight() {
         return this.imageHeight;

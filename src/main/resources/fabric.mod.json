@@ -3,7 +3,7 @@
   "id": "$mod_id",
   "version": "$version",
   "name": "$mod_name",
-  "icon": "assets/${mod_id}/icon.png",
+  "icon": "assets/machinelib/icon.png",
   "description": "Machine Library for Galacticraft 5.",
   "license": "MIT",
   "contact": {
@@ -49,6 +49,9 @@
       "dev.galacticraft.machinelib.client.impl.compat.MachineLibEMIPlugin"
     ]
   },
+  "mixins": [
+    "machinelib.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.16",
     "minecraft": ">=1.21",

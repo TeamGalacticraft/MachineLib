@@ -137,7 +137,7 @@ public interface FluidResourceSlot extends ResourceSlot<Fluid> {
         @Contract(pure = true)
         public @NotNull FluidResourceSlot create() {
             if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
-            if (this.height < 0) throw new IllegalArgumentException("height is negative");
+            if (this.height < 0) throw new IllegalArgumentException("sizeY is negative");
             if (this.hidden) {
                 if (this.x != 0 || this.y != 0 || this.width != 16 || this.height != 48)
                     throw new UnsupportedOperationException("Display properties changed while hidden!");

@@ -189,6 +189,8 @@ dependencies {
         "fabric-api-base",
         "fabric-api-lookup-api-v1",
         "fabric-data-attachment-api-v1",
+        "fabric-events-interaction-v0",
+        "fabric-networking-api-v1",
         "fabric-gametest-api-v1",
         "fabric-item-api-v1",
         "fabric-model-loading-api-v1",
