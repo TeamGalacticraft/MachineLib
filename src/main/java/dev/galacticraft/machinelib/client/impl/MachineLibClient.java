@@ -61,5 +61,7 @@ public final class MachineLibClient implements ClientModInitializer {
                         }), MachineModelLoadingPlugin.INSTANCE);
 
         MachineLibPackets.registerClient();
+
+        TestMenuScreens.register();
     }
 }
