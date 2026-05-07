@@ -4,6 +4,7 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuContext;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockSlotPredicate;
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
@@ -66,6 +67,8 @@ public final class MachineLibTestMultiblocks {
                 builder -> {
                     builder.pattern(pattern);
                     builder.rule(RotationFormationRule.allow(MultiblockOrientation.horizontal()));
+
+                    MultiblockStandardComponents.configured(builder);
 
                     builder.onUsePart(context -> {
                         context.player().sendSystemMessage(Component.literal(
