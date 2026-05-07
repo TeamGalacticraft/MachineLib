@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.client.impl.multiblock.ClientMultiblockManage
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.multiblock.FormedMultiblockMachine;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockPart;
+import dev.galacticraft.machinelib.impl.multiblock.MultiblockPlayerSyncTracker;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -37,11 +38,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Server-to-client payload announcing that a formed multiblock is now active on
@@ -116,16 +116,22 @@ public record MultiblockSyncAddPayload(
     }
 
     /**
-     * Sends this formed multiblock to all players currently tracking its origin
-     * chunk.
+     * Sends this formed multiblock to every player currently tracking any chunk
+     * touched by the machine.
      *
      * @param machine formed multiblock machine
      */
     public static void syncAdded(final FormedMultiblockMachine machine) {
         final MultiblockSyncAddPayload payload = create(machine);
+        final Set<ServerPlayer> players = new HashSet<>();
 
-        for (final ServerPlayer player : PlayerLookup.tracking(machine.level(), machine.origin())) {
+        for (final ChunkPos chunkPos : machine.touchedChunks()) {
+            players.addAll(PlayerLookup.tracking(machine.level(), chunkPos));
+        }
+
+        for (final ServerPlayer player : players) {
             ServerPlayNetworking.send(player, payload);
+            MultiblockPlayerSyncTracker.markSynced(player, machine);
         }
     }
 
@@ -140,6 +146,7 @@ public record MultiblockSyncAddPayload(
             final FormedMultiblockMachine machine
     ) {
         ServerPlayNetworking.send(player, create(machine));
+        MultiblockPlayerSyncTracker.markSynced(player, machine);
     }
 
     private static MultiblockSyncAddPayload create(final FormedMultiblockMachine machine) {

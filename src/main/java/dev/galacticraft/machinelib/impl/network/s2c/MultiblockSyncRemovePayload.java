@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.network.s2c;
 import dev.galacticraft.machinelib.client.impl.multiblock.ClientMultiblockManager;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.multiblock.FormedMultiblockMachine;
+import dev.galacticraft.machinelib.impl.multiblock.MultiblockPlayerSyncTracker;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -33,8 +34,11 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -75,8 +79,8 @@ public record MultiblockSyncRemovePayload(
     }
 
     /**
-     * Sends a remove packet for the formed multiblock to players tracking its
-     * origin chunk.
+     * Sends a remove packet for the formed multiblock to all players currently
+     * tracking any chunk touched by it.
      *
      * @param machine formed machine
      */
@@ -84,9 +88,32 @@ public record MultiblockSyncRemovePayload(
         final MultiblockSyncRemovePayload payload =
                 new MultiblockSyncRemovePayload(machine.instanceId());
 
-        for (final ServerPlayer player : PlayerLookup.tracking(machine.level(), machine.origin())) {
-            ServerPlayNetworking.send(player, payload);
+        final Set<ServerPlayer> players = new HashSet<>();
+
+        for (final ChunkPos chunkPos : machine.touchedChunks()) {
+            players.addAll(PlayerLookup.tracking(machine.level(), chunkPos));
         }
+
+        for (final ServerPlayer player : players) {
+            ServerPlayNetworking.send(player, payload);
+            MultiblockPlayerSyncTracker.markRemoved(player, machine);
+        }
+    }
+
+    /**
+     * Sends a remove packet directly to one player.
+     *
+     * @param player target player
+     * @param instanceId formed machine instance id
+     */
+    public static void syncRemovedTo(
+            final ServerPlayer player,
+            final UUID instanceId
+    ) {
+        ServerPlayNetworking.send(
+                player,
+                new MultiblockSyncRemovePayload(instanceId)
+        );
     }
 
     /**

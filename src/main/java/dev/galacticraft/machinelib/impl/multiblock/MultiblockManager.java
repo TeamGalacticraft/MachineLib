@@ -10,17 +10,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Runtime manager for formed multiblock machines in a single server level.
@@ -41,6 +37,9 @@ public final class MultiblockManager {
             new HashMap<>();
 
     private final Map<BlockPos, FormedMultiblockMachine> machinesByPart =
+            new HashMap<>();
+
+    private final Map<ChunkPos, Set<FormedMultiblockMachine>> machinesByChunk =
             new HashMap<>();
 
     private final MultiblockSavedData savedData;
@@ -114,12 +113,23 @@ public final class MultiblockManager {
     }
 
     /**
-     * Handles player interaction with a formed multiblock part.
+     * Gets all loaded runtime machines that touch a chunk.
      *
-     * <p>If the clicked position belongs to a loaded formed machine, this creates
-     * a multiblock interaction context and forwards the call to the multiblock
-     * definition. If no loaded machine owns the position, the interaction passes
-     * through normally.</p>
+     * @param chunkPos chunk position
+     * @return immutable collection of machines touching the chunk
+     */
+    public Collection<FormedMultiblockMachine> getMachinesIntersectingChunk(final ChunkPos chunkPos) {
+        final Set<FormedMultiblockMachine> machines = this.machinesByChunk.get(chunkPos);
+
+        if (machines == null) {
+            return List.of();
+        }
+
+        return Collections.unmodifiableSet(machines);
+    }
+
+    /**
+     * Handles player interaction with a formed multiblock part.
      *
      * @param player interacting player
      * @param pos clicked block position
@@ -342,12 +352,7 @@ public final class MultiblockManager {
                 parts
         );
 
-        this.machinesById.put(machine.instanceId(), machine);
-        this.machinesByOrigin.put(machine.origin(), machine);
-
-        for (final MultiblockPart part : machine.parts()) {
-            this.machinesByPart.put(part.worldPos(), machine);
-        }
+        this.addRuntimeIndexes(machine);
 
         if (save) {
             this.savedData.put(machine);
@@ -381,6 +386,7 @@ public final class MultiblockManager {
 
         this.removeRuntimeIndexes(machine);
         MultiblockSyncRemovePayload.syncRemoved(machine);
+        MultiblockPlayerSyncTracker.forgetMachine(machine.instanceId());
         this.savedData.remove(machine.instanceId());
 
         LOGGER.info(
@@ -403,6 +409,7 @@ public final class MultiblockManager {
 
         this.removeRuntimeIndexes(machine);
         MultiblockSyncRemovePayload.syncRemoved(machine);
+        MultiblockPlayerSyncTracker.forgetMachine(machine.instanceId());
 
         LOGGER.info(
                 "Unloaded runtime multiblock {} at {}; instance={}",
@@ -412,12 +419,41 @@ public final class MultiblockManager {
         );
     }
 
+    private void addRuntimeIndexes(final FormedMultiblockMachine machine) {
+        this.machinesById.put(machine.instanceId(), machine);
+        this.machinesByOrigin.put(machine.origin(), machine);
+
+        for (final MultiblockPart part : machine.parts()) {
+            this.machinesByPart.put(part.worldPos(), machine);
+        }
+
+        for (final ChunkPos chunkPos : machine.touchedChunks()) {
+            this.machinesByChunk
+                    .computeIfAbsent(chunkPos, ignored -> new HashSet<>())
+                    .add(machine);
+        }
+    }
+
     private void removeRuntimeIndexes(final FormedMultiblockMachine machine) {
         this.machinesById.remove(machine.instanceId());
         this.machinesByOrigin.remove(machine.origin());
 
         for (final BlockPos partPos : machine.partPositions()) {
             this.machinesByPart.remove(partPos);
+        }
+
+        for (final ChunkPos chunkPos : machine.touchedChunks()) {
+            final Set<FormedMultiblockMachine> machines = this.machinesByChunk.get(chunkPos);
+
+            if (machines == null) {
+                continue;
+            }
+
+            machines.remove(machine);
+
+            if (machines.isEmpty()) {
+                this.machinesByChunk.remove(chunkPos);
+            }
         }
     }
 
@@ -510,6 +546,7 @@ public final class MultiblockManager {
         this.machinesById.clear();
         this.machinesByOrigin.clear();
         this.machinesByPart.clear();
+        this.machinesByChunk.clear();
     }
 
 }

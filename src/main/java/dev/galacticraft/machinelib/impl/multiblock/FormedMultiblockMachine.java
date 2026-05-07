@@ -4,6 +4,7 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public final class FormedMultiblockMachine {
     private final MultiblockDefinition definition;
     private final List<MultiblockPart> parts;
     private final Set<BlockPos> partPositions;
+    private final Set<ChunkPos> touchedChunks;
     private final List<MultiblockPartData> partData;
 
     private MultiblockState state = MultiblockState.FORMED;
@@ -87,10 +89,15 @@ public final class FormedMultiblockMachine {
         this.parts = List.copyOf(parts);
 
         final Set<BlockPos> positions = new HashSet<>();
+        final Set<ChunkPos> chunks = new HashSet<>();
         final List<MultiblockPartData> data = new ArrayList<>();
 
         for (final MultiblockPart part : parts) {
-            positions.add(part.worldPos());
+            final BlockPos worldPos = part.worldPos().immutable();
+
+            positions.add(worldPos);
+            chunks.add(new ChunkPos(worldPos));
+
             data.add(part.createData(
                     this.instanceId,
                     definition.id(),
@@ -100,6 +107,7 @@ public final class FormedMultiblockMachine {
         }
 
         this.partPositions = Collections.unmodifiableSet(positions);
+        this.touchedChunks = Collections.unmodifiableSet(chunks);
         this.partData = List.copyOf(data);
     }
 
@@ -160,6 +168,18 @@ public final class FormedMultiblockMachine {
     }
 
     /**
+     * Gets all chunks touched by this formed multiblock.
+     *
+     * <p>This is used for client synchronization. A player only needs to track
+     * one touched chunk to require a client-side formed-part record.</p>
+     *
+     * @return immutable set of touched chunk positions
+     */
+    public Set<ChunkPos> touchedChunks() {
+        return this.touchedChunks;
+    }
+
+    /**
      * @return current runtime state
      */
     public MultiblockState state() {
@@ -181,6 +201,16 @@ public final class FormedMultiblockMachine {
      */
     public boolean contains(final BlockPos pos) {
         return this.partPositions.contains(pos);
+    }
+
+    /**
+     * Checks whether this machine touches a chunk.
+     *
+     * @param chunkPos chunk position
+     * @return {@code true} if any part of this machine is in the chunk
+     */
+    public boolean touchesChunk(final ChunkPos chunkPos) {
+        return this.touchedChunks.contains(chunkPos);
     }
 
     /**

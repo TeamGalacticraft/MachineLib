@@ -213,8 +213,4 @@ public final class MachineLibMultiblocks implements MultiblockRegistry {
     public static void processQueuedValidations(final int limit) {
         INSTANCE.detectionIndex.processQueuedValidations(limit);
     }
-
-//    public static void debugDump(final ServerLevel level) {
-//        MultiblockManager.get(level).debugDump(); //TODO FIX
-//    }
 }

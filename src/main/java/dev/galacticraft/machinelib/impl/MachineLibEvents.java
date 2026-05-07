@@ -5,8 +5,10 @@ import dev.galacticraft.machinelib.client.impl.multiblock.ClientMultiblockManage
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockConfig;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockManager;
+import dev.galacticraft.machinelib.impl.multiblock.MultiblockPlayerSyncTracker;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -31,6 +33,8 @@ public final class MachineLibEvents {
 
                 manager.loadPersistentMachines();
                 manager.tryRestorePersistentMachines();
+
+                MultiblockPlayerSyncTracker.syncLevel(level);
             }
 
             final MultiblockValidationMode mode =
@@ -53,6 +57,10 @@ public final class MachineLibEvents {
                         MultiblockConfig.validationBudgetPerTick()
                 );
             }
+        });
+
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            MultiblockPlayerSyncTracker.clearPlayer(handler.player);
         });
 
         UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
