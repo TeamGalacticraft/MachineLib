@@ -19,6 +19,9 @@ public final class MultiblockStandardComponents {
     public static final ResourceLocation STATE =
             Constant.id("state");
 
+    public static final ResourceLocation IO_CONFIG =
+            Constant.id("io_config");
+
     private MultiblockStandardComponents() {
 
     }
@@ -27,7 +30,7 @@ public final class MultiblockStandardComponents {
      * Adds the standard configured-machine components to a multiblock builder.
      *
      * <p>This should be used by multiblocks that want MachineLib-style security,
-     * redstone mode, and machine state.</p>
+     * redstone mode, machine state, and side configuration.</p>
      *
      * @param builder builder to modify
      * @return the same builder
@@ -48,6 +51,11 @@ public final class MultiblockStandardComponents {
                         STATE,
                         MultiblockStateComponent.class,
                         context -> new MultiblockStateComponent()
+                )
+                .component(
+                        IO_CONFIG,
+                        MultiblockIOConfigComponent.class,
+                        context -> new MultiblockIOConfigComponent()
                 );
     }
 
