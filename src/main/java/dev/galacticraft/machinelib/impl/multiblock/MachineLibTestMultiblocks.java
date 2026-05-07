@@ -8,8 +8,10 @@ import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardC
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
 import dev.galacticraft.machinelib.api.storage.StorageSpec;
 import dev.galacticraft.machinelib.impl.Constant;
+import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -92,10 +94,18 @@ public final class MachineLibTestMultiblocks {
                                 final Inventory inventory,
                                 final Player player
                         ) {
-                            return ChestMenu.threeRows(
+                            final FormedMultiblockMachine machine =
+                                    MultiblockManager.get(context.level()).getById(context.instanceId());
+
+                            if (machine == null || !(player instanceof ServerPlayer serverPlayer)) {
+                                return null;
+                            }
+
+                            return new TestIronCubeMultiblockMenu(
                                     syncId,
-                                    inventory,
-                                    new SimpleContainer(27)
+                                    serverPlayer,
+                                    machine,
+                                    context.clickedPos()
                             );
                         }
 

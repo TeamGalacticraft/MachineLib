@@ -49,6 +49,8 @@ public final class MachineLib implements ModInitializer {
         MachineLibTestMultiblocks.register();
         MachineLibMultiblocks.INSTANCE.freeze();
 
+        TestMenuTypeRegistry.register();
+
         if (CONFIG.enableColoredVanillaFluidNames()) {
             FluidVariantAttributes.enableColoredVanillaFluidNames();
         }

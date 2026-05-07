@@ -125,7 +125,6 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         this.redstoneMode = redstone.mode();
 
         this.data = new MenuDataImpl(player, syncId);
-        this.registerData(this.data);
     }
 
     /**
@@ -164,6 +163,17 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         this.redstoneMode = RedstoneMode.IGNORE;
 
         this.data = new MenuDataClient(syncId);
+    }
+
+    /**
+     * Initializes synchronized menu data after the full menu object has finished
+     * assigning all subclass fields.
+     *
+     * <p>This must not be called from the base constructor, because Java dispatches
+     * overridden methods before subclass constructors have initialized their own
+     * fields.</p>
+     */
+    protected final void initializeDataSync() {
         this.registerData(this.data);
     }
 
