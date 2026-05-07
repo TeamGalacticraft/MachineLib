@@ -34,6 +34,8 @@ public final class MachineLibEvents {
                 manager.loadPersistentMachines();
                 manager.tryRestorePersistentMachines();
 
+                manager.tickComponents();
+
                 MultiblockPlayerSyncTracker.syncLevel(level);
             }
 

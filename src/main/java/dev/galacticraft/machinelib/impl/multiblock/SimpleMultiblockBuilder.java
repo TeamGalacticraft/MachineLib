@@ -14,6 +14,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
 
     private final ResourceLocation id;
     private final List<FormationRule> rules = new ArrayList<>();
+    private final List<MultiblockComponentFactoryEntry<?>> componentFactories =
+            new ArrayList<>();
 
     private MultiblockPattern pattern;
     private MultiblockPartInteractionHandler interactionHandler;
@@ -79,6 +81,19 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
         return this;
     }
 
+    @Override
+    public <T extends MultiblockComponent> SimpleMultiblockBuilder component(
+            final Class<T> type,
+            final MultiblockComponentFactory<? extends T> factory
+    ) {
+        this.componentFactories.add(new MultiblockComponentFactoryEntry<>(
+                type,
+                factory
+        ));
+
+        return this;
+    }
+
     /**
      * Builds the immutable definition.
      *
@@ -95,7 +110,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.pattern,
                 this.rules,
                 this.interactionHandler,
-                this.menuFactory
+                this.menuFactory,
+                this.componentFactories
         );
     }
 

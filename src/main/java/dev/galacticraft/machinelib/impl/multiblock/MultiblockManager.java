@@ -407,6 +407,8 @@ public final class MultiblockManager {
             return;
         }
 
+        machine.unloadRuntime();
+
         this.removeRuntimeIndexes(machine);
         MultiblockSyncRemovePayload.syncRemoved(machine);
         MultiblockPlayerSyncTracker.forgetMachine(machine.instanceId());
@@ -549,4 +551,12 @@ public final class MultiblockManager {
         this.machinesByChunk.clear();
     }
 
+    /**
+     * Ticks runtime components for all currently loaded formed machines.
+     */
+    public void tickComponents() {
+        for (final FormedMultiblockMachine machine : List.copyOf(this.machinesById.values())) {
+            machine.tickComponents();
+        }
+    }
 }

@@ -45,6 +45,15 @@ public interface MultiblockDefinition {
     }
 
     /**
+     * Gets runtime component factories attached to this definition.
+     *
+     * @return immutable component factory list
+     */
+    default List<MultiblockComponentFactoryEntry<?>> componentFactories() {
+        return List.of();
+    }
+
+    /**
      * Handles interaction with one formed part of this multiblock.
      *
      * <p>The default implementation opens the configured multiblock menu if one

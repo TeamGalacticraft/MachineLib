@@ -39,6 +39,19 @@ public interface MultiblockBuilder {
     MultiblockBuilder menu(MultiblockMenuFactory factory);
 
     /**
+     * Adds a runtime component factory to this multiblock definition.
+     *
+     * @param type component lookup type
+     * @param factory component factory
+     * @return this builder
+     * @param <T> component type
+     */
+    <T extends MultiblockComponent> MultiblockBuilder component(
+            Class<T> type,
+            MultiblockComponentFactory<? extends T> factory
+    );
+
+    /**
      * Builds the immutable multiblock definition.
      *
      * @return built definition

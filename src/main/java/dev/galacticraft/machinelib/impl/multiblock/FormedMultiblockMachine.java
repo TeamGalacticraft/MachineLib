@@ -1,5 +1,7 @@
 package dev.galacticraft.machinelib.impl.multiblock;
 
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import net.minecraft.core.BlockPos;
@@ -7,12 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Runtime representation of a formed multiblock machine.
@@ -32,6 +29,9 @@ public final class FormedMultiblockMachine {
     private final Set<BlockPos> partPositions;
     private final Set<ChunkPos> touchedChunks;
     private final List<MultiblockPartData> partData;
+    private final List<MultiblockComponent> components;
+    private final Map<Class<? extends MultiblockComponent>, MultiblockComponent> componentsByType;
+    private final SimpleMultiblockComponentContext componentContext;
 
     private MultiblockState state = MultiblockState.FORMED;
 
@@ -109,6 +109,36 @@ public final class FormedMultiblockMachine {
         this.partPositions = Collections.unmodifiableSet(positions);
         this.touchedChunks = Collections.unmodifiableSet(chunks);
         this.partData = List.copyOf(data);
+        this.componentContext = new SimpleMultiblockComponentContext(this);
+
+        final List<MultiblockComponent> createdComponents = new ArrayList<>();
+        final Map<Class<? extends MultiblockComponent>, MultiblockComponent> componentMap =
+                new HashMap<>();
+
+        for (final MultiblockComponentFactoryEntry<?> entry : definition.componentFactories()) {
+            if (componentMap.containsKey(entry.type())) {
+                throw new IllegalStateException(
+                        "Duplicate multiblock component type " + entry.type().getName()
+                                + " on multiblock " + definition.id()
+                );
+            }
+
+            final MultiblockComponent component =
+                    entry.factory().create(this.componentContext);
+
+            createdComponents.add(component);
+            componentMap.put(
+                    entry.type(),
+                    component
+            );
+        }
+
+        this.components = List.copyOf(createdComponents);
+        this.componentsByType = Map.copyOf(componentMap);
+
+        for (final MultiblockComponent component : this.components) {
+            component.onFormed(this.componentContext);
+        }
     }
 
     /**
@@ -230,6 +260,39 @@ public final class FormedMultiblockMachine {
     }
 
     /**
+     * Gets all runtime components attached to this formed machine.
+     *
+     * @return immutable component list
+     */
+    public List<MultiblockComponent> components() {
+        return this.components;
+    }
+
+    /**
+     * Gets a runtime component by type.
+     *
+     * @param type component type
+     * @return component, or {@code null}
+     * @param <T> component type
+     */
+    public <T extends MultiblockComponent> T component(final Class<T> type) {
+        return type.cast(this.componentsByType.get(type));
+    }
+
+    /**
+     * Ticks all runtime components attached to this formed machine.
+     */
+    public void tickComponents() {
+        if (this.state != MultiblockState.FORMED) {
+            return;
+        }
+
+        for (final MultiblockComponent component : this.components) {
+            component.tick(this.componentContext);
+        }
+    }
+
+    /**
      * Validates the current runtime machine while respecting unloaded chunks.
      *
      * <p>If any part chunk is unloaded, this method returns
@@ -270,10 +333,28 @@ public final class FormedMultiblockMachine {
     }
 
     /**
-     * Marks this runtime machine as invalidated.
+     * Marks this runtime machine as permanently invalidated and notifies all
+     * attached components.
      */
     public void invalidate() {
+        if (this.state == MultiblockState.INVALIDATED) {
+            return;
+        }
+
         this.state = MultiblockState.INVALIDATED;
+
+        for (final MultiblockComponent component : this.components) {
+            component.onInvalidated(this.componentContext);
+        }
     }
 
+    /**
+     * Notifies attached components that this runtime machine is being unloaded
+     * without deleting persistent saved data.
+     */
+    public void unloadRuntime() {
+        for (final MultiblockComponent component : this.components) {
+            component.onRuntimeUnloaded(this.componentContext);
+        }
+    }
 }

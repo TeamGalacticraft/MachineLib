@@ -16,6 +16,7 @@ public final class SimpleMultiblockDefinition implements MultiblockDefinition {
     private final List<FormationRule> rules;
     private final MultiblockPartInteractionHandler interactionHandler;
     private final MultiblockMenuFactory menuFactory;
+    private final List<MultiblockComponentFactoryEntry<?>> componentFactories;
 
     /**
      * Creates a simple multiblock definition.
@@ -31,13 +32,15 @@ public final class SimpleMultiblockDefinition implements MultiblockDefinition {
             final MultiblockPattern pattern,
             final List<FormationRule> rules,
             final MultiblockPartInteractionHandler interactionHandler,
-            final MultiblockMenuFactory menuFactory
+            final MultiblockMenuFactory menuFactory,
+            final List<MultiblockComponentFactoryEntry<?>> componentFactories
     ) {
         this.id = id;
         this.pattern = pattern;
         this.rules = List.copyOf(rules);
         this.interactionHandler = interactionHandler;
         this.menuFactory = menuFactory;
+        this.componentFactories = List.copyOf(componentFactories);
     }
 
     /**
@@ -70,6 +73,11 @@ public final class SimpleMultiblockDefinition implements MultiblockDefinition {
     @Override
     public MultiblockMenuFactory menuFactory() {
         return this.menuFactory;
+    }
+
+    @Override
+    public List<MultiblockComponentFactoryEntry<?>> componentFactories() {
+        return this.componentFactories;
     }
 
     /**

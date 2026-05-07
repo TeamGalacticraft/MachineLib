@@ -95,6 +95,8 @@ public final class MachineLibTestMultiblocks {
                             return Component.literal("Test Iron Cube");
                         }
                     });
+
+                    builder.component(TestCounterComponent.class, context -> new TestCounterComponent());
                 }
         );
     }
