@@ -104,18 +104,11 @@ public final class MultiblockValidationQueue {
                     final MultiblockSlotPredicate predicate = pattern.predicateAt(x, y, z);
 
                     if (predicate == null) {
-                        LOGGER.warn(
-                                "Cannot validate multiblock {} because pattern position {}, {}, {} has no predicate",
-                                definition.id(),
-                                x,
-                                y,
-                                z
-                        );
-
-                        return;
+                        continue;
                     }
 
                     final BlockPos originalRelativePos = new BlockPos(x, y, z);
+
                     final BlockPos transformedRelativePos = candidate.orientation().transformRelative(
                             originalRelativePos,
                             pattern.sizeX(),

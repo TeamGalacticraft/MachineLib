@@ -23,9 +23,11 @@
 package dev.galacticraft.machinelib.api.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
-import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
+import dev.galacticraft.machinelib.api.multiblock.port.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.Set;
 
 /**
  * Mutable builder API for a multiblock definition.
@@ -118,6 +120,38 @@ public interface MultiblockBuilder {
             ResourceLocation id,
             Class<T> type,
             MultiblockComponentFactory<? extends T> factory
+    );
+
+    /**
+     * Adds one allowed port rule to every exposed face of a pattern-relative part.
+     *
+     * @param relativePos pattern-relative multiblock part position
+     * @param types allowed port types
+     * @param modes allowed port modes
+     * @param targets allowed port targets
+     * @return this builder
+     */
+    MultiblockBuilder portRulesForAllExposedFaces(
+            BlockPos relativePos,
+            Set<MultiblockPortType> types,
+            Set<MultiblockPortMode> modes,
+            Set<MultiblockPortTarget> targets
+    );
+
+    /**
+     * Adds one default configured port to every exposed face of a pattern-relative part.
+     *
+     * @param relativePos pattern-relative multiblock part position
+     * @param type configured port type
+     * @param mode configured port mode
+     * @param target configured port target
+     * @return this builder
+     */
+    MultiblockBuilder defaultPortsForAllExposedFaces(
+            BlockPos relativePos,
+            MultiblockPortType type,
+            MultiblockPortMode mode,
+            MultiblockPortTarget target
     );
 
     /**

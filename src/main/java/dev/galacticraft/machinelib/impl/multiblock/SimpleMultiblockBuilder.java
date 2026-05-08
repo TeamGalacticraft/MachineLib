@@ -34,8 +34,9 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionHandler;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
-import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
+import dev.galacticraft.machinelib.api.multiblock.port.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,7 +46,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Mutable builder used to construct a simple immutable multiblock definition.
@@ -58,6 +61,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
             new ArrayList<>();
     private final List<MultiblockPortRule> portRules = new ArrayList<>();
     private final List<ConfiguredMultiblockPort> defaultPorts = new ArrayList<>();
+    private final List<AllFacePortRuleTemplate> allFacePortRules = new ArrayList<>();
+    private final List<AllFaceDefaultPortTemplate> allFaceDefaultPorts = new ArrayList<>();
 
     private MultiblockPattern pattern;
     private MultiblockPartInteractionHandler interactionHandler;
@@ -117,6 +122,40 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     @Override
     public SimpleMultiblockBuilder defaultPort(final ConfiguredMultiblockPort port) {
         this.defaultPorts.add(port);
+        return this;
+    }
+
+    @Override
+    public SimpleMultiblockBuilder portRulesForAllExposedFaces(
+            final BlockPos relativePos,
+            final Set<MultiblockPortType> types,
+            final Set<MultiblockPortMode> modes,
+            final Set<MultiblockPortTarget> targets
+    ) {
+        this.allFacePortRules.add(new AllFacePortRuleTemplate(
+                relativePos.immutable(),
+                Set.copyOf(types),
+                Set.copyOf(modes),
+                Set.copyOf(targets)
+        ));
+
+        return this;
+    }
+
+    @Override
+    public SimpleMultiblockBuilder defaultPortsForAllExposedFaces(
+            final BlockPos relativePos,
+            final MultiblockPortType type,
+            final MultiblockPortMode mode,
+            final MultiblockPortTarget target
+    ) {
+        this.allFaceDefaultPorts.add(new AllFaceDefaultPortTemplate(
+                relativePos.immutable(),
+                type,
+                mode,
+                target
+        ));
+
         return this;
     }
 
@@ -221,7 +260,11 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     }
 
     /**
-     * Builds the immutable definition.
+     * Builds the immutable multiblock definition.
+     *
+     * <p>This validates the structure, collects externally exposed faces, validates
+     * port rules/default ports, automatically installs the standard port component
+     * when needed, and finally creates the immutable definition.</p>
      *
      * @return built definition
      */
@@ -230,6 +273,14 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
         if (this.pattern == null) {
             throw new IllegalStateException("Multiblock " + this.id + " has no pattern");
         }
+
+        final Set<MultiblockPortFace> exposedFaces = this.collectExposedFaces();
+
+        this.expandAllFacePortRules(exposedFaces);
+        this.expandAllFaceDefaultPorts(exposedFaces);
+
+        this.validatePortRules(exposedFaces);
+        this.validateDefaultPorts(exposedFaces);
 
         if (this.needsPortComponent() && !this.hasComponent(MultiblockStandardComponents.PORTS)) {
             MultiblockStandardComponents.ports(this);
@@ -243,14 +294,198 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.menuFactory,
                 this.componentFactories,
                 this.portRules,
-                this.defaultPorts
+                this.defaultPorts,
+                exposedFaces
         );
     }
 
+    /**
+     * Expands all pending all-face port rule templates into concrete port rules.
+     *
+     * @param exposedFaces precomputed exposed face cache
+     */
+    private void expandAllFacePortRules(final Set<MultiblockPortFace> exposedFaces) {
+        for (final AllFacePortRuleTemplate template : this.allFacePortRules) {
+            for (final MultiblockPortFace face : exposedFaces) {
+                if (!face.relativePos().equals(template.relativePos())) {
+                    continue;
+                }
+
+                this.portRules.add(new MultiblockPortRule(
+                        face,
+                        template.types(),
+                        template.modes(),
+                        template.targets()
+                ));
+            }
+        }
+    }
+
+    /**
+     * Expands all pending all-face default port templates into concrete default
+     * ports.
+     *
+     * @param exposedFaces precomputed exposed face cache
+     */
+    private void expandAllFaceDefaultPorts(final Set<MultiblockPortFace> exposedFaces) {
+        for (final AllFaceDefaultPortTemplate template : this.allFaceDefaultPorts) {
+            for (final MultiblockPortFace face : exposedFaces) {
+                if (!face.relativePos().equals(template.relativePos())) {
+                    continue;
+                }
+
+                this.defaultPorts.add(new ConfiguredMultiblockPort(
+                        face,
+                        template.type(),
+                        template.mode(),
+                        template.target()
+                ));
+            }
+        }
+    }
+
+    /**
+     * Collects every externally exposed face in the current pattern.
+     *
+     * <p>A face is exposed when the source position is occupied by a multiblock
+     * part and the adjacent position is either outside the pattern bounds or not
+     * occupied by another multiblock part.</p>
+     *
+     * @return mutable set of exposed faces
+     */
+    private Set<MultiblockPortFace> collectExposedFaces() {
+        final Set<MultiblockPortFace> exposedFaces = new HashSet<>();
+
+        for (int x = 0; x < this.pattern.sizeX(); x++) {
+            for (int y = 0; y < this.pattern.sizeY(); y++) {
+                for (int z = 0; z < this.pattern.sizeZ(); z++) {
+                    if (!this.hasPartAt(x, y, z)) {
+                        continue;
+                    }
+
+                    final BlockPos relativePos = new BlockPos(x, y, z);
+
+                    for (final Direction face : Direction.values()) {
+                        final BlockPos adjacent = relativePos.relative(face);
+
+                        if (!this.isInsidePattern(adjacent) || !this.hasPartAt(adjacent)) {
+                            exposedFaces.add(new MultiblockPortFace(relativePos, face));
+                        }
+                    }
+                }
+            }
+        }
+
+        return exposedFaces;
+    }
+
+    /**
+     * Validates that every registered port rule is placed on a real exposed
+     * multiblock face.
+     *
+     * @param exposedFaces precomputed exposed face cache
+     */
+    private void validatePortRules(final Set<MultiblockPortFace> exposedFaces) {
+        for (final MultiblockPortRule rule : this.portRules) {
+            this.validateFaceExists(rule.face());
+
+            if (!exposedFaces.contains(rule.face())) {
+                throw new IllegalStateException(
+                        "Multiblock " + this.id
+                                + " has port rule on non-exposed face "
+                                + rule.face()
+                );
+            }
+        }
+    }
+
+    /**
+     * Validates every default configured port.
+     *
+     * <p>Each default port must be placed on an existing exposed face and must be
+     * allowed by at least one registered port rule.</p>
+     *
+     * @param exposedFaces precomputed exposed face cache
+     */
+    private void validateDefaultPorts(final Set<MultiblockPortFace> exposedFaces) {
+        for (final ConfiguredMultiblockPort port : this.defaultPorts) {
+            this.validateFaceExists(port.face());
+
+            if (!exposedFaces.contains(port.face())) {
+                throw new IllegalStateException(
+                        "Multiblock " + this.id
+                                + " has default port on non-exposed face "
+                                + port.face()
+                );
+            }
+
+            if (!this.isDefaultPortAllowed(port)) {
+                throw new IllegalStateException(
+                        "Multiblock " + this.id
+                                + " has default port that does not match any port rule: "
+                                + port
+                );
+            }
+        }
+    }
+
+    /**
+     * Checks whether a default port is allowed by any registered port rule.
+     *
+     * @param port configured default port
+     * @return {@code true} if at least one rule allows the port
+     */
+    private boolean isDefaultPortAllowed(final ConfiguredMultiblockPort port) {
+        for (final MultiblockPortRule rule : this.portRules) {
+            if (rule.allows(port)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Validates that a port face points at an occupied pattern position.
+     *
+     * @param face port face to validate
+     */
+    private void validateFaceExists(final MultiblockPortFace face) {
+        final BlockPos relativePos = face.relativePos();
+
+        if (!this.isInsidePattern(relativePos)) {
+            throw new IllegalStateException(
+                    "Multiblock " + this.id
+                            + " has port face outside pattern bounds: "
+                            + face
+            );
+        }
+
+        if (!this.hasPartAt(relativePos)) {
+            throw new IllegalStateException(
+                    "Multiblock " + this.id
+                            + " has port face on empty/null pattern slot: "
+                            + face
+            );
+        }
+    }
+
+    /**
+     * Checks whether the multiblock definition needs the standard port component.
+     *
+     * @return {@code true} if rules or default ports have been registered
+     */
     private boolean needsPortComponent() {
         return !this.portRules.isEmpty() || !this.defaultPorts.isEmpty();
     }
 
+    /**
+     * Checks whether a component factory with the supplied id has already been
+     * registered on this builder.
+     *
+     * @param id component id
+     * @return {@code true} if the component exists
+     */
     private boolean hasComponent(final ResourceLocation id) {
         for (final MultiblockComponentFactoryEntry<?> entry : this.componentFactories) {
             if (entry.id().equals(id)) {
@@ -261,4 +496,66 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
         return false;
     }
 
+    /**
+     * Checks whether a relative position is inside the current pattern bounds.
+     *
+     * @param pos relative position
+     * @return {@code true} if the position is inside the pattern
+     */
+    private boolean isInsidePattern(final BlockPos pos) {
+        return pos.getX() >= 0
+                && pos.getY() >= 0
+                && pos.getZ() >= 0
+                && pos.getX() < this.pattern.sizeX()
+                && pos.getY() < this.pattern.sizeY()
+                && pos.getZ() < this.pattern.sizeZ();
+    }
+
+    /**
+     * Checks whether the supplied relative position contains a multiblock part.
+     *
+     * @param pos relative position
+     * @return {@code true} if the position has a non-null slot predicate
+     */
+    private boolean hasPartAt(final BlockPos pos) {
+        return this.hasPartAt(
+                pos.getX(),
+                pos.getY(),
+                pos.getZ()
+        );
+    }
+
+    /**
+     * Checks whether the supplied pattern coordinates contain a multiblock part.
+     *
+     * @param x pattern x coordinate
+     * @param y pattern y coordinate
+     * @param z pattern z coordinate
+     * @return {@code true} if the slot has a non-null predicate
+     */
+    private boolean hasPartAt(
+            final int x,
+            final int y,
+            final int z
+    ) {
+        return this.pattern.predicateAt(x, y, z) != null;
+    }
+
+    private record AllFacePortRuleTemplate(
+            BlockPos relativePos,
+            Set<MultiblockPortType> types,
+            Set<MultiblockPortMode> modes,
+            Set<MultiblockPortTarget> targets
+    ) {
+
+    }
+
+    private record AllFaceDefaultPortTemplate(
+            BlockPos relativePos,
+            MultiblockPortType type,
+            MultiblockPortMode mode,
+            MultiblockPortTarget target
+    ) {
+
+    }
 }

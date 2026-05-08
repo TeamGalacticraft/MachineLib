@@ -23,17 +23,20 @@
 package dev.galacticraft.machinelib.impl.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockRegistry;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockSlotPredicate;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortType;
 import dev.galacticraft.machinelib.impl.multiblock.detection.MultiblockDetectionIndex;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -170,22 +173,129 @@ public final class MachineLibMultiblocks implements MultiblockRegistry {
     }
 
     /**
-     * Freezes the registry and compiles the detection index.
+     * Freezes the registry, registers multiblock port providers, and compiles the
+     * detection index.
      *
-     * <p>This should only be called once during mod initialization,
-     * after all multiblocks have been registered.</p>
-     *
-     * <p>Compilation converts high-level multiblock patterns into
-     * optimized runtime detection predicates.</p>
+     * <p>This should only be called once during mod initialization after all
+     * multiblocks have been registered. Provider registration happens here because
+     * this is the first point where MachineLib has the complete immutable set of
+     * registered multiblock definitions.</p>
      */
     public void freeze() {
         if (this.frozen) {
             return;
         }
 
+        MultiblockPortDebug.LOGGER.info(
+                "Freezing multiblock registry with {} definitions.",
+                this.definitions.size()
+        );
+
         this.frozen = true;
 
+        MultiblockPortProviders.registerItemProviders(
+                this.collectPortProviderBlocks(MultiblockPortType.ITEM)
+        );
+
+        MultiblockPortProviders.registerFluidProviders(
+                this.collectPortProviderBlocks(MultiblockPortType.FLUID)
+        );
+
+        MultiblockPortProviders.registerEnergyProviders(
+                this.collectPortProviderBlocks(MultiblockPortType.ENERGY)
+        );
+
+        MultiblockPortDebug.LOGGER.info("Multiblock port provider registration complete.");
+
         this.detectionIndex.compile(this.definitions.values());
+    }
+
+    /**
+     * Collects every exact block predicate used by definitions that expose ports of
+     * the requested type.
+     *
+     * @param type port type to collect provider blocks for
+     * @return blocks that may need provider lookup support for the requested port type
+     */
+    private Set<Block> collectPortProviderBlocks(final MultiblockPortType type) {
+        final Set<Block> blocks = new LinkedHashSet<>();
+
+        for (final MultiblockDefinition definition : this.definitions.values()) {
+            if (!this.hasPorts(definition, type)) {
+                continue;
+            }
+
+            this.collectPatternDetectionBlocks(
+                    definition,
+                    blocks
+            );
+        }
+
+        return blocks;
+    }
+
+    /**
+     * Checks whether a definition has any port rule or default port for a specific
+     * resource type.
+     *
+     * @param definition multiblock definition
+     * @param type port type to check
+     * @return {@code true} if the definition can expose that port type
+     */
+    private boolean hasPorts(
+            final MultiblockDefinition definition,
+            final MultiblockPortType type
+    ) {
+        for (final MultiblockPortRule rule : definition.portRules()) {
+            if (rule.types().contains(type)) {
+                return true;
+            }
+        }
+
+        for (final ConfiguredMultiblockPort port : definition.defaultPorts()) {
+            if (port.type() == type) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Adds all exact detection blocks from a definition's pattern into the supplied
+     * output set.
+     *
+     * <p>Exact block predicates return their block through
+     * {@link MultiblockSlotPredicate#detectionBlocks()}, while wildcard predicates
+     * return an empty array. This means provider registration stays conservative
+     * and only registers against known exact blocks.</p>
+     *
+     * @param definition multiblock definition
+     * @param output output block set
+     */
+    private void collectPatternDetectionBlocks(
+            final MultiblockDefinition definition,
+            final Set<Block> output
+    ) {
+        final MultiblockPattern pattern = definition.pattern();
+
+        for (int x = 0; x < pattern.sizeX(); x++) {
+            for (int y = 0; y < pattern.sizeY(); y++) {
+                for (int z = 0; z < pattern.sizeZ(); z++) {
+                    final MultiblockSlotPredicate predicate = pattern.predicateAt(
+                            x,
+                            y,
+                            z
+                    );
+
+                    if (predicate == null) {
+                        continue;
+                    }
+
+                    output.addAll(List.of(predicate.detectionBlocks()));
+                }
+            }
+        }
     }
 
     /**

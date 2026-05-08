@@ -1,37 +1,18 @@
-/*
- * Copyright (c) 2021-2025 Team Galacticraft
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package dev.galacticraft.machinelib.impl;
 
 import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenuSpec;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuOpeningData;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.StorageSpec;
+import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
 import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.impl.multiblock.TestIronCubeMultiblockMenu;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -41,20 +22,37 @@ import net.minecraft.network.chat.Component;
  */
 public final class TestMenuTypeRegistry {
 
-    private static final StorageSpec TEST_IRON_CUBE_STORAGE = StorageSpec.of(
+    public static final StorageSpec TEST_IRON_CUBE_STORAGE = StorageSpec.of(
             MachineItemStorage.spec(
-                    ItemResourceSlot.builder(TransferType.PROCESSING)
+                    ItemResourceSlot.builder(TransferType.INPUT)
                             .pos(8, 62)
                             .filter(ResourceFilters.CAN_INSERT_ENERGY)
-                            .capacity(32),
+                            .capacity(32)
+                            .id(Constant.id("charge_slot"))
+                            .group(Constant.id("item_inputs")),
                     ItemResourceSlot.builder(TransferType.INPUT)
                             .pos(80, 49)
                             .filter((item, tag) -> {
                                 final Integer time = 10000;
                                 return time != null && time > 0;
                             })
+                            .id(Constant.id("process_input"))
+                            .group(Constant.id("item_inputs")),
+                    ItemResourceSlot.builder(TransferType.STORAGE)
+                            .pos(134, 49)
+                            .id(Constant.id("process_output"))
+                            .group(Constant.id("item_outputs"))
             ),
-            MachineEnergyStorage.spec(30000, 0, 100 + 100 / 2)
+            MachineEnergyStorage.spec(30000, 100, 150)
+                    .id(Constant.id("main_energy"))
+                    .group(Constant.id("energy")),
+            MachineFluidStorage.spec(
+                    FluidResourceSlot.builder(TransferType.INPUT)
+                            .pos(152, 18)
+                            .capacity(FluidConstants.BUCKET * 4)
+                            .id(Constant.id("fluid_input"))
+                            .group(Constant.id("fluid_inputs"))
+            )
     );
 
     public static final MultiblockMachineMenuSpec<TestIronCubeMultiblockMenu> TEST_IRON_CUBE =

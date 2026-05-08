@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2021-2025 Team Galacticraft
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package dev.galacticraft.machinelib.api.storage.slot;
 
 import com.mojang.datafixers.util.Pair;
@@ -37,99 +15,217 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * A resource slot that stores items.
  */
 public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemContext, FakeRecipeHolder {
+
+    /**
+     * Creates a mutable item slot specification.
+     *
+     * @param transferType transfer mode for the slot
+     * @return new item slot specification
+     */
     @Contract("_ -> new")
-    static @NotNull Spec builder(TransferType transferType) {
+    static @NotNull Spec builder(final TransferType transferType) {
         return new Spec(transferType);
     }
 
+    /**
+     * Creates an item slot with default capacity.
+     *
+     * @param transferType transfer mode
+     * @param display optional display data
+     * @param filter external item filter
+     * @return created slot
+     */
     @Contract("_, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull TransferType transferType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter) {
-        return create(transferType, display, filter, 64);
-    }
-
-    @Contract("_, _, _, _ -> new")
-    static @NotNull ItemResourceSlot create(@NotNull TransferType transferType, @Nullable ItemSlotDisplay display, @NotNull ResourceFilter<Item> filter, int capacity) {
-        if (capacity < 0 || capacity > 64) throw new IllegalArgumentException();
-        return new ItemResourceSlotImpl(transferType, display, filter, capacity);
+    static @NotNull ItemResourceSlot create(
+            final @NotNull TransferType transferType,
+            final @Nullable ItemSlotDisplay display,
+            final @NotNull ResourceFilter<Item> filter
+    ) {
+        return create(
+                transferType,
+                display,
+                filter,
+                64
+        );
     }
 
     /**
-     * Consumes one item from the slot.
-     * Similar to {@link #extractOne()} but will replace the item with its remainder.
+     * Creates an item slot without logical target metadata.
      *
-     * @return the item that was consumed, or {@code null} if the slot was empty
+     * @param transferType transfer mode
+     * @param display optional display data
+     * @param filter external item filter
+     * @param capacity maximum item capacity
+     * @return created slot
+     */
+    @Contract("_, _, _, _ -> new")
+    static @NotNull ItemResourceSlot create(
+            final @NotNull TransferType transferType,
+            final @Nullable ItemSlotDisplay display,
+            final @NotNull ResourceFilter<Item> filter,
+            final int capacity
+    ) {
+        return create(
+                transferType,
+                display,
+                filter,
+                capacity,
+                null,
+                Set.of()
+        );
+    }
+
+    /**
+     * Creates an item slot with logical target metadata.
+     *
+     * <p>The id and groups are not persisted with item contents. They are static
+     * storage-layout metadata created from the slot specification and used by
+     * multiblock ports, automation, and UI configuration.</p>
+     *
+     * @param transferType transfer mode
+     * @param display optional display data
+     * @param filter external item filter
+     * @param capacity maximum item capacity
+     * @param id optional exact target id
+     * @param groups logical target groups
+     * @return created slot
+     */
+    @Contract("_, _, _, _, _, _ -> new")
+    static @NotNull ItemResourceSlot create(
+            final @NotNull TransferType transferType,
+            final @Nullable ItemSlotDisplay display,
+            final @NotNull ResourceFilter<Item> filter,
+            final int capacity,
+            final @Nullable ResourceLocation id,
+            final @NotNull Set<ResourceLocation> groups
+    ) {
+        if (capacity < 0 || capacity > 64) {
+            throw new IllegalArgumentException();
+        }
+
+        return new ItemResourceSlotImpl(
+                transferType,
+                display,
+                filter,
+                capacity,
+                id,
+                groups
+        );
+    }
+
+    /**
+     * Gets the stable logical target id for this slot.
+     *
+     * @return slot id, or {@code null} if unnamed
+     */
+    @Nullable
+    ResourceLocation id();
+
+    /**
+     * Gets the logical target groups this slot belongs to.
+     *
+     * @return immutable group set
+     */
+    @NotNull
+    Set<ResourceLocation> groups();
+
+    /**
+     * Consumes one item from the slot.
+     *
+     * @return consumed item, or {@code null} if empty
      */
     @Nullable
     Item consumeOne();
 
     /**
-     * Consumes one item of the specified type from the slot.
-     * Similar to {@link #extractOne(Object)} but will replace the item with its remainder.
+     * Consumes one item of the specified type.
      *
-     * @param resource the item type to consume
-     * @return {@code true} if the item was consumed, {@code false} otherwise
+     * @param resource item type to consume
+     * @return {@code true} if one item was consumed
      */
-    default boolean consumeOne(@NotNull Item resource) {
-        return this.consumeOne(resource, null);
+    default boolean consumeOne(final @NotNull Item resource) {
+        return this.consumeOne(
+                resource,
+                null
+        );
     }
 
     /**
-     * Consumes one item of the specified type and components from the slot.
-     * Similar to {@link #extractOne(Object, DataComponentPatch)} but will replace the item with its remainder.
+     * Consumes one item of the specified type and components.
      *
-     * @param resource the item type to consume
-     * @param components the components to match. If {@code null}, any components will match
-     * @return {@code true} if the item was consumed, {@code false} otherwise
+     * @param resource item type to consume
+     * @param components components to match, or {@code null} to ignore components
+     * @return {@code true} if one item was consumed
      */
-    boolean consumeOne(@NotNull Item resource, @Nullable DataComponentPatch components);
+    boolean consumeOne(
+            @NotNull Item resource,
+            @Nullable DataComponentPatch components
+    );
 
     /**
-     * Consumes the specified number of items from the slot.
-     * Similar to {@link #extract(long)} but will replace the item with its remainder.
+     * Consumes items from this slot, applying crafting remainder behavior.
      *
-     * @param amount the number of items to consume
-     * @return the number of items that were actually consumed
+     * @param amount amount to consume
+     * @return consumed amount
      */
     long consume(long amount);
 
     /**
-     * Consumes the specified number of items of the specified type from the slot.
-     * Similar to {@link #extract(Object, long)} but will replace the item with its remainder.
+     * Consumes items of the specified type.
      *
-     * @param resource the item type to consume
-     * @param amount the number of items to consume
-     * @return the number of items that were actually consumed
+     * @param resource item type to consume
+     * @param amount amount to consume
+     * @return consumed amount
      */
-    default long consume(@NotNull Item resource, long amount) {
-        return this.consume(resource, null, amount);
+    default long consume(
+            final @NotNull Item resource,
+            final long amount
+    ) {
+        return this.consume(
+                resource,
+                null,
+                amount
+        );
     }
 
     /**
-     * Consumes the specified number of items of the specified type and components from the slot.
-     * Similar to {@link #extract(Object, DataComponentPatch, long)} but will replace the item with its remainder.
+     * Consumes items of the specified type and components.
      *
-     * @param resource the item type to consume
-     * @param components the components to match. If {@code null}, any components will match
-     * @param amount the number of items to consume
-     * @return the number of items that were actually consumed
+     * @param resource item type to consume
+     * @param components components to match, or {@code null} to ignore components
+     * @param amount amount to consume
+     * @return consumed amount
      */
-    long consume(@NotNull Item resource, @Nullable DataComponentPatch components, long amount);
+    long consume(
+            @NotNull Item resource,
+            @Nullable DataComponentPatch components,
+            long amount
+    );
 
     /**
-     * {@return the display properties of this slot, or {@code null} if hidden}
+     * Gets this slot's display data.
+     *
+     * @return display data, or {@code null} if hidden
      */
     @Nullable
     ItemSlotDisplay getDisplay();
 
-    // required to merge ContainerItemContext#getAmount with ResourceSlot#getAmount
     @Override
     long getAmount();
 
+    /**
+     * Mutable item slot specification.
+     */
     final class Spec {
+
         private final TransferType transferType;
 
         private boolean hidden = false;
@@ -140,67 +236,181 @@ public interface ItemResourceSlot extends ResourceSlot<Item>, ContainerItemConte
         private ResourceFilter<Item> filter = ResourceFilters.any();
         private int capacity = 64;
 
+        private @Nullable ResourceLocation id = null;
+        private final Set<ResourceLocation> groups = new LinkedHashSet<>();
+
         @Contract(pure = true)
-        private Spec(TransferType transferType) {
+        private Spec(final TransferType transferType) {
             this.transferType = transferType;
         }
 
+        /**
+         * Sets the display position.
+         *
+         * @param x x position
+         * @param y y position
+         * @return this specification
+         */
         @Contract("_, _ -> this")
-        public @NotNull Spec pos(int x, int y) {
-            if (this.hidden) throw new UnsupportedOperationException("hidden");
+        public @NotNull Spec pos(
+                final int x,
+                final int y
+        ) {
+            if (this.hidden) {
+                throw new UnsupportedOperationException("hidden");
+            }
+
             this.x = x;
             this.y = y;
             return this;
         }
 
+        /**
+         * Hides this slot from the UI.
+         *
+         * @return this specification
+         */
         @Contract(value = "-> this", mutates = "this")
         public @NotNull Spec hidden() {
             this.hidden = true;
             return this;
         }
 
+        /**
+         * Sets the display x position.
+         *
+         * @param x x position
+         * @return this specification
+         */
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Spec x(int x) {
-            if (this.hidden) throw new UnsupportedOperationException("hidden");
+        public @NotNull Spec x(final int x) {
+            if (this.hidden) {
+                throw new UnsupportedOperationException("hidden");
+            }
+
             this.x = x;
             return this;
         }
 
+        /**
+         * Sets the display y position.
+         *
+         * @param y y position
+         * @return this specification
+         */
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Spec y(int y) {
-            if (this.hidden) throw new UnsupportedOperationException("hidden");
+        public @NotNull Spec y(final int y) {
+            if (this.hidden) {
+                throw new UnsupportedOperationException("hidden");
+            }
+
             this.y = y;
             return this;
         }
 
+        /**
+         * Sets the display icon.
+         *
+         * @param icon icon pair
+         * @return this specification
+         */
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Spec icon(@Nullable Pair<ResourceLocation, ResourceLocation> icon) {
-            if (this.hidden) throw new UnsupportedOperationException("hidden");
+        public @NotNull Spec icon(final @Nullable Pair<ResourceLocation, ResourceLocation> icon) {
+            if (this.hidden) {
+                throw new UnsupportedOperationException("hidden");
+            }
+
             this.icon = icon;
             return this;
         }
 
+        /**
+         * Sets the item filter.
+         *
+         * @param filter item filter
+         * @return this specification
+         */
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Spec filter(@NotNull ResourceFilter<Item> filter) {
+        public @NotNull Spec filter(final @NotNull ResourceFilter<Item> filter) {
             this.filter = filter;
             return this;
         }
 
+        /**
+         * Sets the slot capacity.
+         *
+         * @param capacity capacity
+         * @return this specification
+         */
         @Contract(value = "_ -> this", mutates = "this")
-        public @NotNull Spec capacity(int capacity) {
+        public @NotNull Spec capacity(final int capacity) {
             this.capacity = capacity;
             return this;
         }
 
+        /**
+         * Sets the exact logical target id for this slot.
+         *
+         * @param id slot id
+         * @return this specification
+         */
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull Spec id(final ResourceLocation id) {
+            this.id = id;
+            return this;
+        }
+
+        /**
+         * Adds this slot to one logical target group.
+         *
+         * @param group group id
+         * @return this specification
+         */
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull Spec group(final ResourceLocation group) {
+            this.groups.add(group);
+            return this;
+        }
+
+        /**
+         * Adds this slot to several logical target groups.
+         *
+         * @param groups group ids
+         * @return this specification
+         */
+        @Contract(value = "_ -> this", mutates = "this")
+        public @NotNull Spec groups(final ResourceLocation... groups) {
+            this.groups.addAll(List.of(groups));
+            return this;
+        }
+
+        /**
+         * Creates the item slot represented by this specification.
+         *
+         * @return created slot
+         */
         @Contract(pure = true)
         public @NotNull ItemResourceSlot create() {
-            if (this.capacity <= 0) throw new IllegalArgumentException("capacity <= 0!");
-            if (this.hidden) {
-                if (this.x != 0 || this.y != 0 || this.icon != null)
-                    throw new UnsupportedOperationException("Display prop while hidden");
+            if (this.capacity <= 0) {
+                throw new IllegalArgumentException("capacity <= 0!");
             }
 
-            return ItemResourceSlot.create(this.transferType, this.hidden ? null : ItemSlotDisplay.create(this.x, this.y, this.icon), this.filter, this.capacity);
+            if (this.hidden && (this.x != 0 || this.y != 0 || this.icon != null)) {
+                throw new UnsupportedOperationException("Display prop while hidden");
+            }
+
+            return ItemResourceSlot.create(
+                    this.transferType,
+                    this.hidden ? null : ItemSlotDisplay.create(
+                            this.x,
+                            this.y,
+                            this.icon
+                    ),
+                    this.filter,
+                    this.capacity,
+                    this.id,
+                    this.groups
+            );
         }
     }
 }
