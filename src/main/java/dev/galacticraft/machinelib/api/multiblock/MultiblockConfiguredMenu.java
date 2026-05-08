@@ -23,10 +23,7 @@
 package dev.galacticraft.machinelib.api.multiblock;
 
 import dev.galacticraft.machinelib.api.machine.MachineState;
-import dev.galacticraft.machinelib.api.machine.configuration.IOConfig;
-import dev.galacticraft.machinelib.api.machine.configuration.IOFace;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
-import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
+import dev.galacticraft.machinelib.api.machine.configuration.*;
 import dev.galacticraft.machinelib.api.menu.ConfiguredMenu;
 import dev.galacticraft.machinelib.api.menu.MenuData;
 import dev.galacticraft.machinelib.api.menu.SynchronizedMenu;
@@ -447,6 +444,24 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         }
 
         return List.copyOf(options);
+    }
+
+    /**
+     * Checks whether a player may modify multiblock port configuration.
+     *
+     * <p>Port configuration is treated as a structural/configuration permission,
+     * not merely machine usage. The owner may always edit ports. Other players may
+     * only edit ports when the machine is public.</p>
+     *
+     * @param player player attempting to modify ports
+     * @return {@code true} if the player may modify ports
+     */
+    public boolean canModifyPortConfiguration(final Player player) {
+        if (this.security.isOwner(player)) {
+            return true;
+        }
+
+        return this.security.getAccessLevel() == AccessLevel.PUBLIC;
     }
 
     /**

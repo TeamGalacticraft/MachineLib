@@ -179,6 +179,10 @@ public record MultiblockPortConfigUpdatePayload(
             return;
         }
 
+        if (!menu.canModifyPortConfiguration(context.player())) {
+            return;
+        }
+
         final MultiblockPortComponent ports = machine.component(MultiblockPortComponent.class);
 
         if (ports == null) {
