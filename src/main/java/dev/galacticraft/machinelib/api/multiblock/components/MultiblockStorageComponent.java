@@ -236,4 +236,42 @@ public final class MultiblockStorageComponent implements MultiblockComponent {
 
         context.setChanged();
     }
+
+    /**
+     * Drops stored item resources when the formed multiblock is physically invalidated.
+     *
+     * <p>This intentionally only drops item storage. Fluid and energy storage are
+     * discarded for now, because there is no generic safe world representation for
+     * them yet.</p>
+     *
+     * @param context component context
+     */
+    @Override
+    public void onInvalidated(final MultiblockComponentContext context) {
+        this.dropAllItems(context);
+        this.setChanged();
+    }
+
+    /**
+     * Drops all item storage contents at the multiblock origin.
+     *
+     * @param context component context
+     */
+    private void dropAllItems(final MultiblockComponentContext context) {
+        for (final ItemResourceSlot slot : this.itemStorage.getSlots()) {
+            while (!slot.isEmpty()) {
+                final ItemEntity entity = new ItemEntity(
+                        context.level(),
+                        context.origin().getX() + 0.5D,
+                        context.origin().getY() + 0.5D,
+                        context.origin().getZ() + 0.5D,
+                        ItemStackUtil.create(slot)
+                );
+
+                context.level().addFreshEntity(entity);
+
+                slot.extract(slot.getAmount());
+            }
+        }
+    }
 }
