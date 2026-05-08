@@ -217,6 +217,10 @@ public record MultiblockPortConfigUpdatePayload(
                 )
         );
 
+        if (machine.definition().portRules().stream().noneMatch(rule -> rule.allows(port))) {
+            return;
+        }
+
         if (ports.setPort(port)) {
             machine.setComponentsChanged();
             menu.syncPortsToClient();
