@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.client.impl.compat;
 
-import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import dev.galacticraft.machinelib.client.api.screen.AbstractMachineScreen;
 import dev.galacticraft.machinelib.impl.Constant;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -42,13 +42,14 @@ public class MachineLibJEIPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
-        registration.addGenericGuiContainerHandler(MachineScreen.class,
-            new IGuiContainerHandler<MachineScreen<?, ?>>() {
-                @Override
-                public List<Rect2i> getGuiExtraAreas(MachineScreen<?, ?> provider) {
-                    return provider.getExclusionZones();
+        registration.addGenericGuiContainerHandler(
+                AbstractMachineScreen.class,
+                new IGuiContainerHandler<AbstractMachineScreen<?>>() {
+                    @Override
+                    public List<Rect2i> getGuiExtraAreas(AbstractMachineScreen<?> provider) {
+                        return provider.getExclusionZones();
+                    }
                 }
-            }
         );
     }
 }

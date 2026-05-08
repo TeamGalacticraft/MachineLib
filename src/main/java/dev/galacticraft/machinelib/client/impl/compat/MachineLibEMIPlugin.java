@@ -25,7 +25,7 @@ package dev.galacticraft.machinelib.client.impl.compat;
 import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.widget.Bounds;
-import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import dev.galacticraft.machinelib.client.api.screen.AbstractMachineScreen;
 import net.minecraft.client.renderer.Rect2i;
 
 import java.util.List;
@@ -34,11 +34,15 @@ public class MachineLibEMIPlugin implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
         registry.addGenericExclusionArea((screen, consumer) -> {
-            if (!(screen instanceof MachineScreen provider)) return;
+            if (!(screen instanceof AbstractMachineScreen<?> provider)) return;
+
             List<Rect2i> areas = provider.getExclusionZones();
-            areas.forEach(rect2i -> {
-                consumer.accept(new Bounds(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight()));
-            });
+            areas.forEach(rect2i -> consumer.accept(new Bounds(
+                    rect2i.getX(),
+                    rect2i.getY(),
+                    rect2i.getWidth(),
+                    rect2i.getHeight()
+            )));
         });
     }
 }

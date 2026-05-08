@@ -23,7 +23,7 @@
 package dev.galacticraft.machinelib.client.impl.compat;
 
 import dev.architectury.event.CompoundEventResult;
-import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import dev.galacticraft.machinelib.client.api.screen.AbstractMachineScreen;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
@@ -37,21 +37,32 @@ public class MachineLibREIClientPlugin implements REIClientPlugin {
     @Override
     public void registerScreens(ScreenRegistry registry) {
         registry.registerFocusedStack((screen, mouse) -> {
-            if (screen instanceof MachineScreen<?, ?> machineScreen) {
+            if (screen instanceof AbstractMachineScreen<?> machineScreen) {
                 if (machineScreen.hoveredTank != null && !machineScreen.hoveredTank.isEmpty()) {
-                    return CompoundEventResult.interruptTrue(EntryStacks.of(machineScreen.hoveredTank.getFluid(), machineScreen.hoveredTank.getAmount()));
+                    return CompoundEventResult.interruptTrue(
+                            EntryStacks.of(
+                                    machineScreen.hoveredTank.getFluid(),
+                                    machineScreen.hoveredTank.getAmount()
+                            )
+                    );
                 }
             }
+
             return CompoundEventResult.pass();
         });
     }
 
     @Override
     public void registerExclusionZones(ExclusionZones zones) {
-        zones.register(MachineScreen.class, provider -> {
+        zones.register(AbstractMachineScreen.class, provider -> {
             List<Rect2i> areas = provider.getExclusionZones();
             return areas.stream().map(
-                    rect2i -> new Rectangle(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight())
+                    rect2i -> new Rectangle(
+                            rect2i.getX(),
+                            rect2i.getY(),
+                            rect2i.getWidth(),
+                            rect2i.getHeight()
+                    )
             ).toList();
         });
     }
