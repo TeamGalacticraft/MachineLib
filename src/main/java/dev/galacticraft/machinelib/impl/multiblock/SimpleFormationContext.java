@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.impl.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.FormationContext;
@@ -6,12 +28,8 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
-public final class SimpleFormationContext implements FormationContext {
-
-    private final ServerLevel level;
-    private final BlockPos origin;
-    private final MultiblockOrientation orientation;
-    private final MultiblockDefinition definition;
+public record SimpleFormationContext(ServerLevel level, BlockPos origin, MultiblockOrientation orientation,
+                                     MultiblockDefinition definition) implements FormationContext {
 
     public SimpleFormationContext(
             final ServerLevel level,
@@ -23,26 +41,6 @@ public final class SimpleFormationContext implements FormationContext {
         this.origin = origin.immutable();
         this.orientation = orientation;
         this.definition = definition;
-    }
-
-    @Override
-    public ServerLevel level() {
-        return this.level;
-    }
-
-    @Override
-    public BlockPos origin() {
-        return this.origin;
-    }
-
-    @Override
-    public MultiblockOrientation orientation() {
-        return this.orientation;
-    }
-
-    @Override
-    public MultiblockDefinition definition() {
-        return this.definition;
     }
 
 }

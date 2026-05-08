@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.impl.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
@@ -8,7 +30,9 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
-public final class MultiblockPartData {
+public record MultiblockPartData(UUID instanceId, ResourceLocation definitionId, BlockPos origin, BlockPos worldPos,
+                                 BlockPos originalRelativePos, BlockPos transformedRelativePos,
+                                 MultiblockOrientation orientation) {
 
     private static final String INSTANCE_ID = "InstanceId";
     private static final String DEFINITION_ID = "DefinitionId";
@@ -26,14 +50,6 @@ public final class MultiblockPartData {
     private static final String TRANSFORMED_RELATIVE_Z = "TransformedRelativeZ";
     private static final String FORWARD = "Forward";
     private static final String UP = "Up";
-
-    private final UUID instanceId;
-    private final ResourceLocation definitionId;
-    private final BlockPos origin;
-    private final BlockPos worldPos;
-    private final BlockPos originalRelativePos;
-    private final BlockPos transformedRelativePos;
-    private final MultiblockOrientation orientation;
 
     public MultiblockPartData(
             final UUID instanceId,
@@ -56,6 +72,7 @@ public final class MultiblockPartData {
     /**
      * Returns the unique runtime identity of the formed multiblock instance.
      */
+    @Override
     public UUID instanceId() {
         return this.instanceId;
     }
@@ -63,6 +80,7 @@ public final class MultiblockPartData {
     /**
      * Returns the registered multiblock definition id this part belongs to.
      */
+    @Override
     public ResourceLocation definitionId() {
         return this.definitionId;
     }
@@ -70,6 +88,7 @@ public final class MultiblockPartData {
     /**
      * Returns the world-space origin of the formed multiblock.
      */
+    @Override
     public BlockPos origin() {
         return this.origin;
     }
@@ -77,6 +96,7 @@ public final class MultiblockPartData {
     /**
      * Returns the world-space position of this specific part.
      */
+    @Override
     public BlockPos worldPos() {
         return this.worldPos;
     }
@@ -84,6 +104,7 @@ public final class MultiblockPartData {
     /**
      * Returns this part's untransformed pattern-space position.
      */
+    @Override
     public BlockPos originalRelativePos() {
         return this.originalRelativePos;
     }
@@ -91,6 +112,7 @@ public final class MultiblockPartData {
     /**
      * Returns this part's transformed relative position after orientation is applied.
      */
+    @Override
     public BlockPos transformedRelativePos() {
         return this.transformedRelativePos;
     }
@@ -98,6 +120,7 @@ public final class MultiblockPartData {
     /**
      * Returns the orientation used by the formed multiblock.
      */
+    @Override
     public MultiblockOrientation orientation() {
         return this.orientation;
     }
