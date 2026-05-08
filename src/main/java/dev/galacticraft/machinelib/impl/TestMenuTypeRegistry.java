@@ -22,8 +22,13 @@
 
 package dev.galacticraft.machinelib.impl;
 
+import dev.galacticraft.machinelib.api.filter.ResourceFilters;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuOpeningData;
+import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
+import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.StorageSpec;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.impl.multiblock.TestIronCubeMultiblockMenu;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.Registry;
@@ -32,8 +37,21 @@ import net.minecraft.world.inventory.MenuType;
 
 public final class TestMenuTypeRegistry {
 
-    public static final StorageSpec TEST_IRON_CUBE_STORAGE =
-            StorageSpec.empty();
+    public static final StorageSpec TEST_IRON_CUBE_STORAGE = StorageSpec.of(
+            MachineItemStorage.spec(
+                    ItemResourceSlot.builder(TransferType.PROCESSING)
+                            .pos(8, 62)
+                            .filter(ResourceFilters.CAN_INSERT_ENERGY)
+                            .capacity(32),
+                    ItemResourceSlot.builder(TransferType.INPUT)
+                            .pos(80, 49)
+                            .filter((item, tag) -> {
+                                Integer time = 10000;
+                                return time != null && time > 0;
+                            })
+            ),
+            MachineEnergyStorage.spec(30000, 0, 100 + 100 / 2)
+    );
 
     public static final MenuType<TestIronCubeMultiblockMenu> TEST_IRON_CUBE_MULTIBLOCK =
             new ExtendedScreenHandlerType<>(

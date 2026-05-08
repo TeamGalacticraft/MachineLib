@@ -114,8 +114,17 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
 
     @Override
     public void readTag(@NotNull ListTag tag) {
-        for (int i = 0; i < tag.size(); i++) {
+        final int readableSlots = Math.min(
+                tag.size(),
+                this.slots.length
+        );
+
+        for (int i = 0; i < readableSlots; i++) {
             this.slots[i].readTag(tag.getCompound(i));
+        }
+
+        if (tag.size() != this.slots.length) {
+            this.markModified();
         }
     }
 

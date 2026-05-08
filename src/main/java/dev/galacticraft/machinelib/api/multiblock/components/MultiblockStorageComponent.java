@@ -28,9 +28,14 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
 import dev.galacticraft.machinelib.api.storage.StorageSpec;
+import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
+import dev.galacticraft.machinelib.api.transfer.TransferType;
+import dev.galacticraft.machinelib.api.util.ItemStackUtil;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.item.ItemEntity;
 
 /**
  * Persistent storage component for a formed multiblock machine.
@@ -120,10 +125,17 @@ public final class MultiblockStorageComponent implements MultiblockComponent {
         this.context = context;
 
         if (tag.contains(ITEM_STORAGE, Tag.TAG_LIST)) {
-            this.itemStorage.readTag(tag.getList(
+            final ListTag itemStorageTag = tag.getList(
                     ITEM_STORAGE,
                     Tag.TAG_COMPOUND
-            ));
+            );
+
+            this.dropRemovedItemSlots(
+                    context,
+                    itemStorageTag
+            );
+
+            this.itemStorage.readTag(itemStorageTag);
         }
 
         if (tag.contains(FLUID_STORAGE, Tag.TAG_LIST)) {
@@ -181,4 +193,47 @@ public final class MultiblockStorageComponent implements MultiblockComponent {
         this.context = context;
     }
 
+    /**
+     * Drops saved item slots that no longer exist in the current item storage spec.
+     *
+     * <p>This is a migration safety path for development and version changes. If a
+     * machine previously saved more item slots than the current storage spec has,
+     * the removed slots are restored into temporary compatible slots, converted to
+     * item entities, and spawned at the multiblock origin.</p>
+     *
+     * @param context component context
+     * @param tag saved item storage tag
+     */
+    private void dropRemovedItemSlots(
+            final MultiblockComponentContext context,
+            final ListTag tag
+    ) {
+        if (tag.size() <= this.itemStorage.size()) {
+            return;
+        }
+
+        for (int i = this.itemStorage.size(); i < tag.size(); i++) {
+            final ItemResourceSlot removedSlot = ItemResourceSlot.builder(TransferType.TRANSFER)
+                    .capacity(64)
+                    .create();
+
+            removedSlot.readTag(tag.getCompound(i));
+
+            if (removedSlot.isEmpty()) {
+                continue;
+            }
+
+            final ItemEntity entity = new ItemEntity(
+                    context.level(),
+                    context.origin().getX() + 0.5D,
+                    context.origin().getY() + 0.5D,
+                    context.origin().getZ() + 0.5D,
+                    ItemStackUtil.create(removedSlot)
+            );
+
+            context.level().addFreshEntity(entity);
+        }
+
+        context.setChanged();
+    }
 }
