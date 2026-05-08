@@ -32,9 +32,7 @@ import dev.galacticraft.machinelib.api.menu.MenuData;
 import dev.galacticraft.machinelib.api.menu.SynchronizedMenu;
 import dev.galacticraft.machinelib.api.menu.Tank;
 import dev.galacticraft.machinelib.api.multiblock.components.*;
-import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
+import dev.galacticraft.machinelib.api.multiblock.port.*;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
@@ -369,6 +367,86 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
                         ports.ports()
                 )
         );
+    }
+
+    /**
+     * Cycles the configured port on a multiblock face.
+     *
+     * <p>Every configurable face always has an implicit {@code none} option. This
+     * means cycling forward goes from no port to the first valid option, through
+     * every valid option, then back to no port. Cycling backward does the reverse.</p>
+     *
+     * @param face port face to cycle
+     * @param reverse whether to cycle backward
+     */
+    public void cyclePort(
+            final MultiblockPortFace face,
+            final boolean reverse
+    ) {
+        final List<ConfiguredMultiblockPort> options = this.portOptionsFor(face);
+
+        if (options.isEmpty()) {
+            return;
+        }
+
+        final Optional<ConfiguredMultiblockPort> current = this.configuredPortAt(face);
+
+        if (current.isEmpty()) {
+            this.sendSetPort(reverse ? options.get(options.size() - 1) : options.get(0));
+            return;
+        }
+
+        int index = options.indexOf(current.get());
+
+        if (index < 0) {
+            this.sendRemovePort(face);
+            return;
+        }
+
+        index += reverse ? -1 : 1;
+
+        if (index < 0 || index >= options.size()) {
+            this.sendRemovePort(face);
+            return;
+        }
+
+        this.sendSetPort(options.get(index));
+    }
+
+    /**
+     * Removes the configured port from one multiblock face.
+     *
+     * @param face port face to clear
+     */
+    public void removePort(final MultiblockPortFace face) {
+        this.sendRemovePort(face);
+    }
+
+    /**
+     * Builds every valid configured-port option for a face from its matching rules.
+     *
+     * @param face port face
+     * @return valid configured-port options
+     */
+    public List<ConfiguredMultiblockPort> portOptionsFor(final MultiblockPortFace face) {
+        final List<ConfiguredMultiblockPort> options = new ArrayList<>();
+
+        for (final MultiblockPortRule rule : this.portRulesFor(face)) {
+            for (final MultiblockPortType type : rule.types()) {
+                for (final MultiblockPortMode mode : rule.modes()) {
+                    for (final MultiblockPortTarget target : rule.targets()) {
+                        options.add(new ConfiguredMultiblockPort(
+                                face,
+                                type,
+                                mode,
+                                target
+                        ));
+                    }
+                }
+            }
+        }
+
+        return List.copyOf(options);
     }
 
     /**

@@ -65,13 +65,13 @@ public final class MachineLibTestMultiblocks {
                     registerPortRules(builder);
                     registerDefaultPorts(builder);
 
-                    builder.onUsePart(context -> {
-                        context.player().sendSystemMessage(Component.literal(
-                                "Clicked formed multiblock " + context.definition().id()
-                        ));
-
-                        return InteractionResult.PASS;
-                    });
+//                    builder.onUsePart(context -> {
+//                        context.player().sendSystemMessage(Component.literal(
+//                                "Clicked formed multiblock " + context.definition().id()
+//                        ));
+//
+//                        return InteractionResult.PASS;
+//                    });
 
                     builder.component(
                             ResourceLocation.fromNamespaceAndPath(
@@ -105,7 +105,7 @@ public final class MachineLibTestMultiblocks {
         builder.portRulesForAllExposedFaces(
                 new BlockPos(2, 0, 0),
                 Set.of(MultiblockPortType.ITEM),
-                Set.of(MultiblockPortMode.INPUT),
+                Set.of(MultiblockPortMode.INPUT, MultiblockPortMode.OUTPUT),
                 Set.of(MultiblockPortTarget.group(Constant.id("item_inputs")))
         );
 

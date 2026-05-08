@@ -30,7 +30,7 @@ public final class TestMenuTypeRegistry {
                             .capacity(32)
                             .id(Constant.id("charge_slot"))
                             .group(Constant.id("item_inputs")),
-                    ItemResourceSlot.builder(TransferType.INPUT)
+                    ItemResourceSlot.builder(TransferType.STORAGE)
                             .pos(80, 49)
                             .filter((item, tag) -> {
                                 final Integer time = 10000;
