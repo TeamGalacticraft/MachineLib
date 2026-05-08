@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.api.multiblock;
 
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 

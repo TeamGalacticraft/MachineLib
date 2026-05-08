@@ -20,24 +20,44 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
-
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+package dev.galacticraft.machinelib.api.multiblock.port;
 
 /**
- * Creates a runtime component for a formed multiblock machine.
- *
- * @param <T> component type
+ * Direction of transfer allowed through a multiblock port.
  */
-@FunctionalInterface
-public interface MultiblockComponentFactory<T extends MultiblockComponent> {
+public enum MultiblockPortMode {
 
     /**
-     * Creates a new component instance.
-     *
-     * @param context formed machine context
-     * @return component instance
+     * The port accepts resources or signals from the world into the multiblock.
      */
-    T create(MultiblockComponentContext context);
+    INPUT,
+
+    /**
+     * The port exposes resources or signals from the multiblock to the world.
+     */
+    OUTPUT,
+
+    /**
+     * The port can both accept and expose resources or signals.
+     */
+    BOTH;
+
+    /**
+     * Checks whether this mode allows input.
+     *
+     * @return {@code true} if input is allowed
+     */
+    public boolean allowsInput() {
+        return this == INPUT || this == BOTH;
+    }
+
+    /**
+     * Checks whether this mode allows output.
+     *
+     * @return {@code true} if output is allowed
+     */
+    public boolean allowsOutput() {
+        return this == OUTPUT || this == BOTH;
+    }
 
 }

@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.api.multiblock.components;
 
 import dev.galacticraft.machinelib.api.machine.configuration.IOConfig;
 import dev.galacticraft.machinelib.api.machine.configuration.IOFace;
-import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentContext;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;

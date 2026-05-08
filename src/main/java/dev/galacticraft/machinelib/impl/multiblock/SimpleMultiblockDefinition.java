@@ -22,8 +22,16 @@
 
 package dev.galacticraft.machinelib.impl.multiblock;
 
-import dev.galacticraft.machinelib.api.multiblock.*;
+import dev.galacticraft.machinelib.api.multiblock.FormationRule;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionContext;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionHandler;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockSecurityComponent;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 
@@ -31,67 +39,44 @@ import java.util.List;
 
 /**
  * Default immutable implementation of {@link MultiblockDefinition}.
+ *
+ * @param id unique multiblock id
+ * @param pattern structure pattern
+ * @param rules formation rules
+ * @param interactionHandler optional part interaction handler
+ * @param menuFactory optional menu factory
+ * @param componentFactories runtime component factories
+ * @param portRules allowed port rules
+ * @param defaultPorts default configured ports
  */
-public record SimpleMultiblockDefinition(ResourceLocation id, MultiblockPattern pattern, List<FormationRule> rules,
-                                         MultiblockPartInteractionHandler interactionHandler,
-                                         MultiblockMenuFactory menuFactory,
-                                         List<MultiblockComponentFactoryEntry<?>> componentFactories) implements MultiblockDefinition {
+public record SimpleMultiblockDefinition(
+        ResourceLocation id,
+        MultiblockPattern pattern,
+        List<FormationRule> rules,
+        MultiblockPartInteractionHandler interactionHandler,
+        MultiblockMenuFactory menuFactory,
+        List<MultiblockComponentFactoryEntry<?>> componentFactories,
+        List<MultiblockPortRule> portRules,
+        List<ConfiguredMultiblockPort> defaultPorts
+) implements MultiblockDefinition {
 
     /**
      * Creates a simple multiblock definition.
      *
-     * @param id                 unique multiblock id
-     * @param pattern            structure pattern
-     * @param rules              formation rules
+     * @param id unique multiblock id
+     * @param pattern structure pattern
+     * @param rules formation rules
      * @param interactionHandler optional part interaction handler
-     * @param menuFactory        optional menu factory
+     * @param menuFactory optional menu factory
+     * @param componentFactories runtime component factories
+     * @param portRules allowed port rules
+     * @param defaultPorts default configured ports
      */
-    public SimpleMultiblockDefinition(
-            final ResourceLocation id,
-            final MultiblockPattern pattern,
-            final List<FormationRule> rules,
-            final MultiblockPartInteractionHandler interactionHandler,
-            final MultiblockMenuFactory menuFactory,
-            final List<MultiblockComponentFactoryEntry<?>> componentFactories
-    ) {
-        this.id = id;
-        this.pattern = pattern;
-        this.rules = List.copyOf(rules);
-        this.interactionHandler = interactionHandler;
-        this.menuFactory = menuFactory;
-        this.componentFactories = List.copyOf(componentFactories);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ResourceLocation id() {
-        return this.id;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MultiblockPattern pattern() {
-        return this.pattern;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<FormationRule> rules() {
-        return this.rules;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MultiblockMenuFactory menuFactory() {
-        return this.menuFactory;
+    public SimpleMultiblockDefinition {
+        rules = List.copyOf(rules);
+        componentFactories = List.copyOf(componentFactories);
+        portRules = List.copyOf(portRules);
+        defaultPorts = List.copyOf(defaultPorts);
     }
 
     /**

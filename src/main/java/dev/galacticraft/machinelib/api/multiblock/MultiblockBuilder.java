@@ -22,6 +22,9 @@
 
 package dev.galacticraft.machinelib.api.multiblock;
 
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -44,6 +47,28 @@ public interface MultiblockBuilder {
      * @return this builder
      */
     MultiblockBuilder rule(FormationRule rule);
+
+    /**
+     * Adds an allowed port rule.
+     *
+     * <p>Port rules define which faces on which multiblock parts may be
+     * configured as item, fluid, energy, or redstone ports.</p>
+     *
+     * @param rule port rule
+     * @return this builder
+     */
+    MultiblockBuilder portRule(MultiblockPortRule rule);
+
+    /**
+     * Adds a default configured port.
+     *
+     * <p>Default ports are applied when a formed multiblock is created for the
+     * first time. They must match one of the registered port rules.</p>
+     *
+     * @param port default configured port
+     * @return this builder
+     */
+    MultiblockBuilder defaultPort(ConfiguredMultiblockPort port);
 
     /**
      * Sets the handler called when a player interacts with a formed part.

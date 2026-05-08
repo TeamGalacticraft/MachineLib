@@ -24,7 +24,7 @@ package dev.galacticraft.machinelib.impl.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.FormationRule;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockBuilder;
-import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
@@ -34,6 +34,8 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionHandler;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,6 +56,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     private final List<FormationRule> rules = new ArrayList<>();
     private final List<MultiblockComponentFactoryEntry<?>> componentFactories =
             new ArrayList<>();
+    private final List<MultiblockPortRule> portRules = new ArrayList<>();
+    private final List<ConfiguredMultiblockPort> defaultPorts = new ArrayList<>();
 
     private MultiblockPattern pattern;
     private MultiblockPartInteractionHandler interactionHandler;
@@ -89,6 +93,30 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     @Override
     public SimpleMultiblockBuilder rule(final FormationRule rule) {
         this.rules.add(rule);
+        return this;
+    }
+
+    /**
+     * Adds an allowed port rule.
+     *
+     * @param rule port rule
+     * @return this builder
+     */
+    @Override
+    public SimpleMultiblockBuilder portRule(final MultiblockPortRule rule) {
+        this.portRules.add(rule);
+        return this;
+    }
+
+    /**
+     * Adds a default configured port.
+     *
+     * @param port default configured port
+     * @return this builder
+     */
+    @Override
+    public SimpleMultiblockBuilder defaultPort(final ConfiguredMultiblockPort port) {
+        this.defaultPorts.add(port);
         return this;
     }
 
@@ -212,7 +240,9 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.rules,
                 this.interactionHandler,
                 this.menuFactory,
-                this.componentFactories
+                this.componentFactories,
+                this.portRules,
+                this.defaultPorts
         );
     }
 

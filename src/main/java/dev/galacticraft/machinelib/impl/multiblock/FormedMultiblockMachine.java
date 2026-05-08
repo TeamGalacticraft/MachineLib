@@ -22,7 +22,7 @@
 
 package dev.galacticraft.machinelib.impl.multiblock;
 
-import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;

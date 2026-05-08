@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.api.multiblock.components;
 
-import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentContext;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;

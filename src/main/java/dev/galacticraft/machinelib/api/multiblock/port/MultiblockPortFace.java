@@ -20,24 +20,21 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
+package dev.galacticraft.machinelib.api.multiblock.port;
 
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 /**
- * Creates a runtime component for a formed multiblock machine.
+ * One configurable face on one relative block position inside a formed
+ * multiblock.
  *
- * @param <T> component type
+ * @param relativePos pattern-relative part position
+ * @param face local face direction on that part
  */
-@FunctionalInterface
-public interface MultiblockComponentFactory<T extends MultiblockComponent> {
-
-    /**
-     * Creates a new component instance.
-     *
-     * @param context formed machine context
-     * @return component instance
-     */
-    T create(MultiblockComponentContext context);
+public record MultiblockPortFace(
+        BlockPos relativePos,
+        Direction face
+) {
 
 }

@@ -22,6 +22,8 @@
 
 package dev.galacticraft.machinelib.api.multiblock;
 
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockMenuOpener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
@@ -31,8 +33,9 @@ import java.util.List;
 /**
  * Immutable definition of a MachineLib multiblock.
  *
- * <p>A definition describes the structure pattern, formation rules, and optional
- * runtime behaviour for a formed multiblock.</p>
+ * <p>A definition describes the structure pattern, formation rules, optional
+ * runtime behaviour, runtime components, and allowed/default port layout for a
+ * formed multiblock.</p>
  */
 public interface MultiblockDefinition {
 
@@ -72,6 +75,25 @@ public interface MultiblockDefinition {
      * @return immutable component factory list
      */
     default List<MultiblockComponentFactoryEntry<?>> componentFactories() {
+        return List.of();
+    }
+
+    /**
+     * Gets the allowed port rules for this multiblock.
+     *
+     * @return immutable port rule list
+     */
+    default List<MultiblockPortRule> portRules() {
+        return List.of();
+    }
+
+    /**
+     * Gets the default configured ports applied when a formed multiblock is first
+     * created.
+     *
+     * @return immutable default port list
+     */
+    default List<ConfiguredMultiblockPort> defaultPorts() {
         return List.of();
     }
 

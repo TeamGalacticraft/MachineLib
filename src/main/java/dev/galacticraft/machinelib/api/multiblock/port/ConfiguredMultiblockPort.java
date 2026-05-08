@@ -20,24 +20,21 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
-
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+package dev.galacticraft.machinelib.api.multiblock.port;
 
 /**
- * Creates a runtime component for a formed multiblock machine.
+ * A player-configured port installed on one allowed multiblock face.
  *
- * @param <T> component type
+ * @param face configured multiblock face
+ * @param type port type
+ * @param mode port transfer mode
+ * @param target internal target endpoint or group
  */
-@FunctionalInterface
-public interface MultiblockComponentFactory<T extends MultiblockComponent> {
-
-    /**
-     * Creates a new component instance.
-     *
-     * @param context formed machine context
-     * @return component instance
-     */
-    T create(MultiblockComponentContext context);
+public record ConfiguredMultiblockPort(
+        MultiblockPortFace face,
+        MultiblockPortType type,
+        MultiblockPortMode mode,
+        MultiblockPortTarget target
+) {
 
 }

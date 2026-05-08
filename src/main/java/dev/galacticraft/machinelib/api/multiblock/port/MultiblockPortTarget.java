@@ -20,24 +20,49 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
+package dev.galacticraft.machinelib.api.multiblock.port;
 
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * Creates a runtime component for a formed multiblock machine.
+ * Target inside a multiblock component that a port connects to.
  *
- * @param <T> component type
+ * <p>The target can either represent one exact endpoint id, such as one item
+ * slot or one redstone getter, or a group id, such as a group of input item
+ * slots.</p>
+ *
+ * @param id target id
+ * @param group {@code true} if this target represents a group id
  */
-@FunctionalInterface
-public interface MultiblockComponentFactory<T extends MultiblockComponent> {
+public record MultiblockPortTarget(
+        ResourceLocation id,
+        boolean group
+) {
 
     /**
-     * Creates a new component instance.
+     * Creates an exact endpoint target.
      *
-     * @param context formed machine context
-     * @return component instance
+     * @param id endpoint id
+     * @return endpoint target
      */
-    T create(MultiblockComponentContext context);
+    public static MultiblockPortTarget id(final ResourceLocation id) {
+        return new MultiblockPortTarget(
+                id,
+                false
+        );
+    }
+
+    /**
+     * Creates a grouped endpoint target.
+     *
+     * @param id group id
+     * @return group target
+     */
+    public static MultiblockPortTarget group(final ResourceLocation id) {
+        return new MultiblockPortTarget(
+                id,
+                true
+        );
+    }
 
 }

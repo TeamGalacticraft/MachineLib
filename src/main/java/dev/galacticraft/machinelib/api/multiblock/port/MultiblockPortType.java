@@ -20,24 +20,31 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
-
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
+package dev.galacticraft.machinelib.api.multiblock.port;
 
 /**
- * Creates a runtime component for a formed multiblock machine.
- *
- * @param <T> component type
+ * Type of resource or signal exposed by a multiblock port.
  */
-@FunctionalInterface
-public interface MultiblockComponentFactory<T extends MultiblockComponent> {
+public enum MultiblockPortType {
 
     /**
-     * Creates a new component instance.
-     *
-     * @param context formed machine context
-     * @return component instance
+     * Item insertion or extraction.
      */
-    T create(MultiblockComponentContext context);
+    ITEM,
+
+    /**
+     * Fluid insertion or extraction.
+     */
+    FLUID,
+
+    /**
+     * Energy insertion or extraction.
+     */
+    ENERGY,
+
+    /**
+     * Redstone signal input or output.
+     */
+    REDSTONE
 
 }

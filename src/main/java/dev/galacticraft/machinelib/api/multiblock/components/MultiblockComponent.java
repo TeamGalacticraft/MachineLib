@@ -20,8 +20,9 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.multiblock;
+package dev.galacticraft.machinelib.api.multiblock.components;
 
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentContext;
 import net.minecraft.nbt.CompoundTag;
 
 /**

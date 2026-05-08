@@ -48,6 +48,9 @@ public final class MultiblockStandardComponents {
     public static final ResourceLocation STORAGE =
             Constant.id("storage");
 
+    public static final ResourceLocation PORTS =
+            Constant.id("ports");
+
     private MultiblockStandardComponents() {
 
     }
@@ -108,4 +111,17 @@ public final class MultiblockStandardComponents {
         );
     }
 
+    /**
+     * Adds persistent configurable port storage to a multiblock builder.
+     *
+     * @param builder builder to modify
+     * @return the same builder
+     */
+    public static MultiblockBuilder ports(final MultiblockBuilder builder) {
+        return builder.component(
+                PORTS,
+                MultiblockPortComponent.class,
+                context -> new MultiblockPortComponent()
+        );
+    }
 }

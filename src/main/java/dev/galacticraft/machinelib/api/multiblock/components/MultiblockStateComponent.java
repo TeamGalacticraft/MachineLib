@@ -24,7 +24,6 @@ package dev.galacticraft.machinelib.api.multiblock.components;
 
 import dev.galacticraft.machinelib.api.machine.MachineState;
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
-import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentContext;
 import net.minecraft.nbt.CompoundTag;
 

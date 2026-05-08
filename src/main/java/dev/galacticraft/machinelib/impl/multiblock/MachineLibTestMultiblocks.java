@@ -90,6 +90,8 @@ public final class MachineLibTestMultiblocks {
                     builder.pattern(pattern);
                     builder.rule(RotationFormationRule.allow(MultiblockOrientation.horizontal()));
 
+                    MultiblockStandardComponents.ports(builder);
+
                     MultiblockStandardComponents.configured(builder);
 
                     builder.useDefaultMenu(
