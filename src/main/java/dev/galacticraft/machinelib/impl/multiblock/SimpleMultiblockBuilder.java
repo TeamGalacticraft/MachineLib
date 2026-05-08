@@ -199,21 +199,18 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
         return this;
     }
 
-    /**
-     * Adds a runtime component factory to this multiblock definition.
-     *
-     * @param id stable persistent component id
-     * @param type component lookup type
-     * @param factory component factory
-     * @param <T> component type
-     * @return this builder
-     */
     @Override
     public <T extends MultiblockComponent> SimpleMultiblockBuilder component(
             final ResourceLocation id,
             final Class<T> type,
             final MultiblockComponentFactory<? extends T> factory
     ) {
+        if (this.hasComponent(id)) {
+            throw new IllegalStateException(
+                    "Multiblock " + this.id + " already has component " + id
+            );
+        }
+
         this.componentFactories.add(new MultiblockComponentFactoryEntry<>(
                 id,
                 type,
@@ -234,6 +231,10 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
             throw new IllegalStateException("Multiblock " + this.id + " has no pattern");
         }
 
+        if (this.needsPortComponent() && !this.hasComponent(MultiblockStandardComponents.PORTS)) {
+            MultiblockStandardComponents.ports(this);
+        }
+
         return new SimpleMultiblockDefinition(
                 this.id,
                 this.pattern,
@@ -244,6 +245,20 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.portRules,
                 this.defaultPorts
         );
+    }
+
+    private boolean needsPortComponent() {
+        return !this.portRules.isEmpty() || !this.defaultPorts.isEmpty();
+    }
+
+    private boolean hasComponent(final ResourceLocation id) {
+        for (final MultiblockComponentFactoryEntry<?> entry : this.componentFactories) {
+            if (entry.id().equals(id)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
