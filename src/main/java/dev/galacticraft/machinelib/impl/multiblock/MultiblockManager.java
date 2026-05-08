@@ -29,6 +29,7 @@ import dev.galacticraft.machinelib.impl.network.s2c.MultiblockSyncRemovePayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -68,6 +69,9 @@ public final class MultiblockManager {
     private final MultiblockSavedData savedData;
 
     private boolean loadedPersistentMachines;
+
+    private final Map<RecoveryKey, CompoundTag> sessionRecoveryCache =
+            new HashMap<>();
 
     private MultiblockManager(final ServerLevel level) {
         this.level = level;
@@ -366,9 +370,21 @@ public final class MultiblockManager {
             return null;
         }
 
+        final RecoveryKey recoveryKey = new RecoveryKey(
+                definition.id(),
+                origin,
+                orientation
+        );
+
+        final CompoundTag recoveredComponents = save
+                ? this.sessionRecoveryCache.remove(recoveryKey)
+                : null;
+
         final CompoundTag savedComponents;
 
-        if (save) {
+        if (recoveredComponents != null) {
+            savedComponents = recoveredComponents;
+        } else if (save) {
             savedComponents = new CompoundTag();
         } else {
             final MultiblockSavedData.SavedMachine savedMachine =
@@ -412,6 +428,12 @@ public final class MultiblockManager {
     /**
      * Invalidates a machine permanently.
      *
+     * <p>Item storage is dropped by the storage component during invalidation. After
+     * components have handled invalidation, the remaining component state is cached
+     * in memory so the same multiblock can recover ports, fluids, energy, security,
+     * and other non-item state if it reforms at the same origin and orientation
+     * during the same server session.</p>
+     *
      * @param machine machine to invalidate
      */
     public void invalidate(final FormedMultiblockMachine machine) {
@@ -420,6 +442,8 @@ public final class MultiblockManager {
         }
 
         machine.invalidate();
+
+        this.cacheInvalidatedMachine(machine);
 
         this.removeRuntimeIndexes(machine);
         MultiblockSyncRemovePayload.syncRemoved(machine);
@@ -431,6 +455,30 @@ public final class MultiblockManager {
                 machine.definition().id(),
                 machine.origin(),
                 machine.instanceId()
+        );
+    }
+
+    /**
+     * Caches component state from an invalidated machine for same-session recovery.
+     *
+     * <p>The cache is intentionally not written to saved data. It is only useful
+     * while the level remains loaded. Because this is called after component
+     * invalidation, item storage has already been dropped and removed from storage,
+     * while fluid, energy, ports, security, and other retained components can still
+     * be restored.</p>
+     *
+     * @param machine invalidated machine
+     */
+    private void cacheInvalidatedMachine(final FormedMultiblockMachine machine) {
+        final RecoveryKey key = new RecoveryKey(
+                machine.definition().id(),
+                machine.origin(),
+                machine.orientation()
+        );
+
+        this.sessionRecoveryCache.put(
+                key,
+                machine.saveComponents()
         );
     }
 
@@ -606,5 +654,25 @@ public final class MultiblockManager {
                 this.savedData.updateComponents(machine);
             }
         }
+    }
+
+    /**
+     * Session-only key used to recover recently invalidated multiblock component
+     * state when the same definition reforms in the same place.
+     *
+     * @param definitionId multiblock definition id
+     * @param origin multiblock origin
+     * @param orientation formed orientation
+     */
+    private record RecoveryKey(
+            ResourceLocation definitionId,
+            BlockPos origin,
+            MultiblockOrientation orientation
+    ) {
+
+        private RecoveryKey {
+            origin = origin.immutable();
+        }
+
     }
 }
