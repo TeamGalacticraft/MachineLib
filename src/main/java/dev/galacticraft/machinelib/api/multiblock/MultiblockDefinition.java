@@ -74,6 +74,30 @@ public interface MultiblockDefinition {
     }
 
     /**
+     * Checks whether a configured port is valid for this multiblock definition.
+     *
+     * <p>A valid port must be on an exposed face and must match at least one
+     * registered port rule. This method is used for runtime player edits so packet
+     * handlers do not duplicate definition validation logic.</p>
+     *
+     * @param port configured port to validate
+     * @return {@code true} if this definition allows the port
+     */
+    default boolean allowsPort(final ConfiguredMultiblockPort port) {
+        if (!this.exposedFaces().contains(port.face())) {
+            return false;
+        }
+
+        for (final MultiblockPortRule rule : this.portRules()) {
+            if (rule.allows(port)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Handles interaction with one formed part of this multiblock.
      *
      * @param context interaction context

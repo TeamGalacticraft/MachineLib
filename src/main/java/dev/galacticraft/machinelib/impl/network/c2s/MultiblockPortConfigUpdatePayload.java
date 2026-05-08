@@ -239,7 +239,7 @@ public record MultiblockPortConfigUpdatePayload(
                 )
         );
 
-        if (machine.definition().portRules().stream().noneMatch(rule -> rule.allows(port))) {
+        if (!machine.definition().allowsPort(port)) {
             return;
         }
 
