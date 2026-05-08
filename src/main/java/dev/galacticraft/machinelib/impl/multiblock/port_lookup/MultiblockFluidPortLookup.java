@@ -56,7 +56,10 @@ public final class MultiblockFluidPortLookup {
             return null;
         }
 
-        final MultiblockPortFace face = findPortFace(machine, pos, side);
+        final MultiblockPortFace face = machine.getPortFaceAtWorldSide(
+                pos,
+                side
+        );
 
         if (face == null) {
             MultiblockPortDebug.LOGGER.debug("[FLUID] Could not resolve port face at {} side={} machine={}", pos, side, machine.instanceId());
@@ -105,41 +108,6 @@ public final class MultiblockFluidPortLookup {
         MultiblockPortDebug.LOGGER.debug("[FLUID] Exposed storage at {} side={} face={} port={}", pos, side, face, port);
 
         return new DirtyTrackingFluidStorage(exposedStorage, storage);
-    }
-
-    private static @Nullable MultiblockPortFace findPortFace(
-            final FormedMultiblockMachine machine,
-            final BlockPos pos,
-            final Direction worldSide
-    ) {
-        for (final MultiblockPart part : machine.parts()) {
-            if (!part.worldPos().equals(pos)) {
-                continue;
-            }
-
-            final Direction localSide = inverseTransformDirection(machine.orientation(), worldSide);
-
-            if (localSide == null) {
-                return null;
-            }
-
-            return new MultiblockPortFace(part.originalRelativePos(), localSide);
-        }
-
-        return null;
-    }
-
-    private static @Nullable Direction inverseTransformDirection(
-            final MultiblockOrientation orientation,
-            final Direction worldSide
-    ) {
-        for (final Direction localSide : Direction.values()) {
-            if (orientation.transformDirection(localSide) == worldSide) {
-                return localSide;
-            }
-        }
-
-        return null;
     }
 
     private static ResourceFlow flowFor(final MultiblockPortMode mode) {

@@ -26,13 +26,18 @@ import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent
 import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockPortComponent;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -289,6 +294,104 @@ public final class FormedMultiblockMachine {
      */
     public boolean touchesChunk(final ChunkPos chunkPos) {
         return this.touchedChunks.contains(chunkPos);
+    }
+
+    /**
+     * Resolves a world-space part position and world-space side into the configured
+     * multiblock port on that face.
+     *
+     * <p>This is the central world-to-pattern port lookup used by transfer
+     * providers, debug tools, rendering overlays, and the future 3D port
+     * configuration screen.</p>
+     *
+     * @param worldPos world position of the formed multiblock part
+     * @param worldSide world-space side being queried
+     * @return configured port on that face, or empty if none exists
+     */
+    public Optional<ConfiguredMultiblockPort> getConfiguredPortAtWorldSide(
+            final BlockPos worldPos,
+            final Direction worldSide
+    ) {
+        final MultiblockPortFace face = this.getPortFaceAtWorldSide(
+                worldPos,
+                worldSide
+        );
+
+        if (face == null) {
+            return Optional.empty();
+        }
+
+        final MultiblockPortComponent ports =
+                this.component(MultiblockPortComponent.class);
+
+        if (ports == null) {
+            return Optional.empty();
+        }
+
+        return ports.portAt(face);
+    }
+
+    /**
+     * Resolves a world-space part position and side into the matching
+     * pattern-local port face.
+     *
+     * @param worldPos world position of the formed multiblock part
+     * @param worldSide world-space side being queried
+     * @return pattern-local port face, or {@code null} if unresolved
+     */
+    public @Nullable MultiblockPortFace getPortFaceAtWorldSide(
+            final BlockPos worldPos,
+            final Direction worldSide
+    ) {
+        final MultiblockPart part = this.partAt(worldPos);
+
+        if (part == null) {
+            return null;
+        }
+
+        final Direction localSide = this.inverseTransformDirection(worldSide);
+
+        if (localSide == null) {
+            return null;
+        }
+
+        return new MultiblockPortFace(
+                part.originalRelativePos(),
+                localSide
+        );
+    }
+
+    /**
+     * Finds the formed multiblock part at a world position.
+     *
+     * @param worldPos world position
+     * @return matching part, or {@code null}
+     */
+    public @Nullable MultiblockPart partAt(final BlockPos worldPos) {
+        for (final MultiblockPart part : this.parts()) {
+            if (part.worldPos().equals(worldPos)) {
+                return part;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a world-space direction back into the pattern-local direction that
+     * produced it for this formed multiblock's orientation.
+     *
+     * @param worldSide world-space side
+     * @return local pattern side, or {@code null}
+     */
+    private @Nullable Direction inverseTransformDirection(final Direction worldSide) {
+        for (final Direction localSide : Direction.values()) {
+            if (this.orientation().transformDirection(localSide) == worldSide) {
+                return localSide;
+            }
+        }
+
+        return null;
     }
 
     /**

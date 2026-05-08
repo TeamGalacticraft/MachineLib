@@ -74,8 +74,7 @@ public final class MultiblockItemPortLookup {
             return null;
         }
 
-        final MultiblockPortFace face = findPortFace(
-                machine,
+        final MultiblockPortFace face = machine.getPortFaceAtWorldSide(
                 pos,
                 side
         );
@@ -137,50 +136,6 @@ public final class MultiblockItemPortLookup {
     }
 
     /**
-     * Converts a world position and world-space side into a pattern-local
-     * multiblock port face.
-     *
-     * <p>Formed parts already store their original unrotated pattern position,
-     * so the position side of the conversion is taken directly from the matching
-     * {@link MultiblockPart}. The direction side is converted by reversing
-     * {@link MultiblockOrientation#transformDirection(Direction)} through a
-     * small brute-force search over the six possible local directions.</p>
-     *
-     * @param machine formed multiblock machine
-     * @param pos queried world position
-     * @param worldSide queried world-space side
-     * @return pattern-local port face, or {@code null} if the position/side cannot be resolved
-     */
-    private static @Nullable MultiblockPortFace findPortFace(
-            final FormedMultiblockMachine machine,
-            final BlockPos pos,
-            final Direction worldSide
-    ) {
-        final MultiblockPart part = findPart(
-                machine,
-                pos
-        );
-
-        if (part == null) {
-            return null;
-        }
-
-        final Direction localSide = inverseTransformDirection(
-                machine.orientation(),
-                worldSide
-        );
-
-        if (localSide == null) {
-            return null;
-        }
-
-        return new MultiblockPortFace(
-                part.originalRelativePos(),
-                localSide
-        );
-    }
-
-    /**
      * Finds the runtime part at a world position.
      *
      * <p>The manager can already tell us that a position belongs to a formed
@@ -200,27 +155,6 @@ public final class MultiblockItemPortLookup {
         for (final MultiblockPart part : machine.parts()) {
             if (part.worldPos().equals(pos)) {
                 return part;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Converts a world-space direction back into the pattern-local direction
-     * that produced it for the supplied orientation.
-     *
-     * @param orientation formed multiblock orientation
-     * @param worldSide world-space direction
-     * @return local pattern direction, or {@code null} if no direction maps to it
-     */
-    private static @Nullable Direction inverseTransformDirection(
-            final MultiblockOrientation orientation,
-            final Direction worldSide
-    ) {
-        for (final Direction localSide : Direction.values()) {
-            if (orientation.transformDirection(localSide) == worldSide) {
-                return localSide;
             }
         }
 
