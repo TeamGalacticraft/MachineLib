@@ -31,16 +31,21 @@ import dev.galacticraft.machinelib.api.menu.ConfiguredMenu;
 import dev.galacticraft.machinelib.api.menu.MenuData;
 import dev.galacticraft.machinelib.api.menu.SynchronizedMenu;
 import dev.galacticraft.machinelib.api.menu.Tank;
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockIOConfigComponent;
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockRedstoneComponent;
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockSecurityComponent;
-import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStateComponent;
+import dev.galacticraft.machinelib.api.multiblock.components.*;
+import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
+import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.impl.menu.MenuDataClient;
 import dev.galacticraft.machinelib.impl.menu.MenuDataImpl;
 import dev.galacticraft.machinelib.impl.multiblock.FormedMultiblockMachine;
+import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
+import dev.galacticraft.machinelib.impl.network.c2s.MultiblockPortConfigUpdatePayload;
+import dev.galacticraft.machinelib.impl.network.s2c.MultiblockPortConfigSyncPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -50,9 +55,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Base configured menu for formed multiblock machines.
@@ -84,6 +87,9 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
 
     private final MenuData data;
     private final FormedMultiblockMachine machine;
+
+    private final Map<MultiblockPortFace, ConfiguredMultiblockPort> clientPorts =
+            new LinkedHashMap<>();
 
     /**
      * Creates a server-side configured multiblock menu.
@@ -235,6 +241,134 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
      */
     public MenuData getData() {
         return this.data;
+    }
+
+    /**
+     * Gets every exposed face from the opened multiblock definition.
+     *
+     * @return exposed face set
+     */
+    public Set<MultiblockPortFace> exposedPortFaces() {
+        if (this.machine != null) {
+            return this.machine.definition().exposedFaces();
+        }
+
+        final MultiblockDefinition definition = MachineLibMultiblocks.getDefinition(this.definitionId);
+
+        if (definition == null) {
+            return Set.of();
+        }
+
+        return definition.exposedFaces();
+    }
+
+    /**
+     * Gets the currently configured port for a face.
+     *
+     * @param face port face
+     * @return configured port, if present
+     */
+    public Optional<ConfiguredMultiblockPort> configuredPortAt(final MultiblockPortFace face) {
+        if (this.machine == null) {
+            return Optional.ofNullable(this.clientPorts.get(face));
+        }
+
+        final MultiblockPortComponent ports = this.machine.component(MultiblockPortComponent.class);
+
+        if (ports == null) {
+            return Optional.empty();
+        }
+
+        return ports.portAt(face);
+    }
+
+    /**
+     * Gets the allowed port rules for a face.
+     *
+     * @param face port face
+     * @return matching rules
+     */
+    public List<MultiblockPortRule> portRulesFor(final MultiblockPortFace face) {
+        final MultiblockDefinition definition = this.machine == null
+                ? MachineLibMultiblocks.getDefinition(this.definitionId)
+                : this.machine.definition();
+
+        if (definition == null) {
+            return List.of();
+        }
+
+        final List<MultiblockPortRule> rules = new ArrayList<>();
+
+        for (final MultiblockPortRule rule : definition.portRules()) {
+            if (rule.face().equals(face)) {
+                rules.add(rule);
+            }
+        }
+
+        return rules;
+    }
+
+    /**
+     * Applies a full configured-port sync to this client menu.
+     *
+     * @param ports synced configured ports
+     */
+    public void applyClientPortSync(final List<ConfiguredMultiblockPort> ports) {
+        this.clientPorts.clear();
+
+        for (final ConfiguredMultiblockPort port : ports) {
+            this.clientPorts.put(
+                    port.face(),
+                    port
+            );
+        }
+    }
+
+    /**
+     * Sends a client-to-server request to set one multiblock port.
+     *
+     * @param port configured port
+     */
+    public void sendSetPort(final ConfiguredMultiblockPort port) {
+        ClientPlayNetworking.send(MultiblockPortConfigUpdatePayload.set(
+                this.instanceId,
+                port
+        ));
+    }
+
+    /**
+     * Sends a client-to-server request to remove one configured multiblock port.
+     *
+     * @param face port face
+     */
+    public void sendRemovePort(final MultiblockPortFace face) {
+        ClientPlayNetworking.send(MultiblockPortConfigUpdatePayload.remove(
+                this.instanceId,
+                face
+        ));
+    }
+
+    /**
+     * Sends the current server-side port configuration to this menu's player.
+     */
+    public void syncPortsToClient() {
+        if (!(this.player instanceof ServerPlayer serverPlayer) || this.machine == null) {
+            return;
+        }
+
+        final MultiblockPortComponent ports = this.machine.component(MultiblockPortComponent.class);
+
+        if (ports == null) {
+            return;
+        }
+
+        ServerPlayNetworking.send(
+                serverPlayer,
+                new MultiblockPortConfigSyncPayload(
+                        this.instanceId,
+                        ports.ports()
+                )
+        );
     }
 
     /**
@@ -402,6 +536,7 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
     public void sendAllDataToRemote() {
         super.sendAllDataToRemote();
         this.data.synchronizeFull();
+        this.syncPortsToClient();
     }
 
     /**

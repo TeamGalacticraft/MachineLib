@@ -22,10 +22,7 @@
 
 package dev.galacticraft.machinelib.impl.network;
 
-import dev.galacticraft.machinelib.impl.network.c2s.AccessLevelPayload;
-import dev.galacticraft.machinelib.impl.network.c2s.RedstoneModePayload;
-import dev.galacticraft.machinelib.impl.network.c2s.SideConfigurationClickPayload;
-import dev.galacticraft.machinelib.impl.network.c2s.TankInteractionPayload;
+import dev.galacticraft.machinelib.impl.network.c2s.*;
 import dev.galacticraft.machinelib.impl.network.s2c.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -37,6 +34,7 @@ public class MachineLibPackets {
         ServerPlayNetworking.registerGlobalReceiver(RedstoneModePayload.TYPE, RedstoneModePayload::apply);
         ServerPlayNetworking.registerGlobalReceiver(SideConfigurationClickPayload.TYPE, SideConfigurationClickPayload::apply);
         ServerPlayNetworking.registerGlobalReceiver(TankInteractionPayload.TYPE, TankInteractionPayload::apply);
+        ServerPlayNetworking.registerGlobalReceiver(MultiblockPortConfigUpdatePayload.TYPE, MultiblockPortConfigUpdatePayload::apply);
     }
 
     public static void registerClient() {
@@ -45,6 +43,7 @@ public class MachineLibPackets {
         ClientPlayNetworking.registerGlobalReceiver(MenuSyncPayload.TYPE, MenuSyncPayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(MultiblockSyncAddPayload.TYPE, MultiblockSyncAddPayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(MultiblockSyncRemovePayload.TYPE, MultiblockSyncRemovePayload::apply);
+        ClientPlayNetworking.registerGlobalReceiver(MultiblockPortConfigSyncPayload.TYPE, MultiblockPortConfigSyncPayload::apply);
     }
 
     public static void registerChannels() {
@@ -53,6 +52,7 @@ public class MachineLibPackets {
         PayloadTypeRegistry.playC2S().register(RedstoneModePayload.TYPE, RedstoneModePayload.CODEC);
         PayloadTypeRegistry.playC2S().register(SideConfigurationClickPayload.TYPE, SideConfigurationClickPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TankInteractionPayload.TYPE, TankInteractionPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(MultiblockPortConfigUpdatePayload.TYPE, MultiblockPortConfigUpdatePayload.CODEC);
 
         // s2c
         PayloadTypeRegistry.playS2C().register(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload.CODEC);
@@ -60,5 +60,6 @@ public class MachineLibPackets {
         PayloadTypeRegistry.playS2C().register(MenuSyncPayload.TYPE, MenuSyncPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(MultiblockSyncAddPayload.TYPE, MultiblockSyncAddPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(MultiblockSyncRemovePayload.TYPE, MultiblockSyncRemovePayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(MultiblockPortConfigSyncPayload.TYPE, MultiblockPortConfigSyncPayload.CODEC);
     }
 }
