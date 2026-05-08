@@ -107,4 +107,5 @@ public final class MultiblockStandardComponents {
                 context -> new MultiblockStorageComponent(spec)
         );
     }
+
 }

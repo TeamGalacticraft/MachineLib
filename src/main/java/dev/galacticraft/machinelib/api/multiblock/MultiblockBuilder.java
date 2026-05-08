@@ -63,13 +63,31 @@ public interface MultiblockBuilder {
     MultiblockBuilder menu(MultiblockMenuFactory factory);
 
     /**
+     * Uses a default MachineLib-style multiblock menu.
+     *
+     * <p>This is a convenience method for ordinary MachineLib-style multiblocks.
+     * It adds the storage component from the supplied menu spec and installs a
+     * standard menu factory that opens the supplied menu type.</p>
+     *
+     * <p>Use {@link #menu(MultiblockMenuFactory)} directly instead for custom
+     * menus, multi-menu multiblocks, headless multiblocks, or dynamic layouts.</p>
+     *
+     * @param spec default multiblock menu spec
+     * @param <Menu> menu type
+     * @return this builder
+     */
+    <Menu extends MultiblockMachineMenu> MultiblockBuilder useDefaultMenu(
+            MultiblockMachineMenuSpec<Menu> spec
+    );
+
+    /**
      * Adds a runtime component factory to this multiblock definition.
      *
      * @param id stable persistent component id
      * @param type component lookup type
      * @param factory component factory
-     * @return this builder
      * @param <T> component type
+     * @return this builder
      */
     <T extends MultiblockComponent> MultiblockBuilder component(
             ResourceLocation id,

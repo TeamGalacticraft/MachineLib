@@ -22,40 +22,29 @@
 
 package dev.galacticraft.machinelib.impl.multiblock;
 
-import dev.galacticraft.machinelib.api.filter.ResourceFilters;
-import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuContext;
-import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockOrientation;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockSlotPredicate;
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
-import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
-import dev.galacticraft.machinelib.api.storage.MachineFluidStorage;
-import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
-import dev.galacticraft.machinelib.api.storage.StorageSpec;
-import dev.galacticraft.machinelib.api.storage.slot.FluidResourceSlot;
-import dev.galacticraft.machinelib.api.storage.slot.ItemResourceSlot;
-import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.Fluids;
 
+/**
+ * Registers MachineLib's built-in test multiblocks.
+ */
 public final class MachineLibTestMultiblocks {
 
     private MachineLibTestMultiblocks() {
 
     }
 
+    /**
+     * Registers MachineLib's test multiblock definitions.
+     */
     public static void register() {
         final SimpleMultiblockPattern pattern =
                 new SimpleMultiblockPattern(
@@ -103,9 +92,8 @@ public final class MachineLibTestMultiblocks {
 
                     MultiblockStandardComponents.configured(builder);
 
-                    MultiblockStandardComponents.storage(
-                            builder,
-                            TestMenuTypeRegistry.TEST_IRON_CUBE_STORAGE
+                    builder.useDefaultMenu(
+                            TestMenuTypeRegistry.TEST_IRON_CUBE
                     );
 
                     builder.onUsePart(context -> {
@@ -116,37 +104,11 @@ public final class MachineLibTestMultiblocks {
                         return InteractionResult.PASS;
                     });
 
-                    builder.menu(new MultiblockMenuFactory() {
-                        @Override
-                        public AbstractContainerMenu createMenu(
-                                final MultiblockMenuContext context,
-                                final int syncId,
-                                final Inventory inventory,
-                                final Player player
-                        ) {
-                            final FormedMultiblockMachine machine =
-                                    MultiblockManager.get(context.level()).getById(context.instanceId());
-
-                            if (machine == null || !(player instanceof ServerPlayer serverPlayer)) {
-                                return null;
-                            }
-
-                            return new TestIronCubeMultiblockMenu(
-                                    syncId,
-                                    serverPlayer,
-                                    machine,
-                                    context.clickedPos()
-                            );
-                        }
-
-                        @Override
-                        public Component getDisplayName(final MultiblockMenuContext context) {
-                            return Component.literal("Test Iron Cube");
-                        }
-                    });
-
                     builder.component(
-                            ResourceLocation.fromNamespaceAndPath(Constant.MOD_ID, "test_counter"),
+                            ResourceLocation.fromNamespaceAndPath(
+                                    Constant.MOD_ID,
+                                    "test_counter"
+                            ),
                             TestCounterComponent.class,
                             context -> new TestCounterComponent()
                     );

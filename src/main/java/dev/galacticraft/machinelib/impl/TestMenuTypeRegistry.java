@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.impl;
 
 import dev.galacticraft.machinelib.api.filter.ResourceFilters;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenuSpec;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuOpeningData;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.storage.MachineItemStorage;
@@ -33,11 +34,14 @@ import dev.galacticraft.machinelib.impl.multiblock.TestIronCubeMultiblockMenu;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.inventory.MenuType;
+import net.minecraft.network.chat.Component;
 
+/**
+ * Registers test menu types used by MachineLib's development/test content.
+ */
 public final class TestMenuTypeRegistry {
 
-    public static final StorageSpec TEST_IRON_CUBE_STORAGE = StorageSpec.of(
+    private static final StorageSpec TEST_IRON_CUBE_STORAGE = StorageSpec.of(
             MachineItemStorage.spec(
                     ItemResourceSlot.builder(TransferType.PROCESSING)
                             .pos(8, 62)
@@ -46,34 +50,42 @@ public final class TestMenuTypeRegistry {
                     ItemResourceSlot.builder(TransferType.INPUT)
                             .pos(80, 49)
                             .filter((item, tag) -> {
-                                Integer time = 10000;
+                                final Integer time = 10000;
                                 return time != null && time > 0;
                             })
             ),
             MachineEnergyStorage.spec(30000, 0, 100 + 100 / 2)
     );
 
-    public static final MenuType<TestIronCubeMultiblockMenu> TEST_IRON_CUBE_MULTIBLOCK =
-            new ExtendedScreenHandlerType<>(
-                    (syncId, inventory, openingData) ->
-                            new TestIronCubeMultiblockMenu(
-                                    syncId,
-                                    inventory,
-                                    openingData,
-                                    TEST_IRON_CUBE_STORAGE
-                            ),
-                    MultiblockMenuOpeningData.STREAM_CODEC
+    public static final MultiblockMachineMenuSpec<TestIronCubeMultiblockMenu> TEST_IRON_CUBE =
+            new MultiblockMachineMenuSpec<>(
+                    TEST_IRON_CUBE_STORAGE,
+                    new ExtendedScreenHandlerType<>(
+                            (syncId, inventory, openingData) ->
+                                    new TestIronCubeMultiblockMenu(
+                                            syncId,
+                                            inventory,
+                                            openingData,
+                                            TEST_IRON_CUBE_STORAGE
+                                    ),
+                            MultiblockMenuOpeningData.STREAM_CODEC
+                    ),
+                    TestIronCubeMultiblockMenu::new,
+                    Component.literal("Test Iron Cube")
             );
 
     private TestMenuTypeRegistry() {
 
     }
 
+    /**
+     * Registers MachineLib's test menu types.
+     */
     public static void register() {
         Registry.register(
                 BuiltInRegistries.MENU,
                 Constant.id("test_iron_cube_multiblock"),
-                TEST_IRON_CUBE_MULTIBLOCK
+                TEST_IRON_CUBE.menuType()
         );
     }
 

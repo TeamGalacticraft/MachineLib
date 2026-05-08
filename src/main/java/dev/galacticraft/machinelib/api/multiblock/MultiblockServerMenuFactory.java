@@ -20,22 +20,34 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.client.impl;
+package dev.galacticraft.machinelib.api.multiblock;
 
-import dev.galacticraft.machinelib.client.impl.multiblock.TestIronCubeMultiblockScreen;
-import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
-import net.minecraft.client.gui.screens.MenuScreens;
+import dev.galacticraft.machinelib.impl.multiblock.FormedMultiblockMachine;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 
-public final class TestMenuScreens {
+/**
+ * Factory for creating server-side menus for formed multiblock machines.
+ *
+ * @param <Menu> menu type
+ */
+@FunctionalInterface
+public interface MultiblockServerMenuFactory<Menu extends MultiblockMachineMenu> {
 
-    private TestMenuScreens() {
+    /**
+     * Creates a server-side menu for a formed multiblock machine.
+     *
+     * @param syncId sync id
+     * @param player server player
+     * @param machine formed multiblock machine
+     * @param clickedPos clicked multiblock part position
+     * @return server-side menu
+     */
+    Menu create(
+            int syncId,
+            ServerPlayer player,
+            FormedMultiblockMachine machine,
+            BlockPos clickedPos
+    );
 
-    }
-
-    public static void register() {
-        MenuScreens.register(
-                TestMenuTypeRegistry.TEST_IRON_CUBE.menuType(),
-                TestIronCubeMultiblockScreen::new
-        );
-    }
 }

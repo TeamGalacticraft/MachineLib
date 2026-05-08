@@ -22,9 +22,25 @@
 
 package dev.galacticraft.machinelib.impl.multiblock;
 
-import dev.galacticraft.machinelib.api.multiblock.*;
+import dev.galacticraft.machinelib.api.multiblock.FormationRule;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockBuilder;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponent;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactory;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockComponentFactoryEntry;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenuSpec;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuContext;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockMenuFactory;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionHandler;
+import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
+import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,13 +120,65 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     }
 
     /**
+     * Uses a default MachineLib-style multiblock menu.
+     *
+     * <p>This installs the storage component defined by the supplied menu spec
+     * and registers a default menu factory that opens the menu for the formed
+     * multiblock machine.</p>
+     *
+     * @param spec default menu spec
+     * @param <Menu> menu type
+     * @return this builder
+     */
+    @Override
+    public <Menu extends MultiblockMachineMenu> SimpleMultiblockBuilder useDefaultMenu(
+            final MultiblockMachineMenuSpec<Menu> spec
+    ) {
+        MultiblockStandardComponents.storage(
+                this,
+                spec.storage()
+        );
+
+        this.menu(new MultiblockMenuFactory() {
+            @Override
+            public AbstractContainerMenu createMenu(
+                    final MultiblockMenuContext context,
+                    final int syncId,
+                    final Inventory inventory,
+                    final Player player
+            ) {
+                final FormedMultiblockMachine machine =
+                        MultiblockManager.get(context.level()).getById(context.instanceId());
+
+                if (machine == null || !(player instanceof ServerPlayer serverPlayer)) {
+                    return null;
+                }
+
+                return spec.createServerMenu(
+                        syncId,
+                        serverPlayer,
+                        machine,
+                        context.clickedPos()
+                );
+            }
+
+            @Override
+            public Component getDisplayName(final MultiblockMenuContext context) {
+                return spec.displayName();
+            }
+        });
+
+        return this;
+    }
+
+    /**
      * Adds a runtime component factory to this multiblock definition.
      *
      * @param id stable persistent component id
      * @param type component lookup type
      * @param factory component factory
-     * @return this builder
      * @param <T> component type
+     * @return this builder
      */
     @Override
     public <T extends MultiblockComponent> SimpleMultiblockBuilder component(
