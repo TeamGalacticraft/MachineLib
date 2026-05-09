@@ -33,6 +33,8 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
+import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewWidget;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.api.util.GraphicsUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
@@ -255,6 +257,9 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
 
     protected abstract void refreshMachineModel();
 
+    private PortPreviewWidget portPreviewWidget;
+    private PortPreviewScene portPreviewScene;
+
     /**
      * Initializes the screen.
      */
@@ -264,6 +269,19 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
 
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
         this.refreshMachineModel();
+
+        this.portPreviewScene = this.createPortPreviewScene();
+
+        if (this.portPreviewScene != null) {
+            this.portPreviewWidget = new PortPreviewWidget(
+                    this.leftPos + this.imageWidth + SPACING,
+                    this.topPos + SPACING,
+                    170,
+                    120
+            );
+        } else {
+            this.portPreviewWidget = null;
+        }
     }
 
     /**
@@ -646,6 +664,15 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
     }
 
     /**
+     * Creates the 3D port preview scene for this screen.
+     *
+     * @return port preview scene, or {@code null} if this screen does not use one
+     */
+    protected PortPreviewScene createPortPreviewScene() {
+        return null;
+    }
+
+    /**
      * Gets exclusion zones for recipe viewers.
      *
      * @return exclusion rectangles
@@ -877,6 +904,30 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
     }
 
     /**
+     * Renders the shared 3D port preview widget.
+     *
+     * @param graphics GUI graphics
+     * @param mouseX mouse x
+     * @param mouseY mouse y
+     */
+    protected void renderPortPreview(
+            final GuiGraphics graphics,
+            final int mouseX,
+            final int mouseY
+    ) {
+        if (this.portPreviewWidget == null || this.portPreviewScene == null) {
+            return;
+        }
+
+        this.portPreviewWidget.render(
+                graphics,
+                this.portPreviewScene,
+                mouseX,
+                mouseY
+        );
+    }
+
+    /**
      * Renders additional foreground content.
      *
      * @param graphics GUI graphics
@@ -890,7 +941,11 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             final int mouseY,
             final float delta
     ) {
-
+        this.renderPortPreview(
+                graphics,
+                mouseX,
+                mouseY
+        );
     }
 
     /**
@@ -1110,6 +1165,10 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             return true;
         }
 
+        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+
         return this.checkConfigurationPanelClick(mouseX, mouseY, button) | super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -1186,6 +1245,57 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         ClientPlayNetworking.send(new SideConfigurationClickPayload(face, reverse, reset));
         this.cycleFaceConfig(face, reverse, reset);
         this.playButtonSound();
+    }
+
+    @Override
+    public boolean mouseReleased(
+            final double mouseX,
+            final double mouseY,
+            final int button
+    ) {
+        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseReleased(mouseX, mouseY, button)) {
+            return true;
+        }
+
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(
+            final double mouseX,
+            final double mouseY,
+            final int button,
+            final double deltaX,
+            final double deltaY
+    ) {
+        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            return true;
+        }
+
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseScrolled(
+            final double mouseX,
+            final double mouseY,
+            final double horizontalAmount,
+            final double verticalAmount
+    ) {
+        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseScrolled(
+                mouseX,
+                mouseY,
+                verticalAmount
+        )) {
+            return true;
+        }
+
+        return super.mouseScrolled(
+                mouseX,
+                mouseY,
+                horizontalAmount,
+                verticalAmount
+        );
     }
 
     /**

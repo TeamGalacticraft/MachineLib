@@ -31,10 +31,14 @@ import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.menu.Tank;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.screen.port.BlockEntityPortPreviewScene;
+import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
+import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewWidget;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.model.WrapperBakedModel;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -70,6 +74,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 title,
                 texture
         );
+    }
+
+    @Override
+    protected PortPreviewScene createPortPreviewScene() {
+        return new BlockEntityPortPreviewScene<>(this.menu);
     }
 
     @Override

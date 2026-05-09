@@ -32,6 +32,8 @@ import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.screen.port.MultiblockPortPreviewScene;
+import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -79,6 +81,11 @@ public class MultiblockMachineScreen<Menu extends MultiblockMachineMenu> extends
                 title,
                 texture
         );
+    }
+
+    @Override
+    protected PortPreviewScene createPortPreviewScene() {
+        return new MultiblockPortPreviewScene<>(this.menu);
     }
 
     @Override
@@ -174,6 +181,13 @@ public class MultiblockMachineScreen<Menu extends MultiblockMachineMenu> extends
             final int mouseY,
             final float delta
     ) {
+        super.renderForeground(
+                graphics,
+                mouseX,
+                mouseY,
+                delta
+        );
+
         this.renderPortPanel(
                 graphics,
                 mouseX,
