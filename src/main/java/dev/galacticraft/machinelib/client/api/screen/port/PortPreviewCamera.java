@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.client.api.screen.port;
 
 import net.minecraft.core.BlockPos;
@@ -87,7 +109,7 @@ public final class PortPreviewCamera {
         final double sinYaw = Math.sin(yawRadians);
 
         final double worldRightX = cosYaw;
-        final double worldRightZ = -sinYaw;
+        final double worldRightZ = sinYaw;
         final double worldUpY = 1.0D;
 
         final double moveX = -deltaX * scale * 0.75D;
@@ -128,6 +150,20 @@ public final class PortPreviewCamera {
     /**
      * Projects a 3D preview-space point into widget-space coordinates.
      *
+     * <p>This mirrors the preview mesh render transform:</p>
+     *
+     * <pre>
+     * translate(center)
+     * scale(zoom, -zoom, zoom)
+     * rotateX(pitch)
+     * rotateY(yaw)
+     * translate(-focus)
+     * </pre>
+     *
+     * <p>The previous version fixed one axis but applied pitch/yaw in the wrong
+     * order for the actual mesh transform, causing the overlay to drift during
+     * horizontal rotation.</p>
+     *
      * @param point 3D point
      * @param centerX widget center x
      * @param centerY widget center y
@@ -148,8 +184,8 @@ public final class PortPreviewCamera {
         final double sinPitch = Math.sin(pitchRadians);
         final double cosPitch = Math.cos(pitchRadians);
 
-        final double xYaw = relative.x * cosYaw - relative.z * sinYaw;
-        final double zYaw = relative.x * sinYaw + relative.z * cosYaw;
+        final double xYaw = relative.x * cosYaw + relative.z * sinYaw;
+        final double zYaw = -relative.x * sinYaw + relative.z * cosYaw;
 
         final double yPitch = relative.y * cosPitch - zYaw * sinPitch;
         final double zPitch = relative.y * sinPitch + zYaw * cosPitch;

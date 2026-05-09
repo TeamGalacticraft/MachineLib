@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.client.api.screen.port;
 
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
@@ -76,6 +98,7 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
 
                     blocks.add(new PreviewBlock(
                             previewPos,
+                            worldPos,
                             level.getBlockState(worldPos),
                             true
                     ));
@@ -167,13 +190,17 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
 
             final BlockPos previewPos = this.transform(face.relativePos());
             final Direction previewFace = this.menu.orientation.transformDirection(face.face());
-            final boolean configured = this.menu.configuredPortAt(face).isPresent();
+
+            final ConfiguredMultiblockPort configuredPort = this.menu.configuredPortAt(face)
+                    .orElse(null);
 
             final PreviewPortFace previewFaceData = new PreviewPortFace(
                     previewPos,
                     previewFace,
                     this.describe(face),
-                    configured
+                    configuredPort != null,
+                    this.fillColor(configuredPort),
+                    this.outlineColor(configuredPort)
             );
 
             this.faceMap.put(
@@ -185,6 +212,43 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
         }
 
         return List.copyOf(faces);
+    }
+
+    /**
+     * Gets the translucent fill colour for a multiblock port.
+     *
+     * @param port configured port, or {@code null}
+     * @return ARGB fill colour
+     */
+    private int fillColor(final ConfiguredMultiblockPort port) {
+        if (port == null) {
+            return 0x00000000;
+        }
+
+        return switch (port.type()) {
+            case ITEM -> 0xC6FFD84D;
+            case FLUID -> 0xC64D8DFF;
+            case ENERGY -> 0xC637D65C;
+            case REDSTONE -> 0xC6D63737;
+        };
+    }
+
+    /**
+     * Gets the outline colour for a multiblock port.
+     *
+     * @param port configured port, or {@code null}
+     * @return ARGB outline colour
+     */
+    private int outlineColor(final ConfiguredMultiblockPort port) {
+        if (port == null) {
+            return 0xFF9A9A9A;
+        }
+
+        return switch (port.mode()) {
+            case INPUT -> 0xFF37D65C;
+            case OUTPUT -> 0xFFD63737;
+            case BOTH -> 0xFFFFD84D;
+        };
     }
 
     @Override
@@ -244,7 +308,8 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
                     previewPos.getZ()
             );
 
-            final BlockState neighbourState = level.getBlockState(worldPartPos.relative(previewFace));
+            final BlockPos worldNeighbourPos = worldPartPos.relative(previewFace);
+            final BlockState neighbourState = level.getBlockState(worldNeighbourPos);
 
             if (neighbourState.isAir()) {
                 continue;
@@ -252,6 +317,7 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
 
             blocks.add(new PreviewBlock(
                     previewNeighbourPos,
+                    worldNeighbourPos,
                     neighbourState,
                     false
             ));

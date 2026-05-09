@@ -358,27 +358,21 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
         if (bits != 0b1_000_000_000_000 && !reset && !isFaceLocked(face)) {
             ResourceType type = option.getType();
             ResourceFlow flow = option.getFlow();
-            int index = switch (type) {
-                case NONE -> 12;
-                case ENERGY, ITEM, FLUID, ANY -> (type.ordinal() - 1) * 3 + flow.ordinal();
-            };
-            int i = index + (reverse ? -1 : 1);
-            while (i != index) {
-                if (i == -1) {
+            int index = type == ResourceType.NONE
+                    ? 12
+                    : (type.ordinal() - 1) * 3 + flow.ordinal();
+
+            int i = index;
+
+            do {
+                i += reverse ? -1 : 1;
+
+                if (i < 0) {
                     i = 12;
-                } else if (i == 13) {
+                } else if (i > 12) {
                     i = 0;
                 }
-
-                if ((bits >>> i & 0b1) != 0) {
-                    break;
-                }
-                if (reverse) {
-                    i--;
-                } else {
-                    i++;
-                }
-            }
+            } while (i != index && (bits >>> i & 0b1) == 0);
 
             if (i == 12) {
                 option.setOption(ResourceType.NONE, ResourceFlow.BOTH);

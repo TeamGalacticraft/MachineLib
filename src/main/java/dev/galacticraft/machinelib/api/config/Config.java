@@ -156,4 +156,16 @@ public interface Config {
      * @param budget the validation budget
      */
     void setMultiblockValidationBudgetPerTick(int budget);
+
+    /**
+     * {@return the opacity used when rendering adjacent neighbour blocks in port previews}
+     */
+    float portPreviewAdjacentBlockOpacity();
+
+    /**
+     * Sets the opacity used when rendering adjacent neighbour blocks in port previews.
+     *
+     * @param opacity opacity from {@code 0.0F} to {@code 1.0F}
+     */
+    void setPortPreviewAdjacentBlockOpacity(float opacity);
 }

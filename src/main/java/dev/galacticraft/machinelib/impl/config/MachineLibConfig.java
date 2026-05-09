@@ -51,6 +51,9 @@ public class MachineLibConfig implements Config {
     @Expose
     public int multiblockValidationBudgetPerTick = 32;
 
+    @Expose
+    public float portPreviewAdjacentBlockOpacity = 0.5F;
+
     public MachineLibConfig(@Nullable File file) {
         this.file = file;
 
@@ -105,11 +108,28 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
+    public float portPreviewAdjacentBlockOpacity() {
+        return this.portPreviewAdjacentBlockOpacity;
+    }
+
+    @Override
+    public void setPortPreviewAdjacentBlockOpacity(final float opacity) {
+        this.portPreviewAdjacentBlockOpacity = Math.max(
+                0.0F,
+                Math.min(
+                        1.0F,
+                        opacity
+                )
+        );
+    }
+
+    @Override
     public void copyFrom(Config config) {
         this.enableColoredVanillaFluidNames = config.enableColoredVanillaFluidNames();
         this.fluidUnits = config.fluidUnits();
         this.multiblockValidationMode = config.multiblockValidationMode();
         this.multiblockValidationBudgetPerTick = config.multiblockValidationBudgetPerTick();
+        this.portPreviewAdjacentBlockOpacity = config.portPreviewAdjacentBlockOpacity();
     }
 
     @Override

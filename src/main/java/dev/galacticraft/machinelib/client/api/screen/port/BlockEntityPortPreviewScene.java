@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.client.api.screen.port;
 
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
@@ -8,9 +30,7 @@ import dev.galacticraft.machinelib.api.util.BlockFace;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -48,6 +68,7 @@ public final class BlockEntityPortPreviewScene<
 
         blocks.add(new PreviewBlock(
                 CENTER,
+                this.menu.be.getBlockPos(),
                 machineState,
                 true
         ));
@@ -70,6 +91,7 @@ public final class BlockEntityPortPreviewScene<
 
             blocks.add(new PreviewBlock(
                     CENTER.relative(direction),
+                    neighbourPos,
                     neighbourState,
                     false
             ));
@@ -100,11 +122,46 @@ public final class BlockEntityPortPreviewScene<
                     CENTER,
                     direction,
                     blockFace.getName(),
-                    ioFace.getType() != ResourceType.NONE
+                    ioFace.getType() != ResourceType.NONE,
+                    this.fillColor(ioFace),
+                    this.outlineColor(ioFace)
             ));
         }
 
         return List.copyOf(faces);
+    }
+
+    /**
+     * Gets the translucent fill colour for a normal machine side.
+     *
+     * @param face configured IO face
+     * @return ARGB fill colour
+     */
+    private int fillColor(final IOFace face) {
+        return switch (face.getType()) {
+            case ITEM -> 0xC6FFD84D;
+            case FLUID -> 0xC64D8DFF;
+            case ENERGY -> 0xC637D65C;
+            case NONE, ANY -> 0x00000000;
+        };
+    }
+
+    /**
+     * Gets the outline colour for a normal machine side.
+     *
+     * @param face configured IO face
+     * @return ARGB outline colour
+     */
+    private int outlineColor(final IOFace face) {
+        if (face.getType() == ResourceType.NONE) {
+            return 0xFF9A9A9A;
+        }
+
+        return switch (face.getFlow()) {
+            case INPUT -> 0xFF37D65C;
+            case OUTPUT -> 0xFFD63737;
+            case BOTH -> 0xFFFF4DD8;
+        };
     }
 
     @Override

@@ -28,8 +28,6 @@ import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.api.menu.Tank;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
-import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.api.screen.port.MultiblockPortPreviewScene;
@@ -37,19 +35,14 @@ import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
-import org.lwjgl.glfw.GLFW;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Environment(EnvType.CLIENT)
 public class MultiblockMachineScreen<Menu extends MultiblockMachineMenu> extends AbstractMachineScreen<Menu> {

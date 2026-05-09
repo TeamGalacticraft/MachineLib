@@ -199,6 +199,7 @@ public interface Constant {
         String ENERGY = "ui.machinelib.resource.type.energy";
         String ITEM = "ui.machinelib.resource.type.item";
         String FLUID = "ui.machinelib.resource.type.fluid";
+        String REDSTONE = "ui.machinelib.resource.type.redstone";
 
         String TANK_CONTENTS = "ui.machinelib.machine.tank.contents";
         String TANK_AMOUNT = "ui.machinelib.machine.tank.contents.amount";
