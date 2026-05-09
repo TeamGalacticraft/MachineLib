@@ -195,6 +195,22 @@ public final class PortPreviewCamera {
         );
     }
 
+    public float yaw() {
+        return this.yaw;
+    }
+
+    public float pitch() {
+        return this.pitch;
+    }
+
+    public float zoom() {
+        return this.zoom;
+    }
+
+    public Vec3 focus() {
+        return this.focus;
+    }
+
     /**
      * Calculates the maximum zoom level.
      *

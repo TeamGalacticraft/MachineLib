@@ -30,6 +30,8 @@ public final class PortPreviewWidget {
     private PreviewPortFace hoveredFace;
     private PreviewPortFace selectedFace;
 
+    private final PortPreviewMeshCache meshCache = new PortPreviewMeshCache();
+
     /**
      * Creates a preview widget.
      *
@@ -130,6 +132,7 @@ public final class PortPreviewWidget {
         PortPreviewRenderer.render(
                 graphics,
                 scene,
+                this.meshCache.get(scene),
                 this.camera,
                 this.hoveredFace,
                 this.selectedFace,

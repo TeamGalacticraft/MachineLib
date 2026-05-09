@@ -1,16 +1,32 @@
 package dev.galacticraft.machinelib.client.api.screen.port;
 
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * Simple software renderer for the temporary 3D port preview.
+ * Renderer for the 3D port preview.
+ *
+ * <p>This renderer uses real client-side baked block models for the structure
+ * preview, while port faces are still rendered as 2D projected overlays. This
+ * keeps the scene entirely client-side and avoids adding any server rendering
+ * data.</p>
  */
 public final class PortPreviewRenderer {
 
@@ -26,6 +42,8 @@ public final class PortPreviewRenderer {
      * @param graphics GUI graphics
      * @param scene preview scene
      * @param camera preview camera
+     * @param hoveredFace hovered face
+     * @param selectedFace selected face
      * @param x widget x
      * @param y widget y
      * @param width widget width
@@ -34,6 +52,7 @@ public final class PortPreviewRenderer {
     public static void render(
             final GuiGraphics graphics,
             final PortPreviewScene scene,
+            final PortPreviewMesh mesh,
             final PortPreviewCamera camera,
             final PreviewPortFace hoveredFace,
             final PreviewPortFace selectedFace,
@@ -50,45 +69,27 @@ public final class PortPreviewRenderer {
                 0xCC101010
         );
 
-        final int centerX = x + width / 2;
-        final int centerY = y + height / 2;
+        renderMesh(
+                graphics,
+                mesh,
+                camera,
+                x,
+                y,
+                width,
+                height
+        );
 
-        final List<RenderCube> cubes = new ArrayList<>();
-
-        for (final PreviewBlock block : scene.blocks()) {
-            cubes.add(new RenderCube(
-                    block,
-                    camera.project(
-                            PortPreviewCamera.centerOf(block.previewPos()),
-                            centerX,
-                            centerY
-                    ).depth()
-            ));
-        }
-
-        cubes.sort(Comparator.comparingDouble(RenderCube::depth).reversed());
-
-        for (final RenderCube cube : cubes) {
-            renderCube(
-                    graphics,
-                    camera,
-                    cube.block(),
-                    centerX,
-                    centerY
-            );
-        }
-
-        for (final PreviewPortFace face : scene.portFaces()) {
-            renderPortFace(
-                    graphics,
-                    camera,
-                    face,
-                    face.equals(hoveredFace),
-                    face.equals(selectedFace),
-                    centerX,
-                    centerY
-            );
-        }
+        renderPortFaces(
+                graphics,
+                scene,
+                camera,
+                hoveredFace,
+                selectedFace,
+                x,
+                y,
+                width,
+                height
+        );
     }
 
     /**
@@ -144,44 +145,170 @@ public final class PortPreviewRenderer {
     }
 
     /**
-     * Renders one simplified cube.
+     * Renders the cached static preview mesh.
+     *
+     * <p>The mesh contains baked block model quads already translated into
+     * preview-space. The renderer only applies the current camera transform and
+     * emits the stored vertices to the GUI render buffer.</p>
      *
      * @param graphics GUI graphics
-     * @param camera camera
-     * @param block preview block
-     * @param centerX widget center x
-     * @param centerY widget center y
+     * @param mesh cached static preview mesh
+     * @param camera preview camera
+     * @param x widget x
+     * @param y widget y
+     * @param width widget width
+     * @param height widget height
      */
-    private static void renderCube(
+    private static void renderMesh(
             final GuiGraphics graphics,
+            final PortPreviewMesh mesh,
             final PortPreviewCamera camera,
-            final PreviewBlock block,
-            final int centerX,
-            final int centerY
+            final int x,
+            final int y,
+            final int width,
+            final int height
     ) {
-        final Bounds bounds = boundsFor(
-                camera,
-                block.previewPos(),
-                centerX,
-                centerY
+        final Minecraft minecraft = Minecraft.getInstance();
+        final MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();
+        final PoseStack poseStack = graphics.pose();
+        final Vec3 focus = camera.focus();
+
+        graphics.enableScissor(
+                x,
+                y,
+                x + width,
+                y + height
         );
 
-        final int color = block.primary()
-                ? 0xAA707070
-                : 0x664A6D8A;
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, false);
+        Lighting.setupFor3DItems();
 
-        graphics.fill(
-                bounds.minX(),
-                bounds.minY(),
-                bounds.maxX(),
-                bounds.maxY(),
-                color
+        poseStack.pushPose();
+
+        poseStack.translate(
+                x + width / 2.0D,
+                y + height / 2.0D,
+                200.0D
         );
 
-        graphics.hLine(bounds.minX(), bounds.maxX(), bounds.minY(), 0xFF000000);
-        graphics.hLine(bounds.minX(), bounds.maxX(), bounds.maxY(), 0xFF000000);
-        graphics.vLine(bounds.minX(), bounds.minY(), bounds.maxY(), 0xFF000000);
-        graphics.vLine(bounds.maxX(), bounds.minY(), bounds.maxY(), 0xFF000000);
+        poseStack.scale(
+                camera.zoom(),
+                -camera.zoom(),
+                camera.zoom()
+        );
+
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
+
+        poseStack.translate(
+                -focus.x,
+                -focus.y,
+                -focus.z
+        );
+
+        final VertexConsumer consumer = buffer.getBuffer(RenderType.cutoutMipped());
+
+        for (final PortPreviewQuad quad : mesh.quads()) {
+            renderQuad(
+                    poseStack,
+                    consumer,
+                    quad
+            );
+        }
+
+        buffer.endBatch();
+
+        poseStack.popPose();
+
+        Lighting.setupForFlatItems();
+        RenderSystem.disableDepthTest();
+        graphics.disableScissor();
+    }
+
+    /**
+     * Emits one cached preview quad.
+     *
+     * @param poseStack current pose stack
+     * @param consumer vertex consumer
+     * @param quad cached preview quad
+     */
+    private static void renderQuad(
+            final PoseStack poseStack,
+            final VertexConsumer consumer,
+            final PortPreviewQuad quad
+    ) {
+        final PoseStack.Pose pose = poseStack.last();
+        final Vec3[] vertices = quad.vertices();
+
+        final float normalX = quad.direction().getStepX();
+        final float normalY = quad.direction().getStepY();
+        final float normalZ = quad.direction().getStepZ();
+
+        for (int i = 0; i < 4; i++) {
+            final Vec3 vertex = vertices[i];
+
+            consumer.addVertex(
+                            pose,
+                            (float) vertex.x,
+                            (float) vertex.y,
+                            (float) vertex.z
+                    )
+                    .setColor(255, 255, 255, 255)
+                    .setUv(
+                            quad.u()[i],
+                            quad.v()[i]
+                    )
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(LightTexture.FULL_BRIGHT)
+                    .setNormal(
+                            pose,
+                            normalX,
+                            normalY,
+                            normalZ
+                    );
+        }
+    }
+
+    /**
+     * Renders projected port face overlays.
+     *
+     * @param graphics GUI graphics
+     * @param scene preview scene
+     * @param camera preview camera
+     * @param hoveredFace hovered face
+     * @param selectedFace selected face
+     * @param x widget x
+     * @param y widget y
+     * @param width widget width
+     * @param height widget height
+     */
+    private static void renderPortFaces(
+            final GuiGraphics graphics,
+            final PortPreviewScene scene,
+            final PortPreviewCamera camera,
+            final PreviewPortFace hoveredFace,
+            final PreviewPortFace selectedFace,
+            final int x,
+            final int y,
+            final int width,
+            final int height
+    ) {
+        final int centerX = x + width / 2;
+        final int centerY = y + height / 2;
+
+        for (final PreviewPortFace face : scene.portFaces()) {
+            renderPortFace(
+                    graphics,
+                    camera,
+                    face,
+                    face.equals(hoveredFace),
+                    face.equals(selectedFace),
+                    centerX,
+                    centerY
+            );
+        }
     }
 
     /**
@@ -190,6 +317,8 @@ public final class PortPreviewRenderer {
      * @param graphics GUI graphics
      * @param camera camera
      * @param face preview face
+     * @param hovered hovered
+     * @param selected selected
      * @param centerX widget center x
      * @param centerY widget center y
      */
@@ -247,55 +376,6 @@ public final class PortPreviewRenderer {
     }
 
     /**
-     * Gets the projected bounds for one cube.
-     *
-     * @param camera camera
-     * @param pos cube position
-     * @param centerX widget center x
-     * @param centerY widget center y
-     * @return projected bounds
-     */
-    private static Bounds boundsFor(
-            final PortPreviewCamera camera,
-            final BlockPos pos,
-            final int centerX,
-            final int centerY
-    ) {
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
-
-        for (int x = 0; x <= 1; x++) {
-            for (int y = 0; y <= 1; y++) {
-                for (int z = 0; z <= 1; z++) {
-                    final PortPreviewCamera.ProjectedPoint point = camera.project(
-                            new Vec3(
-                                    pos.getX() + x,
-                                    pos.getY() + y,
-                                    pos.getZ() + z
-                            ),
-                            centerX,
-                            centerY
-                    );
-
-                    minX = Math.min(minX, (int) Math.round(point.x()));
-                    minY = Math.min(minY, (int) Math.round(point.y()));
-                    maxX = Math.max(maxX, (int) Math.round(point.x()));
-                    maxY = Math.max(maxY, (int) Math.round(point.y()));
-                }
-            }
-        }
-
-        return new Bounds(
-                minX,
-                minY,
-                maxX,
-                maxY
-        );
-    }
-
-    /**
      * Gets the center point of one cube face.
      *
      * @param pos cube position
@@ -311,21 +391,5 @@ public final class PortPreviewRenderer {
                 pos.getY() + 0.5D + face.getStepY() * 0.51D,
                 pos.getZ() + 0.5D + face.getStepZ() * 0.51D
         );
-    }
-
-    private record RenderCube(
-            PreviewBlock block,
-            double depth
-    ) {
-
-    }
-
-    private record Bounds(
-            int minX,
-            int minY,
-            int maxX,
-            int maxY
-    ) {
-
     }
 }
