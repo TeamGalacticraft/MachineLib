@@ -27,6 +27,7 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
 
     private final Menu menu;
     private final Map<PreviewPortFace, MultiblockPortFace> faceMap = new HashMap<>();
+    private PortPreviewBounds cachedBounds;
 
     /**
      * Creates a multiblock preview scene.
@@ -88,6 +89,69 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
         );
 
         return List.copyOf(blocks);
+    }
+
+    @Override
+    public PortPreviewBounds bounds() {
+        if (this.cachedBounds != null) {
+            return this.cachedBounds;
+        }
+
+        final MultiblockDefinition definition = MachineLibMultiblocks.getDefinition(this.menu.definitionId);
+
+        if (definition == null) {
+            this.cachedBounds = PortPreviewBounds.singleBlock();
+            return this.cachedBounds;
+        }
+
+        final MultiblockPattern pattern = definition.pattern();
+
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+
+        for (int x = 0; x < pattern.sizeX(); x++) {
+            for (int y = 0; y < pattern.sizeY(); y++) {
+                for (int z = 0; z < pattern.sizeZ(); z++) {
+                    if (pattern.predicateAt(x, y, z) == null) {
+                        continue;
+                    }
+
+                    final BlockPos previewPos = this.transform(new BlockPos(
+                            x,
+                            y,
+                            z
+                    ));
+
+                    minX = Math.min(minX, previewPos.getX());
+                    minY = Math.min(minY, previewPos.getY());
+                    minZ = Math.min(minZ, previewPos.getZ());
+
+                    maxX = Math.max(maxX, previewPos.getX() + 1);
+                    maxY = Math.max(maxY, previewPos.getY() + 1);
+                    maxZ = Math.max(maxZ, previewPos.getZ() + 1);
+                }
+            }
+        }
+
+        if (minX == Integer.MAX_VALUE) {
+            this.cachedBounds = PortPreviewBounds.singleBlock();
+            return this.cachedBounds;
+        }
+
+        this.cachedBounds = new PortPreviewBounds(
+                minX,
+                minY,
+                minZ,
+                maxX,
+                maxY,
+                maxZ
+        );
+
+        return this.cachedBounds;
     }
 
     @Override

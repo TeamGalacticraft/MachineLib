@@ -153,6 +153,11 @@ public final class BlockEntityPortPreviewScene<
         );
     }
 
+    @Override
+    public PortPreviewBounds bounds() {
+        return PortPreviewBounds.singleBlock();
+    }
+
     /**
      * Gets the machine's facing direction.
      *

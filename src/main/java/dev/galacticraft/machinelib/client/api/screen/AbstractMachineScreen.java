@@ -33,6 +33,7 @@ import dev.galacticraft.machinelib.api.storage.MachineEnergyStorage;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.transfer.TransferType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.client.api.screen.port.PortConfigPreviewScreen;
 import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
 import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewWidget;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
@@ -145,6 +146,13 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
 
     private static final int MACHINE_FACE_SIZE = 16;
     private static final int BUTTON_SIZE = 16;
+
+    private static final int PORT_CONFIG_PANEL_WIDTH = 170;
+    private static final int PORT_CONFIG_PANEL_HEIGHT = 126;
+    private static final int PORT_CONFIG_PREVIEW_X = 5;
+    private static final int PORT_CONFIG_PREVIEW_Y = 22;
+    private static final int PORT_CONFIG_PREVIEW_WIDTH = 160;
+    private static final int PORT_CONFIG_PREVIEW_HEIGHT = 74;
 
     @ApiStatus.Internal
     private static final List<Component> TOOLTIP_ARRAY = new ArrayList<>();
@@ -274,11 +282,18 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
 
         if (this.portPreviewScene != null) {
             this.portPreviewWidget = new PortPreviewWidget(
-                    this.leftPos + this.imageWidth + SPACING,
-                    this.topPos + SPACING,
-                    170,
-                    120
+                    0,
+                    0,
+                    PORT_CONFIG_PREVIEW_WIDTH,
+                    PORT_CONFIG_PREVIEW_HEIGHT
             );
+
+            this.portPreviewWidget.setPopOutHandler(() -> this.minecraft.setScreen(new PortConfigPreviewScreen(
+                    this,
+                    this.portPreviewScene
+            )));
+
+            this.portPreviewWidget.centerOnScene(this.portPreviewScene);
         } else {
             this.portPreviewWidget = null;
         }
@@ -332,11 +347,26 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         int rightY = this.topPos + SPACING;
 
         for (final Tab tab : Tab.values()) {
-            final int width = tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
-            final int height = tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
+            final int width = tab == Tab.CONFIGURATION && tab.isOpen()
+                    ? PORT_CONFIG_PANEL_WIDTH
+                    : tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
+
+            final int height = tab == Tab.CONFIGURATION && tab.isOpen()
+                    ? PORT_CONFIG_PANEL_HEIGHT
+                    : tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
 
             if (tab.isLeft()) {
-                graphics.blit(Constant.ScreenTexture.MACHINE_CONFIG_PANELS, leftX - width, leftY, tab.getU(), tab.getV(), width, height);
+                if (!(tab == Tab.CONFIGURATION && tab.isOpen())) {
+                    graphics.blit(
+                            Constant.ScreenTexture.MACHINE_CONFIG_PANELS,
+                            leftX - width,
+                            leftY,
+                            tab.getU(),
+                            tab.getV(),
+                            width,
+                            height
+                    );
+                }
 
                 if (!tab.isOpen()) {
                     graphics.renderFakeItem(tab.getItem(), leftX - TAB_WIDTH + 4, leftY + 3);
@@ -382,21 +412,69 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         }
 
         if (Tab.CONFIGURATION.isOpen()) {
+            final int panelX = this.leftPos - PORT_CONFIG_PANEL_WIDTH;
+            final int panelY = this.topPos + TAB_HEIGHT + SPACING * 2;
+
             poseStack.pushPose();
-            poseStack.translate(-PANEL_WIDTH, TAB_HEIGHT + SPACING * 2, 0);
+            poseStack.translate(-PORT_CONFIG_PANEL_WIDTH, TAB_HEIGHT + SPACING * 2, 0);
 
-            graphics.renderFakeItem(WRENCH, Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT, PANEL_ICON_Y);
-            graphics.drawString(this.font, Component.translatable(Constant.TranslationKey.CONFIGURATION).setStyle(Constant.Text.GRAY_STYLE), (Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X, PANEL_TITLE_Y, 0xFFFFFFFF);
+            graphics.fill(
+                    0,
+                    0,
+                    PORT_CONFIG_PANEL_WIDTH,
+                    PORT_CONFIG_PANEL_HEIGHT,
+                    0xDD202020
+            );
 
-            RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-            this.drawMachineFace(graphics, TOP_FACE_X, TOP_FACE_Y, this.configuration(), BlockFace.TOP);
-            this.drawMachineFace(graphics, LEFT_FACE_X, LEFT_FACE_Y, this.configuration(), BlockFace.LEFT);
-            this.drawMachineFace(graphics, FRONT_FACE_X, FRONT_FACE_Y, this.configuration(), BlockFace.FRONT);
-            this.drawMachineFace(graphics, RIGHT_FACE_X, RIGHT_FACE_Y, this.configuration(), BlockFace.RIGHT);
-            this.drawMachineFace(graphics, BACK_FACE_X, BACK_FACE_Y, this.configuration(), BlockFace.BACK);
-            this.drawMachineFace(graphics, BOTTOM_FACE_X, BOTTOM_FACE_Y, this.configuration(), BlockFace.BOTTOM);
+            graphics.fill(
+                    0,
+                    0,
+                    PORT_CONFIG_PANEL_WIDTH,
+                    PANEL_UPPER_HEIGHT,
+                    0xEE303030
+            );
+
+            graphics.renderFakeItem(
+                    WRENCH,
+                    Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT,
+                    PANEL_ICON_Y
+            );
+
+            graphics.drawString(
+                    this.font,
+                    Component.literal("Port Config").setStyle(Constant.Text.GRAY_STYLE),
+                    (Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X,
+                    PANEL_TITLE_Y,
+                    0xFFFFFFFF
+            );
+
+            graphics.drawString(this.font, Component.literal("LMB cycle"), 6, PORT_CONFIG_PANEL_HEIGHT - 42, 0xFFB0B0B0, false);
+            graphics.drawString(this.font, Component.literal("RMB reverse"), 6, PORT_CONFIG_PANEL_HEIGHT - 32, 0xFFB0B0B0, false);
+            graphics.drawString(this.font, Component.literal("Ctrl/Mid clear"), 6, PORT_CONFIG_PANEL_HEIGHT - 22, 0xFFB0B0B0, false);
+            graphics.drawString(this.font, Component.literal("Drag rotate | Scroll zoom"), 6, PORT_CONFIG_PANEL_HEIGHT - 12, 0xFFB0B0B0, false);
 
             poseStack.popPose();
+
+            if (this.portPreviewWidget != null && this.portPreviewScene != null) {
+                this.portPreviewWidget.setBounds(
+                        panelX + PORT_CONFIG_PREVIEW_X,
+                        panelY + PORT_CONFIG_PREVIEW_Y,
+                        PORT_CONFIG_PREVIEW_WIDTH,
+                        PORT_CONFIG_PREVIEW_HEIGHT
+                );
+
+                poseStack.pushPose();
+                poseStack.translate(-this.leftPos, -this.topPos, 0);
+
+                this.portPreviewWidget.render(
+                        graphics,
+                        this.portPreviewScene,
+                        mouseX,
+                        mouseY
+                );
+
+                poseStack.popPose();
+            }
         }
 
         if (Tab.STATS.isOpen()) {
@@ -562,36 +640,21 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         mouseX = originalMouseX - this.leftPos;
         mouseY = originalMouseY - this.topPos;
 
+        mouseX = originalMouseX - this.leftPos;
+        mouseY = originalMouseY - this.topPos;
+
         if (Tab.CONFIGURATION.isOpen()) {
-            mouseX += PANEL_WIDTH;
+            mouseX += PORT_CONFIG_PANEL_WIDTH;
             mouseY -= TAB_HEIGHT + SPACING * 2;
 
-            if (mouseIn(mouseX, mouseY, 0, 0, PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
+            if (mouseIn(mouseX, mouseY, 0, 0, PORT_CONFIG_PANEL_WIDTH, PANEL_UPPER_HEIGHT)) {
                 Tab.CONFIGURATION.toggle();
                 this.playButtonSound();
                 return true;
             }
 
-            if (button >= GLFW.GLFW_MOUSE_BUTTON_LEFT && button <= GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
-                if (mouseIn(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.TOP);
-                    return true;
-                } else if (mouseIn(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.LEFT);
-                    return true;
-                } else if (mouseIn(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.FRONT);
-                    return true;
-                } else if (mouseIn(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.RIGHT);
-                    return true;
-                } else if (mouseIn(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.BACK);
-                    return true;
-                } else if (mouseIn(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, BUTTON_SIZE, BUTTON_SIZE)) {
-                    this.modifyFace(button, BlockFace.BOTTOM);
-                    return true;
-                }
+            if (mouseIn(mouseX, mouseY, 0, 0, PORT_CONFIG_PANEL_WIDTH, PORT_CONFIG_PANEL_HEIGHT)) {
+                return true;
             }
         } else {
             mouseX += TAB_WIDTH;
@@ -686,8 +749,13 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         int rightY = this.getY() + SPACING;
 
         for (final Tab tab : Tab.values()) {
-            final int width = tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
-            final int height = tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
+            final int width = tab == Tab.CONFIGURATION && tab.isOpen()
+                    ? PORT_CONFIG_PANEL_WIDTH
+                    : tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
+
+            final int height = tab == Tab.CONFIGURATION && tab.isOpen()
+                    ? PORT_CONFIG_PANEL_HEIGHT
+                    : tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
 
             if (tab.isLeft()) {
                 areas.add(new Rect2i(leftX - width, leftY, width, height));
@@ -904,8 +972,6 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
     }
 
     /**
-     * Renders the shared 3D port preview widget.
-     *
      * @param graphics GUI graphics
      * @param mouseX mouse x
      * @param mouseY mouse y
@@ -915,16 +981,7 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             final int mouseX,
             final int mouseY
     ) {
-        if (this.portPreviewWidget == null || this.portPreviewScene == null) {
-            return;
-        }
 
-        this.portPreviewWidget.render(
-                graphics,
-                this.portPreviewScene,
-                mouseX,
-                mouseY
-        );
     }
 
     /**
@@ -1086,61 +1143,7 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             int mouseX,
             int mouseY
     ) {
-        if (!Tab.CONFIGURATION.isOpen()) {
-            return;
-        }
 
-        mouseX -= this.leftPos - PANEL_WIDTH;
-        mouseY -= this.topPos + TAB_HEIGHT + SPACING * 2;
-
-        IOFace config = null;
-
-        if (mouseIn(mouseX, mouseY, TOP_FACE_X, TOP_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.TOP);
-        } else if (mouseIn(mouseX, mouseY, LEFT_FACE_X, LEFT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.LEFT);
-        } else if (mouseIn(mouseX, mouseY, FRONT_FACE_X, FRONT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.FRONT);
-        } else if (mouseIn(mouseX, mouseY, RIGHT_FACE_X, RIGHT_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.RIGHT);
-        } else if (mouseIn(mouseX, mouseY, BACK_FACE_X, BACK_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.BACK);
-        } else if (mouseIn(mouseX, mouseY, BOTTOM_FACE_X, BOTTOM_FACE_Y, MACHINE_FACE_SIZE, MACHINE_FACE_SIZE)) {
-            config = this.configuration().get(BlockFace.BOTTOM);
-        }
-
-        if (config == null) {
-            return;
-        }
-
-        final ResourceType resource = config.getType();
-
-        if (resource.willAcceptResource(ResourceType.ITEM)) {
-            for (final Slot slot : this.menu.slots) {
-                if (slot instanceof StorageSlot storageSlot) {
-                    final TransferType type = storageSlot.getWrapped().transferMode();
-
-                    if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                        GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, slot.x, slot.y, 16, 16, type.color());
-                    }
-                }
-            }
-        }
-
-        if (resource.willAcceptResource(ResourceType.FLUID)) {
-            for (final Tank tank : this.tanks()) {
-                final TransferType type = tank.getInputType();
-
-                if (type.getExternalFlow() != null && type.getExternalFlow().canFlowIn(config.getFlow())) {
-                    GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, tank.getX(), tank.getY(), tank.getWidth(), tank.getHeight(), type.color());
-                }
-            }
-        }
-
-        if (resource.willAcceptResource(ResourceType.ENERGY)) {
-            RenderSystem.enableBlend();
-            GraphicsUtil.highlightElement(graphics, this.leftPos, this.topPos, this.capacitorX, this.capacitorY, 16, this.capacitorHeight, 0x00F6FF00);
-        }
     }
 
     /**
@@ -1165,7 +1168,10 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             return true;
         }
 
-        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseClicked(mouseX, mouseY, button)) {
+        if (this.portPreviewWidget != null
+                && this.portPreviewScene != null
+                && Tab.CONFIGURATION.isOpen()
+                && this.portPreviewWidget.mouseClicked(this.portPreviewScene, mouseX, mouseY, button)) {
             return true;
         }
 
@@ -1282,7 +1288,11 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             final double horizontalAmount,
             final double verticalAmount
     ) {
-        if (this.portPreviewWidget != null && this.portPreviewWidget.mouseScrolled(
+        if (this.portPreviewWidget != null
+                && this.portPreviewScene != null
+                && Tab.CONFIGURATION.isOpen()
+                && this.portPreviewWidget.mouseScrolled(
+                this.portPreviewScene,
                 mouseX,
                 mouseY,
                 verticalAmount

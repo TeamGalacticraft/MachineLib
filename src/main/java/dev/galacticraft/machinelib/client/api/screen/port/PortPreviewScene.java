@@ -1,13 +1,11 @@
 package dev.galacticraft.machinelib.client.api.screen.port;
 
+import net.minecraft.network.chat.Component;
+
 import java.util.List;
 
 /**
  * Backend data source for a reusable 3D port configuration preview.
- *
- * <p>The widget should only render blocks, render selectable faces, and forward
- * clicks back into this scene. The scene owns the machine-specific conversion
- * between preview-space faces and real menu configuration actions.</p>
  */
 public interface PortPreviewScene {
 
@@ -26,6 +24,24 @@ public interface PortPreviewScene {
     List<PreviewPortFace> portFaces();
 
     /**
+     * Gets the clamped camera bounds.
+     *
+     * @return preview bounds
+     */
+    default PortPreviewBounds bounds() {
+        return PortPreviewBounds.fromPrimaryBlocks(this.blocks());
+    }
+
+    /**
+     * Gets the preview title.
+     *
+     * @return title
+     */
+    default Component title() {
+        return Component.literal("Port Config");
+    }
+
+    /**
      * Cycles the configuration for a selected face.
      *
      * @param face selected preview face
@@ -39,5 +55,4 @@ public interface PortPreviewScene {
      * @param face selected preview face
      */
     void removePort(PreviewPortFace face);
-
 }
