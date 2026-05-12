@@ -35,6 +35,9 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockPartInteractionHandl
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardComponents;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRule;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictScope;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -67,6 +70,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     private MultiblockPattern pattern;
     private MultiblockPartInteractionHandler interactionHandler;
     private MultiblockMenuFactory menuFactory;
+
+    private final List<MultiblockPortConflictRuleAssignment> portConflictRules = new ArrayList<>();
 
     /**
      * Creates a builder for a multiblock id.
@@ -295,7 +300,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.componentFactories,
                 this.portRules,
                 this.defaultPorts,
-                exposedFaces
+                exposedFaces,
+                this.portConflictRules
         );
     }
 
@@ -342,6 +348,30 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 ));
             }
         }
+    }
+
+    /**
+     * Adds a scoped port conflict rule to this multiblock.
+     *
+     * <p>Conflict rules are evaluated only in the port configuration UI. They allow
+     * a multiblock definition to mark otherwise rule-allowed port options as
+     * conflicting or disabled. Rules may be scoped to the entire multiblock, one
+     * port type, one pattern-relative block, or one exact face.</p>
+     *
+     * @param scope scope where the rule applies
+     * @param rule conflict rule
+     * @return this builder
+     */
+    public SimpleMultiblockBuilder portConflictRule(
+            final MultiblockPortConflictScope scope,
+            final MultiblockPortConflictRule rule
+    ) {
+        this.portConflictRules.add(new MultiblockPortConflictRuleAssignment(
+                scope,
+                rule
+        ));
+
+        return this;
     }
 
     /**

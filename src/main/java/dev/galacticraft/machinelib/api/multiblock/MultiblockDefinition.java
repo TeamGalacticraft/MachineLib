@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.api.multiblock;
 import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockMenuOpener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
@@ -95,6 +96,19 @@ public interface MultiblockDefinition {
         }
 
         return false;
+    }
+
+    /**
+     * Gets optional port conflict rule assignments.
+     *
+     * <p>MachineLib applies no port conflicts by default. Definitions may opt into
+     * conflict rules globally, by port type, by pattern-relative block position, or
+     * by exact pattern-relative face.</p>
+     *
+     * @return immutable conflict rule assignments
+     */
+    default List<MultiblockPortConflictRuleAssignment> portConflictRules() {
+        return List.of();
     }
 
     /**

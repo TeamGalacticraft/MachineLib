@@ -26,6 +26,8 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictContext;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
 import net.minecraft.client.Minecraft;
@@ -465,18 +467,30 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
             return PreviewPortOptionState.DISABLED;
         }
 
-        final ConfiguredMultiblockPort port = option.port();
+        final MultiblockDefinition definition = MachineLibMultiblocks.getDefinition(this.menu.definitionId);
 
-        if (port == null) {
+        if (definition == null) {
             return PreviewPortOptionState.VALID;
         }
 
-        if (this.hasDuplicateTargetConflict(portFace, port)) {
-            return PreviewPortOptionState.CONFLICT;
-        }
+        final MultiblockPortConflictContext context = new MultiblockPortConflictContext(
+                definition,
+                this.menu,
+                portFace,
+                face,
+                option
+        );
 
-        if (this.hasMissingNeighbourConflict(face, port)) {
-            return PreviewPortOptionState.CONFLICT;
+        for (final MultiblockPortConflictRuleAssignment assignment : definition.portConflictRules()) {
+            if (!assignment.matches(context)) {
+                continue;
+            }
+
+            final PreviewPortOptionState state = assignment.rule().validate(context);
+
+            if (state == PreviewPortOptionState.DISABLED || state == PreviewPortOptionState.CONFLICT) {
+                return state;
+            }
         }
 
         return PreviewPortOptionState.VALID;

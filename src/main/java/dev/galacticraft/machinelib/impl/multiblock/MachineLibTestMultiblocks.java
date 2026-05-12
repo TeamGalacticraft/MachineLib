@@ -28,6 +28,8 @@ import dev.galacticraft.machinelib.api.multiblock.components.MultiblockStandardC
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortMode;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortTarget;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortType;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRules;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictScope;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
@@ -80,6 +82,16 @@ public final class MachineLibTestMultiblocks {
 
                     registerPortRules(builder);
                     registerDefaultPorts(builder);
+
+                    builder.portConflictRule(
+                            MultiblockPortConflictScope.multiblock(),
+                            MultiblockPortConflictRules.onlyOneUniquePortPerMultiblock()
+                    );
+
+                    builder.portConflictRule(
+                            MultiblockPortConflictScope.portBlock(new BlockPos(0, 0, 0)),
+                            MultiblockPortConflictRules.onlyOnePortPerBlock()
+                    );
 
 //                    builder.onUsePart(context -> {
 //                        context.player().sendSystemMessage(Component.literal(
