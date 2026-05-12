@@ -410,7 +410,16 @@ public final class PortConfigSidebarWidget {
                     false
             );
 
-            final Component tooltip = child ? option.fullTargetLabel() : null;
+            Component tooltip = child ? option.fullTargetLabel() : null;
+
+            final Component validationTooltip = scene.optionTooltipFor(
+                    selectedFace,
+                    option
+            );
+
+            if (validationTooltip != null) {
+                tooltip = validationTooltip;
+            }
 
             if (hovered && tooltip != null) {
                 this.hoveredTooltip = tooltip;

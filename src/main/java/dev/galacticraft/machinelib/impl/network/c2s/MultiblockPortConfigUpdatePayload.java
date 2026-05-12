@@ -239,7 +239,8 @@ public record MultiblockPortConfigUpdatePayload(
                 )
         );
 
-        if (!machine.definition().allowsPort(port)) {
+        if (!menu.canApplyPortConfiguration(port)) {
+            menu.syncPortsToClient();
             return;
         }
 

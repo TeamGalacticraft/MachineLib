@@ -1,40 +1,56 @@
-package dev.galacticraft.machinelib.api.multiblock.port.conflict;
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
-import dev.galacticraft.machinelib.client.api.screen.port.PreviewPortOptionState;
+package dev.galacticraft.machinelib.api.multiblock.port.conflict;
 
 /**
  * Base class for custom multiblock port conflict rules.
  *
- * <p>This class handles common safety checks, such as clear/no-port options.
- * Developers only need to implement {@link #validatePort(MultiblockPortConflictContext)}
- * for real configured port candidates.</p>
+ * <p>This class handles null/no-port safety checks. Developers only need to
+ * implement {@link #validatePort(MultiblockPortConflictContext)} for real
+ * configured port candidates.</p>
  */
 public abstract class AbstractMultiblockPortConflictRule implements MultiblockPortConflictRule {
 
     /**
-     * Validates one candidate port option.
+     * Validates one candidate port.
      *
      * @param context validation context
-     * @return validation state for the candidate option
+     * @return validation result for the candidate port
      */
     @Override
-    public final PreviewPortOptionState validate(final MultiblockPortConflictContext context) {
-        if (context.option().clearsPort()) {
-            return PreviewPortOptionState.VALID;
-        }
-
+    public final MultiblockPortConflictResult validate(final MultiblockPortConflictContext context) {
         if (context.port() == null) {
-            return PreviewPortOptionState.VALID;
+            return MultiblockPortConflictResult.valid();
         }
 
         return this.validatePort(context);
     }
 
     /**
-     * Validates a non-clear configured port candidate.
+     * Validates a non-null configured port candidate.
      *
      * @param context validation context
-     * @return validation state for the candidate option
+     * @return validation result for the candidate port
      */
-    protected abstract PreviewPortOptionState validatePort(MultiblockPortConflictContext context);
+    protected abstract MultiblockPortConflictResult validatePort(MultiblockPortConflictContext context);
 }

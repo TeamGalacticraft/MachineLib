@@ -26,8 +26,6 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
-import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictContext;
-import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
 import net.minecraft.client.Minecraft;
@@ -306,9 +304,9 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
     /**
      * Cycles to the next valid, non-conflicting port option for a selected face.
      *
-     * <p>This uses the same validation path as the sidebar. Options marked as
-     * {@link PreviewPortOptionState#DISABLED} or {@link PreviewPortOptionState#CONFLICT}
-     * are skipped, so clicking the 3D face cannot bypass conflict rules.</p>
+     * <p>This uses the same validation path as the sidebar and the server packet
+     * handler. Options that cannot be applied are skipped, so clicking the 3D face
+     * cannot bypass registered conflict rules.</p>
      *
      * @param face selected preview face
      * @param reverse whether to cycle backward
@@ -318,32 +316,20 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
             final PreviewPortFace face,
             final boolean reverse
     ) {
-        final List<PreviewPortOption> options = this.optionsFor(face);
+        final List<PreviewPortOption> options = this.optionsFor(face)
+                .stream()
+                .filter(option -> option.clearsPort()
+                        || option.port() != null && this.menu.canApplyPortConfiguration(option.port()))
+                .toList();
 
         if (options.isEmpty()) {
             return;
         }
 
-        final List<PreviewPortOption> validOptions = options.stream()
-                .filter(option -> {
-                    final PreviewPortOptionState state = this.optionStateFor(
-                            face,
-                            option
-                    );
-
-                    return state != PreviewPortOptionState.DISABLED
-                            && state != PreviewPortOptionState.CONFLICT;
-                })
-                .toList();
-
-        if (validOptions.isEmpty()) {
-            return;
-        }
-
         int currentIndex = -1;
 
-        for (int i = 0; i < validOptions.size(); i++) {
-            if (validOptions.get(i).matches(face)) {
+        for (int i = 0; i < options.size(); i++) {
+            if (options.get(i).matches(face)) {
                 currentIndex = i;
                 break;
             }
@@ -353,17 +339,17 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
 
         if (reverse) {
             nextIndex = currentIndex <= 0
-                    ? validOptions.size() - 1
+                    ? options.size() - 1
                     : currentIndex - 1;
         } else {
-            nextIndex = currentIndex >= validOptions.size() - 1
+            nextIndex = currentIndex >= options.size() - 1
                     ? 0
                     : currentIndex + 1;
         }
 
         this.setPort(
                 face,
-                validOptions.get(nextIndex)
+                options.get(nextIndex)
         );
     }
 
@@ -508,39 +494,32 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
             return PreviewPortOptionState.VALID;
         }
 
-        final MultiblockPortFace portFace = this.portFaceFor(face);
+        final ConfiguredMultiblockPort port = option.port();
 
-        if (portFace == null) {
-            return PreviewPortOptionState.DISABLED;
-        }
-
-        final MultiblockDefinition definition = MachineLibMultiblocks.getDefinition(this.menu.definitionId);
-
-        if (definition == null) {
+        if (port == null) {
             return PreviewPortOptionState.VALID;
         }
 
-        final MultiblockPortConflictContext context = new MultiblockPortConflictContext(
-                definition,
-                this.menu,
-                portFace,
-                face,
-                option
-        );
+        return this.menu.validatePortConfiguration(port).state();
+    }
 
-        for (final MultiblockPortConflictRuleAssignment assignment : definition.portConflictRules()) {
-            if (!assignment.matches(context)) {
-                continue;
-            }
-
-            final PreviewPortOptionState state = assignment.rule().validate(context);
-
-            if (state == PreviewPortOptionState.DISABLED || state == PreviewPortOptionState.CONFLICT) {
-                return state;
-            }
+    /**
+     * Gets the validation tooltip reason for an option on a selected face.
+     *
+     * @param face selected face
+     * @param option option
+     * @return tooltip reason, or {@code null}
+     */
+    @Override
+    public Component optionTooltipFor(
+            final PreviewPortFace face,
+            final PreviewPortOption option
+    ) {
+        if (option.clearsPort() || option.port() == null) {
+            return null;
         }
 
-        return PreviewPortOptionState.VALID;
+        return this.menu.validatePortConfiguration(option.port()).reason();
     }
 
     /**

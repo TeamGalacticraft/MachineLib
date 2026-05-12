@@ -30,10 +30,14 @@ import dev.galacticraft.machinelib.api.menu.SynchronizedMenu;
 import dev.galacticraft.machinelib.api.menu.Tank;
 import dev.galacticraft.machinelib.api.multiblock.components.*;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictContext;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictResult;
+import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.impl.menu.MenuDataClient;
+import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.menu.MenuDataImpl;
 import dev.galacticraft.machinelib.impl.multiblock.FormedMultiblockMachine;
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
@@ -42,6 +46,7 @@ import dev.galacticraft.machinelib.impl.network.s2c.MultiblockPortConfigSyncPayl
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -369,9 +374,9 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
     /**
      * Cycles the configured port on a multiblock face.
      *
-     * <p>Every configurable face always has an implicit {@code none} option. This
-     * means cycling forward goes from no port to the first valid option, through
-     * every valid option, then back to no port. Cycling backward does the reverse.</p>
+     * <p>Every configurable face always has an implicit {@code none} option. Cycling
+     * skips options that are disabled or conflicting, so client-side face clicking
+     * cannot bypass registered conflict rules.</p>
      *
      * @param face port face to cycle
      * @param reverse whether to cycle backward
@@ -380,13 +385,21 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
             final MultiblockPortFace face,
             final boolean reverse
     ) {
-        final List<ConfiguredMultiblockPort> options = this.portOptionsFor(face);
+        final List<ConfiguredMultiblockPort> rawOptions = this.portOptionsFor(face);
 
-        if (options.isEmpty()) {
-            return;
-        }
+        final List<ConfiguredMultiblockPort> options = rawOptions.stream()
+                .filter(this::canApplyPortConfiguration)
+                .toList();
 
         final Optional<ConfiguredMultiblockPort> current = this.configuredPortAt(face);
+
+        if (options.isEmpty()) {
+            if (current.isPresent()) {
+                this.removePort(face);
+            }
+
+            return;
+        }
 
         if (current.isEmpty()) {
             this.setPort(reverse ? options.get(options.size() - 1) : options.get(0));
@@ -430,14 +443,17 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
     /**
      * Sets the configured port on one multiblock face.
      *
-     * <p>On the client this updates the local cache immediately so the preview UI
-     * reflects the change in the same frame. The packet is still sent to the
-     * server, which remains authoritative and may later correct the client if the
-     * option is rejected.</p>
+     * <p>On the client this updates the local cache immediately only if the candidate
+     * passes the same validation used by the server. The server remains authoritative
+     * and validates the packet again before mutating the formed machine.</p>
      *
      * @param port configured port to apply
      */
     public void setPort(final ConfiguredMultiblockPort port) {
+        if (!this.canApplyPortConfiguration(port)) {
+            return;
+        }
+
         if (this.machine == null) {
             this.clientPorts.put(
                     port.face(),
@@ -690,6 +706,66 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
      */
     private static final class ClientSecuritySettings extends SecuritySettings {
 
+    }
+
+    /**
+     * Validates a candidate configured multiblock port against the definition's
+     * allowed port rules and optional conflict rules.
+     *
+     * <p>This method is safe to call on both the client and the server. The client
+     * uses it for preview UI feedback and cycling. The server uses it as the
+     * authoritative validation path before accepting a packet.</p>
+     *
+     * @param port candidate configured port
+     * @return validation result
+     */
+    public MultiblockPortConflictResult validatePortConfiguration(final ConfiguredMultiblockPort port) {
+        final MultiblockDefinition definition = this.machine == null
+                ? MachineLibMultiblocks.getDefinition(this.definitionId)
+                : this.machine.definition();
+
+        if (definition == null) {
+            return MultiblockPortConflictResult.disabled(
+                    Component.translatable(Constant.TranslationKey.PORT_CONFLICT_DISABLED)
+            );
+        }
+
+        if (!definition.allowsPort(port)) {
+            return MultiblockPortConflictResult.disabled(
+                    Component.translatable(Constant.TranslationKey.PORT_CONFLICT_DISABLED)
+            );
+        }
+
+        final MultiblockPortConflictContext context = new MultiblockPortConflictContext(
+                definition,
+                this,
+                port.face(),
+                port
+        );
+
+        for (final MultiblockPortConflictRuleAssignment assignment : definition.portConflictRules()) {
+            if (!assignment.matches(context)) {
+                continue;
+            }
+
+            final MultiblockPortConflictResult result = assignment.rule().validate(context);
+
+            if (result.blocksSelection()) {
+                return result;
+            }
+        }
+
+        return MultiblockPortConflictResult.valid();
+    }
+
+    /**
+     * Checks whether a candidate configured multiblock port may be applied.
+     *
+     * @param port candidate configured port
+     * @return {@code true} if the port may be applied
+     */
+    public boolean canApplyPortConfiguration(final ConfiguredMultiblockPort port) {
+        return !this.validatePortConfiguration(port).blocksSelection();
     }
 
 }

@@ -246,6 +246,10 @@ public interface Constant {
         String PORT_OPTION_GROUP = "ui.machinelib.port_config.option.group";
         String PORT_OPTION_TARGET_COMPACT = "ui.machinelib.port_config.option.target_compact";
         String PORT_OPTION_TARGET_FULL = "ui.machinelib.port_config.option.target_full";
+
+        String PORT_CONFLICT_ONLY_ONE_PER_BLOCK = "ui.machinelib.port_config.conflict.only_one_per_block";
+        String PORT_CONFLICT_ONLY_ONE_UNIQUE_PER_MULTIBLOCK = "ui.machinelib.port_config.conflict.only_one_unique_per_multiblock";
+        String PORT_CONFLICT_DISABLED = "ui.machinelib.port_config.conflict.disabled";
     }
 
     interface Filter {

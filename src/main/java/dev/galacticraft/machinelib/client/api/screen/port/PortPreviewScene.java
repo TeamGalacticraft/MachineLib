@@ -73,6 +73,20 @@ public interface PortPreviewScene {
     void cyclePort(PreviewPortFace face, boolean reverse);
 
     /**
+     * Gets the validation tooltip reason for an option on a selected face.
+     *
+     * @param face selected face
+     * @param option option
+     * @return tooltip reason, or {@code null}
+     */
+    default Component optionTooltipFor(
+            final PreviewPortFace face,
+            final PreviewPortOption option
+    ) {
+        return null;
+    }
+
+    /**
      * Removes the configuration from a selected face.
      *
      * @param face selected preview face
