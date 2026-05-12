@@ -55,8 +55,6 @@ import java.util.List;
  */
 public final class PortPreviewRenderer {
 
-    private static final int PICK_RADIUS = 8;
-
     private PortPreviewRenderer() {
 
     }
@@ -287,25 +285,6 @@ public final class PortPreviewRenderer {
                 relativeX,
                 relativeY,
                 relativeZ
-        );
-    }
-
-    /**
-     * Converts a view-space depth direction into preview-space.
-     *
-     * @param camera preview camera
-     * @param viewDepth depth direction scalar
-     * @return preview-space direction
-     */
-    private static Vec3 unprojectDirection(
-            final PortPreviewCamera camera,
-            final double viewDepth
-    ) {
-        return unprojectViewPoint(
-                camera,
-                0.0D,
-                0.0D,
-                viewDepth
         );
     }
 
@@ -625,25 +604,14 @@ public final class PortPreviewRenderer {
 
         poseStack.pushPose();
 
-        poseStack.translate(
-                x + width / 2.0D,
-                y + height / 2.0D,
+        applyPreviewTransform(
+                poseStack,
+                camera,
+                x,
+                y,
+                width,
+                height,
                 200.0D
-        );
-
-        poseStack.scale(
-                camera.zoom(),
-                -camera.zoom(),
-                camera.zoom()
-        );
-
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
-
-        poseStack.translate(
-                -focus.x,
-                -focus.y,
-                -focus.z
         );
 
         final VertexConsumer consumer = buffer.getBuffer(RenderType.cutoutMipped());
@@ -709,25 +677,14 @@ public final class PortPreviewRenderer {
 
         poseStack.pushPose();
 
-        poseStack.translate(
-                x + width / 2.0D,
-                y + height / 2.0D,
+        applyPreviewTransform(
+                poseStack,
+                camera,
+                x,
+                y,
+                width,
+                height,
                 200.0D
-        );
-
-        poseStack.scale(
-                camera.zoom(),
-                -camera.zoom(),
-                camera.zoom()
-        );
-
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
-
-        poseStack.translate(
-                -focus.x,
-                -focus.y,
-                -focus.z
         );
 
         final float opacity = MachineLib.CONFIG.portPreviewAdjacentBlockOpacity();
@@ -809,25 +766,14 @@ public final class PortPreviewRenderer {
 
         poseStack.pushPose();
 
-        poseStack.translate(
-                x + width / 2.0D,
-                y + height / 2.0D,
+        applyPreviewTransform(
+                poseStack,
+                camera,
+                x,
+                y,
+                width,
+                height,
                 200.0D
-        );
-
-        poseStack.scale(
-                camera.zoom(),
-                -camera.zoom(),
-                camera.zoom()
-        );
-
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
-
-        poseStack.translate(
-                -focus.x,
-                -focus.y,
-                -focus.z
         );
 
         for (final PreviewBlock block : scene.blocks()) {
@@ -1052,25 +998,14 @@ public final class PortPreviewRenderer {
 
         poseStack.pushPose();
 
-        poseStack.translate(
-                x + width / 2.0D,
-                y + height / 2.0D,
+        applyPreviewTransform(
+                poseStack,
+                camera,
+                x,
+                y,
+                width,
+                height,
                 201.0D
-        );
-
-        poseStack.scale(
-                camera.zoom(),
-                -camera.zoom(),
-                camera.zoom()
-        );
-
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
-
-        poseStack.translate(
-                -focus.x,
-                -focus.y,
-                -focus.z
         );
 
         final VertexConsumer consumer = buffer.getBuffer(renderType);
@@ -1103,6 +1038,50 @@ public final class PortPreviewRenderer {
 
         RenderSystem.disableDepthTest();
         graphics.disableScissor();
+    }
+
+    /**
+     * Applies the shared 3D preview camera transform.
+     *
+     * @param poseStack current pose stack
+     * @param camera preview camera
+     * @param x widget x
+     * @param y widget y
+     * @param width widget width
+     * @param height widget height
+     * @param depth gui depth offset
+     */
+    private static void applyPreviewTransform(
+            final PoseStack poseStack,
+            final PortPreviewCamera camera,
+            final int x,
+            final int y,
+            final int width,
+            final int height,
+            final double depth
+    ) {
+        final Vec3 focus = camera.focus();
+
+        poseStack.translate(
+                x + width / 2.0D,
+                y + height / 2.0D,
+                depth
+        );
+
+        poseStack.scale(
+                camera.zoom(),
+                -camera.zoom(),
+                camera.zoom()
+        );
+
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
+
+        poseStack.translate(
+                -focus.x,
+                -focus.y,
+                -focus.z
+        );
     }
 
     /**
