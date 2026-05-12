@@ -104,6 +104,18 @@ public final class PortPreviewRenderer {
                 height
         );
 
+        renderPortFaces(
+                graphics,
+                scene,
+                camera,
+                hoveredFace,
+                selectedFace,
+                x,
+                y,
+                width,
+                height
+        );
+
         renderAdjacentBlocks(
                 graphics,
                 scene,
@@ -123,26 +135,16 @@ public final class PortPreviewRenderer {
                 width,
                 height
         );
-
-        renderPortFaces(
-                graphics,
-                scene,
-                camera,
-                hoveredFace,
-                selectedFace,
-                x,
-                y,
-                width,
-                height
-        );
     }
 
     /**
-     * Picks the front-most projected port face under a screen point.
+     * Picks the nearest visible port face under a screen point.
      *
-     * <p>This uses the same projected face corners as the overlay renderer, so the
-     * clickable area matches the visible overlay exactly. If multiple projected
-     * faces overlap, the face closest to the camera is selected.</p>
+     * <p>This uses an orthographic ray that matches the preview camera projection.
+     * Each port face is tested as a real 3D rectangle attached to its block face.
+     * Candidate faces are then rejected if any rendered preview block intersects
+     * the ray before the selected face. This prevents hidden/back-side ports from
+     * being selected through the machine.</p>
      *
      * @param scene preview scene
      * @param camera camera
@@ -152,7 +154,7 @@ public final class PortPreviewRenderer {
      * @param height widget height
      * @param mouseX mouse x
      * @param mouseY mouse y
-     * @return picked face, or {@code null}
+     * @return picked visible face, or {@code null}
      */
     public static PreviewPortFace pick(
             final PortPreviewScene scene,
@@ -164,127 +166,420 @@ public final class PortPreviewRenderer {
             final double mouseX,
             final double mouseY
     ) {
-        final int centerX = x + width / 2;
-        final int centerY = y + height / 2;
+        if (mouseX < x || mouseY < y || mouseX >= x + width || mouseY >= y + height) {
+            return null;
+        }
+
+        final PickRay ray = createPickRay(
+                camera,
+                x + width / 2,
+                y + height / 2,
+                mouseX,
+                mouseY
+        );
 
         PreviewPortFace bestFace = null;
-        double bestDepth = Double.NEGATIVE_INFINITY;
+        double bestDistance = Double.POSITIVE_INFINITY;
 
         for (final PreviewPortFace face : scene.portFaces()) {
-            if (!isFaceCameraVisible(camera, face)) {
-                continue;
-            }
-
-            final ProjectedFace projected = projectFace(
-                    camera,
+            final double distance = intersectPortFace(
+                    ray,
                     face,
-                    centerX,
-                    centerY,
                     0.018D,
                     0.12D
             );
 
-            if (!pointInProjectedQuad(
-                    mouseX,
-                    mouseY,
-                    projected.p0(),
-                    projected.p1(),
-                    projected.p2(),
-                    projected.p3()
+            if (distance < 0.0D || distance >= bestDistance) {
+                continue;
+            }
+
+            if (isOccludedBeforeFace(
+                    scene,
+                    ray,
+                    face,
+                    distance
             )) {
                 continue;
             }
 
-            if (projected.averageDepth() > bestDepth) {
-                bestDepth = projected.averageDepth();
-                bestFace = face;
-            }
+            bestDistance = distance;
+            bestFace = face;
         }
 
         return bestFace;
     }
 
     /**
-     * Checks whether a port face is generally facing the camera.
+     * Creates an orthographic pick ray matching the preview camera.
      *
-     * <p>This prevents selecting rear-facing port overlays that are now hidden by
-     * the 3D depth buffer.</p>
+     * <p>The ray starts far in front of the preview and travels into the scene.
+     * This must match the same yaw/pitch projection used by the preview renderer and
+     * {@link PortPreviewCamera#project(Vec3, int, int)}.</p>
      *
      * @param camera preview camera
-     * @param face preview face
-     * @return true if the face can be selected
+     * @param centerX widget center x
+     * @param centerY widget center y
+     * @param mouseX mouse x
+     * @param mouseY mouse y
+     * @return preview-space pick ray
      */
-    private static boolean isFaceCameraVisible(
+    private static PickRay createPickRay(
             final PortPreviewCamera camera,
-            final PreviewPortFace face
+            final int centerX,
+            final int centerY,
+            final double mouseX,
+            final double mouseY
     ) {
-        final Vec3 center = faceCenter(
-                face.previewPos(),
-                face.previewFace()
+        final double viewX = (mouseX - centerX) / camera.zoom();
+        final double viewY = (centerY - mouseY) / camera.zoom();
+
+        final Vec3 near = camera.focus().add(unprojectViewPoint(
+                camera,
+                viewX,
+                viewY,
+                1024.0D
+        ));
+
+        final Vec3 far = camera.focus().add(unprojectViewPoint(
+                camera,
+                viewX,
+                viewY,
+                -1024.0D
+        ));
+
+        return new PickRay(
+                near,
+                far.subtract(near).normalize()
         );
-
-        final Vec3 normal = new Vec3(
-                face.previewFace().getStepX(),
-                face.previewFace().getStepY(),
-                face.previewFace().getStepZ()
-        );
-
-        final Vec3 cameraDirection = center.subtract(camera.focus()).normalize();
-
-        return normal.dot(cameraDirection) < 0.15D;
     }
 
     /**
-     * Checks whether a screen point is inside a projected quad.
+     * Converts a view-space point back into preview-space relative to the camera
+     * focus.
      *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param p0 first projected corner
-     * @param p1 second projected corner
-     * @param p2 third projected corner
-     * @param p3 fourth projected corner
-     * @return {@code true} if the point is inside the quad
+     * @param camera preview camera
+     * @param viewX view-space x
+     * @param viewY view-space y
+     * @param viewDepth view-space depth
+     * @return preview-space relative point
      */
-    private static boolean pointInProjectedQuad(
-            final double mouseX,
-            final double mouseY,
-            final PortPreviewCamera.ProjectedPoint p0,
-            final PortPreviewCamera.ProjectedPoint p1,
-            final PortPreviewCamera.ProjectedPoint p2,
-            final PortPreviewCamera.ProjectedPoint p3
+    private static Vec3 unprojectViewPoint(
+            final PortPreviewCamera camera,
+            final double viewX,
+            final double viewY,
+            final double viewDepth
     ) {
-        return pointInTriangle(mouseX, mouseY, p0, p1, p2)
-                || pointInTriangle(mouseX, mouseY, p0, p2, p3);
+        final double yawRadians = Math.toRadians(camera.yaw());
+        final double pitchRadians = Math.toRadians(camera.pitch());
+
+        final double sinYaw = Math.sin(yawRadians);
+        final double cosYaw = Math.cos(yawRadians);
+        final double sinPitch = Math.sin(pitchRadians);
+        final double cosPitch = Math.cos(pitchRadians);
+
+        final double relativeY = viewY * cosPitch + viewDepth * sinPitch;
+        final double zYaw = -viewY * sinPitch + viewDepth * cosPitch;
+
+        final double relativeX = viewX * cosYaw - zYaw * sinYaw;
+        final double relativeZ = viewX * sinYaw + zYaw * cosYaw;
+
+        return new Vec3(
+                relativeX,
+                relativeY,
+                relativeZ
+        );
     }
 
     /**
-     * Checks whether a screen point is inside a projected triangle.
+     * Converts a view-space depth direction into preview-space.
      *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param a first triangle point
-     * @param b second triangle point
-     * @param c third triangle point
-     * @return {@code true} if inside
+     * @param camera preview camera
+     * @param viewDepth depth direction scalar
+     * @return preview-space direction
      */
-    private static boolean pointInTriangle(
-            final double mouseX,
-            final double mouseY,
-            final PortPreviewCamera.ProjectedPoint a,
-            final PortPreviewCamera.ProjectedPoint b,
-            final PortPreviewCamera.ProjectedPoint c
+    private static Vec3 unprojectDirection(
+            final PortPreviewCamera camera,
+            final double viewDepth
     ) {
-        final double denominator = (b.y() - c.y()) * (a.x() - c.x()) + (c.x() - b.x()) * (a.y() - c.y());
+        return unprojectViewPoint(
+                camera,
+                0.0D,
+                0.0D,
+                viewDepth
+        );
+    }
 
-        if (Math.abs(denominator) < 0.000001D) {
-            return false;
+    /**
+     * Intersects a pick ray with one port face rectangle.
+     *
+     * @param ray pick ray
+     * @param face preview port face
+     * @param outwardOffset outward offset from the block face
+     * @param inset inset from the block edge
+     * @return ray distance, or {@code -1.0D} if missed
+     */
+    private static double intersectPortFace(
+            final PickRay ray,
+            final PreviewPortFace face,
+            final double outwardOffset,
+            final double inset
+    ) {
+        final BlockPos pos = face.previewPos();
+        final Direction direction = face.previewFace();
+
+        final double min = inset;
+        final double max = 1.0D - inset;
+
+        final double plane;
+        final double originAxis;
+        final double directionAxis;
+
+        switch (direction) {
+            case NORTH -> {
+                plane = pos.getZ() - outwardOffset;
+                originAxis = ray.origin().z;
+                directionAxis = ray.direction().z;
+            }
+            case SOUTH -> {
+                plane = pos.getZ() + 1.0D + outwardOffset;
+                originAxis = ray.origin().z;
+                directionAxis = ray.direction().z;
+            }
+            case WEST -> {
+                plane = pos.getX() - outwardOffset;
+                originAxis = ray.origin().x;
+                directionAxis = ray.direction().x;
+            }
+            case EAST -> {
+                plane = pos.getX() + 1.0D + outwardOffset;
+                originAxis = ray.origin().x;
+                directionAxis = ray.direction().x;
+            }
+            case DOWN -> {
+                plane = pos.getY() - outwardOffset;
+                originAxis = ray.origin().y;
+                directionAxis = ray.direction().y;
+            }
+            case UP -> {
+                plane = pos.getY() + 1.0D + outwardOffset;
+                originAxis = ray.origin().y;
+                directionAxis = ray.direction().y;
+            }
+            default -> {
+                return -1.0D;
+            }
         }
 
-        final double alpha = ((b.y() - c.y()) * (mouseX - c.x()) + (c.x() - b.x()) * (mouseY - c.y())) / denominator;
-        final double beta = ((c.y() - a.y()) * (mouseX - c.x()) + (a.x() - c.x()) * (mouseY - c.y())) / denominator;
-        final double gamma = 1.0D - alpha - beta;
+        if (Math.abs(directionAxis) < 0.000001D) {
+            return -1.0D;
+        }
 
-        return alpha >= 0.0D && beta >= 0.0D && gamma >= 0.0D;
+        final Vec3 normal = Vec3.atLowerCornerOf(direction.getNormal());
+
+        if (ray.direction().dot(normal) >= 0.0D) {
+            return -1.0D;
+        }
+
+        final double distance = (plane - originAxis) / directionAxis;
+
+        if (distance <= 0.0D) {
+            return -1.0D;
+        }
+
+        final Vec3 hit = ray.origin().add(ray.direction().scale(distance));
+
+        return switch (direction) {
+            case NORTH, SOUTH -> hit.x >= pos.getX() + min
+                    && hit.x <= pos.getX() + max
+                    && hit.y >= pos.getY() + min
+                    && hit.y <= pos.getY() + max
+                    ? distance
+                    : -1.0D;
+
+            case WEST, EAST -> hit.z >= pos.getZ() + min
+                    && hit.z <= pos.getZ() + max
+                    && hit.y >= pos.getY() + min
+                    && hit.y <= pos.getY() + max
+                    ? distance
+                    : -1.0D;
+
+            case DOWN, UP -> hit.x >= pos.getX() + min
+                    && hit.x <= pos.getX() + max
+                    && hit.z >= pos.getZ() + min
+                    && hit.z <= pos.getZ() + max
+                    ? distance
+                    : -1.0D;
+        };
+    }
+
+    /**
+     * Checks whether a primary preview block intersects the ray before the selected
+     * port face.
+     *
+     * <p>Only primary machine/multiblock blocks are used for occlusion. Adjacent
+     * context blocks such as chests, hoppers, pipes, and cables are intentionally
+     * ignored, because they can sit outside valid port faces and should not prevent
+     * the user from selecting those machine faces.</p>
+     *
+     * @param scene preview scene
+     * @param ray pick ray
+     * @param selectedFace selected face
+     * @param faceDistance selected face distance
+     * @return {@code true} if the face is occluded by the structure
+     */
+    private static boolean isOccludedBeforeFace(
+            final PortPreviewScene scene,
+            final PickRay ray,
+            final PreviewPortFace selectedFace,
+            final double faceDistance
+    ) {
+        final double epsilon = 0.025D;
+
+        for (final PreviewBlock block : scene.blocks()) {
+            if (!block.primary() || block.state().isAir()) {
+                continue;
+            }
+
+            final double blockDistance = intersectBlockAabb(
+                    ray,
+                    block.previewPos()
+            );
+
+            if (blockDistance >= 0.0D && blockDistance < faceDistance - epsilon) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Intersects a ray with a full-block axis-aligned bounding box.
+     *
+     * @param ray pick ray
+     * @param pos preview block position
+     * @return first intersection distance, or {@code -1.0D} if missed
+     */
+    private static double intersectBlockAabb(
+            final PickRay ray,
+            final BlockPos pos
+    ) {
+        final double minX = pos.getX();
+        final double minY = pos.getY();
+        final double minZ = pos.getZ();
+        final double maxX = pos.getX() + 1.0D;
+        final double maxY = pos.getY() + 1.0D;
+        final double maxZ = pos.getZ() + 1.0D;
+
+        double tMin = 0.0D;
+        double tMax = Double.POSITIVE_INFINITY;
+
+        final double[] resultX = intersectAxis(
+                ray.origin().x,
+                ray.direction().x,
+                minX,
+                maxX,
+                tMin,
+                tMax
+        );
+
+        if (resultX == null) {
+            return -1.0D;
+        }
+
+        tMin = resultX[0];
+        tMax = resultX[1];
+
+        final double[] resultY = intersectAxis(
+                ray.origin().y,
+                ray.direction().y,
+                minY,
+                maxY,
+                tMin,
+                tMax
+        );
+
+        if (resultY == null) {
+            return -1.0D;
+        }
+
+        tMin = resultY[0];
+        tMax = resultY[1];
+
+        final double[] resultZ = intersectAxis(
+                ray.origin().z,
+                ray.direction().z,
+                minZ,
+                maxZ,
+                tMin,
+                tMax
+        );
+
+        if (resultZ == null) {
+            return -1.0D;
+        }
+
+        tMin = resultZ[0];
+
+        return tMin >= 0.0D ? tMin : -1.0D;
+    }
+
+    /**
+     * Applies one slab intersection axis.
+     *
+     * @param origin ray origin axis value
+     * @param direction ray direction axis value
+     * @param min axis minimum
+     * @param max axis maximum
+     * @param currentMin current minimum distance
+     * @param currentMax current maximum distance
+     * @return updated min/max pair, or {@code null} if missed
+     */
+    private static double[] intersectAxis(
+            final double origin,
+            final double direction,
+            final double min,
+            final double max,
+            final double currentMin,
+            final double currentMax
+    ) {
+        if (Math.abs(direction) < 0.000001D) {
+            if (origin < min || origin > max) {
+                return null;
+            }
+
+            return new double[]{
+                    currentMin,
+                    currentMax
+            };
+        }
+
+        double near = (min - origin) / direction;
+        double far = (max - origin) / direction;
+
+        if (near > far) {
+            final double swap = near;
+            near = far;
+            far = swap;
+        }
+
+        final double newMin = Math.max(
+                currentMin,
+                near
+        );
+        final double newMax = Math.min(
+                currentMax,
+                far
+        );
+
+        if (newMin > newMax) {
+            return null;
+        }
+
+        return new double[]{
+                newMin,
+                newMax
+        };
     }
 
     /**
@@ -811,223 +1106,6 @@ public final class PortPreviewRenderer {
     }
 
     /**
-     * Projects one port face into screen-space.
-     *
-     * @param camera preview camera
-     * @param face preview port face
-     * @param centerX screen-space projection center x
-     * @param centerY screen-space projection center y
-     * @param outwardOffset outward face offset
-     * @param inset face inset
-     * @return projected face
-     */
-    private static ProjectedFace projectFace(
-            final PortPreviewCamera camera,
-            final PreviewPortFace face,
-            final int centerX,
-            final int centerY,
-            final double outwardOffset,
-            final double inset
-    ) {
-        final Vec3[] corners = faceCorners(
-                face.previewPos(),
-                face.previewFace(),
-                outwardOffset,
-                inset
-        );
-
-        final PortPreviewCamera.ProjectedPoint p0 = camera.project(corners[0], centerX, centerY);
-        final PortPreviewCamera.ProjectedPoint p1 = camera.project(corners[1], centerX, centerY);
-        final PortPreviewCamera.ProjectedPoint p2 = camera.project(corners[2], centerX, centerY);
-        final PortPreviewCamera.ProjectedPoint p3 = camera.project(corners[3], centerX, centerY);
-
-        return new ProjectedFace(
-                p0,
-                p1,
-                p2,
-                p3,
-                (p0.depth() + p1.depth() + p2.depth() + p3.depth()) * 0.25D
-        );
-    }
-
-    /**
-     * Emits one projected translucent port fill quad.
-     *
-     * @param poseStack pose stack
-     * @param consumer vertex consumer
-     * @param face projected face
-     * @param argb ARGB fill colour
-     */
-    private static void emitProjectedPortFill(
-            final PoseStack poseStack,
-            final VertexConsumer consumer,
-            final ProjectedFace face,
-            final int argb
-    ) {
-        if (((argb >> 24) & 255) <= 0) {
-            return;
-        }
-
-        emitProjectedQuad(
-                poseStack,
-                consumer,
-                face.p0(),
-                face.p1(),
-                face.p2(),
-                face.p3(),
-                argb
-        );
-
-        emitProjectedQuad(
-                poseStack,
-                consumer,
-                face.p3(),
-                face.p2(),
-                face.p1(),
-                face.p0(),
-                argb
-        );
-    }
-
-    /**
-     * Emits a bold projected outline around a port face.
-     *
-     * @param poseStack pose stack
-     * @param consumer vertex consumer
-     * @param face projected face
-     * @param argb ARGB outline colour
-     */
-    private static void emitProjectedPortOutline(
-            final PoseStack poseStack,
-            final VertexConsumer consumer,
-            final ProjectedFace face,
-            final int argb
-    ) {
-        final double thickness = 3.0D;
-
-        emitProjectedLineQuad(poseStack, consumer, face.p0(), face.p1(), thickness, argb);
-        emitProjectedLineQuad(poseStack, consumer, face.p1(), face.p2(), thickness, argb);
-        emitProjectedLineQuad(poseStack, consumer, face.p2(), face.p3(), thickness, argb);
-        emitProjectedLineQuad(poseStack, consumer, face.p3(), face.p0(), thickness, argb);
-    }
-
-    /**
-     * Emits a projected screen-space quad.
-     *
-     * @param poseStack pose stack
-     * @param consumer vertex consumer
-     * @param a first corner
-     * @param b second corner
-     * @param c third corner
-     * @param d fourth corner
-     * @param argb ARGB colour
-     */
-    private static void emitProjectedQuad(
-            final PoseStack poseStack,
-            final VertexConsumer consumer,
-            final PortPreviewCamera.ProjectedPoint a,
-            final PortPreviewCamera.ProjectedPoint b,
-            final PortPreviewCamera.ProjectedPoint c,
-            final PortPreviewCamera.ProjectedPoint d,
-            final int argb
-    ) {
-        emitProjectedVertex(poseStack, consumer, a, argb);
-        emitProjectedVertex(poseStack, consumer, b, argb);
-        emitProjectedVertex(poseStack, consumer, c, argb);
-        emitProjectedVertex(poseStack, consumer, d, argb);
-    }
-
-    /**
-     * Emits a thick screen-space line as a quad.
-     *
-     * @param poseStack pose stack
-     * @param consumer vertex consumer
-     * @param from first point
-     * @param to second point
-     * @param thickness line thickness in pixels
-     * @param argb ARGB colour
-     */
-    private static void emitProjectedLineQuad(
-            final PoseStack poseStack,
-            final VertexConsumer consumer,
-            final PortPreviewCamera.ProjectedPoint from,
-            final PortPreviewCamera.ProjectedPoint to,
-            final double thickness,
-            final int argb
-    ) {
-        final double deltaX = to.x() - from.x();
-        final double deltaY = to.y() - from.y();
-        final double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        if (length < 0.0001D) {
-            return;
-        }
-
-        final double normalX = -deltaY / length * thickness * 0.5D;
-        final double normalY = deltaX / length * thickness * 0.5D;
-        final double depth = Math.min(from.depth(), to.depth()) - 0.001D;
-
-        emitProjectedVertex(
-                poseStack,
-                consumer,
-                new PortPreviewCamera.ProjectedPoint(from.x() + normalX, from.y() + normalY, depth),
-                argb
-        );
-        emitProjectedVertex(
-                poseStack,
-                consumer,
-                new PortPreviewCamera.ProjectedPoint(to.x() + normalX, to.y() + normalY, depth),
-                argb
-        );
-        emitProjectedVertex(
-                poseStack,
-                consumer,
-                new PortPreviewCamera.ProjectedPoint(to.x() - normalX, to.y() - normalY, depth),
-                argb
-        );
-        emitProjectedVertex(
-                poseStack,
-                consumer,
-                new PortPreviewCamera.ProjectedPoint(from.x() - normalX, from.y() - normalY, depth),
-                argb
-        );
-    }
-
-    /**
-     * Emits one projected screen-space vertex.
-     *
-     * @param poseStack pose stack
-     * @param consumer vertex consumer
-     * @param point projected point
-     * @param argb ARGB colour
-     */
-    private static void emitProjectedVertex(
-            final PoseStack poseStack,
-            final VertexConsumer consumer,
-            final PortPreviewCamera.ProjectedPoint point,
-            final int argb
-    ) {
-        final PoseStack.Pose pose = poseStack.last();
-
-        final int alpha = (argb >> 24) & 255;
-        final int red = (argb >> 16) & 255;
-        final int green = (argb >> 8) & 255;
-        final int blue = argb & 255;
-
-        consumer.addVertex(
-                        pose,
-                        (float) point.x(),
-                        (float) point.y(),
-                        0.0F
-                )
-                .setColor(red, green, blue, alpha)
-                .setUv(0.0F, 0.0F)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(LightTexture.FULL_BRIGHT)
-                .setNormal(0.0F, 0.0F, 1.0F);
-    }
-
-    /**
      * Brightens an ARGB outline colour while preserving alpha.
      *
      * @param argb original colour
@@ -1196,27 +1274,6 @@ public final class PortPreviewRenderer {
     /**
      * Builds the four corners of a cube face in preview-space.
      *
-     * @param pos preview block position
-     * @param face face direction
-     * @param outwardOffset outward offset used to avoid z-fighting
-     * @return four face corners
-     */
-    private static Vec3[] faceCorners(
-            final BlockPos pos,
-            final Direction face,
-            final double outwardOffset
-    ) {
-        return faceCorners(
-                pos,
-                face,
-                outwardOffset,
-                0.08D
-        );
-    }
-
-    /**
-     * Builds the four corners of a cube face in preview-space.
-     *
      * <p>The inset controls how close the rectangle gets to the block edge. Smaller
      * values make a larger rectangle; larger values make a smaller rectangle.</p>
      *
@@ -1265,66 +1322,29 @@ public final class PortPreviewRenderer {
                     new Vec3(x0 + 1.0D + outwardOffset, y0 + max, z0 + max)
             };
             case DOWN -> new Vec3[]{
-                    new Vec3(x0 + min, y0 - outwardOffset, z0 + max),
-                    new Vec3(x0 + max, y0 - outwardOffset, z0 + max),
+                    new Vec3(x0 + min, y0 - outwardOffset, z0 + min),
                     new Vec3(x0 + max, y0 - outwardOffset, z0 + min),
-                    new Vec3(x0 + min, y0 - outwardOffset, z0 + min)
+                    new Vec3(x0 + max, y0 - outwardOffset, z0 + max),
+                    new Vec3(x0 + min, y0 - outwardOffset, z0 + max)
             };
             case UP -> new Vec3[]{
-                    new Vec3(x0 + min, y0 + 1.0D + outwardOffset, z0 + min),
-                    new Vec3(x0 + max, y0 + 1.0D + outwardOffset, z0 + min),
+                    new Vec3(x0 + min, y0 + 1.0D + outwardOffset, z0 + max),
                     new Vec3(x0 + max, y0 + 1.0D + outwardOffset, z0 + max),
-                    new Vec3(x0 + min, y0 + 1.0D + outwardOffset, z0 + max)
+                    new Vec3(x0 + max, y0 + 1.0D + outwardOffset, z0 + min),
+                    new Vec3(x0 + min, y0 + 1.0D + outwardOffset, z0 + min)
             };
         };
     }
 
     /**
-     * Gets the center point of one cube face.
+     * Orthographic pick ray in preview-space.
      *
-     * @param pos cube position
-     * @param face face direction
-     * @return face center point
+     * @param origin ray origin
+     * @param direction normalized ray direction
      */
-    private static Vec3 faceCenter(
-            final BlockPos pos,
-            final Direction face
-    ) {
-        return new Vec3(
-                pos.getX() + 0.5D + face.getStepX() * 0.51D,
-                pos.getY() + 0.5D + face.getStepY() * 0.51D,
-                pos.getZ() + 0.5D + face.getStepZ() * 0.51D
-        );
-    }
-
-    /**
-     * One projected port face.
-     *
-     * @param p0 first projected corner
-     * @param p1 second projected corner
-     * @param p2 third projected corner
-     * @param p3 fourth projected corner
-     * @param averageDepth average projected depth
-     */
-    private record ProjectedFace(
-            PortPreviewCamera.ProjectedPoint p0,
-            PortPreviewCamera.ProjectedPoint p1,
-            PortPreviewCamera.ProjectedPoint p2,
-            PortPreviewCamera.ProjectedPoint p3,
-            double averageDepth
-    ) {
-
-    }
-
-    /**
-     * One port face paired with its projected position.
-     *
-     * @param face logical preview face
-     * @param projected projected face
-     */
-    private record RenderedPortFace(
-            PreviewPortFace face,
-            ProjectedFace projected
+    private record PickRay(
+            Vec3 origin,
+            Vec3 direction
     ) {
 
     }
