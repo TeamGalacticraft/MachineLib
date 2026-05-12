@@ -23,6 +23,7 @@
 package dev.galacticraft.machinelib.client.api.screen.port;
 
 import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -54,8 +55,8 @@ public record PreviewPortOption(
      */
     public static PreviewPortOption clear() {
         return new PreviewPortOption(
-                Component.literal("Clear / None"),
-                List.of(Component.literal("Remove this configured port")),
+                Component.translatable(Constant.TranslationKey.PORT_CLEAR),
+                List.of(Component.translatable(Constant.TranslationKey.PORT_CLEAR_TOOLTIP)),
                 null
         );
     }
@@ -71,11 +72,25 @@ public record PreviewPortOption(
         final String targetText = targetPrefix + port.target().id();
 
         return new PreviewPortOption(
-                Component.literal(port.type().name() + " " + port.mode().name() + " " + targetText),
+                Component.translatable(
+                        Constant.TranslationKey.PORT_OPTION,
+                        port.type().name(),
+                        port.mode().name(),
+                        targetText
+                ),
                 List.of(
-                        Component.literal("Type: " + port.type().name()),
-                        Component.literal("Mode: " + port.mode().name()),
-                        Component.literal("Target: " + targetText)
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_OPTION_TYPE,
+                                port.type().name()
+                        ),
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_OPTION_MODE,
+                                port.mode().name()
+                        ),
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_OPTION_TARGET,
+                                targetText
+                        )
                 ),
                 port
         );

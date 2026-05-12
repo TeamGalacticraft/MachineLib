@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.client.api.screen.port;
 
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -88,7 +89,7 @@ public record PreviewPortFace(
                 0xFF9A9A9A,
                 List.of(
                         label,
-                        Component.literal("Port: none")
+                        Component.translatable(Constant.TranslationKey.PORT_NONE)
                 )
         );
     }

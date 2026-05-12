@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.api.machine.configuration.IOFace;
 import dev.galacticraft.machinelib.api.menu.MachineMenu;
 import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -240,13 +241,22 @@ public final class BlockEntityPortPreviewScene<
         final IOFace ioFace = this.menu.configuration.get(blockFace);
 
         final List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("Selected: ").append(blockFace.getName()));
+        lines.add(Component.translatable(
+                Constant.TranslationKey.PORT_SELECTED,
+                blockFace.getName()
+        ));
 
         if (ioFace.getType() == ResourceType.NONE) {
-            lines.add(Component.literal("Port: none"));
+            lines.add(Component.translatable(Constant.TranslationKey.PORT_NONE));
         } else {
-            lines.add(Component.literal("Type: ").append(ioFace.getType().getName()));
-            lines.add(Component.literal("Flow: ").append(ioFace.getFlow().getName()));
+            lines.add(Component.translatable(
+                    Constant.TranslationKey.PORT_TYPE,
+                    ioFace.getType().getName()
+            ));
+            lines.add(Component.translatable(
+                    Constant.TranslationKey.PORT_FLOW,
+                    ioFace.getFlow().getName()
+            ));
         }
 
         return List.copyOf(lines);
@@ -287,8 +297,14 @@ public final class BlockEntityPortPreviewScene<
                 this.outlineColor(ioFace),
                 List.of(
                         label,
-                        Component.literal("Type: ").append(ioFace.getType().getName()),
-                        Component.literal("Flow: ").append(ioFace.getFlow().getName())
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_TYPE,
+                                ioFace.getType().getName()
+                        ),
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_FLOW,
+                                ioFace.getFlow().getName()
+                        )
                 )
         );
     }

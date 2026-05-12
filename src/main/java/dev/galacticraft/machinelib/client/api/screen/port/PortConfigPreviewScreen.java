@@ -67,7 +67,16 @@ public final class PortConfigPreviewScreen extends Screen {
     protected void init() {
         final int contentY = MARGIN + TITLE_HEIGHT;
         final int contentHeight = this.height - MARGIN * 2 - TITLE_HEIGHT;
-        final int previewWidth = this.width - MARGIN * 2 - SIDEBAR_WIDTH - GAP;
+
+        final int sidebarWidth = Math.max(
+                180,
+                Math.min(320, this.width / 4)
+        );
+
+        final int previewWidth = this.width
+                - MARGIN * 2
+                - sidebarWidth
+                - GAP;
 
         this.widget.setBounds(
                 MARGIN,

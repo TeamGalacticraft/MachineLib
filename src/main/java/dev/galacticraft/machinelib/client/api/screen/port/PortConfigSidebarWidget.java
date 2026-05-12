@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.client.api.screen.port;
 
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -89,7 +90,7 @@ public final class PortConfigSidebarWidget {
 
         graphics.drawString(
                 font,
-                Component.literal("Selected Port"),
+                Component.translatable(Constant.TranslationKey.PORT_CONFIG_SELECTED),
                 this.x + PADDING,
                 this.y + PADDING,
                 0xFFFFFFFF,
@@ -101,7 +102,7 @@ public final class PortConfigSidebarWidget {
         if (selectedFace == null) {
             graphics.drawWordWrap(
                     font,
-                    Component.literal("Select a highlighted face to configure its port."),
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_NONE_SELECTED),
                     this.x + PADDING,
                     this.y + PADDING + 16,
                     this.width - PADDING * 2,
@@ -122,7 +123,10 @@ public final class PortConfigSidebarWidget {
                     0xFFE0E0E0
             );
 
-            lineY += font.lineHeight + 3;
+            lineY += font.split(
+                    line,
+                    this.width - PADDING * 2
+            ).size() * font.lineHeight + 3;
 
             if (lineY > this.y + this.height - 80) {
                 break;
@@ -133,7 +137,7 @@ public final class PortConfigSidebarWidget {
 
         graphics.drawString(
                 font,
-                Component.literal("Allowed Options"),
+                Component.translatable(Constant.TranslationKey.PORT_CONFIG_ALLOWED),
                 this.x + PADDING,
                 lineY,
                 0xFFFFFFFF,

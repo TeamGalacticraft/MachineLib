@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.client.api.screen.port;
 
+import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public interface PortPreviewScene {
      * @return title
      */
     default Component title() {
-        return Component.literal("Port Config");
+        return Component.translatable(Constant.TranslationKey.PORT_CONFIG);
     }
 
     /**

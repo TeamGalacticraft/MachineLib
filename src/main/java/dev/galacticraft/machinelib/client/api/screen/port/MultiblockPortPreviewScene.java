@@ -26,6 +26,7 @@ import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
+import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -238,7 +239,7 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
                     0xFF9A9A9A,
                     List.of(
                             label,
-                            Component.literal("Port: none")
+                            Component.translatable(Constant.TranslationKey.PORT_NONE)
                     )
             );
         }
@@ -255,9 +256,18 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
                 this.outlineColor(port),
                 List.of(
                         label,
-                        Component.literal("Type: " + port.type().name()),
-                        Component.literal("Mode: " + port.mode().name()),
-                        Component.literal("Target: " + port.target().id())
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_TYPE,
+                                port.type().name()
+                        ),
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_MODE,
+                                port.mode().name()
+                        ),
+                        Component.translatable(
+                                Constant.TranslationKey.PORT_TARGET,
+                                port.target().id()
+                        )
                 )
         );
     }
@@ -400,12 +410,17 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
                 + ","
                 + face.relativePos().getZ();
 
-        final String configured = this.menu.configuredPortAt(face)
+        final Component configured = this.menu.configuredPortAt(face)
                 .map(ConfiguredMultiblockPort::mode)
-                .map(Enum::name)
-                .orElse("NONE");
+                .map(mode -> Component.literal(mode.name()))
+                .orElse(Component.translatable(Constant.TranslationKey.NONE));
 
-        return Component.literal(position + " " + face.face().getName() + " " + configured);
+        return Component.translatable(
+                Constant.TranslationKey.PORT_FACE_LABEL,
+                position,
+                face.face().getName(),
+                configured
+        );
     }
 
     @Override

@@ -214,6 +214,35 @@ public interface Constant {
         String UNKNOWN_STATUS = "status.machinelib.unknown";
         String DISABLED = "status.machinelib.disabled";
         String UNKNOWN = "tooltip.machinelib.machine.unknown";
+
+        String PORT_CONFIG = "ui.machinelib.port_config.title";
+        String PORT_CONFIG_SELECTED = "ui.machinelib.port_config.selected_port";
+        String PORT_CONFIG_NONE_SELECTED = "ui.machinelib.port_config.no_selection";
+        String PORT_CONFIG_ALLOWED = "ui.machinelib.port_config.allowed_options";
+
+        String PORT_CONFIG_HELP_SELECT = "ui.machinelib.port_config.help.select";
+        String PORT_CONFIG_HELP_CONFIGURE = "ui.machinelib.port_config.help.configure";
+        String PORT_CONFIG_HELP_CLEAR = "ui.machinelib.port_config.help.clear";
+        String PORT_CONFIG_HELP_CAMERA = "ui.machinelib.port_config.help.camera";
+
+        String PORT_CONFIG_NONE = "ui.machinelib.port_config.no_port_selected";
+
+        String PORT_OPTION = "ui.machinelib.port_config.option";
+        String PORT_OPTION_TYPE = "ui.machinelib.port_config.option.type";
+        String PORT_OPTION_MODE = "ui.machinelib.port_config.option.mode";
+        String PORT_OPTION_TARGET = "ui.machinelib.port_config.option.target";
+
+        String PORT_NONE = "ui.machinelib.port_config.port_none";
+
+        String PORT_CLEAR = "ui.machinelib.port_config.clear";
+        String PORT_CLEAR_TOOLTIP = "ui.machinelib.port_config.clear.tooltip";
+
+        String PORT_SELECTED = "ui.machinelib.port_config.selected";
+        String PORT_TYPE = "ui.machinelib.port_config.option.type";
+        String PORT_FLOW = "ui.machinelib.port_config.option.flow";
+        String PORT_MODE = "ui.machinelib.port_config.option.mode";
+        String PORT_TARGET = "ui.machinelib.port_config.option.target";
+        String PORT_FACE_LABEL = "ui.machinelib.port_config.face_label";
     }
 
     interface Filter {
