@@ -426,26 +426,38 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
     /**
      * Removes the configured port from one multiblock face.
      *
-     * <p>On the client this updates the local cache immediately so the preview UI
-     * does not wait for the next server sync. The packet is still sent to the
-     * server, which remains authoritative.</p>
+     * <p>On the client this updates the local cache immediately and sends a packet.
+     * On the server this mutates the authoritative port component directly and syncs
+     * the accepted result back to the client.</p>
      *
      * @param face port face to clear
      */
     public void removePort(final MultiblockPortFace face) {
         if (this.machine == null) {
             this.clientPorts.remove(face);
+            this.sendRemovePort(face);
+            return;
         }
 
-        this.sendRemovePort(face);
+        final MultiblockPortComponent ports = this.machine.component(MultiblockPortComponent.class);
+
+        if (ports == null) {
+            return;
+        }
+
+        if (ports.removePort(face)) {
+            this.machine.setComponentsChanged();
+            this.syncPortsToClient();
+        }
     }
 
     /**
      * Sets the configured port on one multiblock face.
      *
      * <p>On the client this updates the local cache immediately only if the candidate
-     * passes the same validation used by the server. The server remains authoritative
-     * and validates the packet again before mutating the formed machine.</p>
+     * passes the same validation used by the server, then sends a packet. On the
+     * server this mutates the authoritative port component directly and syncs the
+     * accepted result back to the client.</p>
      *
      * @param port configured port to apply
      */
@@ -459,9 +471,21 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
                     port.face(),
                     port
             );
+
+            this.sendSetPort(port);
+            return;
         }
 
-        this.sendSetPort(port);
+        final MultiblockPortComponent ports = this.machine.component(MultiblockPortComponent.class);
+
+        if (ports == null) {
+            return;
+        }
+
+        if (ports.setPort(port)) {
+            this.machine.setComponentsChanged();
+            this.syncPortsToClient();
+        }
     }
 
     /**
@@ -686,28 +710,6 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         this.data.synchronize();
     }
 
-    private IOFace[] createClientFaces() {
-        final IOFace[] faces = new IOFace[BlockFace.values().length];
-
-        for (int i = 0; i < faces.length; i++) {
-            faces[i] = new IOFace(
-                    ResourceType.NONE,
-                    ResourceFlow.BOTH
-            );
-        }
-
-        return faces;
-    }
-
-    /**
-     * Client-side security settings placeholder.
-     *
-     * <p>The real values are synchronized through menu data after opening.</p>
-     */
-    private static final class ClientSecuritySettings extends SecuritySettings {
-
-    }
-
     /**
      * Validates a candidate configured multiblock port against the definition's
      * allowed port rules and optional conflict rules.
@@ -768,4 +770,25 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         return !this.validatePortConfiguration(port).blocksSelection();
     }
 
+    private IOFace[] createClientFaces() {
+        final IOFace[] faces = new IOFace[BlockFace.values().length];
+
+        for (int i = 0; i < faces.length; i++) {
+            faces[i] = new IOFace(
+                    ResourceType.NONE,
+                    ResourceFlow.BOTH
+            );
+        }
+
+        return faces;
+    }
+
+    /**
+     * Client-side security settings placeholder.
+     *
+     * <p>The real values are synchronized through menu data after opening.</p>
+     */
+    private static final class ClientSecuritySettings extends SecuritySettings {
+
+    }
 }
