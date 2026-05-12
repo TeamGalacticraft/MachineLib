@@ -447,6 +447,117 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
     }
 
     @Override
+    public PreviewPortOptionState optionStateFor(
+            final PreviewPortFace face,
+            final PreviewPortOption option
+    ) {
+        if (option.matches(face)) {
+            return PreviewPortOptionState.CURRENT;
+        }
+
+        if (option.clearsPort()) {
+            return PreviewPortOptionState.VALID;
+        }
+
+        final MultiblockPortFace portFace = this.portFaceFor(face);
+
+        if (portFace == null) {
+            return PreviewPortOptionState.DISABLED;
+        }
+
+        final ConfiguredMultiblockPort port = option.port();
+
+        if (port == null) {
+            return PreviewPortOptionState.VALID;
+        }
+
+        if (this.hasDuplicateTargetConflict(portFace, port)) {
+            return PreviewPortOptionState.CONFLICT;
+        }
+
+        if (this.hasMissingNeighbourConflict(face, port)) {
+            return PreviewPortOptionState.CONFLICT;
+        }
+
+        return PreviewPortOptionState.VALID;
+    }
+
+    /**
+     * Checks whether another configured face already uses the same type, mode, and target.
+     *
+     * <p>This treats duplicate routing to the same internal target as a conflict.
+     * If later you want to allow multiple faces to share one target, this method is
+     * the only duplicate-target rule that needs changing.</p>
+     *
+     * @param selectedFace selected logical port face
+     * @param candidate candidate port option
+     * @return {@code true} if another face already uses the same target route
+     */
+    private boolean hasDuplicateTargetConflict(
+            final MultiblockPortFace selectedFace,
+            final ConfiguredMultiblockPort candidate
+    ) {
+        for (final MultiblockPortFace otherFace : this.menu.exposedPortFaces()) {
+            if (otherFace.equals(selectedFace)) {
+                continue;
+            }
+
+            final ConfiguredMultiblockPort otherPort = this.menu.configuredPortAt(otherFace)
+                    .orElse(null);
+
+            if (otherPort == null) {
+                continue;
+            }
+
+            if (otherPort.type() == candidate.type()
+                    && otherPort.mode() == candidate.mode()
+                    && otherPort.target().equals(candidate.target())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks whether a physical neighbour is missing for transfer-style ports.
+     *
+     * <p>Item and fluid ports normally need an adjacent block, pipe, inventory, or
+     * tank-like neighbour to be useful. This marks the option as conflicting when the
+     * neighbour position is currently air. Energy and redstone are left valid for now
+     * because their neighbour requirements may be looser or custom later.</p>
+     *
+     * @param face preview face
+     * @param candidate candidate port option
+     * @return {@code true} if the candidate expects a neighbour but none is present
+     */
+    private boolean hasMissingNeighbourConflict(
+            final PreviewPortFace face,
+            final ConfiguredMultiblockPort candidate
+    ) {
+        if (candidate.type() != MultiblockPortType.ITEM
+                && candidate.type() != MultiblockPortType.FLUID) {
+            return false;
+        }
+
+        final Level level = Minecraft.getInstance().level;
+
+        if (level == null) {
+            return false;
+        }
+
+        final BlockPos worldPartPos = this.menu.origin.offset(
+                face.previewPos().getX(),
+                face.previewPos().getY(),
+                face.previewPos().getZ()
+        );
+
+        final BlockPos neighbourPos = worldPartPos.relative(face.previewFace());
+
+        return level.getBlockState(neighbourPos).isAir();
+    }
+
+    @Override
     public void setPort(
             final PreviewPortFace face,
             final PreviewPortOption option

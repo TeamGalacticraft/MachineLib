@@ -125,6 +125,24 @@ public interface PortPreviewScene {
     }
 
     /**
+     * Gets the validation state for an option on a selected face.
+     *
+     * @param face selected face
+     * @param option option
+     * @return option validation state
+     */
+    default PreviewPortOptionState optionStateFor(
+            final PreviewPortFace face,
+            final PreviewPortOption option
+    ) {
+        if (option.matches(face)) {
+            return PreviewPortOptionState.CURRENT;
+        }
+
+        return PreviewPortOptionState.VALID;
+    }
+
+    /**
      * Applies a selected configuration option to a face.
      *
      * @param face selected face

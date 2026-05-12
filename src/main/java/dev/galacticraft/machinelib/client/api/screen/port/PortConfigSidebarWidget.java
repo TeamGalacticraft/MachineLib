@@ -175,6 +175,7 @@ public final class PortConfigSidebarWidget {
         final int endY = this.renderOptions(
                 graphics,
                 font,
+                scene,
                 scene.optionsFor(selectedFace),
                 selectedFace,
                 mouseX,
@@ -241,6 +242,7 @@ public final class PortConfigSidebarWidget {
     private int renderOptions(
             final GuiGraphics graphics,
             final Font font,
+            final PortPreviewScene scene,
             final List<PreviewPortOption> options,
             final PreviewPortFace selectedFace,
             final int mouseX,
@@ -266,7 +268,7 @@ public final class PortConfigSidebarWidget {
         int rowY = startY;
 
         if (clearOption != null) {
-            rowY = this.renderOptionRow(graphics, font, clearOption, selectedFace, mouseX, mouseY, rowY, false);
+            rowY = this.renderOptionRow(graphics, font, scene, clearOption, selectedFace, mouseX, mouseY, rowY, false);
         }
 
         for (final Map.Entry<String, List<PreviewPortOption>> entry : groupedOptions.entrySet()) {
@@ -298,6 +300,7 @@ public final class PortConfigSidebarWidget {
                 rowY = this.renderOptionRow(
                         graphics,
                         font,
+                        scene,
                         option,
                         selectedFace,
                         mouseX,
@@ -350,7 +353,7 @@ public final class PortConfigSidebarWidget {
             graphics.drawString(font, expanded ? "▾" : "▸", rowX + 6, rowY + 5, 0xFFE6E6E6, false);
             graphics.drawString(font, label, rowX + 18, rowY + 5, active ? 0xFFFFFFFF : 0xFFEAEAEA, false);
 
-            this.rows.add(new Row(rowX, rowY, rowWidth, GROUP_ROW_HEIGHT - 2, groupKey, null, null, RowState.VALID));
+            this.rows.add(new Row(rowX, rowY, rowWidth, GROUP_ROW_HEIGHT - 2, groupKey, null, null, PreviewPortOptionState.VALID));
         }
 
         return rowY + GROUP_ROW_HEIGHT;
@@ -372,6 +375,7 @@ public final class PortConfigSidebarWidget {
     private int renderOptionRow(
             final GuiGraphics graphics,
             final Font font,
+            final PortPreviewScene scene,
             final PreviewPortOption option,
             final PreviewPortFace selectedFace,
             final int mouseX,
@@ -383,19 +387,19 @@ public final class PortConfigSidebarWidget {
         final int rowX = this.x + PADDING + (child ? 12 : 0);
         final int rowWidth = this.width - PADDING * 2 - (child ? 12 : 0) - this.scrollbarAllowance();
         final boolean hovered = this.mouseIn(mouseX, mouseY, rowX, rowY, rowWidth, rowHeight - 2);
-        final RowState state = this.stateFor(option, selectedFace);
+        final PreviewPortOptionState state = this.stateFor(scene, option, selectedFace);
 
         if (rowY + rowHeight >= this.contentTop && rowY <= this.contentBottom) {
             final int background = this.backgroundColor(state, hovered, child);
 
             graphics.fill(rowX, rowY, rowX + rowWidth, rowY + rowHeight - 2, background);
 
-            if (state == RowState.CURRENT) {
+            if (state == PreviewPortOptionState.CURRENT) {
                 graphics.fill(rowX, rowY, rowX + 2, rowY + rowHeight - 2, 0xFF7AB7FF);
                 graphics.drawString(font, "✓", rowX + 5, rowY + (child ? 4 : 5), 0xFFFFFFFF, false);
             }
 
-            final int labelX = rowX + (state == RowState.CURRENT ? 17 : 6);
+            final int labelX = rowX + (state == PreviewPortOptionState.CURRENT ? 17 : 6);
 
             graphics.drawString(
                     font,
@@ -421,19 +425,20 @@ public final class PortConfigSidebarWidget {
     /**
      * Gets the visual state for an option row.
      *
+     * @param scene preview scene
      * @param option option
      * @param selectedFace selected face
      * @return row state
      */
-    private RowState stateFor(
+    private PreviewPortOptionState stateFor(
+            final PortPreviewScene scene,
             final PreviewPortOption option,
             final PreviewPortFace selectedFace
     ) {
-        if (option.matches(selectedFace)) {
-            return RowState.CURRENT;
-        }
-
-        return RowState.VALID;
+        return scene.optionStateFor(
+                selectedFace,
+                option
+        );
     }
 
     /**
@@ -445,7 +450,7 @@ public final class PortConfigSidebarWidget {
      * @return ARGB colour
      */
     private int backgroundColor(
-            final RowState state,
+            final PreviewPortOptionState state,
             final boolean hovered,
             final boolean child
     ) {
@@ -465,7 +470,7 @@ public final class PortConfigSidebarWidget {
      * @return ARGB colour
      */
     private int textColor(
-            final RowState state,
+            final PreviewPortOptionState state,
             final PreviewPortOption option
     ) {
         if (option.clearsPort()) {
@@ -534,7 +539,9 @@ public final class PortConfigSidebarWidget {
                 return true;
             }
 
-            if (row.option() != null && row.state() != RowState.DISABLED && row.state() != RowState.CONFLICT) {
+            if (row.option() != null
+                    && row.state() != PreviewPortOptionState.DISABLED
+                    && row.state() != PreviewPortOptionState.CONFLICT) {
                 scene.setPort(selectedFace, row.option());
                 widget.refreshSelection(scene);
                 return true;
@@ -781,16 +788,6 @@ public final class PortConfigSidebarWidget {
     }
 
     /**
-     * Visual state for an option row.
-     */
-    private enum RowState {
-        VALID,
-        CURRENT,
-        DISABLED,
-        CONFLICT
-    }
-
-    /**
      * Rendered sidebar row with matching click bounds.
      *
      * @param x row x
@@ -810,7 +807,7 @@ public final class PortConfigSidebarWidget {
             String groupKey,
             PreviewPortOption option,
             Component tooltip,
-            RowState state
+            PreviewPortOptionState state
     ) {
 
         /**
