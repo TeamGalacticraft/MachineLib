@@ -243,6 +243,9 @@ public interface Constant {
         String PORT_MODE = "ui.machinelib.port_config.option.mode";
         String PORT_TARGET = "ui.machinelib.port_config.option.target";
         String PORT_FACE_LABEL = "ui.machinelib.port_config.face_label";
+        String PORT_OPTION_GROUP = "ui.machinelib.port_config.option.group";
+        String PORT_OPTION_TARGET_COMPACT = "ui.machinelib.port_config.option.target_compact";
+        String PORT_OPTION_TARGET_FULL = "ui.machinelib.port_config.option.target_full";
     }
 
     interface Filter {

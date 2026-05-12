@@ -104,4 +104,72 @@ public record PreviewPortOption(
     public boolean clearsPort() {
         return this.port == null;
     }
+
+    /**
+     * Gets a stable grouping key for this option.
+     *
+     * @return grouping key
+     */
+    public String groupKey() {
+        if (this.port == null) {
+            return "clear";
+        }
+
+        return this.port.type().name() + ":" + this.port.mode().name();
+    }
+
+    /**
+     * Gets the expandable group label for this option.
+     *
+     * @return group label
+     */
+    public Component groupLabel() {
+        if (this.port == null) {
+            return this.label;
+        }
+
+        return Component.translatable(
+                Constant.TranslationKey.PORT_OPTION_GROUP,
+                this.port.type().name(),
+                this.port.mode().name()
+        );
+    }
+
+    /**
+     * Gets the compact target label shown under a group.
+     *
+     * @return compact target label
+     */
+    public Component compactTargetLabel() {
+        if (this.port == null) {
+            return this.label;
+        }
+
+        final String prefix = this.port.target().group() ? "#" : "";
+
+        return Component.translatable(
+                Constant.TranslationKey.PORT_OPTION_TARGET_COMPACT,
+                prefix,
+                this.port.target().id().getPath()
+        );
+    }
+
+    /**
+     * Gets the full target label shown as a tooltip.
+     *
+     * @return full target label
+     */
+    public Component fullTargetLabel() {
+        if (this.port == null) {
+            return this.label;
+        }
+
+        final String prefix = this.port.target().group() ? "#" : "";
+
+        return Component.translatable(
+                Constant.TranslationKey.PORT_OPTION_TARGET_FULL,
+                prefix,
+                this.port.target().id().toString()
+        );
+    }
 }

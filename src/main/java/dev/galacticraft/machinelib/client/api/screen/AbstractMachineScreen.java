@@ -409,54 +409,46 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         }
 
         if (Tab.CONFIGURATION.isOpen()) {
-            final int panelX = this.leftPos - PORT_CONFIG_PANEL_WIDTH;
             final int panelY = this.topPos + TAB_HEIGHT + SPACING * 2;
+            final int panelX = Math.max(4, this.leftPos - PORT_CONFIG_PANEL_WIDTH);
 
-            poseStack.pushPose();
-            poseStack.translate(-PORT_CONFIG_PANEL_WIDTH, TAB_HEIGHT + SPACING * 2, 0);
+            final int availableLeft = Math.max(0, this.leftPos - 4);
+            final int availableHeight = Math.max(0, this.height - panelY - 4);
 
-            graphics.fill(
-                    0,
-                    0,
-                    PORT_CONFIG_PANEL_WIDTH,
-                    PORT_CONFIG_PANEL_HEIGHT,
-                    0xDD202020
+            final int panelWidth = Math.min(PORT_CONFIG_PANEL_WIDTH, availableLeft);
+            final int panelHeight = Math.min(PORT_CONFIG_PANEL_HEIGHT, availableHeight);
+
+            if (panelWidth < 96 || panelHeight < 96) {
+                poseStack.popPose();
+                return;
+            }
+
+            final int previewX = panelX + PORT_CONFIG_PREVIEW_X;
+            final int previewY = panelY + PORT_CONFIG_PREVIEW_Y;
+            final int previewWidth = Math.max(48, panelWidth - PORT_CONFIG_PREVIEW_X * 2);
+            final int previewHeight = Math.min(
+                    PORT_CONFIG_PREVIEW_HEIGHT,
+                    Math.max(42, panelHeight - PORT_CONFIG_PREVIEW_Y - 70)
             );
-
-            graphics.fill(
-                    0,
-                    0,
-                    PORT_CONFIG_PANEL_WIDTH,
-                    PANEL_UPPER_HEIGHT,
-                    0xEE303030
-            );
-
-            graphics.renderFakeItem(
-                    WRENCH,
-                    Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT,
-                    PANEL_ICON_Y
-            );
-
-            graphics.drawString(
-                    this.font,
-                    Component.literal("Port Config").setStyle(Constant.Text.GRAY_STYLE),
-                    (Tab.CONFIGURATION.isLeft() ? PANEL_ICON_X_LEFT : PANEL_ICON_X_RIGHT) + PANEL_TITLE_X,
-                    PANEL_TITLE_Y,
-                    0xFFFFFFFF
-            );
-
-            poseStack.popPose();
 
             poseStack.pushPose();
             poseStack.translate(-this.leftPos, -this.topPos, 0);
 
+            graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xDD202020);
+            graphics.fill(panelX, panelY, panelX + panelWidth, panelY + PANEL_UPPER_HEIGHT, 0xEE303030);
+
+            graphics.renderFakeItem(WRENCH, panelX + PANEL_ICON_X_LEFT, panelY + PANEL_ICON_Y);
+
+            graphics.drawString(
+                    this.font,
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG).setStyle(Constant.Text.GRAY_STYLE),
+                    panelX + PANEL_ICON_X_LEFT + PANEL_TITLE_X,
+                    panelY + PANEL_TITLE_Y,
+                    0xFFFFFFFF
+            );
+
             if (this.portPreviewWidget != null && this.portPreviewScene != null) {
-                this.portPreviewWidget.setBounds(
-                        panelX + PORT_CONFIG_PREVIEW_X,
-                        panelY + PORT_CONFIG_PREVIEW_Y,
-                        PORT_CONFIG_PREVIEW_WIDTH,
-                        PORT_CONFIG_PREVIEW_HEIGHT
-                );
+                this.portPreviewWidget.setBounds(previewX, previewY, previewWidth, previewHeight);
 
                 this.portPreviewWidget.render(
                         graphics,
@@ -469,8 +461,9 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             this.renderPortSelectionDetails(
                     graphics,
                     panelX + 8,
-                    panelY + PORT_CONFIG_PREVIEW_Y + PORT_CONFIG_PREVIEW_HEIGHT + 8,
-                    PORT_CONFIG_PANEL_WIDTH - 16
+                    previewY + previewHeight + 8,
+                    panelWidth - 16,
+                    panelY + panelHeight - 6
             );
 
             poseStack.popPose();
@@ -1019,9 +1012,10 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
             final GuiGraphics graphics,
             final int x,
             final int y,
-            final int width
+            final int width,
+            final int bottomY
     ) {
-        if (this.portPreviewWidget == null || this.portPreviewScene == null) {
+        if (this.portPreviewWidget == null || this.portPreviewScene == null || width <= 0) {
             return;
         }
 
@@ -1031,12 +1025,11 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
 
         if (selectedFace == null) {
             lines = List.of(
-                    Component.literal("No port selected"),
-                    Component.literal(""),
-                    Component.literal("LMB cycle"),
-                    Component.literal("RMB reverse"),
-                    Component.literal("Ctrl/Mid clear"),
-                    Component.literal("Drag rotate | Scroll zoom")
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_NONE),
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_HELP_SELECT),
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_HELP_CONFIGURE),
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_HELP_CLEAR),
+                    Component.translatable(Constant.TranslationKey.PORT_CONFIG_HELP_CAMERA)
             );
         } else {
             lines = this.portPreviewScene.detailsFor(selectedFace);
@@ -1045,16 +1038,23 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
         int lineY = y;
 
         for (int i = 0; i < Math.min(lines.size(), 6); i++) {
+            final Component line = lines.get(i);
+            final int lineHeight = this.font.split(line, width).size() * this.font.lineHeight;
+
+            if (lineY + lineHeight > bottomY) {
+                break;
+            }
+
             graphics.drawWordWrap(
                     this.font,
-                    lines.get(i),
+                    line,
                     x,
                     lineY,
                     width,
                     0xFFE0E0E0
             );
 
-            lineY += this.font.lineHeight + 2;
+            lineY += lineHeight + 2;
         }
     }
 

@@ -227,7 +227,7 @@ public final class PortPreviewCamera {
     ) {
         return (float) Math.max(
                 1.0D,
-                Math.min(viewWidth, viewHeight) / Math.max(1.0D, largest * 1.35D)
+                Math.min(viewWidth, viewHeight) / Math.max(1.0D, largest * 2D)
         );
     }
 
