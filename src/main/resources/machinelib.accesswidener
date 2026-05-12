@@ -1,0 +1,3 @@
+accessWidener v2 named
+
+accessible method net/minecraft/client/renderer/LevelRenderer setBlockDirty (Lnet/minecraft/core/BlockPos;Z)V

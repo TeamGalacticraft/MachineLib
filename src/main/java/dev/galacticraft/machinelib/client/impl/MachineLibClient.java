@@ -28,9 +28,12 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import dev.galacticraft.machinelib.client.impl.model.MachineModelDataLoader;
 import dev.galacticraft.machinelib.client.impl.model.MachineModelLoadingPlugin;
+import dev.galacticraft.machinelib.client.impl.multiblock.visual.ClientMultiblockVisualManager;
 import dev.galacticraft.machinelib.impl.network.MachineLibPackets;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.model.loading.v1.PreparableModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -61,6 +64,8 @@ public final class MachineLibClient implements ClientModInitializer {
                         }), MachineModelLoadingPlugin.INSTANCE);
 
         MachineLibPackets.registerClient();
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientMultiblockVisualManager::render);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> ClientMultiblockVisualManager.tick());
 
         TestMenuScreens.register();
     }

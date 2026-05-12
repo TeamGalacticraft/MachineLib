@@ -100,6 +100,8 @@ sourceSets {
 }
 
 loom {
+    accessWidenerPath.set(file("src/main/resources/machinelib.accesswidener"))
+
     val testmod = sourceSets.getByName("testmod")
 
     mods {
@@ -195,6 +197,7 @@ dependencies {
         "fabric-item-api-v1",
         "fabric-model-loading-api-v1",
         "fabric-renderer-api-v1",
+        "fabric-rendering-v1",
         "fabric-rendering-data-attachment-v1",
         "fabric-rendering-fluids-v1",
         "fabric-screen-handler-api-v1",

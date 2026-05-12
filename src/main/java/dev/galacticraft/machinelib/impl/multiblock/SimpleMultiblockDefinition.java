@@ -34,6 +34,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
+import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualFactory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 
@@ -63,7 +64,8 @@ public record SimpleMultiblockDefinition(
         List<MultiblockPortRule> portRules,
         List<ConfiguredMultiblockPort> defaultPorts,
         Set<MultiblockPortFace> exposedFaces,
-        List<MultiblockPortConflictRuleAssignment> portConflictRules
+        List<MultiblockPortConflictRuleAssignment> portConflictRules,
+        MultiblockVisualFactory visualFactory
 ) implements MultiblockDefinition {
 
     /**
@@ -119,5 +121,4 @@ public record SimpleMultiblockDefinition(
 
         return MultiblockMenuOpener.open(context, this.menuFactory);
     }
-
 }

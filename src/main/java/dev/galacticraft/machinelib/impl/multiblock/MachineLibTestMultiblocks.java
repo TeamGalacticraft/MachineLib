@@ -31,6 +31,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortType;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRules;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictScope;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
+import dev.galacticraft.machinelib.client.impl.multiblock.visual.DebugMultiblockVisual;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
 import net.minecraft.core.BlockPos;
@@ -75,6 +76,8 @@ public final class MachineLibTestMultiblocks {
                 builder -> {
                     builder.pattern(pattern);
                     builder.rule(RotationFormationRule.allow(MultiblockOrientation.horizontal()));
+
+                    builder.visual(context -> new DebugMultiblockVisual());
 
                     MultiblockStandardComponents.configured(builder);
 

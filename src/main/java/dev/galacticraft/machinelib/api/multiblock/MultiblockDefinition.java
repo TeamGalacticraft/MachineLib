@@ -26,6 +26,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
+import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualFactory;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockMenuOpener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
@@ -72,6 +73,18 @@ public interface MultiblockDefinition {
      */
     default Set<MultiblockPortFace> exposedFaces() {
         return Set.of();
+    }
+
+    /**
+     * Gets the optional client-side visual factory for this multiblock definition.
+     *
+     * <p>The visual factory is only used on the client. The server stores it as part
+     * of the definition metadata but never creates or renders visual instances.</p>
+     *
+     * @return visual factory, or {@code null} if this multiblock has no custom visual
+     */
+    default MultiblockVisualFactory visualFactory() {
+        return null;
     }
 
     /**

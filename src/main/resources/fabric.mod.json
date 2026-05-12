@@ -52,6 +52,7 @@
   "mixins": [
     "machinelib.mixins.json"
   ],
+  "accessWidener": "machinelib.accesswidener",
   "depends": {
     "fabricloader": ">=0.16",
     "minecraft": ">=1.21",

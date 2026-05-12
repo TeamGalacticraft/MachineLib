@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.api.multiblock;
 
 import dev.galacticraft.machinelib.api.multiblock.components.MultiblockComponent;
 import dev.galacticraft.machinelib.api.multiblock.port.*;
+import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -88,6 +89,14 @@ public interface MultiblockBuilder {
      * @return this builder
      */
     MultiblockBuilder menu(MultiblockMenuFactory factory);
+
+    /**
+     * Sets the client-side visual factory used when this multiblock is formed.
+     *
+     * @param factory visual factory
+     * @return this builder
+     */
+    MultiblockBuilder visual(MultiblockVisualFactory factory);
 
     /**
      * Uses a default MachineLib-style multiblock menu.

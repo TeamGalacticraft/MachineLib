@@ -3,7 +3,13 @@
   "package": "dev.galacticraft.machinelib.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "LevelMixin"
+    "LevelMixin",
+    "client.BlockFaceOcclusionMixin",
+    "client.BlockStateLightOcclusionMixin"
+  ],
+  "client": [
+    "client.BlockEntityRenderDispatcherMixin",
+    "client.FabricBakedModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

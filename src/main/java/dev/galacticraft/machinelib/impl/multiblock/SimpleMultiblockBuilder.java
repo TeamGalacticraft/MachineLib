@@ -38,6 +38,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.*;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRule;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictScope;
+import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -72,6 +73,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     private MultiblockMenuFactory menuFactory;
 
     private final List<MultiblockPortConflictRuleAssignment> portConflictRules = new ArrayList<>();
+
+    private MultiblockVisualFactory visualFactory;
 
     /**
      * Creates a builder for a multiblock id.
@@ -192,6 +195,18 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
     }
 
     /**
+     * Sets the client-side visual factory used when this multiblock is formed.
+     *
+     * @param factory visual factory
+     * @return this builder
+     */
+    @Override
+    public SimpleMultiblockBuilder visual(final MultiblockVisualFactory factory) {
+        this.visualFactory = factory;
+        return this;
+    }
+
+    /**
      * Uses a default MachineLib-style multiblock menu.
      *
      * <p>This installs the storage component defined by the supplied menu spec
@@ -301,7 +316,8 @@ public final class SimpleMultiblockBuilder implements MultiblockBuilder {
                 this.portRules,
                 this.defaultPorts,
                 exposedFaces,
-                this.portConflictRules
+                this.portConflictRules,
+                this.visualFactory
         );
     }
 
