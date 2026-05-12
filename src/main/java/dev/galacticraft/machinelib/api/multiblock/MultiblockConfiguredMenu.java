@@ -389,34 +389,63 @@ public abstract class MultiblockConfiguredMenu extends AbstractContainerMenu {
         final Optional<ConfiguredMultiblockPort> current = this.configuredPortAt(face);
 
         if (current.isEmpty()) {
-            this.sendSetPort(reverse ? options.get(options.size() - 1) : options.get(0));
+            this.setPort(reverse ? options.get(options.size() - 1) : options.get(0));
             return;
         }
 
         int index = options.indexOf(current.get());
 
         if (index < 0) {
-            this.sendRemovePort(face);
+            this.removePort(face);
             return;
         }
 
         index += reverse ? -1 : 1;
 
         if (index < 0 || index >= options.size()) {
-            this.sendRemovePort(face);
+            this.removePort(face);
             return;
         }
 
-        this.sendSetPort(options.get(index));
+        this.setPort(options.get(index));
     }
 
     /**
      * Removes the configured port from one multiblock face.
      *
+     * <p>On the client this updates the local cache immediately so the preview UI
+     * does not wait for the next server sync. The packet is still sent to the
+     * server, which remains authoritative.</p>
+     *
      * @param face port face to clear
      */
     public void removePort(final MultiblockPortFace face) {
+        if (this.machine == null) {
+            this.clientPorts.remove(face);
+        }
+
         this.sendRemovePort(face);
+    }
+
+    /**
+     * Sets the configured port on one multiblock face.
+     *
+     * <p>On the client this updates the local cache immediately so the preview UI
+     * reflects the change in the same frame. The packet is still sent to the
+     * server, which remains authoritative and may later correct the client if the
+     * option is rejected.</p>
+     *
+     * @param port configured port to apply
+     */
+    public void setPort(final ConfiguredMultiblockPort port) {
+        if (this.machine == null) {
+            this.clientPorts.put(
+                    port.face(),
+                    port
+            );
+        }
+
+        this.sendSetPort(port);
     }
 
     /**

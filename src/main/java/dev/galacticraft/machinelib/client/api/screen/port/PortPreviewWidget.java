@@ -54,6 +54,8 @@ public final class PortPreviewWidget {
 
     private final PortPreviewMeshCache meshCache = new PortPreviewMeshCache();
 
+    private boolean requireSecondClickToEdit;
+
     /**
      * Creates a preview widget.
      *
@@ -83,6 +85,20 @@ public final class PortPreviewWidget {
      */
     public void setPopOutHandler(final Runnable popOutHandler) {
         this.popOutHandler = popOutHandler;
+    }
+
+    /**
+     * Sets whether editing requires clicking an already-selected face.
+     *
+     * <p>When enabled, the first click on a different face only selects it. A
+     * second click on that same selected face performs the normal cycle, reverse,
+     * or clear action. This is useful in the full-screen editor where selecting a
+     * face should not immediately mutate the port.</p>
+     *
+     * @param requireSecondClickToEdit {@code true} to require a second click before editing
+     */
+    public void setRequireSecondClickToEdit(final boolean requireSecondClickToEdit) {
+        this.requireSecondClickToEdit = requireSecondClickToEdit;
     }
 
     /**
@@ -151,6 +167,10 @@ public final class PortPreviewWidget {
                 mouseY
         );
 
+        if (this.selectedFace != null) {
+            this.selectedFace = scene.resolveUpdatedFace(this.selectedFace);
+        }
+
         PortPreviewRenderer.render(
                 graphics,
                 scene,
@@ -170,15 +190,33 @@ public final class PortPreviewWidget {
                 mouseY
         );
 
-        if (this.contains(
+        this.renderBorder(
+                graphics,
                 mouseX,
                 mouseY
-        )) {
-            graphics.fill(this.x, this.y, this.x + this.width, this.y + 1, 0xFFFFFFFF);
-            graphics.fill(this.x, this.y + this.height - 1, this.x + this.width, this.y + this.height, 0xFFFFFFFF);
-            graphics.fill(this.x, this.y, this.x + 1, this.y + this.height, 0xFFFFFFFF);
-            graphics.fill(this.x + this.width - 1, this.y, this.x + this.width, this.y + this.height, 0xFFFFFFFF);
-        }
+        );
+    }
+
+    /**
+     * Renders the widget border above all preview content.
+     *
+     * @param graphics GUI graphics
+     * @param mouseX mouse x
+     * @param mouseY mouse y
+     */
+    private void renderBorder(
+            final GuiGraphics graphics,
+            final int mouseX,
+            final int mouseY
+    ) {
+        final int color = this.contains(mouseX, mouseY)
+                ? 0xFFFFFFFF
+                : 0xFFE0E0E0;
+
+        graphics.fill(this.x, this.y, this.x + this.width, this.y + 2, color);
+        graphics.fill(this.x, this.y + this.height - 2, this.x + this.width, this.y + this.height, color);
+        graphics.fill(this.x, this.y, this.x + 2, this.y + this.height, color);
+        graphics.fill(this.x + this.width - 2, this.y, this.x + this.width, this.y + this.height, color);
     }
 
     /**
@@ -222,10 +260,21 @@ public final class PortPreviewWidget {
                 mouseY
         );
 
-        if (picked != null && !Screen.hasAltDown()) {
-            this.selectedFace = picked;
+        if (picked != null) {
+            final boolean sameAsSelected = this.selectedFace != null
+                    && this.selectedFace.previewPos().equals(picked.previewPos())
+                    && this.selectedFace.previewFace() == picked.previewFace();
 
-            if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE || Screen.hasControlDown()) {
+            this.selectedFace = scene.resolveUpdatedFace(picked);
+            this.hoveredFace = this.selectedFace;
+
+            if (this.requireSecondClickToEdit && !sameAsSelected) {
+                return true;
+            }
+
+            if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE
+                    || Screen.hasControlDown()
+                    || Screen.hasAltDown()) {
                 scene.removePort(picked);
             } else {
                 scene.cyclePort(
@@ -233,6 +282,9 @@ public final class PortPreviewWidget {
                         button == GLFW.GLFW_MOUSE_BUTTON_RIGHT || Screen.hasShiftDown()
                 );
             }
+
+            this.selectedFace = scene.resolveUpdatedFace(picked);
+            this.hoveredFace = this.selectedFace;
 
             return true;
         }
@@ -427,5 +479,38 @@ public final class PortPreviewWidget {
                 && mouseY >= this.y
                 && mouseX < this.x + this.width
                 && mouseY < this.y + this.height;
+    }
+
+    /**
+     * Gets the currently selected preview face.
+     *
+     * @return selected face, or {@code null}
+     */
+    public PreviewPortFace selectedFace() {
+        return this.selectedFace;
+    }
+
+    /**
+     * Gets the currently hovered preview face.
+     *
+     * @return hovered face, or {@code null}
+     */
+    public PreviewPortFace hoveredFace() {
+        return this.hoveredFace;
+    }
+
+    /**
+     * Refreshes selected/hovered face records from the current scene.
+     *
+     * @param scene preview scene
+     */
+    public void refreshSelection(final PortPreviewScene scene) {
+        if (this.selectedFace != null) {
+            this.selectedFace = scene.resolveUpdatedFace(this.selectedFace);
+        }
+
+        if (this.hoveredFace != null) {
+            this.hoveredFace = scene.resolveUpdatedFace(this.hoveredFace);
+        }
     }
 }

@@ -25,8 +25,7 @@ package dev.galacticraft.machinelib.client.api.screen.port;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockDefinition;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockMachineMenu;
 import dev.galacticraft.machinelib.api.multiblock.MultiblockPattern;
-import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
-import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
+import dev.galacticraft.machinelib.api.multiblock.port.*;
 import dev.galacticraft.machinelib.impl.multiblock.MachineLibMultiblocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -35,10 +34,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 3D port preview scene for formed multiblock machines.
@@ -194,13 +190,11 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
             final ConfiguredMultiblockPort configuredPort = this.menu.configuredPortAt(face)
                     .orElse(null);
 
-            final PreviewPortFace previewFaceData = new PreviewPortFace(
+            final PreviewPortFace previewFaceData = this.createFace(
                     previewPos,
                     previewFace,
-                    this.describe(face),
-                    configuredPort != null,
-                    this.fillColor(configuredPort),
-                    this.outlineColor(configuredPort)
+                    face,
+                    configuredPort
             );
 
             this.faceMap.put(
@@ -215,35 +209,81 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
     }
 
     /**
+     * Creates a preview face for one multiblock port face.
+     *
+     * @param previewPos preview-space block position
+     * @param previewFace preview-space face direction
+     * @param portFace logical multiblock port face
+     * @param port configured port, or {@code null}
+     * @return preview face
+     */
+    private PreviewPortFace createFace(
+            final BlockPos previewPos,
+            final Direction previewFace,
+            final MultiblockPortFace portFace,
+            final ConfiguredMultiblockPort port
+    ) {
+        final Component label = this.describe(portFace);
+
+        if (port == null) {
+            return new PreviewPortFace(
+                    previewPos,
+                    previewFace,
+                    label,
+                    false,
+                    null,
+                    null,
+                    null,
+                    0x00000000,
+                    0xFF9A9A9A,
+                    List.of(
+                            label,
+                            Component.literal("Port: none")
+                    )
+            );
+        }
+
+        return new PreviewPortFace(
+                previewPos,
+                previewFace,
+                label,
+                true,
+                port.type().name(),
+                port.mode().name(),
+                port.target().id().toString(),
+                this.fillColor(port),
+                this.outlineColor(port),
+                List.of(
+                        label,
+                        Component.literal("Type: " + port.type().name()),
+                        Component.literal("Mode: " + port.mode().name()),
+                        Component.literal("Target: " + port.target().id())
+                )
+        );
+    }
+
+    /**
      * Gets the translucent fill colour for a multiblock port.
      *
-     * @param port configured port, or {@code null}
+     * @param port configured port
      * @return ARGB fill colour
      */
     private int fillColor(final ConfiguredMultiblockPort port) {
-        if (port == null) {
-            return 0x00000000;
-        }
-
         return switch (port.type()) {
-            case ITEM -> 0xC6FFD84D;
-            case FLUID -> 0xC64D8DFF;
-            case ENERGY -> 0xC637D65C;
-            case REDSTONE -> 0xC6D63737;
+            case ITEM -> 0x66FFD84D;
+            case FLUID -> 0x664D8DFF;
+            case ENERGY -> 0x6637D65C;
+            case REDSTONE -> 0x66D63737;
         };
     }
 
     /**
      * Gets the outline colour for a multiblock port.
      *
-     * @param port configured port, or {@code null}
+     * @param port configured port
      * @return ARGB outline colour
      */
     private int outlineColor(final ConfiguredMultiblockPort port) {
-        if (port == null) {
-            return 0xFF9A9A9A;
-        }
-
         return switch (port.mode()) {
             case INPUT -> 0xFF37D65C;
             case OUTPUT -> 0xFFD63737;
@@ -366,6 +406,77 @@ public final class MultiblockPortPreviewScene<Menu extends MultiblockMachineMenu
                 .orElse("NONE");
 
         return Component.literal(position + " " + face.face().getName() + " " + configured);
+    }
+
+    @Override
+    public List<Component> detailsFor(final PreviewPortFace face) {
+        return face.detailLines();
+    }
+
+    @Override
+    public List<PreviewPortOption> optionsFor(final PreviewPortFace face) {
+        final MultiblockPortFace portFace = this.portFaceFor(face);
+
+        if (portFace == null) {
+            return List.of();
+        }
+
+        final List<PreviewPortOption> options = new ArrayList<>();
+        options.add(PreviewPortOption.clear());
+
+        for (final ConfiguredMultiblockPort port : this.menu.portOptionsFor(portFace)) {
+            options.add(PreviewPortOption.of(port));
+        }
+
+        return List.copyOf(options);
+    }
+
+    @Override
+    public void setPort(
+            final PreviewPortFace face,
+            final PreviewPortOption option
+    ) {
+        final MultiblockPortFace portFace = this.portFaceFor(face);
+
+        if (portFace == null) {
+            return;
+        }
+
+        if (option.clearsPort()) {
+            this.menu.removePort(portFace);
+            return;
+        }
+
+        this.menu.setPort(option.port());
+    }
+
+    /**
+     * Resolves a logical multiblock port face from a preview face.
+     *
+     * <p>The preview face record may be recreated when configuration changes, so
+     * this method first checks the direct map and then falls back to matching by
+     * preview position and preview direction.</p>
+     *
+     * @param face preview face
+     * @return logical multiblock port face, or {@code null}
+     */
+    private MultiblockPortFace portFaceFor(final PreviewPortFace face) {
+        final MultiblockPortFace direct = this.faceMap.get(face);
+
+        if (direct != null) {
+            return direct;
+        }
+
+        for (final Map.Entry<PreviewPortFace, MultiblockPortFace> entry : this.faceMap.entrySet()) {
+            final PreviewPortFace candidate = entry.getKey();
+
+            if (candidate.previewPos().equals(face.previewPos())
+                    && candidate.previewFace() == face.previewFace()) {
+                return entry.getValue();
+            }
+        }
+
+        return null;
     }
 
 }

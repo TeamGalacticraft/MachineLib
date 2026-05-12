@@ -43,7 +43,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -172,6 +171,10 @@ public final class PortPreviewRenderer {
         double bestDepth = Double.NEGATIVE_INFINITY;
 
         for (final PreviewPortFace face : scene.portFaces()) {
+            if (!isFaceCameraVisible(camera, face)) {
+                continue;
+            }
+
             final ProjectedFace projected = projectFace(
                     camera,
                     face,
@@ -199,6 +202,36 @@ public final class PortPreviewRenderer {
         }
 
         return bestFace;
+    }
+
+    /**
+     * Checks whether a port face is generally facing the camera.
+     *
+     * <p>This prevents selecting rear-facing port overlays that are now hidden by
+     * the 3D depth buffer.</p>
+     *
+     * @param camera preview camera
+     * @param face preview face
+     * @return true if the face can be selected
+     */
+    private static boolean isFaceCameraVisible(
+            final PortPreviewCamera camera,
+            final PreviewPortFace face
+    ) {
+        final Vec3 center = faceCenter(
+                face.previewPos(),
+                face.previewFace()
+        );
+
+        final Vec3 normal = new Vec3(
+                face.previewFace().getStepX(),
+                face.previewFace().getStepY(),
+                face.previewFace().getStepZ()
+        );
+
+        final Vec3 cameraDirection = center.subtract(camera.focus()).normalize();
+
+        return normal.dot(cameraDirection) < 0.15D;
     }
 
     /**
@@ -693,22 +726,12 @@ public final class PortPreviewRenderer {
     }
 
     /**
-     * Renders all port face overlays as projected screen-space quads.
+     * Renders all port face overlays as real 3D quads attached to block faces.
      *
-     * <p>The actual machine blocks are still rendered as 3D baked geometry. Port
-     * overlays are projected into screen-space using the same math as picking. This
-     * guarantees the hovered/clicked area matches the visible overlay even at steep
-     * camera rotations.</p>
-     *
-     * @param graphics GUI graphics
-     * @param scene preview scene
-     * @param camera preview camera
-     * @param hoveredFace hovered face
-     * @param selectedFace selected face
-     * @param x widget x
-     * @param y widget y
-     * @param width widget width
-     * @param height widget height
+     * <p>The overlays are emitted into the 3D preview transform and depth-tested
+     * against the preview mesh. This means hidden ports are naturally occluded by
+     * blocks, and partially visible ports are clipped by real depth instead of being
+     * drawn as flat screen-space UI.</p>
      */
     private static void renderPortFaces(
             final GuiGraphics graphics,
@@ -724,63 +747,66 @@ public final class PortPreviewRenderer {
         final Minecraft minecraft = Minecraft.getInstance();
         final MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();
         final PoseStack poseStack = graphics.pose();
+        final Vec3 focus = camera.focus();
         final RenderType renderType = RenderType.guiOverlay();
 
-        final int centerX = x + width / 2;
-        final int centerY = y + height / 2;
+        graphics.enableScissor(x, y, x + width, y + height);
 
-        graphics.enableScissor(
-                x,
-                y,
-                x + width,
-                y + height
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+
+        poseStack.pushPose();
+
+        poseStack.translate(
+                x + width / 2.0D,
+                y + height / 2.0D,
+                201.0D
         );
 
-        RenderSystem.enableBlend();
-        RenderSystem.disableDepthTest();
+        poseStack.scale(
+                camera.zoom(),
+                -camera.zoom(),
+                camera.zoom()
+        );
+
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.pitch()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(camera.yaw()));
+
+        poseStack.translate(
+                -focus.x,
+                -focus.y,
+                -focus.z
+        );
 
         final VertexConsumer consumer = buffer.getBuffer(renderType);
 
-        scene.portFaces()
-                .stream()
-                .map(face -> new RenderedPortFace(
-                        face,
-                        projectFace(
-                                camera,
-                                face,
-                                centerX,
-                                centerY,
-                                0.018D,
-                                0.12D
-                        )
-                ))
-                .sorted(Comparator.comparingDouble(value -> value.projected().averageDepth()))
-                .forEach(value -> {
-                    final PreviewPortFace face = value.face();
-                    final ProjectedFace projected = value.projected();
+        for (final PreviewPortFace face : scene.portFaces()) {
+            emitPortFaceFill(
+                    poseStack,
+                    consumer,
+                    face,
+                    face.fillColor()
+            );
 
-                    emitProjectedPortFill(
-                            poseStack,
-                            consumer,
-                            projected,
-                            face.fillColor()
-                    );
-
-                    emitProjectedPortOutline(
-                            poseStack,
-                            consumer,
-                            projected,
-                            face.equals(selectedFace)
-                                    ? brightenOutline(face.outlineColor(), 1.45F)
-                                    : face.equals(hoveredFace)
-                                    ? brightenOutline(face.outlineColor(), 1.8F)
-                                    : face.outlineColor()
-                    );
-                });
+            emitPortFaceOutline(
+                    poseStack,
+                    consumer,
+                    face,
+                    face.equals(selectedFace) && face.equals(hoveredFace)
+                            ? brightenOutline(face.outlineColor(), 2.1F)
+                            : face.equals(selectedFace)
+                            ? brightenOutline(face.outlineColor(), 1.45F)
+                            : face.equals(hoveredFace)
+                            ? brightenOutline(face.outlineColor(), 1.8F)
+                            : face.outlineColor()
+            );
+        }
 
         buffer.endBatch(renderType);
 
-        RenderSystem.enableDepthTest();
+        poseStack.popPose();
+
+        RenderSystem.disableDepthTest();
         graphics.disableScissor();
     }
 
@@ -1075,63 +1101,13 @@ public final class PortPreviewRenderer {
             final PreviewPortFace face,
             final int argb
     ) {
-        final Vec3[] outer = faceCorners(
-                face.previewPos(),
-                face.previewFace(),
-                0.024D,
-                0.055D
-        );
+        final Vec3[] outer = faceCorners(face.previewPos(), face.previewFace(), 0.024D, 0.055D);
+        final Vec3[] inner = faceCorners(face.previewPos(), face.previewFace(), 0.026D, 0.115D);
 
-        final Vec3[] inner = faceCorners(
-                face.previewPos(),
-                face.previewFace(),
-                0.026D,
-                0.115D
-        );
-
-        emitQuad(
-                poseStack,
-                consumer,
-                outer[0],
-                outer[1],
-                inner[1],
-                inner[0],
-                face.previewFace(),
-                argb
-        );
-
-        emitQuad(
-                poseStack,
-                consumer,
-                outer[1],
-                outer[2],
-                inner[2],
-                inner[1],
-                face.previewFace(),
-                argb
-        );
-
-        emitQuad(
-                poseStack,
-                consumer,
-                outer[2],
-                outer[3],
-                inner[3],
-                inner[2],
-                face.previewFace(),
-                argb
-        );
-
-        emitQuad(
-                poseStack,
-                consumer,
-                outer[3],
-                outer[0],
-                inner[0],
-                inner[3],
-                face.previewFace(),
-                argb
-        );
+        emitQuad(poseStack, consumer, outer[0], outer[1], inner[1], inner[0], face.previewFace(), argb);
+        emitQuad(poseStack, consumer, outer[1], outer[2], inner[2], inner[1], face.previewFace(), argb);
+        emitQuad(poseStack, consumer, outer[2], outer[3], inner[3], inner[2], face.previewFace(), argb);
+        emitQuad(poseStack, consumer, outer[3], outer[0], inner[0], inner[3], face.previewFace(), argb);
     }
 
     /**

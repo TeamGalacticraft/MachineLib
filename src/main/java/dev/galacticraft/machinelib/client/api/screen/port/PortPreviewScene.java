@@ -77,4 +77,59 @@ public interface PortPreviewScene {
      * @param face selected preview face
      */
     void removePort(PreviewPortFace face);
+
+    /**
+     * Gets detail text for a selected preview face.
+     *
+     * <p>The face stores display data at creation time, so details update with the
+     * same data used by the overlay renderer instead of relying on delayed menu
+     * synchronization.</p>
+     *
+     * @param face selected preview face
+     * @return detail lines
+     */
+    default List<Component> detailsFor(final PreviewPortFace face) {
+        return face.detailLines();
+    }
+
+    /**
+     * Resolves an updated face after a configuration change.
+     *
+     * <p>Port cycling usually rebuilds {@link PreviewPortFace} records with updated
+     * display values. This method finds the replacement face with the same preview
+     * position and direction.</p>
+     *
+     * @param previous previous face record
+     * @return updated face record, or {@code previous} if not found
+     */
+    default PreviewPortFace resolveUpdatedFace(final PreviewPortFace previous) {
+        for (final PreviewPortFace face : this.portFaces()) {
+            if (face.previewPos().equals(previous.previewPos())
+                    && face.previewFace() == previous.previewFace()) {
+                return face;
+            }
+        }
+
+        return previous;
+    }
+
+    /**
+     * Gets selectable configuration options for a selected face.
+     *
+     * @param face selected face
+     * @return available options
+     */
+    default List<PreviewPortOption> optionsFor(final PreviewPortFace face) {
+        return List.of();
+    }
+
+    /**
+     * Applies a selected configuration option to a face.
+     *
+     * @param face selected face
+     * @param option selected option
+     */
+    default void setPort(final PreviewPortFace face, final PreviewPortOption option) {
+
+    }
 }

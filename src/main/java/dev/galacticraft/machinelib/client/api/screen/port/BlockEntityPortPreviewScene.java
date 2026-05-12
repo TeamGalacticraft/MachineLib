@@ -30,6 +30,7 @@ import dev.galacticraft.machinelib.api.util.BlockFace;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -118,18 +119,17 @@ public final class BlockEntityPortPreviewScene<
 
             final IOFace ioFace = this.menu.configuration.get(blockFace);
 
-            faces.add(new PreviewPortFace(
+            faces.add(this.createFace(
                     CENTER,
                     direction,
                     blockFace.getName(),
-                    ioFace.getType() != ResourceType.NONE,
-                    this.fillColor(ioFace),
-                    this.outlineColor(ioFace)
+                    ioFace
             ));
         }
 
         return List.copyOf(faces);
     }
+
 
     /**
      * Gets the translucent fill colour for a normal machine side.
@@ -139,10 +139,10 @@ public final class BlockEntityPortPreviewScene<
      */
     private int fillColor(final IOFace face) {
         return switch (face.getType()) {
-            case ITEM -> 0xC6FFD84D;
-            case FLUID -> 0xC64D8DFF;
-            case ENERGY -> 0xC637D65C;
-            case NONE, ANY -> 0x00000000;
+            case ITEM -> 0x66FFD84D;
+            case FLUID -> 0x664D8DFF;
+            case ENERGY -> 0x6637D65C;
+            default -> 0x00000000;
         };
     }
 
@@ -160,7 +160,7 @@ public final class BlockEntityPortPreviewScene<
         return switch (face.getFlow()) {
             case INPUT -> 0xFF37D65C;
             case OUTPUT -> 0xFFD63737;
-            case BOTH -> 0xFFFF4DD8;
+            case BOTH -> 0xFFFFD84D;
         };
     }
 
@@ -227,6 +227,70 @@ public final class BlockEntityPortPreviewScene<
         }
 
         return Direction.NORTH;
+    }
+
+    @Override
+    public List<Component> detailsFor(final PreviewPortFace face) {
+        final BlockFace blockFace = this.blockFace(face);
+
+        if (blockFace == null) {
+            return List.of(face.label());
+        }
+
+        final IOFace ioFace = this.menu.configuration.get(blockFace);
+
+        final List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal("Selected: ").append(blockFace.getName()));
+
+        if (ioFace.getType() == ResourceType.NONE) {
+            lines.add(Component.literal("Port: none"));
+        } else {
+            lines.add(Component.literal("Type: ").append(ioFace.getType().getName()));
+            lines.add(Component.literal("Flow: ").append(ioFace.getFlow().getName()));
+        }
+
+        return List.copyOf(lines);
+    }
+
+    /**
+     * Creates a preview face for a normal block entity machine side.
+     *
+     * @param previewPos preview-space block position
+     * @param previewFace preview-space face direction
+     * @param label face label
+     * @param ioFace configured IO face
+     * @return preview face
+     */
+    private PreviewPortFace createFace(
+            final BlockPos previewPos,
+            final Direction previewFace,
+            final Component label,
+            final IOFace ioFace
+    ) {
+        if (ioFace.getType() == ResourceType.NONE) {
+            return PreviewPortFace.none(
+                    previewPos,
+                    previewFace,
+                    label
+            );
+        }
+
+        return new PreviewPortFace(
+                previewPos,
+                previewFace,
+                label,
+                true,
+                ioFace.getType().getName().getString(),
+                ioFace.getFlow().getName().getString(),
+                null,
+                this.fillColor(ioFace),
+                this.outlineColor(ioFace),
+                List.of(
+                        label,
+                        Component.literal("Type: ").append(ioFace.getType().getName()),
+                        Component.literal("Flow: ").append(ioFace.getFlow().getName())
+                )
+        );
     }
 
 }

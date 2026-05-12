@@ -26,50 +26,70 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
+
 /**
  * One selectable face inside a 3D port preview scene.
  *
  * @param previewPos preview-space block position
  * @param previewFace preview-space face direction
- * @param label readable label
+ * @param label readable face label
  * @param configured whether this face currently has a configured port
+ * @param typeName current port type display text, or {@code null}
+ * @param modeName current port mode/flow display text, or {@code null}
+ * @param targetName current target display text, or {@code null}
  * @param fillColor ARGB translucent fill colour
  * @param outlineColor ARGB outline colour
+ * @param detailLines cached detail lines shown when this face is selected
  */
 public record PreviewPortFace(
         BlockPos previewPos,
         Direction previewFace,
         Component label,
         boolean configured,
+        String typeName,
+        String modeName,
+        String targetName,
         int fillColor,
-        int outlineColor
+        int outlineColor,
+        List<Component> detailLines
 ) {
 
+    /**
+     * Normalizes immutable values.
+     */
     public PreviewPortFace {
         previewPos = previewPos.immutable();
+        detailLines = List.copyOf(detailLines);
     }
 
     /**
-     * Creates a fallback unconfigured preview face.
+     * Creates an unconfigured preview face.
      *
      * @param previewPos preview-space block position
      * @param previewFace preview-space face direction
-     * @param label readable label
-     * @param configured whether this face currently has a configured port
+     * @param label readable face label
+     * @return unconfigured face
      */
-    public PreviewPortFace(
+    public static PreviewPortFace none(
             final BlockPos previewPos,
             final Direction previewFace,
-            final Component label,
-            final boolean configured
+            final Component label
     ) {
-        this(
+        return new PreviewPortFace(
                 previewPos,
                 previewFace,
                 label,
-                configured,
-                configured ? 0x6637D65C : 0x00000000,
-                configured ? 0xFF37D65C : 0xFF9A9A9A
+                false,
+                null,
+                null,
+                null,
+                0x00000000,
+                0xFF9A9A9A,
+                List.of(
+                        label,
+                        Component.literal("Port: none")
+                )
         );
     }
 }

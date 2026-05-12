@@ -26,15 +26,19 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 
 /**
- * Full-screen port configuration preview.
+ * Full-screen advanced port configuration preview.
  */
 public final class PortConfigPreviewScreen extends Screen {
 
     private static final int MARGIN = 18;
+    private static final int TITLE_HEIGHT = 14;
+    private static final int GAP = 8;
+    private static final int SIDEBAR_WIDTH = 230;
 
     private final Screen parent;
     private final PortPreviewScene scene;
     private final PortPreviewWidget widget;
+    private final PortConfigSidebarWidget sidebar;
 
     /**
      * Creates a full-screen port configuration preview.
@@ -56,31 +60,34 @@ public final class PortConfigPreviewScreen extends Screen {
                 1,
                 1
         );
+        this.sidebar = new PortConfigSidebarWidget();
     }
 
-    /**
-     * Initializes the full-screen widget bounds.
-     */
     @Override
     protected void init() {
+        final int contentY = MARGIN + TITLE_HEIGHT;
+        final int contentHeight = this.height - MARGIN * 2 - TITLE_HEIGHT;
+        final int previewWidth = this.width - MARGIN * 2 - SIDEBAR_WIDTH - GAP;
+
         this.widget.setBounds(
                 MARGIN,
-                MARGIN + 14,
-                this.width - MARGIN * 2,
-                this.height - MARGIN * 2 - 14
+                contentY,
+                previewWidth,
+                contentHeight
+        );
+
+        this.sidebar.setBounds(
+                MARGIN + previewWidth + GAP,
+                contentY,
+                SIDEBAR_WIDTH,
+                contentHeight
         );
 
         this.widget.centerOnScene(this.scene);
+
+        this.widget.setRequireSecondClickToEdit(true);
     }
 
-    /**
-     * Renders the full-screen preview.
-     *
-     * @param graphics GUI graphics
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param delta tick delta
-     */
     @Override
     public void render(
             final GuiGraphics graphics,
@@ -110,22 +117,33 @@ public final class PortConfigPreviewScreen extends Screen {
                 mouseX,
                 mouseY
         );
+
+        this.sidebar.render(
+                graphics,
+                this.font,
+                this.scene,
+                this.widget,
+                mouseX,
+                mouseY
+        );
     }
 
-    /**
-     * Handles mouse clicks.
-     *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param button button
-     * @return {@code true} if handled
-     */
     @Override
     public boolean mouseClicked(
             final double mouseX,
             final double mouseY,
             final int button
     ) {
+        if (this.sidebar.mouseClicked(
+                this.scene,
+                this.widget,
+                mouseX,
+                mouseY,
+                button
+        )) {
+            return true;
+        }
+
         if (this.widget.mouseClicked(
                 this.scene,
                 mouseX,
@@ -142,14 +160,6 @@ public final class PortConfigPreviewScreen extends Screen {
         );
     }
 
-    /**
-     * Handles mouse release.
-     *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param button button
-     * @return {@code true} if handled
-     */
     @Override
     public boolean mouseReleased(
             final double mouseX,
@@ -171,16 +181,6 @@ public final class PortConfigPreviewScreen extends Screen {
         );
     }
 
-    /**
-     * Handles mouse dragging.
-     *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param button button
-     * @param deltaX x delta
-     * @param deltaY y delta
-     * @return {@code true} if handled
-     */
     @Override
     public boolean mouseDragged(
             final double mouseX,
@@ -208,15 +208,6 @@ public final class PortConfigPreviewScreen extends Screen {
         );
     }
 
-    /**
-     * Handles mouse scrolling.
-     *
-     * @param mouseX mouse x
-     * @param mouseY mouse y
-     * @param horizontalAmount horizontal scroll amount
-     * @param verticalAmount vertical scroll amount
-     * @return {@code true} if handled
-     */
     @Override
     public boolean mouseScrolled(
             final double mouseX,
@@ -241,9 +232,6 @@ public final class PortConfigPreviewScreen extends Screen {
         );
     }
 
-    /**
-     * Closes the full-screen preview.
-     */
     @Override
     public void onClose() {
         this.minecraft.setScreen(this.parent);

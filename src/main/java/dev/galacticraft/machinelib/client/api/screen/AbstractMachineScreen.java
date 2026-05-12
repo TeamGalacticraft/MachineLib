@@ -35,6 +35,7 @@ import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.client.api.screen.port.PortConfigPreviewScreen;
 import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewScene;
 import dev.galacticraft.machinelib.client.api.screen.port.PortPreviewWidget;
+import dev.galacticraft.machinelib.client.api.screen.port.PreviewPortFace;
 import dev.galacticraft.machinelib.client.api.util.DisplayUtil;
 import dev.galacticraft.machinelib.client.api.util.GraphicsUtil;
 import dev.galacticraft.machinelib.client.impl.model.MachineBakedModel;
@@ -144,11 +145,11 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
     private static final int BUTTON_SIZE = 16;
 
     private static final int PORT_CONFIG_PANEL_WIDTH = 170;
-    private static final int PORT_CONFIG_PANEL_HEIGHT = 126;
+    private static final int PORT_CONFIG_PANEL_HEIGHT = 176;
     private static final int PORT_CONFIG_PREVIEW_X = 5;
     private static final int PORT_CONFIG_PREVIEW_Y = 22;
     private static final int PORT_CONFIG_PREVIEW_WIDTH = 160;
-    private static final int PORT_CONFIG_PREVIEW_HEIGHT = 74;
+    private static final int PORT_CONFIG_PREVIEW_HEIGHT = 86;
 
     @ApiStatus.Internal
     private static final List<Component> TOOLTIP_ARRAY = new ArrayList<>();
@@ -444,12 +445,10 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
                     0xFFFFFFFF
             );
 
-            graphics.drawString(this.font, Component.literal("LMB cycle"), 6, PORT_CONFIG_PANEL_HEIGHT - 42, 0xFFB0B0B0, false);
-            graphics.drawString(this.font, Component.literal("RMB reverse"), 6, PORT_CONFIG_PANEL_HEIGHT - 32, 0xFFB0B0B0, false);
-            graphics.drawString(this.font, Component.literal("Ctrl/Mid clear"), 6, PORT_CONFIG_PANEL_HEIGHT - 22, 0xFFB0B0B0, false);
-            graphics.drawString(this.font, Component.literal("Drag rotate | Scroll zoom"), 6, PORT_CONFIG_PANEL_HEIGHT - 12, 0xFFB0B0B0, false);
-
             poseStack.popPose();
+
+            poseStack.pushPose();
+            poseStack.translate(-this.leftPos, -this.topPos, 0);
 
             if (this.portPreviewWidget != null && this.portPreviewScene != null) {
                 this.portPreviewWidget.setBounds(
@@ -459,18 +458,22 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
                         PORT_CONFIG_PREVIEW_HEIGHT
                 );
 
-                poseStack.pushPose();
-                poseStack.translate(-this.leftPos, -this.topPos, 0);
-
                 this.portPreviewWidget.render(
                         graphics,
                         this.portPreviewScene,
                         mouseX,
                         mouseY
                 );
-
-                poseStack.popPose();
             }
+
+            this.renderPortSelectionDetails(
+                    graphics,
+                    panelX + 8,
+                    panelY + PORT_CONFIG_PREVIEW_Y + PORT_CONFIG_PREVIEW_HEIGHT + 8,
+                    PORT_CONFIG_PANEL_WIDTH - 16
+            );
+
+            poseStack.popPose();
         }
 
         if (Tab.STATS.isOpen()) {
@@ -999,6 +1002,60 @@ public abstract class AbstractMachineScreen<Menu extends AbstractContainerMenu> 
                 mouseX,
                 mouseY
         );
+    }
+
+    /**
+     * Renders detail text for the currently selected port preview face.
+     *
+     * <p>This text is rendered inside the lower information area of the port
+     * configuration panel, replacing the old static mouse-control help text.</p>
+     *
+     * @param graphics GUI graphics
+     * @param x left text x
+     * @param y top text y
+     * @param width available width
+     */
+    private void renderPortSelectionDetails(
+            final GuiGraphics graphics,
+            final int x,
+            final int y,
+            final int width
+    ) {
+        if (this.portPreviewWidget == null || this.portPreviewScene == null) {
+            return;
+        }
+
+        final PreviewPortFace selectedFace = this.portPreviewWidget.selectedFace();
+
+        final List<Component> lines;
+
+        if (selectedFace == null) {
+            lines = List.of(
+                    Component.literal("No port selected"),
+                    Component.literal(""),
+                    Component.literal("LMB cycle"),
+                    Component.literal("RMB reverse"),
+                    Component.literal("Ctrl/Mid clear"),
+                    Component.literal("Drag rotate | Scroll zoom")
+            );
+        } else {
+            lines = this.portPreviewScene.detailsFor(selectedFace);
+        }
+
+        int lineY = y;
+
+        for (int i = 0; i < Math.min(lines.size(), 6); i++) {
+            graphics.drawWordWrap(
+                    this.font,
+                    lines.get(i),
+                    x,
+                    lineY,
+                    width,
+                    0xFFE0E0E0
+            );
+
+            lineY += this.font.lineHeight + 2;
+        }
     }
 
     /**
