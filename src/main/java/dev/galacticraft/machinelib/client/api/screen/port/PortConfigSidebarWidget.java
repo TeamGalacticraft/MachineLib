@@ -1,13 +1,39 @@
+/*
+ * Copyright (c) 2021-2025 Team Galacticraft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package dev.galacticraft.machinelib.client.api.screen.port;
 
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Right-side advanced editor panel for the full-screen port config view.
@@ -20,6 +46,18 @@ public final class PortConfigSidebarWidget {
     private static final int DETAIL_RESERVED_HEIGHT = 80;
     private static final int SCROLLBAR_WIDTH = 5;
     private static final int SCROLL_SPEED = 18;
+
+    private static final int COLOR_PANEL = 0xEE151515;
+    private static final int COLOR_HEADER = 0xEE202020;
+    private static final int COLOR_DIVIDER = 0xFF303030;
+    private static final int COLOR_GROUP = 0xFF242424;
+    private static final int COLOR_GROUP_HOVER = 0xFF323232;
+    private static final int COLOR_CHILD = 0xCC1F1F1F;
+    private static final int COLOR_CHILD_HOVER = 0xFF2E2E2E;
+    private static final int COLOR_ACTIVE = 0xFF23405F;
+    private static final int COLOR_ACTIVE_HOVER = 0xFF2E5278;
+    private static final int COLOR_DISABLED = 0xAA1A1A1A;
+    private static final int COLOR_CONFLICT = 0xFF5F3A23;
 
     private final Set<String> expandedGroups = new HashSet<>();
     private final List<Row> rows = new ArrayList<>();
@@ -85,9 +123,9 @@ public final class PortConfigSidebarWidget {
         this.hoveredTooltip = null;
         this.smoothScroll();
 
-        graphics.fill(this.x, this.y, this.x + this.width, this.y + this.height, 0xEE151515);
-        graphics.fill(this.x, this.y, this.x + this.width, this.y + 24, 0xEE202020);
-        graphics.fill(this.x, this.y + 24, this.x + this.width, this.y + 25, 0xFF303030);
+        graphics.fill(this.x, this.y, this.x + this.width, this.y + this.height, COLOR_PANEL);
+        graphics.fill(this.x, this.y, this.x + this.width, this.y + 24, COLOR_HEADER);
+        graphics.fill(this.x, this.y + 24, this.x + this.width, this.y + 25, COLOR_DIVIDER);
 
         graphics.drawString(
                 font,
@@ -138,6 +176,7 @@ public final class PortConfigSidebarWidget {
                 graphics,
                 font,
                 scene.optionsFor(selectedFace),
+                selectedFace,
                 mouseX,
                 mouseY,
                 this.contentTop - (int) Math.round(this.scroll)
@@ -193,6 +232,7 @@ public final class PortConfigSidebarWidget {
      * @param graphics GUI graphics
      * @param font font
      * @param options options
+     * @param selectedFace selected face
      * @param mouseX mouse x
      * @param mouseY mouse y
      * @param startY start y
@@ -202,6 +242,7 @@ public final class PortConfigSidebarWidget {
             final GuiGraphics graphics,
             final Font font,
             final List<PreviewPortOption> options,
+            final PreviewPortFace selectedFace,
             final int mouseX,
             final int mouseY,
             final int startY
@@ -216,12 +257,16 @@ public final class PortConfigSidebarWidget {
             }
 
             groupedOptions.computeIfAbsent(option.groupKey(), ignored -> new ArrayList<>()).add(option);
+
+            if (option.matches(selectedFace)) {
+                this.expandedGroups.add(option.groupKey());
+            }
         }
 
         int rowY = startY;
 
         if (clearOption != null) {
-            rowY = this.renderOptionRow(graphics, font, clearOption, mouseX, mouseY, rowY, false);
+            rowY = this.renderOptionRow(graphics, font, clearOption, selectedFace, mouseX, mouseY, rowY, false);
         }
 
         for (final Map.Entry<String, List<PreviewPortOption>> entry : groupedOptions.entrySet()) {
@@ -232,11 +277,14 @@ public final class PortConfigSidebarWidget {
                 continue;
             }
 
+            final boolean groupHasActiveOption = groupOptions.stream().anyMatch(option -> option.matches(selectedFace));
+
             rowY = this.renderGroupRow(
                     graphics,
                     font,
                     groupKey,
                     groupOptions.get(0).groupLabel(),
+                    groupHasActiveOption,
                     mouseX,
                     mouseY,
                     rowY
@@ -247,7 +295,16 @@ public final class PortConfigSidebarWidget {
             }
 
             for (final PreviewPortOption option : groupOptions) {
-                rowY = this.renderOptionRow(graphics, font, option, mouseX, mouseY, rowY, true);
+                rowY = this.renderOptionRow(
+                        graphics,
+                        font,
+                        option,
+                        selectedFace,
+                        mouseX,
+                        mouseY,
+                        rowY,
+                        true
+                );
             }
         }
 
@@ -261,6 +318,7 @@ public final class PortConfigSidebarWidget {
      * @param font font
      * @param groupKey group key
      * @param label label
+     * @param active whether this group contains the current active option
      * @param mouseX mouse x
      * @param mouseY mouse y
      * @param rowY row y
@@ -271,6 +329,7 @@ public final class PortConfigSidebarWidget {
             final Font font,
             final String groupKey,
             final Component label,
+            final boolean active,
             final int mouseX,
             final int mouseY,
             final int rowY
@@ -281,13 +340,17 @@ public final class PortConfigSidebarWidget {
         final boolean hovered = this.mouseIn(mouseX, mouseY, rowX, rowY, rowWidth, GROUP_ROW_HEIGHT - 2);
 
         if (rowY + GROUP_ROW_HEIGHT >= this.contentTop && rowY <= this.contentBottom) {
-            graphics.fill(rowX, rowY, rowX + rowWidth, rowY + GROUP_ROW_HEIGHT - 2, hovered ? 0xFF323232 : 0xFF242424);
-            graphics.fill(rowX, rowY, rowX + 2, rowY + GROUP_ROW_HEIGHT - 2, expanded ? 0xFF5C8DFF : 0xFF444444);
+            final int background = active
+                    ? hovered ? COLOR_ACTIVE_HOVER : COLOR_ACTIVE
+                    : hovered ? COLOR_GROUP_HOVER : COLOR_GROUP;
+
+            graphics.fill(rowX, rowY, rowX + rowWidth, rowY + GROUP_ROW_HEIGHT - 2, background);
+            graphics.fill(rowX, rowY, rowX + 2, rowY + GROUP_ROW_HEIGHT - 2, active ? 0xFF7AB7FF : expanded ? 0xFF5C8DFF : 0xFF444444);
 
             graphics.drawString(font, expanded ? "▾" : "▸", rowX + 6, rowY + 5, 0xFFE6E6E6, false);
-            graphics.drawString(font, label, rowX + 18, rowY + 5, 0xFFFFFFFF, false);
+            graphics.drawString(font, label, rowX + 18, rowY + 5, active ? 0xFFFFFFFF : 0xFFEAEAEA, false);
 
-            this.rows.add(new Row(rowX, rowY, rowWidth, GROUP_ROW_HEIGHT - 2, groupKey, null, null));
+            this.rows.add(new Row(rowX, rowY, rowWidth, GROUP_ROW_HEIGHT - 2, groupKey, null, null, RowState.VALID));
         }
 
         return rowY + GROUP_ROW_HEIGHT;
@@ -299,6 +362,7 @@ public final class PortConfigSidebarWidget {
      * @param graphics GUI graphics
      * @param font font
      * @param option option
+     * @param selectedFace selected face
      * @param mouseX mouse x
      * @param mouseY mouse y
      * @param rowY row y
@@ -309,6 +373,7 @@ public final class PortConfigSidebarWidget {
             final GuiGraphics graphics,
             final Font font,
             final PreviewPortOption option,
+            final PreviewPortFace selectedFace,
             final int mouseX,
             final int mouseY,
             final int rowY,
@@ -318,16 +383,26 @@ public final class PortConfigSidebarWidget {
         final int rowX = this.x + PADDING + (child ? 12 : 0);
         final int rowWidth = this.width - PADDING * 2 - (child ? 12 : 0) - this.scrollbarAllowance();
         final boolean hovered = this.mouseIn(mouseX, mouseY, rowX, rowY, rowWidth, rowHeight - 2);
+        final RowState state = this.stateFor(option, selectedFace);
 
         if (rowY + rowHeight >= this.contentTop && rowY <= this.contentBottom) {
-            graphics.fill(rowX, rowY, rowX + rowWidth, rowY + rowHeight - 2, hovered ? 0xFF2E2E2E : child ? 0xCC1F1F1F : 0xFF242424);
+            final int background = this.backgroundColor(state, hovered, child);
+
+            graphics.fill(rowX, rowY, rowX + rowWidth, rowY + rowHeight - 2, background);
+
+            if (state == RowState.CURRENT) {
+                graphics.fill(rowX, rowY, rowX + 2, rowY + rowHeight - 2, 0xFF7AB7FF);
+                graphics.drawString(font, "✓", rowX + 5, rowY + (child ? 4 : 5), 0xFFFFFFFF, false);
+            }
+
+            final int labelX = rowX + (state == RowState.CURRENT ? 17 : 6);
 
             graphics.drawString(
                     font,
                     child ? option.compactTargetLabel() : option.label(),
-                    rowX + 6,
+                    labelX,
                     rowY + (child ? 4 : 5),
-                    option.clearsPort() ? 0xFFAAAAAA : 0xFFEAEAEA,
+                    this.textColor(state, option),
                     false
             );
 
@@ -337,10 +412,72 @@ public final class PortConfigSidebarWidget {
                 this.hoveredTooltip = tooltip;
             }
 
-            this.rows.add(new Row(rowX, rowY, rowWidth, rowHeight - 2, null, option, tooltip));
+            this.rows.add(new Row(rowX, rowY, rowWidth, rowHeight - 2, null, option, tooltip, state));
         }
 
         return rowY + rowHeight;
+    }
+
+    /**
+     * Gets the visual state for an option row.
+     *
+     * @param option option
+     * @param selectedFace selected face
+     * @return row state
+     */
+    private RowState stateFor(
+            final PreviewPortOption option,
+            final PreviewPortFace selectedFace
+    ) {
+        if (option.matches(selectedFace)) {
+            return RowState.CURRENT;
+        }
+
+        return RowState.VALID;
+    }
+
+    /**
+     * Gets a row background colour.
+     *
+     * @param state row state
+     * @param hovered whether row is hovered
+     * @param child whether row is a child row
+     * @return ARGB colour
+     */
+    private int backgroundColor(
+            final RowState state,
+            final boolean hovered,
+            final boolean child
+    ) {
+        return switch (state) {
+            case CURRENT -> hovered ? COLOR_ACTIVE_HOVER : COLOR_ACTIVE;
+            case DISABLED -> COLOR_DISABLED;
+            case CONFLICT -> hovered ? 0xFF73482C : COLOR_CONFLICT;
+            case VALID -> hovered ? COLOR_CHILD_HOVER : child ? COLOR_CHILD : COLOR_GROUP;
+        };
+    }
+
+    /**
+     * Gets row text colour.
+     *
+     * @param state row state
+     * @param option option
+     * @return ARGB colour
+     */
+    private int textColor(
+            final RowState state,
+            final PreviewPortOption option
+    ) {
+        if (option.clearsPort()) {
+            return 0xFFAAAAAA;
+        }
+
+        return switch (state) {
+            case CURRENT -> 0xFFFFFFFF;
+            case DISABLED -> 0xFF777777;
+            case CONFLICT -> 0xFFFFC08A;
+            case VALID -> 0xFFEAEAEA;
+        };
     }
 
     /**
@@ -397,7 +534,7 @@ public final class PortConfigSidebarWidget {
                 return true;
             }
 
-            if (row.option() != null) {
+            if (row.option() != null && row.state() != RowState.DISABLED && row.state() != RowState.CONFLICT) {
                 scene.setPort(selectedFace, row.option());
                 widget.refreshSelection(scene);
                 return true;
@@ -644,6 +781,16 @@ public final class PortConfigSidebarWidget {
     }
 
     /**
+     * Visual state for an option row.
+     */
+    private enum RowState {
+        VALID,
+        CURRENT,
+        DISABLED,
+        CONFLICT
+    }
+
+    /**
      * Rendered sidebar row with matching click bounds.
      *
      * @param x row x
@@ -653,6 +800,7 @@ public final class PortConfigSidebarWidget {
      * @param groupKey group key, or {@code null}
      * @param option option, or {@code null}
      * @param tooltip tooltip, or {@code null}
+     * @param state row state
      */
     private record Row(
             int x,
@@ -661,7 +809,8 @@ public final class PortConfigSidebarWidget {
             int height,
             String groupKey,
             PreviewPortOption option,
-            Component tooltip
+            Component tooltip,
+            RowState state
     ) {
 
         /**

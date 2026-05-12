@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * One selectable port configuration option shown in the advanced port sidebar.
@@ -79,18 +80,9 @@ public record PreviewPortOption(
                         targetText
                 ),
                 List.of(
-                        Component.translatable(
-                                Constant.TranslationKey.PORT_OPTION_TYPE,
-                                port.type().name()
-                        ),
-                        Component.translatable(
-                                Constant.TranslationKey.PORT_OPTION_MODE,
-                                port.mode().name()
-                        ),
-                        Component.translatable(
-                                Constant.TranslationKey.PORT_OPTION_TARGET,
-                                targetText
-                        )
+                        Component.translatable(Constant.TranslationKey.PORT_OPTION_TYPE, port.type().name()),
+                        Component.translatable(Constant.TranslationKey.PORT_OPTION_MODE, port.mode().name()),
+                        Component.translatable(Constant.TranslationKey.PORT_OPTION_TARGET, targetText)
                 ),
                 port
         );
@@ -103,6 +95,27 @@ public record PreviewPortOption(
      */
     public boolean clearsPort() {
         return this.port == null;
+    }
+
+    /**
+     * Checks whether this option represents the currently configured selected face.
+     *
+     * @param face selected preview face
+     * @return {@code true} if this option is currently active for the selected face
+     */
+    public boolean matches(final PreviewPortFace face) {
+        if (face == null) {
+            return false;
+        }
+
+        if (this.port == null) {
+            return !face.configured();
+        }
+
+        return face.configured()
+                && Objects.equals(face.typeName(), this.port.type().name())
+                && Objects.equals(face.modeName(), this.port.mode().name())
+                && Objects.equals(face.targetName(), this.port.target().id().toString());
     }
 
     /**
