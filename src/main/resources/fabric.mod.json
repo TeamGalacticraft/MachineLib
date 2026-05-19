@@ -36,6 +36,9 @@
     "main": [
       "dev.galacticraft.machinelib.impl.MachineLib"
     ],
+    "fabric-datagen": [
+      "dev.galacticraft.machinelib.impl.data.MachineLibDatagen"
+    ],
     "rei_common": [
       "dev.galacticraft.machinelib.impl.compat.rei.MachineLibREIPlugin"
     ],
@@ -65,7 +68,9 @@
     "fabric-rendering-fluids-v1": "*",
     "fabric-resource-loader-v0": "*",
     "fabric-screen-handler-api-v1": "*",
-    "fabric-transfer-api-v1": "*"
+    "fabric-transfer-api-v1": "*",
+    "fabric-item-group-api-v1": "*",
+    "fabric-data-generation-api-v1": "*"
   },
   "custom": {
     "modmenu": {

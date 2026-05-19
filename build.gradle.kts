@@ -59,11 +59,14 @@ plugins {
 group = "dev.galacticraft"
 version = buildString {
     append(modVersion)
+
     val env = System.getenv()
-    if (env.containsKey("PRE_RELEASE") && env["PRE_RELEASE"] == "true") {
+    if (env["PRE_RELEASE"] == "true") {
         append("-pre")
     }
+
     append('+')
+
     if (env.containsKey("GITHUB_RUN_NUMBER")) {
         append(env["GITHUB_RUN_NUMBER"])
     } else {
@@ -78,11 +81,16 @@ version = buildString {
         }
     }
 }
+
 println("$modName: $version")
 
 base.archivesName.set(modName)
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+
     targetCompatibility = JavaVersion.VERSION_21
     sourceCompatibility = JavaVersion.VERSION_21
 
@@ -91,6 +99,10 @@ java {
 }
 
 sourceSets {
+    main {
+        resources.srcDir("src/main/generated")
+    }
+
     register("testmod") {
         resources.srcDir("src/testmod/generated")
 
@@ -108,9 +120,11 @@ loom {
         create("machinelib") {
             sourceSet(sourceSets.main.get())
         }
+
         create("machinelib_test") {
             sourceSet(sourceSets.test.get())
         }
+
         create("machinelib_testmod") {
             sourceSet(testmod)
         }
@@ -120,31 +134,36 @@ loom {
     createRemapConfigurations(sourceSets.test.get())
 
     runs {
+        register("machinelibData") {
+            name("MachineLib Data Generation")
+            client()
+            source(sourceSets.main.get())
+            runDir("build/datagen-machinelib")
+
+            property("fabric-api.datagen")
+            property("fabric-api.datagen.modid", modId)
+            property("fabric-api.datagen.output-dir", project.file("src/main/generated").toString())
+            property("fabric-api.datagen.strict-validation", "false")
+        }
+
         getByName("server") {
             name("Minecraft Server")
             source(testmod)
             vmArgs("-ea")
         }
+
         getByName("client") {
             name("Minecraft Client")
             source(testmod)
         }
+
         register("gametest") {
             name("GameTest Server")
             server()
             source(testmod)
+
             property("fabric-api.gametest")
             property("fabric-api.gametest.report-file", "${project.layout.buildDirectory.get()}/junit.xml")
-        }
-        register("data") {
-            name("Data Generation")
-            client()
-            source(testmod)
-            runDir("build/datagen")
-            property("fabric-api.datagen")
-            property("fabric-api.datagen.modid", "machinelib_testmod")
-            property("fabric-api.datagen.output-dir", project.file("src/testmod/generated").toString())
-            property("fabric-api.datagen.strict-validation", "false")
         }
     }
 }
@@ -156,6 +175,7 @@ repositories {
             includeGroup("dev.emi")
         }
     }
+
     maven("https://maven.shedaniel.me") {
         content {
             includeGroup("me.shedaniel")
@@ -163,12 +183,14 @@ repositories {
             includeGroup("dev.architectury")
         }
     }
+
     maven("https://maven.bai.lol") {
         content {
             includeGroup("lol.bai")
             includeGroup("mcp.mobius.waila")
         }
     }
+
     maven("https://maven.blamejared.com/") {
         content {
             includeGroup("mezz.jei")
@@ -179,10 +201,10 @@ repositories {
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft")
     mappings(mojarn.mappings("net.fabricmc:yarn:$minecraft+build.$yarn:v2"))
+
     modImplementation("net.fabricmc:fabric-loader:$loader")
     testImplementation("net.fabricmc:fabric-loader-junit:$loader")
 
-    // Mandatory Dependency (Included with Jar-In-Jar)
     include(modApi("teamreborn:energy:$energy") {
         isTransitive = false
     })
@@ -191,10 +213,12 @@ dependencies {
         "fabric-api-base",
         "fabric-api-lookup-api-v1",
         "fabric-data-attachment-api-v1",
+        "fabric-data-generation-api-v1",
         "fabric-events-interaction-v0",
         "fabric-networking-api-v1",
         "fabric-gametest-api-v1",
         "fabric-item-api-v1",
+        "fabric-item-group-api-v1",
         "fabric-model-loading-api-v1",
         "fabric-renderer-api-v1",
         "fabric-rendering-v1",
@@ -206,6 +230,8 @@ dependencies {
     ).forEach {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }
+
+    modLocalRuntime("net.fabricmc.fabric-api:fabric-api:$fabric")
 
     modImplementation("lol.bai:badpackets:fabric-$badpackets")
 
@@ -227,9 +253,9 @@ dependencies {
         modLocalRuntime("mezz.jei:jei-$minecraft-fabric:$jei")
     }
 
-	modCompileOnly("dev.emi:emi-fabric:$emi:api")
+    modCompileOnly("dev.emi:emi-fabric:$emi:api")
     if (runEmi) {
-	    modLocalRuntime("dev.emi:emi-fabric:$emi")
+        modLocalRuntime("dev.emi:emi-fabric:$emi")
     }
 
     "testmodImplementation"(sourceSets.main.get().output)
@@ -238,9 +264,9 @@ dependencies {
 
 tasks.withType<ProcessResources> {
     val properties = mapOf(
-            "version" to project.version,
-            "mod_id" to modId,
-            "mod_name" to modName
+        "version" to project.version,
+        "mod_id" to modId,
+        "mod_name" to modName
     )
     inputs.properties(properties)
 
@@ -248,8 +274,6 @@ tasks.withType<ProcessResources> {
         expand(properties)
     }
 
-    // Minify json resources
-    // https://stackoverflow.com/questions/41028030/gradle-minimize-json-resources-in-processresources#41029113
     doLast {
         fileTree(
             mapOf(
@@ -262,14 +286,9 @@ tasks.withType<ProcessResources> {
     }
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    options.release.set(21)
-}
-
 tasks.withType<Jar> {
     from("LICENSE") {
-        rename { "${it}_${modId}"}
+        rename { "${it}_${modId}" }
     }
 
     manifest {

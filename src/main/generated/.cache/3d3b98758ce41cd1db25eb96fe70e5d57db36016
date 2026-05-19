@@ -1,0 +1,7 @@
+// 1.21.1	2026-05-19T16:32:02.562426559	MachineLib/Model Definitions
+e06d59341cf4c23d84b2ac82d5455487dba7a688 assets/machinelib/models/item/schematic_paper.json
+412ba217056f097ff213d86b4e356f0d11a7f9ce assets/machinelib/models/machine/schematic_workbench.json
+df63d7df04fa8bc08a09d21e01e14f6c64909f28 assets/machinelib/models/machine/base.json
+e092f1dea135d7b377e715465c07038d24251cfc assets/machinelib/blockstates/schematic_projector.json
+61997199343b4f71e7e03497f1f6ad7e0cedf116 assets/machinelib/blockstates/schematic_workbench.json
+412ba217056f097ff213d86b4e356f0d11a7f9ce assets/machinelib/models/machine/schematic_projector.json

@@ -1,0 +1,7 @@
+// 1.21.1	2026-05-19T16:32:02.562816317	MachineLib/Recipes
+2111676bb298e5734c9fcc3723d364bd3e8c6465 data/machinelib/recipe/schematic_paper.json
+dc35d357b1b80fb38033ace11320dc6a7feeb44b data/machinelib/advancement/recipes/misc/schematic_paper.json
+35425cd433bcc1f9069ca95bec0f63f022ec2e18 data/machinelib/advancement/recipes/decorations/schematic_projector.json
+36e896a05eee8b25d70df9fa8c4d1ef98e64fa73 data/machinelib/recipe/schematic_workbench.json
+728e5c5c7bd490a0a0759d73ebcf2a9a5a9d4c00 data/machinelib/recipe/schematic_projector.json
+70bef724152101ee38cdc80779b78ad61cb847ab data/machinelib/advancement/recipes/decorations/schematic_workbench.json

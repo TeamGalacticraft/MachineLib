@@ -30,6 +30,7 @@ import dev.galacticraft.machinelib.client.impl.model.MachineModelDataLoader;
 import dev.galacticraft.machinelib.client.impl.model.MachineModelLoadingPlugin;
 import dev.galacticraft.machinelib.client.impl.multiblock.visual.ClientMultiblockVisualManager;
 import dev.galacticraft.machinelib.client.impl.multiblock.visual.gltf.GltfVisualModelManager;
+import dev.galacticraft.machinelib.client.impl.schematic.SchematicScreens;
 import dev.galacticraft.machinelib.impl.network.MachineLibPackets;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -72,6 +73,7 @@ public final class MachineLibClient implements ClientModInitializer {
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES)
                 .registerReloadListener(GltfVisualModelManager.INSTANCE);
 
+        SchematicScreens.register();
         TestMenuScreens.register();
     }
 }

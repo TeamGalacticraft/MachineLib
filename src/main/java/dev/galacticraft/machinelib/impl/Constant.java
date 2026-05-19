@@ -250,6 +250,18 @@ public interface Constant {
         String PORT_CONFLICT_ONLY_ONE_PER_BLOCK = "ui.machinelib.port_config.conflict.only_one_per_block";
         String PORT_CONFLICT_ONLY_ONE_UNIQUE_PER_MULTIBLOCK = "ui.machinelib.port_config.conflict.only_one_unique_per_multiblock";
         String PORT_CONFLICT_DISABLED = "ui.machinelib.port_config.conflict.disabled";
+
+        String SCHEMATIC_WORKBENCH_TITLE = "ui.machinelib.schematic_workbench.title";
+        String SCHEMATIC_WORKBENCH_SELECT = "ui.machinelib.schematic_workbench.select";
+        String SCHEMATIC_WORKBENCH_WRITE = "ui.machinelib.schematic_workbench.write";
+        String SCHEMATIC_WORKBENCH_NO_SELECTION = "ui.machinelib.schematic_workbench.no_selection";
+        String SCHEMATIC_WORKBENCH_NO_PAPER = "ui.machinelib.schematic_workbench.no_paper";
+        String SCHEMATIC_PAPER_SELECTED = "item.machinelib.schematic_paper.selected";
+
+        String SCHEMATIC_WORKBENCH_SEARCH = "ui.machinelib.schematic_workbench.search";
+        String SCHEMATIC_WORKBENCH_NO_RESULTS = "ui.machinelib.schematic_workbench.no_results";
+
+        String SCHEMATIC_WORKBENCH_SELECTED = "ui.machinelib.schematic_workbench.selected";
     }
 
     interface Filter {

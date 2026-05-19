@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortFace;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRuleAssignment;
 import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualFactory;
+import dev.galacticraft.machinelib.api.multiblock.visual.PreviewableMultiblockVisualFactory;
 import dev.galacticraft.machinelib.impl.multiblock.MultiblockMenuOpener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
@@ -84,6 +85,27 @@ public interface MultiblockDefinition {
      * @return visual factory, or {@code null} if this multiblock has no custom visual
      */
     default MultiblockVisualFactory visualFactory() {
+        return null;
+    }
+
+    /**
+     * Gets the optional glTF visual model id used for GUI previews.
+     *
+     * <p>This id comes from the registered visual factory rather than being guessed
+     * from the multiblock definition id. For example, a multiblock registered as
+     * {@code machinelib:test_iron_cube} may preview the visual model
+     * {@code machinelib:engineering_bay}.</p>
+     *
+     * @return preview glTF model id, or {@code null} if this definition has no
+     * previewable visual
+     */
+    default ResourceLocation previewVisualModelId() {
+        final MultiblockVisualFactory factory = this.visualFactory();
+
+        if (factory instanceof PreviewableMultiblockVisualFactory previewable) {
+            return previewable.previewVisualModelId();
+        }
+
         return null;
     }
 

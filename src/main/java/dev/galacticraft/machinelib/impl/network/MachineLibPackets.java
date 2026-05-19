@@ -35,6 +35,7 @@ public class MachineLibPackets {
         ServerPlayNetworking.registerGlobalReceiver(SideConfigurationClickPayload.TYPE, SideConfigurationClickPayload::apply);
         ServerPlayNetworking.registerGlobalReceiver(TankInteractionPayload.TYPE, TankInteractionPayload::apply);
         ServerPlayNetworking.registerGlobalReceiver(MultiblockPortConfigUpdatePayload.TYPE, MultiblockPortConfigUpdatePayload::apply);
+        ServerPlayNetworking.registerGlobalReceiver(SchematicWorkbenchWritePayload.TYPE, SchematicWorkbenchWritePayload::apply);
     }
 
     public static void registerClient() {
@@ -53,6 +54,7 @@ public class MachineLibPackets {
         PayloadTypeRegistry.playC2S().register(SideConfigurationClickPayload.TYPE, SideConfigurationClickPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TankInteractionPayload.TYPE, TankInteractionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(MultiblockPortConfigUpdatePayload.TYPE, MultiblockPortConfigUpdatePayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(SchematicWorkbenchWritePayload.TYPE, SchematicWorkbenchWritePayload.CODEC);
 
         // s2c
         PayloadTypeRegistry.playS2C().register(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload.CODEC);

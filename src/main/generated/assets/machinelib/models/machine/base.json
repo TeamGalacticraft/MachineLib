@@ -1,0 +1,24 @@
+{
+  "any": {
+    "both": "machinelib:block/machine_any_both",
+    "input": "machinelib:block/machine_any_input",
+    "output": "machinelib:block/machine_any_output"
+  },
+  "base": "machinelib:block/machine",
+  "energy": {
+    "both": "machinelib:block/machine_energy_both",
+    "input": "machinelib:block/machine_energy_input",
+    "output": "machinelib:block/machine_energy_output"
+  },
+  "fluid": {
+    "both": "machinelib:block/machine_fluid_both",
+    "input": "machinelib:block/machine_fluid_input",
+    "output": "machinelib:block/machine_fluid_output"
+  },
+  "item": {
+    "both": "machinelib:block/machine_item_both",
+    "input": "machinelib:block/machine_item_input",
+    "output": "machinelib:block/machine_item_output"
+  },
+  "machinelib:type": "base"
+}

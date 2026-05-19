@@ -30,6 +30,7 @@ import dev.galacticraft.machinelib.api.multiblock.port.ConfiguredMultiblockPort;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortRule;
 import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortType;
 import dev.galacticraft.machinelib.impl.multiblock.detection.MultiblockDetectionIndex;
+import dev.galacticraft.machinelib.impl.schematic.MachineLibSchematicContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -208,6 +209,8 @@ public final class MachineLibMultiblocks implements MultiblockRegistry {
         MultiblockPortDebug.LOGGER.info("Multiblock port provider registration complete.");
 
         this.detectionIndex.compile(this.definitions.values());
+
+        MachineLibSchematicContent.registerIfNeeded(!this.definitions.isEmpty());
     }
 
     /**

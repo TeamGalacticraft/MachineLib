@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    " R ",
+    "PPP",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "machinelib:schematic_paper"
+  }
+}

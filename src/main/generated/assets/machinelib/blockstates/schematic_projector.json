@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "machinelib:machine/schematic_projector"
+    },
+    "active=true": {
+      "model": "machinelib:machine/schematic_projector"
+    }
+  }
+}
