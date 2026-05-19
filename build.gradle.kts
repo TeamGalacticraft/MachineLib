@@ -201,7 +201,8 @@ dependencies {
         "fabric-rendering-data-attachment-v1",
         "fabric-rendering-fluids-v1",
         "fabric-screen-handler-api-v1",
-        "fabric-transfer-api-v1"
+        "fabric-transfer-api-v1",
+        "fabric-resource-loader-v0"
     ).forEach {
         modImplementation("net.fabricmc.fabric-api:$it:${fabricApi.moduleVersion(it, fabric)}")
     }

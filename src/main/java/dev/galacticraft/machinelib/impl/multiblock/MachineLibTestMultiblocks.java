@@ -31,12 +31,16 @@ import dev.galacticraft.machinelib.api.multiblock.port.MultiblockPortType;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictRules;
 import dev.galacticraft.machinelib.api.multiblock.port.conflict.MultiblockPortConflictScope;
 import dev.galacticraft.machinelib.api.multiblock.rules.RotationFormationRule;
+import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisuals;
 import dev.galacticraft.machinelib.client.impl.multiblock.visual.DebugMultiblockVisual;
+import dev.galacticraft.machinelib.client.impl.multiblock.visual.gltf.StaticGltfVisualTransform;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.TestMenuTypeRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Set;
 
@@ -75,9 +79,17 @@ public final class MachineLibTestMultiblocks {
                 ),
                 builder -> {
                     builder.pattern(pattern);
-                    builder.rule(RotationFormationRule.allow(MultiblockOrientation.horizontal()));
+                    builder.rule(RotationFormationRule.any());
 
-                    builder.visual(context -> new DebugMultiblockVisual());
+
+                    builder.visual(MultiblockVisuals.staticGltfModel(
+                            Constant.id("engineering_bay"),
+                            new StaticGltfVisualTransform(
+                                    new Vec3(1.5D, 0.0D, 1.5D),
+                                    Direction.EAST,
+                                    Direction.UP
+                            )
+                    ));
 
                     MultiblockStandardComponents.configured(builder);
 

@@ -74,7 +74,10 @@ public final class ClientMultiblockVisualManager {
                 definitionId,
                 origin,
                 orientation,
-                partPositions
+                partPositions,
+                definition.pattern().sizeX(),
+                definition.pattern().sizeY(),
+                definition.pattern().sizeZ()
         );
 
         final MultiblockVisual visual = definition.visualFactory().create(context);
