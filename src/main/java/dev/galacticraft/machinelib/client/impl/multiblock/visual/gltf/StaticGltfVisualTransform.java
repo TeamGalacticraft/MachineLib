@@ -47,6 +47,47 @@ public record StaticGltfVisualTransform(
     }
 
     /**
+     * Converts a model-space normal into world space.
+     *
+     * @param modelNormal model-space normal
+     * @param orientation formed multiblock orientation
+     * @return world-space normal
+     */
+    public Vector3f modelNormalToWorld(
+            final Vector3f modelNormal,
+            final MultiblockOrientation orientation
+    ) {
+        final Direction modelRight = cross(
+                this.modelUp,
+                this.modelForward
+        );
+
+        final Vec3 patternNormal = new Vec3(
+                directionVector(modelRight).x * modelNormal.x()
+                        + directionVector(this.modelUp).x * modelNormal.y()
+                        + directionVector(this.modelForward).x * modelNormal.z(),
+                directionVector(modelRight).y * modelNormal.x()
+                        + directionVector(this.modelUp).y * modelNormal.y()
+                        + directionVector(this.modelForward).y * modelNormal.z(),
+                directionVector(modelRight).z * modelNormal.x()
+                        + directionVector(this.modelUp).z * modelNormal.y()
+                        + directionVector(this.modelForward).z * modelNormal.z()
+        );
+
+        final Vec3 right = directionVector(orientation.right());
+        final Vec3 up = directionVector(orientation.up());
+        final Vec3 forward = directionVector(orientation.forward());
+
+        final Vector3f worldNormal = new Vector3f(
+                (float) (right.x * patternNormal.x + up.x * patternNormal.y + forward.x * patternNormal.z),
+                (float) (right.y * patternNormal.x + up.y * patternNormal.y + forward.y * patternNormal.z),
+                (float) (right.z * patternNormal.x + up.z * patternNormal.y + forward.z * patternNormal.z)
+        );
+
+        return worldNormal.normalize();
+    }
+
+    /**
      * Converts one glTF model-space vertex into world space.
      *
      * @param modelPosition glTF model-space vertex

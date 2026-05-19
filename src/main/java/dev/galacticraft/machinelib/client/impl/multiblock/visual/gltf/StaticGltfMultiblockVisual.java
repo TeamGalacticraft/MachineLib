@@ -4,8 +4,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.galacticraft.machinelib.api.multiblock.visual.MultiblockVisualContext;
 import dev.galacticraft.machinelib.client.impl.multiblock.visual.ClientFormedMultiblockVisual;
+import dev.galacticraft.machinelib.client.impl.render.MachineLibRenderTypes;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
@@ -77,70 +80,119 @@ public final class StaticGltfMultiblockVisual implements ClientFormedMultiblockV
     ) {
         final GltfVisualModel model = GltfVisualModelManager.INSTANCE.get(this.modelId);
 
-        if (model == null) {
+        if (model == null || renderContext.consumers() == null) {
             return;
         }
-
-        if (renderContext.consumers() == null) {
-            return;
-        }
-
-        final VertexConsumer consumer = renderContext.consumers()
-                .getBuffer(RenderType.lines());
 
         matrices.pushPose();
 
         for (final GltfVisualTriangle triangle : model.mesh().triangles()) {
-            final Vec3 a = this.transform.modelPointToWorld(
-                    triangle.a().position(),
-                    context.origin(),
-                    context.orientation(),
-                    context.patternWidth(),
-                    context.patternHeight(),
-                    context.patternDepth()
-            );
+            final GltfVisualMaterial material = model.materials()
+                    .get(Math.min(
+                            triangle.materialIndex(),
+                            model.materials().size() - 1
+                    ));
 
-            final Vec3 b = this.transform.modelPointToWorld(
-                    triangle.b().position(),
-                    context.origin(),
-                    context.orientation(),
-                    context.patternWidth(),
-                    context.patternHeight(),
-                    context.patternDepth()
-            );
+            if (material.textureId() == null) {
+                continue;
+            }
 
-            final Vec3 c = this.transform.modelPointToWorld(
-                    triangle.c().position(),
-                    context.origin(),
-                    context.orientation(),
-                    context.patternWidth(),
-                    context.patternHeight(),
-                    context.patternDepth()
-            );
+            final VertexConsumer consumer = renderContext.consumers()
+                    .getBuffer(material.translucent()
+                            ? MachineLibRenderTypes.gltfTranslucentTriangles(material.textureId())
+                            : MachineLibRenderTypes.gltfTriangles(material.textureId()));
 
-            renderLine(
+            renderTriangle(
+                    context,
                     matrices,
                     consumer,
-                    cameraRelative(a, cameraPos),
-                    cameraRelative(b, cameraPos)
-            );
-
-            renderLine(
-                    matrices,
-                    consumer,
-                    cameraRelative(b, cameraPos),
-                    cameraRelative(c, cameraPos)
-            );
-
-            renderLine(
-                    matrices,
-                    consumer,
-                    cameraRelative(c, cameraPos),
-                    cameraRelative(a, cameraPos)
+                    cameraPos,
+                    triangle
             );
         }
 
         matrices.popPose();
+    }
+
+    /**
+     * Renders one glTF triangle into a triangle-based render buffer.
+     *
+     * @param context visual context
+     * @param matrices active pose stack
+     * @param consumer vertex consumer
+     * @param cameraPos camera position
+     * @param triangle triangle to render
+     */
+    private void renderTriangle(
+            final MultiblockVisualContext context,
+            final PoseStack matrices,
+            final VertexConsumer consumer,
+            final Vec3 cameraPos,
+            final GltfVisualTriangle triangle
+    ) {
+        renderVertex(
+                context,
+                matrices,
+                consumer,
+                cameraPos,
+                triangle.a()
+        );
+        renderVertex(
+                context,
+                matrices,
+                consumer,
+                cameraPos,
+                triangle.b()
+        );
+        renderVertex(
+                context,
+                matrices,
+                consumer,
+                cameraPos,
+                triangle.c()
+        );
+    }
+
+    private void renderVertex(
+            final MultiblockVisualContext context,
+            final PoseStack matrices,
+            final VertexConsumer consumer,
+            final Vec3 cameraPos,
+            final GltfVisualVertex vertex
+    ) {
+        final Vec3 worldPos = this.transform.modelPointToWorld(
+                vertex.position(),
+                context.origin(),
+                context.orientation(),
+                context.patternWidth(),
+                context.patternHeight(),
+                context.patternDepth()
+        );
+
+        final Vector3f normal = this.transform.modelNormalToWorld(
+                vertex.normal(),
+                context.orientation()
+        );
+
+        consumer.addVertex(
+                        matrices.last(),
+                        (float) (worldPos.x - cameraPos.x),
+                        (float) (worldPos.y - cameraPos.y),
+                        (float) (worldPos.z - cameraPos.z)
+                )
+                .setColor(255, 255, 255, 255)
+                .setUv(
+                        vertex.uv().x(),
+                        vertex.uv().y()
+                )
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(
+                        matrices.last(),
+                        normal.x(),
+                        normal.y(),
+                        normal.z()
+                );
     }
 
     /**

@@ -3,26 +3,23 @@ package dev.galacticraft.machinelib.client.impl.multiblock.visual.gltf;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
 /**
- * Parser for the initial MachineLib static glTF visual format.
+ * Parser for MachineLib static glTF visual models.
  *
- * <p>This loader intentionally supports a small, well-defined subset first:
- * Blockbench-exported embedded {@code .gltf} files with one embedded buffer,
- * triangle primitives, {@code POSITION} attributes, optional indices, and node
- * transforms using translation, rotation quaternion, and scale.</p>
- *
- * <p>The output is a transformed triangle mesh. Texture, material, alpha, normal,
- * and UV support should be added after this geometry path is verified in-game.</p>
+ * <p>This implementation supports embedded base64 {@code .gltf} files exported
+ * by Blockbench, including positions, normals, UVs, indices, node transforms,
+ * embedded PNG textures, and simple material alpha modes.</p>
  */
 public final class GltfVisualModelLoader {
 
@@ -37,13 +34,23 @@ public final class GltfVisualModelLoader {
     }
 
     /**
-     * Loads a transformed mesh from a parsed glTF root object.
+     * Loads a glTF visual model from a parsed root object.
      *
+     * @param id visual model id
      * @param root glTF root object
-     * @return transformed visual mesh
+     * @param textureIds registered texture ids for embedded images
+     * @return loaded visual model
      */
-    public static GltfVisualMesh loadMesh(final JsonObject root) {
+    public static GltfVisualModel loadModel(
+            final ResourceLocation id,
+            final JsonObject root,
+            final List<ResourceLocation> textureIds
+    ) {
         final List<byte[]> buffers = loadBuffers(root);
+        final List<GltfVisualMaterial> materials = loadMaterials(
+                root,
+                textureIds
+        );
         final List<GltfVisualTriangle> triangles = new ArrayList<>();
 
         final int sceneIndex = root.has("scene")
@@ -56,33 +63,61 @@ public final class GltfVisualModelLoader {
 
         final JsonArray nodes = scene.getAsJsonArray("nodes");
 
-        if (nodes == null) {
-            return new GltfVisualMesh(triangles);
+        if (nodes != null) {
+            final Matrix4f identity = new Matrix4f();
+
+            for (final JsonElement nodeElement : nodes) {
+                loadNode(
+                        root,
+                        buffers,
+                        nodeElement.getAsInt(),
+                        identity,
+                        triangles
+                );
+            }
         }
 
-        final Matrix4f identity = new Matrix4f();
-
-        for (final JsonElement nodeElement : nodes) {
-            loadNode(
-                    root,
-                    buffers,
-                    nodeElement.getAsInt(),
-                    identity,
-                    triangles
-            );
-        }
-
-        return new GltfVisualMesh(triangles);
+        return new GltfVisualModel(
+                id,
+                new GltfVisualMesh(triangles),
+                materials
+        );
     }
 
     /**
-     * Recursively loads one glTF node and its children.
+     * Loads all embedded image bytes from the glTF root.
      *
      * @param root glTF root object
-     * @param buffers decoded buffers
-     * @param nodeIndex node index
-     * @param parentTransform parent transform
-     * @param triangles output triangle list
+     * @return embedded image byte arrays
+     */
+    public static List<byte[]> loadEmbeddedImages(final JsonObject root) {
+        final List<byte[]> images = new ArrayList<>();
+
+        if (!root.has("images")) {
+            return images;
+        }
+
+        for (final JsonElement imageElement : root.getAsJsonArray("images")) {
+            final JsonObject image = imageElement.getAsJsonObject();
+
+            if (!image.has("uri")) {
+                throw new IllegalArgumentException("Only embedded image URI textures are supported for now.");
+            }
+
+            final String uri = image.get("uri").getAsString();
+
+            if (!uri.startsWith("data:")) {
+                throw new IllegalArgumentException("Only embedded base64 image textures are supported for now.");
+            }
+
+            images.add(decodeDataUri(uri));
+        }
+
+        return images;
+    }
+
+    /**
+     * Recursively loads one node and its children.
      */
     private static void loadNode(
             final JsonObject root,
@@ -122,13 +157,7 @@ public final class GltfVisualModelLoader {
     }
 
     /**
-     * Loads every primitive in one glTF mesh.
-     *
-     * @param root glTF root object
-     * @param buffers decoded buffers
-     * @param meshIndex mesh index
-     * @param transform node transform
-     * @param triangles output triangle list
+     * Loads all primitives from a glTF mesh.
      */
     private static void loadMeshPrimitives(
             final JsonObject root,
@@ -140,6 +169,10 @@ public final class GltfVisualModelLoader {
         final JsonObject mesh = root.getAsJsonArray("meshes")
                 .get(meshIndex)
                 .getAsJsonObject();
+
+        final Matrix3f normalTransform = new Matrix3f(transform)
+                .invert()
+                .transpose();
 
         for (final JsonElement primitiveElement : mesh.getAsJsonArray("primitives")) {
             final JsonObject primitive = primitiveElement.getAsJsonObject();
@@ -164,6 +197,22 @@ public final class GltfVisualModelLoader {
                     attributes.get("POSITION").getAsInt()
             );
 
+            final List<Vector3f> normals = attributes.has("NORMAL")
+                    ? readVec3Accessor(
+                    root,
+                    buffers,
+                    attributes.get("NORMAL").getAsInt()
+            )
+                    : defaultNormals(positions.size());
+
+            final List<Vector2f> uvs = attributes.has("TEXCOORD_0")
+                    ? readVec2Accessor(
+                    root,
+                    buffers,
+                    attributes.get("TEXCOORD_0").getAsInt()
+            )
+                    : defaultUvs(positions.size());
+
             final List<Integer> indices = primitive.has("indices")
                     ? readScalarIndexAccessor(
                     root,
@@ -172,39 +221,128 @@ public final class GltfVisualModelLoader {
             )
                     : sequentialIndices(positions.size());
 
-            if (indices.size() % 3 != 0) {
-                throw new IllegalArgumentException("glTF triangle index count must be divisible by 3.");
-            }
+            final int materialIndex = primitive.has("material")
+                    ? primitive.get("material").getAsInt()
+                    : 0;
 
             for (int i = 0; i < indices.size(); i += 3) {
-                final Vector3f a = transformPosition(
-                        positions.get(indices.get(i)),
-                        transform
-                );
-                final Vector3f b = transformPosition(
-                        positions.get(indices.get(i + 1)),
-                        transform
-                );
-                final Vector3f c = transformPosition(
-                        positions.get(indices.get(i + 2)),
-                        transform
-                );
+                final int ai = indices.get(i);
+                final int bi = indices.get(i + 1);
+                final int ci = indices.get(i + 2);
 
                 triangles.add(new GltfVisualTriangle(
-                        new GltfVisualVertex(a),
-                        new GltfVisualVertex(b),
-                        new GltfVisualVertex(c)
+                        createVertex(
+                                positions.get(ai),
+                                normals.get(ai),
+                                uvs.get(ai),
+                                transform,
+                                normalTransform
+                        ),
+                        createVertex(
+                                positions.get(bi),
+                                normals.get(bi),
+                                uvs.get(bi),
+                                transform,
+                                normalTransform
+                        ),
+                        createVertex(
+                                positions.get(ci),
+                                normals.get(ci),
+                                uvs.get(ci),
+                                transform,
+                                normalTransform
+                        ),
+                        materialIndex
                 ));
             }
         }
     }
 
     /**
-     * Reads one node transform from matrix or TRS fields.
-     *
-     * @param node node object
-     * @return local node transform
+     * Creates one transformed visual vertex.
      */
+    private static GltfVisualVertex createVertex(
+            final Vector3f position,
+            final Vector3f normal,
+            final Vector2f uv,
+            final Matrix4f transform,
+            final Matrix3f normalTransform
+    ) {
+        final Vector3f transformedPosition = transform.transformPosition(new Vector3f(position));
+        final Vector3f transformedNormal = normalTransform.transform(new Vector3f(normal)).normalize();
+
+        return new GltfVisualVertex(
+                transformedPosition,
+                transformedNormal,
+                uv
+        );
+    }
+
+    /**
+     * Loads material definitions.
+     */
+    private static List<GltfVisualMaterial> loadMaterials(
+            final JsonObject root,
+            final List<ResourceLocation> textureIds
+    ) {
+        final List<GltfVisualMaterial> materials = new ArrayList<>();
+
+        if (!root.has("materials")) {
+            materials.add(new GltfVisualMaterial(
+                    textureIds.isEmpty() ? null : textureIds.get(0),
+                    false
+            ));
+            return materials;
+        }
+
+        for (final JsonElement materialElement : root.getAsJsonArray("materials")) {
+            final JsonObject material = materialElement.getAsJsonObject();
+
+            ResourceLocation textureId = textureIds.isEmpty()
+                    ? null
+                    : textureIds.get(0);
+
+            if (material.has("pbrMetallicRoughness")) {
+                final JsonObject pbr = material.getAsJsonObject("pbrMetallicRoughness");
+
+                if (pbr.has("baseColorTexture")) {
+                    final JsonObject textureInfo = pbr.getAsJsonObject("baseColorTexture");
+                    final int textureIndex = textureInfo.get("index").getAsInt();
+
+                    if (root.has("textures")) {
+                        final JsonObject texture = root.getAsJsonArray("textures")
+                                .get(textureIndex)
+                                .getAsJsonObject();
+
+                        final int sourceIndex = texture.get("source").getAsInt();
+
+                        if (sourceIndex >= 0 && sourceIndex < textureIds.size()) {
+                            textureId = textureIds.get(sourceIndex);
+                        }
+                    }
+                }
+            }
+
+            final String alphaMode = material.has("alphaMode")
+                    ? material.get("alphaMode").getAsString()
+                    : "OPAQUE";
+
+            materials.add(new GltfVisualMaterial(
+                    textureId,
+                    "BLEND".equals(alphaMode)
+            ));
+        }
+
+        if (materials.isEmpty()) {
+            materials.add(new GltfVisualMaterial(
+                    textureIds.isEmpty() ? null : textureIds.get(0),
+                    false
+            ));
+        }
+
+        return materials;
+    }
+
     private static Matrix4f readNodeTransform(final JsonObject node) {
         if (node.has("matrix")) {
             final JsonArray matrix = node.getAsJsonArray("matrix");
@@ -249,14 +387,6 @@ public final class GltfVisualModelLoader {
                 );
     }
 
-    /**
-     * Reads a VEC3 float accessor.
-     *
-     * @param root glTF root object
-     * @param buffers decoded buffers
-     * @param accessorIndex accessor index
-     * @return vector list
-     */
     private static List<Vector3f> readVec3Accessor(
             final JsonObject root,
             final List<byte[]> buffers,
@@ -267,7 +397,7 @@ public final class GltfVisualModelLoader {
                 .getAsJsonObject();
 
         if (accessor.get("componentType").getAsInt() != COMPONENT_FLOAT) {
-            throw new IllegalArgumentException("Only FLOAT VEC3 accessors are supported for POSITION.");
+            throw new IllegalArgumentException("Only FLOAT VEC3 accessors are supported.");
         }
 
         if (!"VEC3".equals(accessor.get("type").getAsString())) {
@@ -295,14 +425,43 @@ public final class GltfVisualModelLoader {
         return values;
     }
 
-    /**
-     * Reads a scalar index accessor.
-     *
-     * @param root glTF root object
-     * @param buffers decoded buffers
-     * @param accessorIndex accessor index
-     * @return index list
-     */
+    private static List<Vector2f> readVec2Accessor(
+            final JsonObject root,
+            final List<byte[]> buffers,
+            final int accessorIndex
+    ) {
+        final JsonObject accessor = root.getAsJsonArray("accessors")
+                .get(accessorIndex)
+                .getAsJsonObject();
+
+        if (accessor.get("componentType").getAsInt() != COMPONENT_FLOAT) {
+            throw new IllegalArgumentException("Only FLOAT VEC2 accessors are supported.");
+        }
+
+        if (!"VEC2".equals(accessor.get("type").getAsString())) {
+            throw new IllegalArgumentException("Expected VEC2 accessor.");
+        }
+
+        final AccessorView view = createAccessorView(
+                root,
+                buffers,
+                accessor
+        );
+
+        final List<Vector2f> values = new ArrayList<>();
+
+        for (int i = 0; i < view.count(); i++) {
+            final int offset = view.offset() + i * view.stride();
+
+            values.add(new Vector2f(
+                    view.buffer().getFloat(offset),
+                    view.buffer().getFloat(offset + 4)
+            ));
+        }
+
+        return values;
+    }
+
     private static List<Integer> readScalarIndexAccessor(
             final JsonObject root,
             final List<byte[]> buffers,
@@ -317,36 +476,64 @@ public final class GltfVisualModelLoader {
         }
 
         final int componentType = accessor.get("componentType").getAsInt();
-        final AccessorView view = createAccessorView(
-                root,
-                buffers,
-                accessor
-        );
+        final int count = accessor.get("count").getAsInt();
+
+        final JsonObject bufferView = root.getAsJsonArray("bufferViews")
+                .get(accessor.get("bufferView").getAsInt())
+                .getAsJsonObject();
+
+        final int bufferIndex = bufferView.get("buffer").getAsInt();
+
+        final int accessorOffset = accessor.has("byteOffset")
+                ? accessor.get("byteOffset").getAsInt()
+                : 0;
+
+        final int bufferViewOffset = bufferView.has("byteOffset")
+                ? bufferView.get("byteOffset").getAsInt()
+                : 0;
+
+        final java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(
+                        buffers.get(bufferIndex)
+                )
+                .order(java.nio.ByteOrder.LITTLE_ENDIAN);
+
+        final int start = bufferViewOffset + accessorOffset;
 
         final List<Integer> values = new ArrayList<>();
 
-        for (int i = 0; i < view.count(); i++) {
-            final int offset = view.offset() + i * view.stride();
+        switch (componentType) {
+            case COMPONENT_UNSIGNED_BYTE -> {
+                for (int i = 0; i < count; i++) {
+                    values.add(Byte.toUnsignedInt(
+                            buffer.get(start + i)
+                    ));
+                }
+            }
 
-            values.add(switch (componentType) {
-                case COMPONENT_UNSIGNED_BYTE -> Byte.toUnsignedInt(view.buffer().get(offset));
-                case COMPONENT_UNSIGNED_SHORT -> Short.toUnsignedInt(view.buffer().getShort(offset));
-                case COMPONENT_UNSIGNED_INT -> view.buffer().getInt(offset);
-                default -> throw new IllegalArgumentException("Unsupported index component type: " + componentType);
-            });
+            case COMPONENT_UNSIGNED_SHORT -> {
+                for (int i = 0; i < count; i++) {
+                    values.add(Short.toUnsignedInt(
+                            buffer.getShort(start + i * 2)
+                    ));
+                }
+            }
+
+            case COMPONENT_UNSIGNED_INT -> {
+                for (int i = 0; i < count; i++) {
+                    values.add(
+                            buffer.getInt(start + i * 4)
+                    );
+                }
+            }
+
+            default -> throw new IllegalArgumentException(
+                    "Unsupported index component type: " + componentType
+            );
         }
 
         return values;
     }
 
-    /**
-     * Creates a byte-buffer view for one glTF accessor.
-     *
-     * @param root glTF root object
-     * @param buffers decoded buffers
-     * @param accessor accessor object
-     * @return accessor view
-     */
     private static AccessorView createAccessorView(
             final JsonObject root,
             final List<byte[]> buffers,
@@ -371,25 +558,18 @@ public final class GltfVisualModelLoader {
                 ? bufferView.get("byteStride").getAsInt()
                 : defaultStride(accessor);
 
-        final ByteBuffer buffer = ByteBuffer.wrap(buffers.get(bufferIndex))
-                .order(ByteOrder.LITTLE_ENDIAN);
-
         return new AccessorView(
-                buffer,
+                java.nio.ByteBuffer.wrap(buffers.get(bufferIndex))
+                        .order(java.nio.ByteOrder.LITTLE_ENDIAN),
                 bufferViewOffset + accessorOffset,
                 stride,
                 count
         );
     }
 
-    /**
-     * Calculates the default tightly packed stride for an accessor.
-     *
-     * @param accessor accessor object
-     * @return stride in bytes
-     */
     private static int defaultStride(final JsonObject accessor) {
         final int componentType = accessor.get("componentType").getAsInt();
+
         final int componentSize = switch (componentType) {
             case COMPONENT_FLOAT, COMPONENT_UNSIGNED_INT -> 4;
             case COMPONENT_UNSIGNED_SHORT -> 2;
@@ -402,47 +582,36 @@ public final class GltfVisualModelLoader {
             case "VEC2" -> 2;
             case "VEC3" -> 3;
             case "VEC4" -> 4;
-            default -> throw new IllegalArgumentException("Unsupported accessor type: " + accessor.get("type").getAsString());
+            default -> throw new IllegalArgumentException("Unsupported accessor type.");
         };
 
         return componentSize * componentCount;
     }
 
-    /**
-     * Decodes all embedded base64 buffers.
-     *
-     * @param root glTF root object
-     * @return decoded buffers
-     */
     private static List<byte[]> loadBuffers(final JsonObject root) {
         final List<byte[]> buffers = new ArrayList<>();
 
         for (final JsonElement bufferElement : root.getAsJsonArray("buffers")) {
-            final JsonObject buffer = bufferElement.getAsJsonObject();
-            final String uri = buffer.get("uri").getAsString();
+            final String uri = bufferElement.getAsJsonObject()
+                    .get("uri")
+                    .getAsString();
 
-            if (!uri.startsWith("data:")) {
-                throw new IllegalArgumentException("Only embedded base64 glTF buffers are supported in this first implementation.");
-            }
-
-            final int comma = uri.indexOf(',');
-
-            if (comma < 0) {
-                throw new IllegalArgumentException("Invalid embedded glTF buffer URI.");
-            }
-
-            buffers.add(Base64.getDecoder().decode(uri.substring(comma + 1)));
+            buffers.add(decodeDataUri(uri));
         }
 
         return buffers;
     }
 
-    /**
-     * Creates a sequential index list for non-indexed primitives.
-     *
-     * @param count vertex count
-     * @return index list
-     */
+    private static byte[] decodeDataUri(final String uri) {
+        final int comma = uri.indexOf(',');
+
+        if (comma < 0) {
+            throw new IllegalArgumentException("Invalid embedded glTF data URI.");
+        }
+
+        return Base64.getDecoder().decode(uri.substring(comma + 1));
+    }
+
     private static List<Integer> sequentialIndices(final int count) {
         final List<Integer> indices = new ArrayList<>();
 
@@ -453,27 +622,26 @@ public final class GltfVisualModelLoader {
         return indices;
     }
 
-    /**
-     * Transforms one position vector by a matrix.
-     *
-     * @param position source position
-     * @param transform transform matrix
-     * @return transformed position
-     */
-    private static Vector3f transformPosition(
-            final Vector3f position,
-            final Matrix4f transform
-    ) {
-        return transform.transformPosition(new Vector3f(position));
+    private static List<Vector3f> defaultNormals(final int count) {
+        final List<Vector3f> normals = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            normals.add(new Vector3f(0.0F, 1.0F, 0.0F));
+        }
+
+        return normals;
     }
 
-    /**
-     * Reads a vector from JSON.
-     *
-     * @param array source array
-     * @param defaultValue fallback value for missing components
-     * @return vector
-     */
+    private static List<Vector2f> defaultUvs(final int count) {
+        final List<Vector2f> uvs = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            uvs.add(new Vector2f());
+        }
+
+        return uvs;
+    }
+
     private static Vector3f readVec3(
             final JsonArray array,
             final float defaultValue
@@ -485,15 +653,6 @@ public final class GltfVisualModelLoader {
         );
     }
 
-    /**
-     * Reads a glTF quaternion.
-     *
-     * <p>glTF stores quaternions as {@code [x, y, z, w]}, matching JOML's
-     * constructor order.</p>
-     *
-     * @param array source array
-     * @return quaternion
-     */
     private static Quaternionf readQuaternion(final JsonArray array) {
         return new Quaternionf(
                 array.get(0).getAsFloat(),
@@ -503,16 +662,8 @@ public final class GltfVisualModelLoader {
         );
     }
 
-    /**
-     * Accessor byte-buffer view.
-     *
-     * @param buffer byte buffer
-     * @param offset absolute byte offset
-     * @param stride byte stride
-     * @param count element count
-     */
     private record AccessorView(
-            ByteBuffer buffer,
+            java.nio.ByteBuffer buffer,
             int offset,
             int stride,
             int count

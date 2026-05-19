@@ -4,37 +4,22 @@ import com.google.common.base.Charsets;
 import com.google.gson.JsonElement;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
- * Client resource manager for MachineLib static glTF visual models.
- *
- * <p>Models are loaded from:</p>
- *
- * <pre>{@code
- * assets/<namespace>/machinelib_visuals/<path>.gltf
- * }</pre>
- *
- * <p>The registered model id omits the folder and extension. For example:</p>
- *
- * <pre>{@code
- * assets/example/machinelib_visuals/test_cube.gltf
- * }</pre>
- *
- * <p>is looked up as:</p>
- *
- * <pre>{@code
- * example:test_cube
- * }</pre>
- */
 public final class GltfVisualModelManager implements SimpleSynchronousResourceReloadListener {
 
     public static final GltfVisualModelManager INSTANCE = new GltfVisualModelManager();
@@ -48,21 +33,11 @@ public final class GltfVisualModelManager implements SimpleSynchronousResourceRe
 
     }
 
-    /**
-     * Gets the reload listener id.
-     *
-     * @return reload listener id
-     */
     @Override
     public ResourceLocation getFabricId() {
         return Constant.id("gltf_visual_models");
     }
 
-    /**
-     * Reloads every MachineLib glTF visual model from client resources.
-     *
-     * @param manager active resource manager
-     */
     @Override
     public void onResourceManagerReload(final ResourceManager manager) {
         final Map<ResourceLocation, GltfVisualModel> loaded = new HashMap<>();
@@ -83,16 +58,17 @@ public final class GltfVisualModelManager implements SimpleSynchronousResourceRe
                     ))
             ) {
                 final JsonElement element = Streams.parse(reader);
-
-                if (!element.isJsonObject()) {
-                    throw new IllegalArgumentException("Root glTF element is not an object.");
-                }
+                final List<ResourceLocation> textureIds = registerEmbeddedTextures(
+                        modelId,
+                        GltfVisualModelLoader.loadEmbeddedImages(element.getAsJsonObject())
+                );
 
                 loaded.put(
                         modelId,
-                        new GltfVisualModel(
+                        GltfVisualModelLoader.loadModel(
                                 modelId,
-                                GltfVisualModelLoader.loadMesh(element.getAsJsonObject())
+                                element.getAsJsonObject(),
+                                textureIds
                         )
                 );
             } catch (final Exception exception) {
@@ -107,22 +83,41 @@ public final class GltfVisualModelManager implements SimpleSynchronousResourceRe
         this.models.putAll(loaded);
     }
 
-    /**
-     * Gets a loaded glTF visual model by id.
-     *
-     * @param id visual model id
-     * @return loaded model, or {@code null}
-     */
     public GltfVisualModel get(final ResourceLocation id) {
         return this.models.get(id);
     }
 
-    /**
-     * Converts a resource id to a model id.
-     *
-     * @param resourceId resource id
-     * @return model id
-     */
+    private static List<ResourceLocation> registerEmbeddedTextures(
+            final ResourceLocation modelId,
+            final List<byte[]> imageBytes
+    ) throws Exception {
+        final List<ResourceLocation> ids = new ArrayList<>();
+
+        for (int i = 0; i < imageBytes.size(); i++) {
+            final ResourceLocation textureId = ResourceLocation.fromNamespaceAndPath(
+                    modelId.getNamespace(),
+                    "machinelib_visuals/generated/"
+                            + modelId.getPath()
+                            + "/texture_"
+                            + i
+            );
+
+            final NativeImage image = NativeImage.read(new ByteArrayInputStream(imageBytes.get(i)));
+            final DynamicTexture texture = new DynamicTexture(image);
+
+            Minecraft.getInstance()
+                    .getTextureManager()
+                    .register(
+                            textureId,
+                            texture
+                    );
+
+            ids.add(textureId);
+        }
+
+        return ids;
+    }
+
     private static ResourceLocation modelIdFromResource(final ResourceLocation resourceId) {
         final String path = resourceId.getPath();
 
