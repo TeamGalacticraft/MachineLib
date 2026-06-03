@@ -32,6 +32,7 @@ import dev.galacticraft.machinelib.api.transfer.ResourceType;
 import dev.galacticraft.machinelib.api.util.BlockFace;
 import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.network.s2c.BaseMachineUpdatePayload;
+import dev.galacticraft.machinelib.impl.network.s2c.MachineStatusUpdatePayload;
 import dev.galacticraft.machinelib.impl.network.s2c.SideConfigurationUpdatePayload;
 import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -329,8 +330,12 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         @Override
         public void setStatus(@Nullable MachineStatus status) {
             if (this.status != status) {
+                MachineStatus oldStatus = this.status;
                 this.status = status;
                 ConfiguredBlockEntity.this.setChanged();
+                if (ConfiguredBlockEntity.this.level != null && !ConfiguredBlockEntity.this.level.isClientSide) {
+                    ConfiguredBlockEntity.this.broadcastToPlayers(new MachineStatusUpdatePayload(ConfiguredBlockEntity.this.worldPosition, status, oldStatus));
+                }
             }
         }
 
