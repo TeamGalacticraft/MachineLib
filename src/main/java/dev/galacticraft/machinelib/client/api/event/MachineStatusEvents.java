@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MachineStatusEvents {
     /**
-     * An event that is called on the client-side when the {@link MachineStatus} of a {@link ConfiguredBlockEntity} changes.
+     * An event that is called on the client-side when the {@link MachineStatus} of a {@link dev.galacticraft.machinelib.api.block.entity.ConfiguredBlockEntity} changes.
      */
     Event<MachineStatusChanged> MACHINE_STATUS_CHANGED = EventFactory.createArrayBacked(MachineStatusChanged.class, callbacks -> (minecraft, player, pos, status, oldStatus) -> {
         for (MachineStatusChanged callback : callbacks)
@@ -45,7 +45,7 @@ public interface MachineStatusEvents {
     @FunctionalInterface
     interface MachineStatusChanged {
         /**
-         * Called on the client-side after the {@link MachineStatus} of a {@link ConfiguredBlockEntity} has changed.
+         * Called on the client-side after the {@link MachineStatus} of a {@link dev.galacticraft.machinelib.api.block.entity.ConfiguredBlockEntity} has changed.
          */
         void onMachineStatusChanged(Minecraft minecraft, LocalPlayer player, BlockPos pos, @Nullable MachineStatus status, @Nullable MachineStatus oldStatus);
     }
