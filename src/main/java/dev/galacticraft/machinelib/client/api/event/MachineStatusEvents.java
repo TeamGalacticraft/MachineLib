@@ -30,13 +30,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Events related to the statuses of machines.
+ */
 public interface MachineStatusEvents {
+    /**
+     * An event that is called on the client-side when the {@link MachineStatus} of a {@link ConfiguredBlockEntity} changes.
+     */
     Event<MachineStatusChanged> MACHINE_STATUS_CHANGED = EventFactory.createArrayBacked(MachineStatusChanged.class, callbacks -> (minecraft, player, pos, status, oldStatus) -> {
         for (MachineStatusChanged callback : callbacks)
             callback.onMachineStatusChanged(minecraft, player, pos, status, oldStatus);
     });
 
+    @FunctionalInterface
     interface MachineStatusChanged {
+        /**
+         * Called on the client-side after the {@link MachineStatus} of a {@link ConfiguredBlockEntity} has changed.
+         */
         void onMachineStatusChanged(Minecraft minecraft, LocalPlayer player, BlockPos pos, @Nullable MachineStatus status, @Nullable MachineStatus oldStatus);
     }
 }
