@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.api.machine.configuration;
 
+import com.mojang.authlib.GameProfile;
 import dev.galacticraft.machinelib.api.misc.DeltaPacketSerializable;
 import dev.galacticraft.machinelib.api.misc.PacketSerializable;
 import dev.galacticraft.machinelib.api.misc.Serializable;
@@ -30,11 +31,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
+import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -73,6 +77,28 @@ public class SecuritySettings implements Serializable<CompoundTag>, DeltaPacketS
     }
 
     /**
+     * {@return whether the player belongs to the same team as the owner of the linked machine}
+     *
+     * @param player the player to check
+     */
+    @Contract(pure = true)
+    public boolean isOwnerOnTeam(@NotNull Player player) {
+        if (isOwner(player)) {
+            return true;
+        }
+
+        Optional<GameProfile> profile = SkullBlockEntity.fetchGameProfile(this.owner).getNow(Optional.empty());
+        if (profile.isPresent()) {
+            PlayerTeam playerTeam = player.level().getScoreboard().getPlayersTeam(profile.get().getName());
+            if (playerTeam != null) {
+                return playerTeam.getPlayers().contains(player.getScoreboardName());
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * {@return whether the player has access to the linked machine}
      *
      * @param player the player to check
@@ -80,7 +106,7 @@ public class SecuritySettings implements Serializable<CompoundTag>, DeltaPacketS
     public boolean hasAccess(@NotNull Player player) {
         return switch (this.accessLevel) {
             case PUBLIC -> true;
-            case TEAM -> this.isOwner(player); // todo: teams
+            case TEAM -> this.isOwnerOnTeam(player);
             case PRIVATE -> this.isOwner(player);
         };
     }
