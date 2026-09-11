@@ -24,6 +24,10 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+val runJei = project.getProperties().getOrDefault("jei", "false").toString().toBoolean()
+val runEmi = project.getProperties().getOrDefault("emi", "false").toString().toBoolean()
+val runRei = project.getProperties().getOrDefault("rei", !runJei && !runEmi).toString().toBoolean()
+
 val modId = project.property("mod.id").toString()
 val modVersion = project.property("mod.version").toString()
 val modName = project.property("mod.name").toString()
@@ -38,6 +42,8 @@ val fabric = project.property("fabric.version").toString()
 val clothConfig = project.property("cloth.config.version").toString()
 val modmenu = project.property("modmenu.version").toString()
 val rei = project.property("rei.version").toString()
+val jei = project.property("jei.version").toString()
+val emi = project.property("emi.version").toString()
 val architectury = project.property("architectury.version").toString()
 val wthit = project.property("wthit.version").toString()
 
@@ -145,6 +151,7 @@ repositories {
     maven("https://maven.terraformersmc.com/releases") {
         content {
             includeGroup("com.terraformersmc")
+            includeGroup("dev.emi")
         }
     }
     maven("https://maven.shedaniel.me") {
@@ -158,6 +165,11 @@ repositories {
         content {
             includeGroup("lol.bai")
             includeGroup("mcp.mobius.waila")
+        }
+    }
+    maven("https://maven.blamejared.com/") {
+        content {
+            includeGroup("mezz.jei")
         }
     }
 }
@@ -194,12 +206,25 @@ dependencies {
     modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthit")
     modLocalRuntime("mcp.mobius.waila:wthit:fabric-$wthit")
 
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
     modCompileOnly("dev.architectury:architectury-fabric:$architectury")
-    modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
 
     modLocalRuntime(modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:$clothConfig")!!)
     modLocalRuntime(modCompileOnly("com.terraformersmc:modmenu:$modmenu")!!)
+
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:$rei")
+    if (runRei) {
+        modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei")
+    }
+
+    modCompileOnly("mezz.jei:jei-$minecraft-fabric-api:$jei")
+    if (runJei) {
+        modLocalRuntime("mezz.jei:jei-$minecraft-fabric:$jei")
+    }
+
+	modCompileOnly("dev.emi:emi-fabric:$emi:api")
+    if (runEmi) {
+	    modLocalRuntime("dev.emi:emi-fabric:$emi")
+    }
 
     "testmodImplementation"(sourceSets.main.get().output)
     "modTestRuntimeOnly"("modTestmodImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric")!!)

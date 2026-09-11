@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ import dev.galacticraft.machinelib.impl.network.c2s.RedstoneModePayload;
 import dev.galacticraft.machinelib.impl.network.c2s.SideConfigurationClickPayload;
 import dev.galacticraft.machinelib.impl.network.c2s.TankInteractionPayload;
 import dev.galacticraft.machinelib.impl.network.s2c.BaseMachineUpdatePayload;
+import dev.galacticraft.machinelib.impl.network.s2c.MachineStatusUpdatePayload;
 import dev.galacticraft.machinelib.impl.network.s2c.MenuSyncPayload;
 import dev.galacticraft.machinelib.impl.network.s2c.SideConfigurationUpdatePayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -43,6 +44,7 @@ public class MachineLibPackets {
 
     public static void registerClient() {
         ClientPlayNetworking.registerGlobalReceiver(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload::apply);
+        ClientPlayNetworking.registerGlobalReceiver(MachineStatusUpdatePayload.TYPE, MachineStatusUpdatePayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(SideConfigurationUpdatePayload.TYPE, SideConfigurationUpdatePayload::apply);
         ClientPlayNetworking.registerGlobalReceiver(MenuSyncPayload.TYPE, MenuSyncPayload::apply);
     }
@@ -57,6 +59,7 @@ public class MachineLibPackets {
         // s2c
         PayloadTypeRegistry.playS2C().register(BaseMachineUpdatePayload.TYPE, BaseMachineUpdatePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SideConfigurationUpdatePayload.TYPE, SideConfigurationUpdatePayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(MachineStatusUpdatePayload.TYPE, MachineStatusUpdatePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(MenuSyncPayload.TYPE, MenuSyncPayload.CODEC);
     }
 }

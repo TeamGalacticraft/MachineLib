@@ -20,29 +20,35 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.misc;
+package dev.galacticraft.machinelib.client.impl.compat;
 
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import dev.galacticraft.machinelib.impl.Constant;
+import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.gui.handlers.IGuiContainerHandler;
+import mezz.jei.api.registration.IGuiHandlerRegistration;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.resources.ResourceLocation;
 
-/**
- * Extension of a mutable object, allowing for the manual marking of modification.
- *
- * @see Modifiable
- */
-@ApiStatus.Internal
-public interface MutableModifiable extends Modifiable {
-    /**
-     * Marks this object as modified within the transaction's lifetime.
-     * Should the transaction be aborted, the modification state will revert itself.
-     *
-     * @param context The transaction context. It can be null if there is no active transaction.
-     */
-    void markModified(@Nullable TransactionContext context);
+import java.util.List;
 
-    /**
-     * Marks this object as modified, incrementing the modification count.
-     */
-    void markModified();
+@JeiPlugin
+public class MachineLibJEIPlugin implements IModPlugin {
+    @Override
+    public ResourceLocation getPluginUid() {
+        return Constant.id("jei_plugin");
+    }
+
+    @Override
+    public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        registration.addGenericGuiContainerHandler(MachineScreen.class,
+            new IGuiContainerHandler<MachineScreen<?, ?>>() {
+                @Override
+                public List<Rect2i> getGuiExtraAreas(MachineScreen<?, ?> provider) {
+                    return provider.getExclusionZones();
+                }
+            }
+        );
+    }
 }

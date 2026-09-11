@@ -20,29 +20,25 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.api.misc;
+package dev.galacticraft.machinelib.client.impl.compat;
 
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+import dev.emi.emi.api.EmiPlugin;
+import dev.emi.emi.api.EmiRegistry;
+import dev.emi.emi.api.widget.Bounds;
+import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
+import net.minecraft.client.renderer.Rect2i;
 
-/**
- * Extension of a mutable object, allowing for the manual marking of modification.
- *
- * @see Modifiable
- */
-@ApiStatus.Internal
-public interface MutableModifiable extends Modifiable {
-    /**
-     * Marks this object as modified within the transaction's lifetime.
-     * Should the transaction be aborted, the modification state will revert itself.
-     *
-     * @param context The transaction context. It can be null if there is no active transaction.
-     */
-    void markModified(@Nullable TransactionContext context);
+import java.util.List;
 
-    /**
-     * Marks this object as modified, incrementing the modification count.
-     */
-    void markModified();
+public class MachineLibEMIPlugin implements EmiPlugin {
+    @Override
+    public void register(EmiRegistry registry) {
+        registry.addGenericExclusionArea((screen, consumer) -> {
+            if (!(screen instanceof MachineScreen provider)) return;
+            List<Rect2i> areas = provider.getExclusionZones();
+            areas.forEach(rect2i -> {
+                consumer.accept(new Bounds(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight()));
+            });
+        });
+    }
 }

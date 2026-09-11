@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,30 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.level.material.Fluids;
 
+import static dev.galacticraft.machinelib.impl.Constant.ScreenTexture.OVERLAY_BARS;
+import static dev.galacticraft.machinelib.impl.Constant.TextureCoordinate.*;
+
 public final class GraphicsUtil {
     private GraphicsUtil() {
+    }
+
+    public static void drawCapacitor(GuiGraphics graphics, int x, int y, long capacity, long amount, boolean oxygen) {
+        int fgU = ENERGY_U;
+        int fgV = ENERGY_V;
+        int bgU = ENERGY_BACKGROUND_U;
+        int bgV = ENERGY_BACKGROUND_V;
+        if (oxygen) {
+            fgU = OXYGEN_U;
+            fgV = OXYGEN_V;
+            bgU = OXYGEN_BACKGROUND_U;
+            bgV = OXYGEN_BACKGROUND_V;
+        }
+
+        float scale = (float) ((double) amount / (double) capacity);
+
+        // We are actually rendering the background in front of the foreground because it is neater this way round
+        graphics.blit(OVERLAY_BARS, x, y, fgU, fgV, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
+        graphics.blit(OVERLAY_BARS, x, y, bgU, bgV, OVERLAY_WIDTH, (int) (OVERLAY_HEIGHT * (1 - scale)), OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
     }
 
     public static void drawFluid(GuiGraphics graphics, int x, int y, int width, int height, long capacity, FluidVariant variant, long available) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,12 @@ package dev.galacticraft.machinelib.impl.compat.waila;
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.machinelib.api.block.MachineBlock;
 import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
+import dev.galacticraft.machinelib.api.block.entity.RecipeMachineBlockEntity;
 import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
 import dev.galacticraft.machinelib.api.machine.configuration.SecuritySettings;
 import dev.galacticraft.machinelib.impl.Constant;
 import mcp.mobius.waila.api.*;
+import mcp.mobius.waila.api.data.ProgressData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 
@@ -38,8 +40,18 @@ public class MachineLibWailaPlugin implements IWailaPlugin {
     @Override
     public void register(IRegistrar registrar) {
         registrar.addBlockData((IDataProvider<MachineBlockEntity>) (data, accessor, config) -> {
-            data.raw().put("security", accessor.getTarget().getSecurity().createTag());
-            data.raw().put("redstone", accessor.getTarget().getRedstoneMode().createTag());
+            MachineBlockEntity machine = accessor.getTarget();
+            data.raw().put("security", machine.getSecurity().createTag());
+            data.raw().put("redstone", machine.getRedstoneMode().createTag());
+            if (machine instanceof RecipeMachineBlockEntity recipeMachine) {
+                if (recipeMachine.getActiveRecipe() != null) {
+                    data.add(ProgressData.TYPE, res -> {
+                        res.add(ProgressData.ratio(recipeMachine.getProgressRatio())
+                                .input(recipeMachine.inputItemStacks())
+                                .output(recipeMachine.outputItemStacks()));
+                    });
+                }
+            }
         }, MachineBlock.class);
 
         registrar.addComponent(new IBlockComponentProvider() {

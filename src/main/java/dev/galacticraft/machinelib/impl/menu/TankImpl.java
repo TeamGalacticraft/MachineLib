@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,10 +65,6 @@ public final class TankImpl implements Tank {
         this.width = width;
         this.height = height;
         this.marked = marked;
-    }
-
-    private static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
     }
 
     @Override

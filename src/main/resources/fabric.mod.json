@@ -41,6 +41,12 @@
     ],
     "rei_client": [
       "dev.galacticraft.machinelib.client.impl.compat.MachineLibREIClientPlugin"
+    ],
+    "jei_mod_plugin": [
+      "dev.galacticraft.machinelib.client.impl.compat.MachineLibJEIPlugin"
+    ],
+    "emi": [
+      "dev.galacticraft.machinelib.client.impl.compat.MachineLibEMIPlugin"
     ]
   },
   "depends": {

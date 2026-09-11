@@ -20,31 +20,33 @@
  * SOFTWARE.
  */
 
-package dev.galacticraft.machinelib.impl.network.c2s;
+package dev.galacticraft.machinelib.impl.network.s2c;
 
-import dev.galacticraft.machinelib.api.block.entity.MachineBlockEntity;
-import dev.galacticraft.machinelib.api.machine.configuration.RedstoneMode;
-import dev.galacticraft.machinelib.api.menu.MachineMenu;
+import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import dev.galacticraft.machinelib.client.api.event.MachineStatusEvents;
 import dev.galacticraft.machinelib.impl.Constant;
-import io.netty.buffer.ByteBuf;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public record RedstoneModePayload(RedstoneMode mode) implements CustomPacketPayload {
-    public static final Type<RedstoneModePayload> TYPE = new Type<>(Constant.id("redstone_mode"));
-    public static final StreamCodec<ByteBuf, RedstoneModePayload> CODEC = RedstoneMode.STREAM_CODEC.map(RedstoneModePayload::new, RedstoneModePayload::mode);
+public record MachineStatusUpdatePayload(BlockPos pos, @Nullable MachineStatus status, @Nullable MachineStatus oldStatus) implements CustomPacketPayload {
+    public static final Type<MachineStatusUpdatePayload> TYPE = new Type<>(Constant.id("status_update"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, MachineStatusUpdatePayload> CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, p -> p.pos,
+            MachineStatus.STREAM_CODEC, p -> p.status,
+            MachineStatus.STREAM_CODEC, p -> p.oldStatus,
+            MachineStatusUpdatePayload::new
+    );
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
+    public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 
-    public void apply(ServerPlayNetworking.Context context) {
-        if (context.player().containerMenu instanceof MachineMenu<?> menu) {
-            MachineBlockEntity machine = menu.be;
-            machine.setRedstoneMode(mode);
-        }
+    public void apply(ClientPlayNetworking.Context context) {
+        MachineStatusEvents.MACHINE_STATUS_CHANGED.invoker().onMachineStatusChanged(context.client(), context.player(), this.pos, this.status, this.oldStatus);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,13 @@ package dev.galacticraft.machinelib.client.impl.compat;
 
 import dev.architectury.event.CompoundEventResult;
 import dev.galacticraft.machinelib.client.api.screen.MachineScreen;
-import dev.galacticraft.machinelib.impl.Constant.TextureCoordinate;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
 import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.minecraft.client.renderer.Rect2i;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MachineLibREIClientPlugin implements REIClientPlugin {
@@ -50,30 +49,10 @@ public class MachineLibREIClientPlugin implements REIClientPlugin {
     @Override
     public void registerExclusionZones(ExclusionZones zones) {
         zones.register(MachineScreen.class, provider -> {
-            List<Rectangle> areas = new ArrayList<>();
-            int leftX = provider.getX();
-            int rightX = provider.getX() + provider.getImageWidth();
-            int leftY = provider.getY() + MachineScreen.SPACING;
-            int rightY = provider.getY() + MachineScreen.SPACING;
-            int width;
-            int height;
-            for (MachineScreen.Tab tab : MachineScreen.Tab.values()) {
-                if (tab.isOpen()) {
-                    width = TextureCoordinate.PANEL_WIDTH;
-                    height = TextureCoordinate.PANEL_HEIGHT;
-                } else {
-                    width = TextureCoordinate.TAB_WIDTH;
-                    height = TextureCoordinate.TAB_HEIGHT;
-                }
-                if (tab.isLeft()) {
-                    areas.add(new Rectangle(leftX - width, leftY, width, height));
-                    leftY += height + MachineScreen.SPACING;
-                } else {
-                    areas.add(new Rectangle(rightX, rightY, width, height));
-                    rightY += height + MachineScreen.SPACING;
-                }
-            }
-            return areas;
+            List<Rect2i> areas = provider.getExclusionZones();
+            return areas.stream().map(
+                    rect2i -> new Rectangle(rect2i.getX(), rect2i.getY(), rect2i.getWidth(), rect2i.getHeight())
+            ).toList();
         });
     }
 }

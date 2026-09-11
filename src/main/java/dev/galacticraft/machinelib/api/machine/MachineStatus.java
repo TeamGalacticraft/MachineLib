@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
  * @see MachineStatuses
  */
 public interface MachineStatus {
+    public static final StreamCodec<RegistryFriendlyByteBuf, @Nullable MachineStatus> STREAM_CODEC = StreamCodec.ofMember(MachineStatus::writePacket, MachineStatus::readPacket);
+
     /**
      * Creates a new machine status.
      *

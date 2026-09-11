@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -86,15 +86,15 @@ public interface Constant {
         int OVERLAY_WIDTH = 16;
         int OVERLAY_HEIGHT = 48;
 
-        int ENERGY_BACKGROUND_X = 0;
-        int ENERGY_BACKGROUND_Y = 0;
-        int ENERGY_X = 16;
-        int ENERGY_Y = 0;
+        int ENERGY_BACKGROUND_U = 0;
+        int ENERGY_BACKGROUND_V = 0;
+        int ENERGY_U = 16;
+        int ENERGY_V = 0;
 
-        int OXYGEN_BACKGROUND_X = 32;
-        int OXYGEN_BACKGROUND_Y = 0;
-        int OXYGEN_X = 48;
-        int OXYGEN_Y = 0;
+        int OXYGEN_BACKGROUND_U = 32;
+        int OXYGEN_BACKGROUND_V = 0;
+        int OXYGEN_U = 48;
+        int OXYGEN_V = 0;
 
         /**
          * The width of a configuration panel.
@@ -111,8 +111,8 @@ public interface Constant {
         /**
          * The height of a configuration tab.
          */
-
         int TAB_HEIGHT = 22;
+
         int BUTTON_U = 0;
         int BUTTON_V = 196;
         int BUTTON_HOVERED_V = 216;

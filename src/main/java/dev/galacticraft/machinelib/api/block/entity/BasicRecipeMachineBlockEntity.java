@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A machine block entity that processes recipes.
  *
@@ -45,6 +48,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BasicRecipeMachineBlockEntity<I extends RecipeInput, R extends Recipe<I>> extends RecipeMachineBlockEntity<I, R> {
     protected final SlottedStorageAccess<Item, ItemResourceSlot> inputSlots;
     protected final SlottedStorageAccess<Item, ItemResourceSlot> outputSlots;
+    protected final int inputSlotsStart;
+    protected final int outputSlotsStart;
+    protected final int inputSlotsLen;
+    protected final int outputSlotsLen;
 
     /**
      * Constructs a new machine block entity that processes recipes.
@@ -90,11 +97,35 @@ public abstract class BasicRecipeMachineBlockEntity<I extends RecipeInput, R ext
      * @param outputSlotsLen The number of recipe output slots.
      */
     protected BasicRecipeMachineBlockEntity(BlockEntityType<? extends BasicRecipeMachineBlockEntity<I, R>> type,
-                                            BlockPos pos, BlockState state, RecipeType<R> recipeType, StorageSpec spec, int inputSlots, int inputSlotsLen, int outputSlots, int outputSlotsLen) {
+                                            BlockPos pos, BlockState state, RecipeType<R> recipeType, StorageSpec spec,
+                                            int inputSlots, int inputSlotsLen, int outputSlots, int outputSlotsLen) {
         super(type, pos, state, recipeType, spec);
 
         this.inputSlots = this.itemStorage().subStorage(inputSlots, inputSlotsLen);
         this.outputSlots = this.itemStorage().subStorage(outputSlots, outputSlotsLen);
+
+        this.inputSlotsStart = inputSlots;
+        this.inputSlotsLen = inputSlotsLen;
+        this.outputSlotsStart = outputSlots;
+        this.outputSlotsLen = outputSlotsLen;
+    }
+
+    @Override
+    public List<ItemStack> inputItemStacks() {
+        List<ItemStack> items = new ArrayList<>();
+        for (int i = 0; i < this.inputSlotsLen; i++) {
+            items.add(this.itemStorage().getItem(this.inputSlotsStart + i));
+        }
+        return items;
+    }
+
+    @Override
+    public List<ItemStack> outputItemStacks() {
+        List<ItemStack> items = new ArrayList<>();
+        for (int i = 0; i < this.outputSlotsLen; i++) {
+            items.add(this.itemStorage().getItem(this.outputSlotsStart + i));
+        }
+        return items;
     }
 
     @Override

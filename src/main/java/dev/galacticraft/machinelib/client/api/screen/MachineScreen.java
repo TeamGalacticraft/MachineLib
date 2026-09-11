@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Team Galacticraft
+ * Copyright (c) 2021-2026 Team Galacticraft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,14 +49,17 @@ import lol.bai.badpackets.api.PacketSender;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.renderer.v1.model.WrapperBakedModel;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -226,7 +229,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     protected static boolean mouseIn(double mouseX, double mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseY >= y && mouseX <= x + width && mouseY <= y + height;
+        return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
     }
 
     @Override
@@ -235,8 +238,10 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         assert this.minecraft != null;
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
 
-        if (this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(this.menu.be.getBlockState()) instanceof MachineBakedModel model) {
-            this.previousState = this.menu.be.getBlockState();
+        BlockState blockState = this.menu.be.getBlockState();
+        BakedModel bakedModel = this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+        if (WrapperBakedModel.unwrap(bakedModel) instanceof MachineBakedModel model) {
+            this.previousState = blockState;
             this.model = model;
         }
     }
@@ -244,9 +249,11 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     @Override
     protected void containerTick() {
         super.containerTick();
-        if (!this.menu.be.getBlockState().equals(this.previousState)) {
-            this.previousState = this.menu.be.getBlockState();
-            if (this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(this.menu.be.getBlockState()) instanceof MachineBakedModel model) {
+        BlockState blockState = this.menu.be.getBlockState();
+        if (!blockState.equals(this.previousState)) {
+            this.previousState = blockState;
+            BakedModel bakedModel = this.minecraft.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+            if (WrapperBakedModel.unwrap(bakedModel) instanceof MachineBakedModel model) {
                 this.model = model;
             }
         }
@@ -272,6 +279,8 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     protected void drawConfigurationPanels(@NotNull GuiGraphics graphics, int mouseX, int mouseY) {
         assert this.minecraft != null;
         PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.translate(0, 0, 10);
 
         int leftX = this.leftPos;
         int rightX = this.leftPos + this.imageWidth;
@@ -280,7 +289,6 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         int width;
         int height;
         for (Tab tab : Tab.values()) { // 0, 1, 2, 3
-            poseStack.pushPose();
             width = tab.isOpen() ? PANEL_WIDTH : TAB_WIDTH;
             height = tab.isOpen() ? PANEL_HEIGHT : TAB_HEIGHT;
             if (tab.isLeft()) {
@@ -296,9 +304,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                 }
                 rightY += height + SPACING;
             }
-            poseStack.popPose();
         }
-        poseStack.pushPose();
         poseStack.translate(this.leftPos, this.topPos, 0);
 
         if (Tab.REDSTONE.isOpen()) {
@@ -579,6 +585,36 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
     }
 
     /**
+     * {@return a list of rectangles recipe viewers should avoid placing items in}
+     */
+    public List<Rect2i> getExclusionZones() {
+        List<Rect2i> areas = new ArrayList<>();
+        int leftX = this.getX();
+        int rightX = this.getX() + this.getImageWidth();
+        int leftY = this.getY() + SPACING;
+        int rightY = this.getY() + SPACING;
+        int width;
+        int height;
+        for (Tab tab : Tab.values()) {
+            if (tab.isOpen()) {
+                width = PANEL_WIDTH;
+                height = PANEL_HEIGHT;
+            } else {
+                width = TAB_WIDTH;
+                height = TAB_HEIGHT;
+            }
+            if (tab.isLeft()) {
+                areas.add(new Rect2i(leftX - width, leftY, width, height));
+                leftY += height + SPACING;
+            } else {
+                areas.add(new Rect2i(rightX, rightY, width, height));
+                rightY += height + SPACING;
+            }
+        }
+        return areas;
+    }
+
+    /**
      * Sets the accessibility of the machine and syncs it to the server.
      *
      * @param accessLevel The accessibility to set.
@@ -785,11 +821,9 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
             int x = this.leftPos + this.capacitorX;
             int y = this.topPos + this.capacitorY;
             long amount = this.menu.energyStorage.getAmount();
-            float scale = (float) ((double) amount / (double) capacity);
-            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, x, y, ENERGY_X, ENERGY_Y, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
-            graphics.blit(Constant.ScreenTexture.OVERLAY_BARS, x, y, ENERGY_BACKGROUND_X, ENERGY_BACKGROUND_Y, OVERLAY_WIDTH, (int) (OVERLAY_HEIGHT * (1 - scale)), OVERLAY_TEX_WIDTH, OVERLAY_TEX_HEIGHT);
+            GraphicsUtil.drawCapacitor(graphics, x, y, capacity, amount, false);
 
-            if (mouseIn(mouseX, mouseY, this.leftPos + this.capacitorX, this.topPos + this.capacitorY, 16, this.capacitorHeight)) {
+            if (mouseIn(mouseX, mouseY, x - 1, y - 1, OVERLAY_WIDTH + 2, this.capacitorHeight + 2)) {
                 List<Component> lines = new ArrayList<>();
                 this.appendEnergyTooltip(lines);
                 this.setTooltipForNextRenderPass(Lists.transform(lines, Component::getVisualOrderText));
@@ -834,7 +868,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
                     }
                 }
 
-                if (this.hoveredTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+                if (this.hoveredTank == null && mouseIn(mouseX, mouseY, this.leftPos + tank.getX() - 1, this.topPos + tank.getY() - 1, tank.getWidth() + 2, tank.getHeight() + 2)) {
                     this.hoveredTank = tank;
                     RenderSystem.disableDepthTest();
                     graphics.fill(tank.getX(), tank.getY(), tank.getX() + tank.getWidth(), tank.getY() + tank.getHeight(), 0x80ffffff);
@@ -845,7 +879,7 @@ public class MachineScreen<Machine extends MachineBlockEntity, Menu extends Mach
         graphics.pose().popPose();
 
         for (Tank tank : this.menu.tanks) {
-            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX(), this.topPos + tank.getY(), tank.getWidth(), tank.getHeight())) {
+            if (mouseIn(mouseX, mouseY, this.leftPos + tank.getX() - 1, this.topPos + tank.getY() - 1, tank.getWidth() + 2, tank.getHeight() + 2)) {
                 this.setTooltipForNextRenderPass(Lists.transform(tank.getTooltip(), Component::getVisualOrderText));
                 break;
             }
