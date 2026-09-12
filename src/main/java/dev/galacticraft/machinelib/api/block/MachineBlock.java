@@ -272,16 +272,14 @@ public abstract class MachineBlock extends BaseBlock {
     public @NotNull ItemStack getCloneItemStack(LevelReader reader, BlockPos pos, BlockState state) {
         ItemStack stack = super.getCloneItemStack(reader, pos, state);
 
-        if (Screen.hasAltDown()) {
-            // todo: add a separate item to copy/paste config data that also works in survival instead of this
-            BlockEntity blockEntity = reader.getBlockEntity(pos);
-            if (blockEntity instanceof MachineBlockEntity machine) {
-                CompoundTag config = new CompoundTag();
-                config.put(Constant.Nbt.CONFIGURATION, machine.getIOConfig().createTag());
-                config.put(Constant.Nbt.SECURITY, machine.getSecurity().createTag());
-                config.put(Constant.Nbt.REDSTONE_MODE, machine.getRedstoneMode().createTag());
-                BlockItem.setBlockEntityData(stack, blockEntity.getType(), config);
-            }
+        // todo: add a separate item to copy/paste config data that also works in survival instead of this
+        BlockEntity blockEntity = reader.getBlockEntity(pos);
+        if (blockEntity instanceof MachineBlockEntity machine) {
+            CompoundTag config = new CompoundTag();
+            config.put(Constant.Nbt.CONFIGURATION, machine.getIOConfig().createTag());
+            config.put(Constant.Nbt.SECURITY, machine.getSecurity().createTag());
+            config.put(Constant.Nbt.REDSTONE_MODE, machine.getRedstoneMode().createTag());
+            BlockItem.setBlockEntityData(stack, blockEntity.getType(), config);
         }
 
         return stack;

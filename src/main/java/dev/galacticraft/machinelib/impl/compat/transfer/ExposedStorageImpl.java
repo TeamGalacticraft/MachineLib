@@ -67,23 +67,23 @@ public class ExposedStorageImpl<Resource, Variant extends TransferVariant<Resour
     @Override
     public long insert(Variant variant, long maxAmount, TransactionContext transaction) {
         if (!this.storage.isValid()) return 0;
-        long requested = maxAmount;
+        long amount = this.storage.insert(variant, maxAmount, transaction);
         for (ExposedSlot<Resource, Variant> slot : this.slots) {
-            if (maxAmount == 0) return requested;
-            maxAmount -= slot.insert(variant, maxAmount, transaction);
+            if (amount == maxAmount) break;
+            amount += slot.insert(variant, maxAmount, transaction);
         }
-        return requested - maxAmount;
+        return amount;
     }
 
     @Override
     public long extract(Variant variant, long maxAmount, TransactionContext transaction) {
         if (!this.storage.isValid()) return 0;
-        long requested = maxAmount;
+        long amount = 0;
         for (ExposedSlot<Resource, Variant> slot : this.slots) {
-            if (maxAmount == 0) return requested;
-            maxAmount -= slot.extract(variant, maxAmount, transaction);
+            if (amount == maxAmount) return amount;
+            amount += slot.extract(variant, maxAmount, transaction);
         }
-        return requested - maxAmount;
+        return amount;
     }
 
     @Override
