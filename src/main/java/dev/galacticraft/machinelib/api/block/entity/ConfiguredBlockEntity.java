@@ -315,6 +315,13 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         tag.putBoolean(Constant.Nbt.ACTIVE, this.active);
     }
 
+    /**
+     * Override this method to allow for alternative faces to be selected in the side config,
+     * such as to choose which sides of the oxygen detector have vents to test for the presence of oxygen.
+     *
+     * @param face the block face being checked.
+     * @return {@code true} if the face should allow the {@code OVERRIDE} resource type, {@code false} otherwise.
+     */
     public boolean faceHasOverride(BlockFace face) {
         return false;
     }
