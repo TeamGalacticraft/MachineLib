@@ -23,9 +23,11 @@
 package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
+import dev.galacticraft.machinelib.api.compat.transfer.MachineInsertHandler;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -53,6 +55,14 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
     @Override
     public boolean isValid() {
         return this.parent == null || !this.parent.isRemoved();
+    }
+
+    @Override
+    public long insert(TransferVariant<Resource> variant, long maxAmount, TransactionContext transaction) {
+        if (this.parent instanceof MachineInsertHandler handler) {
+            return handler.insert(this, variant, maxAmount, transaction);
+        }
+        return 0;
     }
 
     @Override

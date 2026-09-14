@@ -354,19 +354,25 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
     public void cycleFaceConfig(BlockFace face, boolean reverse, boolean reset) {
         IOFace option = this.configuration.get(face);
 
+        int numBits = 12;
         short bits = calculateIoBitmask();
-        if (bits != 0b1_000_000_000_000 && !reset && !isFaceLocked(face)) {
+        if (this.be.faceHasOverride(face)) {
+            numBits = 13;
+            bits |= 0b10_000_000_000_000; //set OVERRIDE bit
+        }
+        if (bits != 0b01_000_000_000_000 && !reset && !isFaceLocked(face)) {
             ResourceType type = option.getType();
             ResourceFlow flow = option.getFlow();
             int index = switch (type) {
                 case NONE -> 12;
+                case OVERRIDE -> 13;
                 case ENERGY, ITEM, FLUID, ANY -> (type.ordinal() - 1) * 3 + flow.ordinal();
             };
             int i = index + (reverse ? -1 : 1);
             while (i != index) {
                 if (i == -1) {
-                    i = 12;
-                } else if (i == 13) {
+                    i = numBits;
+                } else if (i > numBits) {
                     i = 0;
                 }
 
@@ -382,6 +388,8 @@ public abstract class ConfiguredMenu<Machine extends ConfiguredBlockEntity> exte
 
             if (i == 12) {
                 option.setOption(ResourceType.NONE, ResourceFlow.BOTH);
+            } else if (i == 13) {
+                option.setOption(ResourceType.OVERRIDE, ResourceFlow.BOTH);
             } else {
                 byte flowIndex = (byte) (i % 3);
                 byte typeIndex = (byte) ((i - flowIndex) / 3 + 1);

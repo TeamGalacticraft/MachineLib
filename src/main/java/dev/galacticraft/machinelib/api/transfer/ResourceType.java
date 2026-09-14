@@ -42,23 +42,27 @@ public enum ResourceType implements StringRepresentable {
     /**
      * No resources can be stored/transferred.
      */
-    NONE(0b000, Component.translatable(Constant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY))),
+    NONE(0b0000, Component.translatable(Constant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY))),
     /**
      * Energy can be stored/transferred.
      */
-    ENERGY(0b001, Component.translatable(Constant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE))),
+    ENERGY(0b0001, Component.translatable(Constant.TranslationKey.ENERGY).setStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE))),
     /**
      * Items can be stored/transferred.
      */
-    ITEM(0b010, Component.translatable(Constant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD))),
+    ITEM(0b0010, Component.translatable(Constant.TranslationKey.ITEM).setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD))),
     /**
      * Fluids can be stored/transferred.
      */
-    FLUID(0b100, Component.translatable(Constant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN))),
+    FLUID(0b0100, Component.translatable(Constant.TranslationKey.FLUID).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN))),
     /**
      * All resources can be stored/transferred.
      */
-    ANY(0b111, Component.translatable(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)));
+    ANY(0b0111, Component.translatable(Constant.TranslationKey.ANY).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))),
+    /**
+     * No resources can be stored/transferred.
+     */
+    OVERRIDE(0b1000, Component.translatable(Constant.TranslationKey.NONE).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
 
     public static final Codec<ResourceType> CODEC = StringRepresentable.fromValues(ResourceType::values);
     public static final StreamCodec<ByteBuf, ResourceType> STREAM_CODEC = ByteBufCodecs.BYTE.map(i -> i == -1 ? null : values()[i], face -> face == null ? -1 : (byte) face.ordinal());
@@ -93,6 +97,7 @@ public enum ResourceType implements StringRepresentable {
             case 2 -> ITEM;
             case 3 -> FLUID;
             case 4 -> ANY;
+            case 5 -> OVERRIDE;
             default -> throw new IllegalStateException("Unexpected ordinal: " + ordinal);
         };
     }
@@ -100,11 +105,12 @@ public enum ResourceType implements StringRepresentable {
     @Contract(pure = true)
     public static ResourceType getFromId(byte id) {
         return switch (id) {
-            case 0b000 -> NONE;
-            case 0b001 -> ENERGY;
-            case 0b010 -> ITEM;
-            case 0b100 -> FLUID;
-            case 0b111 -> ANY;
+            case 0b0000 -> NONE;
+            case 0b0001 -> ENERGY;
+            case 0b0010 -> ITEM;
+            case 0b0100 -> FLUID;
+            case 0b0111 -> ANY;
+            case 0b1000 -> OVERRIDE;
             default -> throw new IllegalArgumentException("Invalid id: " + id);
         };
     }
@@ -126,7 +132,7 @@ public enum ResourceType implements StringRepresentable {
      */
     @Contract(pure = true)
     public boolean matchesSlots() {
-        return this != ANY && this != NONE && this != ENERGY;
+        return this != NONE && this != ENERGY && this != ANY && this != OVERRIDE;
     }
 
     /**
@@ -134,7 +140,7 @@ public enum ResourceType implements StringRepresentable {
      */
     @Contract(pure = true)
     public boolean matchesGroups() {
-        return this != NONE && this != ENERGY;
+        return this != NONE && this != ENERGY && this != OVERRIDE;
     }
 
     /**
@@ -144,7 +150,7 @@ public enum ResourceType implements StringRepresentable {
      */
     @Contract(pure = true)
     public boolean willAcceptResource(ResourceType other) {
-        return this != NONE && (this == other || this == ANY);
+        return this != NONE && this != OVERRIDE && (this == other || this == ANY);
     }
 
     @Override
@@ -156,6 +162,7 @@ public enum ResourceType implements StringRepresentable {
             case ITEM -> "item";
             case FLUID -> "fluid";
             case ANY -> "any";
+            case OVERRIDE -> "override";
         };
     }
 }

@@ -30,6 +30,7 @@ import dev.galacticraft.machinelib.api.misc.Serializable;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import dev.galacticraft.machinelib.api.transfer.ResourceFlow;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -52,6 +53,17 @@ public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> 
     void setParent(BlockEntity parent);
 
     boolean isValid();
+
+    /**
+     * Invokes the {@link dev.galacticraft.machinelib.api.compat.transfer.MachineInsertHandler#insert},
+     * if the parent block entity implements {@link dev.galacticraft.machinelib.api.compat.transfer.MachineInsertHandler}.
+     *
+     * @param variant the variant to move
+     * @param maxAmount the maximum amount of resources to move
+     * @param transaction the transaction context to use
+     * @return the amount of resources moved
+     */
+    long insert(TransferVariant<Resource> variant, long maxAmount, TransactionContext transaction);
 
     /**
      * Create an exposed storage for this storage.

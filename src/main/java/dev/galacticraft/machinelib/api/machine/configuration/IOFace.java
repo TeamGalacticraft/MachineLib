@@ -61,17 +61,17 @@ public class IOFace implements Serializable<ByteTag>, PacketSerializable<ByteBuf
 
     @VisibleForTesting
     public static byte pack(ResourceType type, ResourceFlow flow) {
-        return (byte) (flow.getId() << 3 | type.getId());
+        return (byte) (flow.getId() << 4 | type.getId());
     }
 
     @VisibleForTesting
     public static ResourceFlow unpackFlow(byte packed) {
-        return ResourceFlow.getFromId((byte) (packed >> 3));
+        return ResourceFlow.getFromId((byte) (packed >> 4));
     }
 
     @VisibleForTesting
     public static ResourceType unpackType(byte packed) {
-        return ResourceType.getFromId((byte) (packed & 0b111));
+        return ResourceType.getFromId((byte) (packed & 0b1111));
     }
 
     /**
