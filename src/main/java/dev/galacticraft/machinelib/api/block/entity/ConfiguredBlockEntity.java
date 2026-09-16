@@ -223,7 +223,7 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
      */
     protected void updateActiveState(Level level, BlockPos pos, BlockState state, boolean b) {
         if (state.getBlock() instanceof MachineBlock) {
-            level.setBlock(pos, state.setValue(MachineBlock.ACTIVE, b), 2);
+            level.setBlock(pos, state.setValue(MachineBlock.ACTIVE, b), Block.UPDATE_ALL);
         }
     }
 
