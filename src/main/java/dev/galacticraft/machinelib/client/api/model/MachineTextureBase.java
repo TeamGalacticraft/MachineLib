@@ -24,10 +24,10 @@ package dev.galacticraft.machinelib.client.api.model;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -91,7 +91,7 @@ public record MachineTextureBase(Material base,
     }
 
     private static Material mat(String namespace, String location) {
-        return new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.fromNamespaceAndPath(namespace, location));
+        return new Material(InventoryMenu.BLOCK_ATLAS, ResourceLocation.fromNamespaceAndPath(namespace, location));
     }
 
     private record TypedResourceSprites(Material input, Material output, Material both) {
