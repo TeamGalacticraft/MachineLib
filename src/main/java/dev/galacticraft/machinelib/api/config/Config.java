@@ -63,7 +63,7 @@ public interface Config {
     /**
      * {@return the unit that fluids should be displayed in}
      */
-    FluidUnits getFluidUnits();
+    FluidUnits fluidUnits();
 
     /**
      * Sets the unit that fluids should be displayed in.

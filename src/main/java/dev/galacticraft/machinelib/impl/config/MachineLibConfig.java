@@ -68,7 +68,7 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public FluidUnits getFluidUnits() {
+    public FluidUnits fluidUnits() {
         return this.fluidUnits;
     }
 
@@ -80,7 +80,7 @@ public class MachineLibConfig implements Config {
     @Override
     public void copyFrom(Config config) {
         this.enableColoredVanillaFluidNames = config.enableColoredVanillaFluidNames();
-        this.fluidUnits = config.getFluidUnits();
+        this.fluidUnits = config.fluidUnits();
     }
 
     @Override
