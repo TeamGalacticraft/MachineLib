@@ -58,5 +58,7 @@
   "ui.machinelib.config.enable_colored_vanilla_fluid_names": "Enable Colored Vanilla Fluid Names",
   "ui.machinelib.config.fluid_display_mode": "Fluid Display Mode",
   "ui.machinelib.config.fluid_display_mode.millibucket": "Millibucket",
-  "ui.machinelib.config.fluid_display_mode.raw": "Raw"
+  "ui.machinelib.config.fluid_display_mode.raw": "Raw",
+  "ui.machinelib.config.team_system": "Team System",
+  "ui.machinelib.config.team_system.tooltip": "Registered team system used by machines set to Team access."
 }

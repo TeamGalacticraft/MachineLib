@@ -73,6 +73,18 @@ public interface Config {
     void setFluidUnits(FluidUnits units);
 
     /**
+     * {@return the id of the team system used by MachineLib security}
+     */
+    String teamSystem();
+
+    /**
+     * Sets the team system used by MachineLib security.
+     *
+     * @param teamSystem the registered team system id
+     */
+    void setTeamSystem(String teamSystem);
+
+    /**
      * Copies the state of the provided config into this config.
      *
      * @param config the config to copy from

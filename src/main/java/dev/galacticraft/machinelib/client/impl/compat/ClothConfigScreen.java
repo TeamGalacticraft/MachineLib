@@ -23,12 +23,16 @@
 package dev.galacticraft.machinelib.client.impl.compat;
 
 import dev.galacticraft.machinelib.api.config.Config;
+import dev.galacticraft.machinelib.api.machine.security.TeamSystems;
 import dev.galacticraft.machinelib.impl.MachineLib;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
 
 public class ClothConfigScreen {
     public static Screen factory(Screen screen) {
@@ -49,6 +53,16 @@ public class ClothConfigScreen {
                 .setDefaultValue(Config.DEFAULT.fluidUnits())
                 .setEnumNameProvider(v -> ((Config.FluidUnits) v).getName())
                 .build()
+        );
+        String configuredTeamSystem = MachineLib.CONFIG.teamSystem();
+        String displayedTeamSystem = TeamSystems.isRegistered(configuredTeamSystem) ? configuredTeamSystem : TeamSystems.MINECRAFT;
+        general.addEntry(entryBuilder.startDropdownMenu(Component.translatable("ui.machinelib.config.team_system"), DropdownMenuBuilder.TopCellElementBuilder.of(displayedTeamSystem, value -> value), DropdownMenuBuilder.CellCreatorBuilder.of(value -> Component.literal(value)))
+                        .setSelections(new ArrayList<>(TeamSystems.getRegisteredIds()))
+                        .setDefaultValue(Config.DEFAULT.teamSystem())
+                        .setSuggestionMode(false)
+                        .setSaveConsumer(MachineLib.CONFIG::setTeamSystem)
+                        .setTooltip(Component.translatable("ui.machinelib.config.team_system.tooltip"))
+                        .build()
         );
 
 //        ConfigCategory debug = builder.getOrCreateCategory(Component.translatable("ui.machinelib.config.category.debug"));
