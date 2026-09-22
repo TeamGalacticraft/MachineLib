@@ -27,6 +27,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import dev.galacticraft.machinelib.api.config.Config;
 import dev.galacticraft.machinelib.impl.MachineLib;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -80,7 +81,7 @@ public class MachineLibConfig implements Config {
         this.fluidUnits = units;
     }
 
-    @Override
+    @Override @NotNull
     public String teamSystem() {
         if (this.teamSystem == null || this.teamSystem.isBlank()) {
             return "minecraft";
@@ -90,10 +91,8 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public void setTeamSystem(String teamSystem) {
-        this.teamSystem = teamSystem == null || teamSystem.isBlank()
-                ? "minecraft"
-                : teamSystem;
+    public void setTeamSystem(@Nullable String teamSystem) {
+        this.teamSystem = ((teamSystem == null || teamSystem.isBlank()) ? "minecraft" : teamSystem);
     }
 
     @Override

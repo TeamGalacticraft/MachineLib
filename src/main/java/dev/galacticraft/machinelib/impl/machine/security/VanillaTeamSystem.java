@@ -25,6 +25,7 @@ package dev.galacticraft.machinelib.impl.machine.security;
 import com.mojang.authlib.GameProfile;
 import dev.galacticraft.machinelib.api.machine.security.TeamSystem;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.ApiStatus;
@@ -53,7 +54,13 @@ public final class VanillaTeamSystem implements TeamSystem {
             return false;
         }
 
-        Optional<GameProfile> ownerProfile = server.getProfileCache().get(owner);
+        GameProfileCache cache = server.getProfileCache();
+
+        if (cache == null) {
+            return false;
+        }
+
+        Optional<GameProfile> ownerProfile = cache.get(owner);
 
         if (ownerProfile.isEmpty()) {
             return false;

@@ -36,74 +36,52 @@ public final class MachineLibCommands {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register(
-                (dispatcher, registryAccess, environment) ->
-                        dispatcher.register(
-                                Commands.literal("machinelib")
-                                        .then(
-                                                Commands.literal("exposedTeamSystems")
-                                                        .executes(context -> {
-                                                            String configured =
-                                                                    MachineLib.CONFIG.teamSystem();
+                (dispatcher, registryAccess, environment) -> dispatcher.register(
+                        Commands.literal("machinelib").then(
+                                Commands.literal("exposedTeamSystems").executes(context -> {
+                                    String configured = MachineLib.CONFIG.teamSystem();
+                                    boolean configuredRegistered = TeamSystems.isRegistered(configured);
 
-                                                            context.getSource().sendSuccess(
-                                                                    () -> Component.literal(
-                                                                            "Registered MachineLib team systems:"
-                                                                    ),
-                                                                    false
-                                                            );
+                                    context.getSource().sendSuccess(
+                                            () -> Component.literal("Registered MachineLib team systems:"),
+                                            false
+                                    );
 
-                                                            for (String id :
-                                                                    TeamSystems.getRegisteredIds()) {
-                                                                boolean active =
-                                                                        id.equals(configured)
-                                                                                || !TeamSystems.isRegistered(configured)
-                                                                                && id.equals(TeamSystems.MINECRAFT);
+                                    for (String id : TeamSystems.getRegisteredIds()) {
+                                        boolean active = id.equals(configured)
+                                                || !configuredRegistered && id.equals(TeamSystems.MINECRAFT);
 
-                                                                Component message =
-                                                                        Component.literal(
-                                                                                " - " + id
-                                                                        );
+                                        Component message = Component.literal(" - " + id);
 
-                                                                if (active) {
-                                                                    message = message.copy()
-                                                                            .append(
-                                                                                    Component.literal(
-                                                                                            " [ACTIVE]"
-                                                                                    ).withStyle(
-                                                                                            ChatFormatting.GREEN
-                                                                                    )
-                                                                            );
-                                                                }
+                                        if (active) {
+                                            message = message.copy().append(
+                                                    Component.literal(" [ACTIVE]")
+                                                            .withStyle(ChatFormatting.GREEN)
+                                            );
+                                        }
 
-                                                                Component finalMessage = message;
+                                        Component finalMessage = message;
 
-                                                                context.getSource().sendSuccess(
-                                                                        () -> finalMessage,
-                                                                        false
-                                                                );
-                                                            }
+                                        context.getSource().sendSuccess(() -> finalMessage, false);
+                                    }
 
-                                                            if (!TeamSystems.isRegistered(configured)) {
-                                                                context.getSource().sendSuccess(
-                                                                        () -> Component.literal(
-                                                                                "Configured team system '"
-                                                                                        + configured
-                                                                                        + "' is not registered; using '"
-                                                                                        + TeamSystems.MINECRAFT
-                                                                                        + "'."
-                                                                        ).withStyle(
-                                                                                ChatFormatting.YELLOW
-                                                                        ),
-                                                                        false
-                                                                );
-                                                            }
+                                    if (!configuredRegistered) {
+                                        context.getSource().sendSuccess(
+                                                () -> Component.literal(
+                                                        String.format(
+                                                                "Configured team system '%s' is not registered; using '%s'.",
+                                                                configured,
+                                                                TeamSystems.MINECRAFT
+                                                        )
+                                                ).withStyle(ChatFormatting.YELLOW),
+                                                false
+                                        );
+                                    }
 
-                                                            return TeamSystems
-                                                                    .getRegisteredIds()
-                                                                    .size();
-                                                        })
-                                        )
+                                    return TeamSystems.getRegisteredIds().size();
+                                })
                         )
+                )
         );
     }
 }
