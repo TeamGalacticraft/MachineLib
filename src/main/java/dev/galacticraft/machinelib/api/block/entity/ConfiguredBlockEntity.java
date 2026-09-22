@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
 
 public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements RenderDataBlockEntity {
     private final @NotNull IOConfig configuration;
@@ -364,19 +363,8 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
      */
     private class InternalSecuritySettings extends SecuritySettings {
         @Override
-        public void tryUpdate(@NotNull UUID uuid) {
-            if (this.owner == null) {
-                this.owner = uuid;
-                ConfiguredBlockEntity.this.setChanged();
-            }
-        }
-
-        @Override
-        public void setAccessLevel(@NotNull AccessLevel accessLevel) {
-            if (this.accessLevel != accessLevel) {
-                this.accessLevel = accessLevel;
-                ConfiguredBlockEntity.this.setChanged();
-            }
+        protected void onChanged() {
+            ConfiguredBlockEntity.this.setChanged();
         }
     }
 
