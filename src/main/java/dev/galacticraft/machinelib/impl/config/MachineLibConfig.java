@@ -44,6 +44,9 @@ public class MachineLibConfig implements Config {
     @Expose
     public FluidUnits fluidUnits = FluidUnits.MILLIBUCKET;
 
+    @Expose
+    public String teamSystem = "minecraft";
+
     public MachineLibConfig(@Nullable File file) {
         this.file = file;
 
@@ -78,9 +81,26 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
+    public String teamSystem() {
+        if (this.teamSystem == null || this.teamSystem.isBlank()) {
+            return "minecraft";
+        }
+
+        return this.teamSystem;
+    }
+
+    @Override
+    public void setTeamSystem(String teamSystem) {
+        this.teamSystem = teamSystem == null || teamSystem.isBlank()
+                ? "minecraft"
+                : teamSystem;
+    }
+
+    @Override
     public void copyFrom(Config config) {
         this.enableColoredVanillaFluidNames = config.enableColoredVanillaFluidNames();
         this.fluidUnits = config.fluidUnits();
+        this.teamSystem = config.teamSystem();
     }
 
     @Override

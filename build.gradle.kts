@@ -187,6 +187,7 @@ dependencies {
 
     listOf(
         "fabric-api-base",
+        "fabric-command-api-v2",
         "fabric-api-lookup-api-v1",
         "fabric-data-attachment-api-v1",
         "fabric-gametest-api-v1",

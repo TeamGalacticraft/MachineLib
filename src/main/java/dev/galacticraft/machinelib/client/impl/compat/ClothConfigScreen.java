@@ -50,6 +50,12 @@ public class ClothConfigScreen {
                 .setEnumNameProvider(v -> ((Config.FluidUnits) v).getName())
                 .build()
         );
+        general.addEntry(entryBuilder.startStrField(Component.translatable("ui.machinelib.config.team_system"), MachineLib.CONFIG.teamSystem())
+                        .setSaveConsumer(MachineLib.CONFIG::setTeamSystem)
+                        .setDefaultValue(Config.DEFAULT.teamSystem())
+                        .setTooltip(Component.translatable("ui.machinelib.config.team_system.tooltip"))
+                        .build()
+        );
 
 //        ConfigCategory debug = builder.getOrCreateCategory(Component.translatable("ui.machinelib.config.category.debug"));
         return builder.build();
