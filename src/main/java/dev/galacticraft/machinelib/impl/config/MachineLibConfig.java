@@ -72,7 +72,7 @@ public class MachineLibConfig implements Config {
     }
 
     @Override
-    public FluidUnits getFluidUnits() {
+    public FluidUnits fluidUnits() {
         return this.fluidUnits;
     }
 

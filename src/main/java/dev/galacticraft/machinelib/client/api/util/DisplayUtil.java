@@ -80,7 +80,7 @@ public final class DisplayUtil {
 
     @Contract(pure = true, value = "_, _ -> new")
     public static @NotNull MutableComponent formatFluid(long amount, boolean forceDetail) {
-        if (!forceDetail && MachineLib.CONFIG.getFluidUnits() == Config.FluidUnits.MILLIBUCKET) {
+        if (!forceDetail && MachineLib.CONFIG.fluidUnits() == Config.FluidUnits.MILLIBUCKET) {
             return Component.literal(truncateDecimal((double) amount / ((double) (FluidConstants.BUCKET / 1000)), 0)).append(Component.translatable(Constant.TranslationKey.UNIT_MILLIBUCKET));
         }
         return Component.literal(NUMBER_FORMAT.format(amount));
