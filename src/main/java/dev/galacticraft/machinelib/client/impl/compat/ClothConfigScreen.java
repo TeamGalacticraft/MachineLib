@@ -44,9 +44,9 @@ public class ClothConfigScreen {
                 .setDefaultValue(Config.DEFAULT.enableColoredVanillaFluidNames())
                 .build()
         );
-        general.addEntry(entryBuilder.startEnumSelector(Component.translatable("ui.machinelib.config.fluid_display_mode"), Config.FluidUnits.class, MachineLib.CONFIG.fluidUnits())
-                .setSaveConsumer(MachineLib.CONFIG::getFluidUnits)
-                .setDefaultValue(Config.DEFAULT.fluidUnits())
+        general.addEntry(entryBuilder.startEnumSelector(Component.translatable("ui.machinelib.config.fluid_display_mode"), Config.FluidUnits.class, MachineLib.CONFIG.getFluidUnits())
+                .setSaveConsumer(MachineLib.CONFIG::setFluidUnits)
+                .setDefaultValue(Config.DEFAULT.getFluidUnits())
                 .setEnumNameProvider(v -> ((Config.FluidUnits) v).getName())
                 .build()
         );

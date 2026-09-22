@@ -36,6 +36,9 @@
     "main": [
       "dev.galacticraft.machinelib.impl.MachineLib"
     ],
+    "modmenu": [
+      "dev.galacticraft.machinelib.client.impl.compat.ModMenuCompat"
+    ],
     "rei_common": [
       "dev.galacticraft.machinelib.impl.compat.rei.MachineLibREIPlugin"
     ],
