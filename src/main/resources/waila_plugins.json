@@ -1,6 +1,9 @@
 {
   "machinelib:plugin": {
-    "initializer": "dev.galacticraft.machinelib.impl.compat.waila.MachineLibWailaPlugin",
+    "entrypoints": {
+      "common": "dev.galacticraft.machinelib.impl.compat.waila.MachineLibWailaCommonPlugin",
+      "client": "dev.galacticraft.machinelib.client.impl.compat.waila.MachineLibWailaClientPlugin"
+    },
     "side": "*"
   }
 }
