@@ -290,8 +290,10 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
             this.redstone = RedstoneMode.readTag(tag.get(Constant.Nbt.REDSTONE_MODE));
         if (tag.contains(Constant.Nbt.STATE, Tag.TAG_BYTE))
             this.state.readTag((ByteTag) tag.get(Constant.Nbt.STATE));
-        if (tag.contains(Constant.Nbt.ACTIVE))
+        if (tag.contains(Constant.Nbt.ACTIVE)) {
             this.active = tag.getBoolean(Constant.Nbt.ACTIVE);
+            this.updateActiveState(this.level, this.worldPosition, this.getBlockState(), this.active);
+        }
 
         if (this.level != null && this.level.isClientSide()) {
             this.level.sendBlockUpdated(this.worldPosition, Blocks.AIR.defaultBlockState(), this.getBlockState(), Block.UPDATE_IMMEDIATE);
