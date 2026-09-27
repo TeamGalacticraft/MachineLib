@@ -38,7 +38,6 @@ import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.ByteArrayTag;
-import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -53,7 +52,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 
 public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements RenderDataBlockEntity {
     private final @NotNull IOConfig configuration;
@@ -289,7 +287,7 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
         if (tag.contains(Constant.Nbt.REDSTONE_MODE, Tag.TAG_BYTE))
             this.redstone = RedstoneMode.readTag(tag.get(Constant.Nbt.REDSTONE_MODE));
         if (tag.contains(Constant.Nbt.STATE, Tag.TAG_BYTE))
-            this.state.readTag((ByteTag) tag.get(Constant.Nbt.STATE));
+            this.state.readTag(tag.getCompound(Constant.Nbt.STATE));
         if (tag.contains(Constant.Nbt.ACTIVE)) {
             this.active = tag.getBoolean(Constant.Nbt.ACTIVE);
             this.updateActiveState(this.level, this.worldPosition, this.getBlockState(), this.active);

@@ -28,6 +28,8 @@ import dev.galacticraft.machinelib.api.misc.Serializable;
 import dev.galacticraft.machinelib.impl.Constant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +41,7 @@ import java.util.Objects;
 /**
  * Stores the state of a machine.
  */
-public class MachineState implements Serializable<ByteTag>, DeltaPacketSerializable<RegistryFriendlyByteBuf, MachineState> {
+public class MachineState implements Serializable<CompoundTag>, DeltaPacketSerializable<RegistryFriendlyByteBuf, MachineState> {
     /**
      * The current status of the machine.
      */
@@ -69,13 +71,22 @@ public class MachineState implements Serializable<ByteTag>, DeltaPacketSerializa
     }
 
     @Override
-    public @NotNull ByteTag createTag() {
-        return ByteTag.valueOf(this.powered);
+    public @NotNull CompoundTag createTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.put(Constant.Nbt.STATUS, MachineStatus.createTag(this.status));
+        tag.put(Constant.Nbt.POWERED, ByteTag.valueOf(this.powered));
+        return tag;
     }
 
     @Override
-    public void readTag(@NotNull ByteTag tag) {
-        this.powered = tag.getAsByte() != 0;
+    public void readTag(@NotNull CompoundTag tag) {
+        if (tag.contains(Constant.Nbt.STATUS, Tag.TAG_BYTE)) {
+            this.status = MachineStatus.readTag(tag.getCompound(Constant.Nbt.STATUS));
+        }
+
+        if (tag.contains(Constant.Nbt.POWERED, Tag.TAG_BYTE)) {
+            this.powered = tag.getByte(Constant.Nbt.POWERED) != 0;
+        }
     }
 
     @Override

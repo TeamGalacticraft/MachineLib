@@ -71,6 +71,11 @@ public interface Constant {
         String ITEM_STORAGE = "ItemStorage";
         String FLUID_STORAGE = "FluidStorage";
         String STATE = "State";
+        String STATUS = "Status";
+        String TYPE = "Type";
+        String COLOR = "Color";
+        String KEY = "Key";
+        String POWERED = "Powered";
         String ACTIVE = "Active";
     }
 

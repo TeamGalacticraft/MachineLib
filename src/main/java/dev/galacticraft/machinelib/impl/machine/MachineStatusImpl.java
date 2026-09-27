@@ -23,13 +23,31 @@
 package dev.galacticraft.machinelib.impl.machine;
 
 import dev.galacticraft.machinelib.api.machine.MachineStatus;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public record MachineStatusImpl(@NotNull Component text, @NotNull MachineStatus.Type type) implements MachineStatus {
+public record MachineStatusImpl(@NotNull String key, @Nullable ChatFormatting color, @NotNull MachineStatus.Type type) implements MachineStatus {
+    @Override
+    public @NotNull String getKey() {
+        return this.key;
+    }
+
+    @Override
+    public @Nullable ChatFormatting getColor() {
+        return this.color;
+    }
+
+    @Override
+    public int getColorIndex() {
+        return this.color != null ? this.color.getId() : -1;
+    }
+
     @Override
     public @NotNull Component getText() {
-        return this.text;
+        return Component.translatable(this.key).setStyle(Style.EMPTY.withColor(this.color));
     }
 
     @Override

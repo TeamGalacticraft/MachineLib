@@ -22,12 +22,13 @@
 
 package dev.galacticraft.machinelib.api.machine;
 
+import dev.galacticraft.machinelib.impl.Constant;
 import dev.galacticraft.machinelib.impl.machine.MachineStatusImpl;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.network.chat.Style;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,19 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * @see MachineStatuses
  */
 public interface MachineStatus {
-    public static final StreamCodec<RegistryFriendlyByteBuf, @Nullable MachineStatus> STREAM_CODEC = StreamCodec.ofMember(MachineStatus::writePacket, MachineStatus::readPacket);
-
-    /**
-     * Creates a new machine status.
-     *
-     * @param name The name of the machine status.
-     * @param type The type of the machine status.
-     * @return The newly created machine status.
-     */
-    @Contract(value = "_, _ -> new", pure = true)
-    static @NotNull MachineStatus create(@NotNull Component name, @NotNull MachineStatus.Type type) {
-        return new MachineStatusImpl(name, type);
-    }
+    StreamCodec<RegistryFriendlyByteBuf, @Nullable MachineStatus> STREAM_CODEC = StreamCodec.ofMember(MachineStatus::writePacket, MachineStatus::readPacket);
 
     /**
      * Creates a new machine status.
@@ -62,8 +51,54 @@ public interface MachineStatus {
      * @return The newly created machine status.
      */
     @Contract(value = "_, _, _ -> new", pure = true)
-    static @NotNull MachineStatus create(@NotNull String key, ChatFormatting color, @NotNull MachineStatus.Type type) {
-        return create(Component.translatable(key).setStyle(Style.EMPTY.withColor(color)), type);
+    static @NotNull MachineStatus create(@NotNull String key, @Nullable ChatFormatting color, @NotNull MachineStatus.Type type) {
+        return new MachineStatusImpl(key, color, type);
+    }
+
+    /**
+     * Creates a new machine status.
+     *
+     * @param key The translation key of the machine status name.
+     * @param colorIndex The id of the color to use for the status text.
+     * @param type The type of the machine status.
+     * @return The newly created machine status.
+     */
+    @Contract(value = "_, _, _ -> new", pure = true)
+    static @NotNull MachineStatus create(@NotNull String key, int colorIndex, @NotNull MachineStatus.Type type) {
+        return MachineStatus.create(key, ChatFormatting.getById(colorIndex), type);
+    }
+
+    static @NotNull CompoundTag createTag(@Nullable MachineStatus status) {
+        CompoundTag tag = new CompoundTag();
+        if (status == null) {
+            tag.putByte(Constant.Nbt.TYPE, (byte) -1);
+        } else {
+            tag.putByte(Constant.Nbt.TYPE, (byte) status.getType().ordinal());
+            tag.putString(Constant.Nbt.KEY, status.getKey());
+            tag.putByte(Constant.Nbt.COLOR, (byte) status.getColorIndex());
+        }
+        return tag;
+    }
+
+    static @Nullable MachineStatus readTag(@NotNull CompoundTag tag) {
+        byte type = tag.getByte(Constant.Nbt.TYPE);
+        if (type == -1) {
+            return null;
+        }
+
+        byte colorIndex = 0;
+        if (tag.contains(Constant.Nbt.COLOR, Tag.TAG_BYTE)) {
+            colorIndex = tag.getByte(Constant.Nbt.COLOR);
+        }
+
+        String key;
+        if (tag.contains(Constant.Nbt.KEY, Tag.TAG_STRING)) {
+            key = tag.getString(Constant.Nbt.KEY);
+        } else {
+            return null;
+        }
+
+        return MachineStatus.create(key, colorIndex, Type.values()[type]);
     }
 
     /**
@@ -77,7 +112,8 @@ public interface MachineStatus {
             return;
         }
         buf.writeByte(status.getType().ordinal());
-        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buf, status.getText());
+        buf.writeByte(status.getColorIndex());
+        buf.writeUtf(status.getKey());
     }
 
     /**
@@ -89,8 +125,27 @@ public interface MachineStatus {
     static @Nullable MachineStatus readPacket(@NotNull RegistryFriendlyByteBuf buf) {
         byte b = buf.readByte();
         if (b == -1) return null;
-        return MachineStatus.create(ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), Type.values()[b]);
+        byte colorIndex = buf.readByte();
+        String key = buf.readUtf();
+        return MachineStatus.create(key, colorIndex, Type.values()[b]);
     }
+
+    /**
+     * {@return the translation key of the machine status}
+     */
+    @NotNull
+    String getKey();
+
+    /**
+     * {@return the color of the machine status}
+     */
+    @Nullable
+    ChatFormatting getColor();
+
+    /**
+     * {@return the id of the color of the machine status}
+     */
+    int getColorIndex();
 
     /**
      * {@return the name of the machine status}
