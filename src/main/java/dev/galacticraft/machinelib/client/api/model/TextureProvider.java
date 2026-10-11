@@ -27,11 +27,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.galacticraft.machinelib.api.util.BlockFace;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +44,9 @@ public record TextureProvider(@Nullable Material front, @Nullable Material back,
                               @Nullable Material top, @Nullable Material bottom,
                               @Nullable Material particle, @Nullable Material topOverride) {
     public static final Codec<Material> MATERIAL_CODEC = Codec.withAlternative(
-            ResourceLocation.CODEC.flatComapMap(tex -> new Material(TextureAtlas.LOCATION_BLOCKS, tex), mat -> mat.atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS) ? DataResult.success(mat.texture()) : DataResult.error(() -> "not block", mat.texture())),
+            ResourceLocation.CODEC.flatComapMap(tex -> new Material(InventoryMenu.BLOCK_ATLAS, tex), mat -> mat.atlasLocation().equals(InventoryMenu.BLOCK_ATLAS) ? DataResult.success(mat.texture()) : DataResult.error(() -> "not block", mat.texture())),
             RecordCodecBuilder.create(instance -> instance.group(
-                    ResourceLocation.CODEC.optionalFieldOf("atlas").xmap(t -> t.orElse(TextureAtlas.LOCATION_BLOCKS), l -> l.equals(TextureAtlas.LOCATION_BLOCKS) ? Optional.empty() : Optional.of(l)).forGetter(Material::atlasLocation),
+                    ResourceLocation.CODEC.optionalFieldOf("atlas").xmap(t -> t.orElse(InventoryMenu.BLOCK_ATLAS), l -> l.equals(InventoryMenu.BLOCK_ATLAS) ? Optional.empty() : Optional.of(l)).forGetter(Material::atlasLocation),
                     ResourceLocation.CODEC.fieldOf("texture").forGetter(Material::texture)
             ).apply(instance, Material::new))
     );
@@ -100,11 +100,11 @@ public record TextureProvider(@Nullable Material front, @Nullable Material back,
     }
 
     public static TextureProvider all(ResourceLocation material) {
-        return TextureProvider.all(new Material(TextureAtlas.LOCATION_BLOCKS, material));
+        return TextureProvider.all(new Material(InventoryMenu.BLOCK_ATLAS, material));
     }
 
     public static TextureProvider all(String namespace, String path) {
-        return TextureProvider.all(new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.fromNamespaceAndPath(namespace, path)));
+        return TextureProvider.all(new Material(InventoryMenu.BLOCK_ATLAS, ResourceLocation.fromNamespaceAndPath(namespace, path)));
     }
 
     public static class Builder {
@@ -173,43 +173,43 @@ public record TextureProvider(@Nullable Material front, @Nullable Material back,
         }
 
         public Builder front(ResourceLocation texture) {
-            return this.front(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.front(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder back(ResourceLocation texture) {
-            return this.back(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.back(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder left(ResourceLocation texture) {
-            return this.left(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.left(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder right(ResourceLocation texture) {
-            return this.right(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.right(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder top(ResourceLocation texture) {
-            return this.top(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.top(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder bottom(ResourceLocation texture) {
-            return this.bottom(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.bottom(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder particle(ResourceLocation texture) {
-            return this.particle(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.particle(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder topOverride(ResourceLocation texture) {
-            return this.topOverride(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.topOverride(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder all(ResourceLocation texture) {
-            return this.all(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.all(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder sides(ResourceLocation texture) {
-            return this.sides(new Material(TextureAtlas.LOCATION_BLOCKS, texture));
+            return this.sides(new Material(InventoryMenu.BLOCK_ATLAS, texture));
         }
 
         public Builder front(Block texture) {

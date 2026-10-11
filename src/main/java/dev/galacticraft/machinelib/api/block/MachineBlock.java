@@ -121,7 +121,7 @@ public abstract class MachineBlock extends BaseBlock {
         if (stack != null) {
             CustomData data = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
             if (!data.isEmpty()) {
-                CompoundTag nbt = data.getUnsafe();
+                CompoundTag nbt = data.copyTag();
                 tooltip.add(Component.empty());
                 if (nbt.contains(Constant.Nbt.ENERGY, Tag.TAG_INT)) {
                     tooltip.add(Component.translatable(Constant.TranslationKey.CURRENT_ENERGY, Component.literal(String.valueOf(nbt.getInt(Constant.Nbt.ENERGY))).setStyle(Constant.Text.BLUE_STYLE)).setStyle(Constant.Text.GOLD_STYLE));
