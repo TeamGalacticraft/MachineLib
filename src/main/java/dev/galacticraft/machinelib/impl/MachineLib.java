@@ -24,6 +24,9 @@ package dev.galacticraft.machinelib.impl;
 
 import dev.galacticraft.machinelib.api.component.MLDataComponents;
 import dev.galacticraft.machinelib.api.config.Config;
+import dev.galacticraft.machinelib.api.machine.security.TeamSystems;
+import dev.galacticraft.machinelib.impl.command.MachineLibCommands;
+import dev.galacticraft.machinelib.impl.machine.security.VanillaTeamSystem;
 import dev.galacticraft.machinelib.impl.network.MachineLibPackets;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -39,6 +42,13 @@ public final class MachineLib implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        TeamSystems.register(
+                TeamSystems.MINECRAFT,
+                VanillaTeamSystem.INSTANCE
+        );
+
+        MachineLibCommands.register();
+
         MachineLibPackets.registerChannels();
         MachineLibPackets.registerServer();
         MLDataComponents.init();
