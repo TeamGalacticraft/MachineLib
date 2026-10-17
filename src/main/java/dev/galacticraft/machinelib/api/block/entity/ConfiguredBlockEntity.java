@@ -292,7 +292,10 @@ public abstract class ConfiguredBlockEntity extends BaseBlockEntity implements R
             this.state.readTag((ByteTag) tag.get(Constant.Nbt.STATE));
         if (tag.contains(Constant.Nbt.ACTIVE)) {
             this.active = tag.getBoolean(Constant.Nbt.ACTIVE);
-            this.updateActiveState(this.level, this.worldPosition, this.getBlockState(), this.active);
+            // The level is not set yet when a chunk is loaded, and the block state stored in the chunk is already correct
+            if (this.level != null && !this.level.isClientSide()) {
+                this.updateActiveState(this.level, this.worldPosition, this.getBlockState(), this.active);
+            }
         }
 
         if (this.level != null && this.level.isClientSide()) {
