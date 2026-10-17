@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.impl.storage;
 
 import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import dev.galacticraft.machinelib.api.compat.transfer.MachineInsertHandler;
+import dev.galacticraft.machinelib.api.compat.vanilla.MachineTakeHandler;
 import dev.galacticraft.machinelib.api.storage.slot.ResourceSlot;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -31,6 +32,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +65,13 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
             return handler.insert(this, variant, maxAmount, transaction);
         }
         return 0;
+    }
+
+    @Override
+    public void onCheckTakeAchievements(ServerPlayer player) {
+        if (this.parent instanceof MachineTakeHandler handler) {
+            handler.onTake(this, player);
+        }
     }
 
     @Override
