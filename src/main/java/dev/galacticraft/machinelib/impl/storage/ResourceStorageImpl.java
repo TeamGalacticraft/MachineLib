@@ -70,7 +70,7 @@ public abstract class ResourceStorageImpl<Resource, Slot extends ResourceSlot<Re
     @Override
     public void onCheckTakeAchievements(ServerPlayer player) {
         if (this.parent instanceof MachineTakeHandler handler) {
-            handler.onTake(this, player);
+            handler.onTake(player);
         }
     }
 

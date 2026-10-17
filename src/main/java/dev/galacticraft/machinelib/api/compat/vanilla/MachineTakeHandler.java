@@ -22,7 +22,6 @@
 
 package dev.galacticraft.machinelib.api.compat.vanilla;
 
-import dev.galacticraft.machinelib.api.storage.ResourceStorage;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -33,10 +32,9 @@ import net.minecraft.server.level.ServerPlayer;
 @FunctionalInterface
 public interface MachineTakeHandler {
     /**
-     * Called when a player takes resources out of an output slot of the given storage.
+     * Called when a player takes resources out of one of its output slots.
      *
-     * @param storage the storage that the resources were taken from
      * @param player the player who took the resources
      */
-    void onTake(ResourceStorage<?, ?> storage, ServerPlayer player);
+    void onTake(ServerPlayer player);
 }
