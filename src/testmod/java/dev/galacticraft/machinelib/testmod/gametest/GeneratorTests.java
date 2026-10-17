@@ -28,10 +28,12 @@ import dev.galacticraft.machinelib.api.gametest.annotation.TestSuite;
 import dev.galacticraft.machinelib.testmod.block.TestModBlocks;
 import dev.galacticraft.machinelib.testmod.block.entity.GeneratorBlockEntity;
 import dev.galacticraft.machinelib.testmod.item.TestModItems;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,6 +50,19 @@ public class GeneratorTests extends MachineGameTest<GeneratorBlockEntity> {
         return () -> {
             if (machine.energyStorage().getAmount() != GeneratorBlockEntity.GENERATION_RATE * 10) {
                 throw new GameTestAssertException(String.format("Failed to generate power (%s / %s)!", machine.energyStorage().getAmount(), GeneratorBlockEntity.GENERATION_RATE * 10));
+            }
+        };
+    }
+
+    @MachineTest
+    public Runnable loadWithoutLevel(GeneratorBlockEntity machine) {
+        machine.itemStorage().slot(GeneratorBlockEntity.FUEL_SLOT).set(Items.COAL, 1);
+        HolderLookup.Provider registries = machine.getLevel().registryAccess();
+        // Loading a chunk creates its block entities before they have a level
+        BlockEntity loaded = BlockEntity.loadStatic(machine.getBlockPos(), machine.getBlockState(), machine.saveWithFullMetadata(registries), registries);
+        return () -> {
+            if (!(loaded instanceof GeneratorBlockEntity generator) || generator.itemStorage().slot(GeneratorBlockEntity.FUEL_SLOT).getAmount() != 1) {
+                throw new GameTestAssertException("Failed to load the machine without a level!");
             }
         };
     }
