@@ -33,6 +33,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,15 @@ public interface ResourceStorage<Resource, Slot extends ResourceSlot<Resource>> 
      * @return the amount of resources moved
      */
     long insert(TransferVariant<Resource> variant, long maxAmount, TransactionContext transaction);
+
+    /**
+     * Invokes {@link dev.galacticraft.machinelib.api.compat.vanilla.MachineTakeHandler#onTake},
+     * if the parent block entity implements {@link dev.galacticraft.machinelib.api.compat.vanilla.MachineTakeHandler}.
+     * Called when a player takes resources out of an output slot of this storage.
+     *
+     * @param player the player who took the resources
+     */
+    void onCheckTakeAchievements(ServerPlayer player);
 
     /**
      * Create an exposed storage for this storage.
