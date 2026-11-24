@@ -39,16 +39,21 @@ import org.jetbrains.annotations.Nullable;
 public class SimpleMachineBlock extends MachineBlock {
     private static final MapCodec<SimpleMachineBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             propertiesCodec(),
-            ResourceKey.codec(Registries.BLOCK_ENTITY_TYPE).fieldOf("factory").forGetter(block -> block.key)
+            ResourceKey.codec(Registries.BLOCK_ENTITY_TYPE).fieldOf("factory").forGetter(block -> block.key),
+            ResourceLocation.CODEC.optionalFieldOf("stat", null).forGetter(block -> block.interactionsStat)
     ).apply(instance, SimpleMachineBlock::new));
     private final ResourceKey<BlockEntityType<?>> key;
 
     public SimpleMachineBlock(Properties settings, ResourceLocation id) {
-        this(settings, ResourceKey.create(Registries.BLOCK_ENTITY_TYPE, id));
+        this(settings, id, null);
     }
 
-    public SimpleMachineBlock(Properties settings, ResourceKey<BlockEntityType<?>> key) {
-        super(settings);
+    public SimpleMachineBlock(Properties settings, ResourceLocation id, @Nullable ResourceLocation interactionsStat) {
+        this(settings, ResourceKey.create(Registries.BLOCK_ENTITY_TYPE, id), interactionsStat);
+    }
+
+    protected SimpleMachineBlock(Properties settings, ResourceKey<BlockEntityType<?>> key, @Nullable ResourceLocation interactionsStat) {
+        super(settings, interactionsStat);
         this.key = key;
     }
 
