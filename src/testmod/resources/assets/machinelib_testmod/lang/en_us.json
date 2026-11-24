@@ -4,5 +4,8 @@
   "block.machinelib_testmod.mixer": "Mixer",
   "block.machinelib_testmod.mixer.description": "Combines water and lava to produce obsidian in a controlled environment.",
   "block.machinelib_testmod.melter": "Melter",
-  "block.machinelib_testmod.melter.description": "Melts cobblestone into lava."
+  "block.machinelib_testmod.melter.description": "Melts cobblestone into lava.",
+  "stat.machinelib_testmod.interact_with_generator": "Interactions with Generator",
+  "stat.machinelib_testmod.interact_with_mixer": "Interactions with Mixer",
+  "stat.machinelib_testmod.interact_with_melter": "Interactions with Melter"
 }

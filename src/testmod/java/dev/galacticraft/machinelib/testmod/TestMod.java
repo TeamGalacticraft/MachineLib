@@ -26,12 +26,14 @@ import dev.galacticraft.machinelib.testmod.block.TestModBlocks;
 import dev.galacticraft.machinelib.testmod.block.entity.TestModBlockEntityTypes;
 import dev.galacticraft.machinelib.testmod.item.TestModItems;
 import dev.galacticraft.machinelib.testmod.menu.TestModMenuTypes;
+import dev.galacticraft.machinelib.testmod.stats.TestModStats;
 import net.fabricmc.api.ModInitializer;
 
 public class TestMod implements ModInitializer {
     @Override
     public void onInitialize() {
         Constant.LOGGER.info("Initializing MachineLib test mod");
+        TestModStats.register();
         TestModBlocks.register();
         TestModItems.register();
         TestModBlockEntityTypes.register();
