@@ -28,6 +28,7 @@ import dev.galacticraft.machinelib.impl.block.entity.BaseBlockEntityTicker;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
@@ -49,12 +50,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class BaseBlock extends BaseEntityBlock {
     /**
+     * The statistic for the number of interactions with this machine. Can be {@code null}.
+     */
+    protected final @Nullable ResourceLocation interactionsStat;
+
+    /**
      * Creates a new machine block.
      *
      * @param settings The settings for the block.
      */
-    public BaseBlock(Properties settings) {
+    protected BaseBlock(Properties settings) {
+        this(settings, null);
+    }
+
+    /**
+     * Creates a new machine block.
+     *
+     * @param settings The settings for the block.
+     * @param interactionsStat The statistic for the number of interactions with this machine.
+     */
+    protected BaseBlock(Properties settings, @Nullable ResourceLocation interactionsStat) {
         super(settings);
+        this.interactionsStat = interactionsStat;
     }
 
     @Nullable
@@ -71,6 +88,10 @@ public abstract class BaseBlock extends BaseEntityBlock {
         if (!level.isClientSide) {
             BlockEntity entity = level.getBlockEntity(pos);
             if (entity instanceof BaseBlockEntity be) {
+                if (interactionsStat != null) {
+                    player.awardStat(interactionsStat);
+                }
+
                 player.openMenu(new ExtendedScreenHandlerFactory<>() {
                     @Nullable
                     @Override

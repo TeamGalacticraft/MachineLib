@@ -24,6 +24,7 @@ package dev.galacticraft.machinelib.testmod.block;
 
 import dev.galacticraft.machinelib.api.block.SimpleMachineBlock;
 import dev.galacticraft.machinelib.testmod.Constant;
+import dev.galacticraft.machinelib.testmod.stats.TestModStats;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
@@ -33,8 +34,8 @@ import net.minecraft.world.level.material.MapColor;
 
 public class TestModBlocks {
     public static final Block GENERATOR = new GeneratorBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL));
-    public static final Block MIXER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MIXER));
-    public static final Block MELTER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MELTER));
+    public static final Block MIXER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MIXER), TestModStats.INTERACT_WITH_MIXER);
+    public static final Block MELTER = new SimpleMachineBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).mapColor(MapColor.METAL), Constant.id(Constant.MELTER), TestModStats.INTERACT_WITH_MELTER);
 
     public static void register() {
         Registry.register(BuiltInRegistries.BLOCK, Constant.id(Constant.GENERATOR), TestModBlocks.GENERATOR);

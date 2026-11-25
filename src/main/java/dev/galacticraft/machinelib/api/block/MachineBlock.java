@@ -42,6 +42,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -102,8 +103,18 @@ public abstract class MachineBlock extends BaseBlock {
      *
      * @param settings The settings for the block.
      */
-    public MachineBlock(Properties settings) {
-        super(settings);
+    protected MachineBlock(Properties settings) {
+        this(settings, null);
+    }
+
+    /**
+     * Creates a new machine block.
+     *
+     * @param settings The settings for the block.
+     * @param interactionsStat The statistic for the number of interactions with this machine.
+     */
+    protected MachineBlock(Properties settings, @Nullable ResourceLocation interactionsStat) {
+        super(settings, interactionsStat);
         this.registerDefaultState(this.getStateDefinition().any().setValue(ACTIVE, false));
     }
 

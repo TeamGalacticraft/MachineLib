@@ -52,7 +52,7 @@ plugins {
     `maven-publish`
     id("fabric-loom") version("1.10-SNAPSHOT")
     id("com.diffplug.spotless") version("7.0.3")
-    id("org.ajoberstar.grgit") version("5.3.0")
+    id("org.ajoberstar.grgit") version("5.3.3")
     id("dev.galacticraft.mojarn") version("0.6.0+18")
 }
 
