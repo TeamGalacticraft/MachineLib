@@ -22,6 +22,7 @@
 
 package dev.galacticraft.machinelib.api.machine.configuration;
 
+import dev.galacticraft.machinelib.api.machine.security.TeamSystems;
 import dev.galacticraft.machinelib.api.misc.DeltaPacketSerializable;
 import dev.galacticraft.machinelib.api.misc.PacketSerializable;
 import dev.galacticraft.machinelib.api.misc.Serializable;
@@ -134,7 +135,9 @@ public class SecuritySettings implements Serializable<CompoundTag>, DeltaPacketS
         return switch (accessLevel) {
             case PUBLIC -> true;
 
-            case TEAM -> this.isOwner(player); // todo: teams
+            case TEAM -> this.isOwner(player)
+                    || this.owner != null
+                    && TeamSystems.areTeammates(this.owner, player);
 
             case PRIVATE -> this.isOwner(player);
         };
